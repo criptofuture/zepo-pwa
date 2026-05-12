@@ -1298,13 +1298,19 @@
               </div>
             </div>
 
+            <!-- Buscador -->
+            <div style="margin-bottom:14px;position:relative;">
+              <input type="text" x-model="cobrosSearch" placeholder="Buscar por persona..." style="width:100%;height:44px;border-radius:22px;background:var(--surface);border:1px solid var(--border);padding:0 16px 0 40px;font-size:14px;color:var(--text);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="16" height="16" style="position:absolute;left:14px;top:14px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+
             <!-- Nuevo cobro CTA -->
             <button @click="openNew()" style="width:100%;height:48px;border-radius:14px;border:1px dashed var(--cyan);background:var(--surface);color:var(--cyan);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               Nuevo cobro
             </button>
 
-            <template x-for="(group, persona) in splitsByPersona" :key="persona">
+            <template x-for="(group, persona) in filteredSplitsByPersona" :key="persona">
               <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                   <div style="display:flex;align-items:center;gap:10px;">
@@ -1448,7 +1454,7 @@
         <!-- Category breakdown -->
         <div class="dash-card">
           <div class="dash-card-title">Por categoría</div>
-          <div class="dash-card-subtitle">Distribucion del mes</div>
+          <div class="dash-card-subtitle" x-text="'Distribución · ' + periodLabel"></div>
           <template x-for="cat in categoryBreakdown" :key="cat.key">
             <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);">
               <div style="width:10px;height:10px;border-radius:3px;flex-shrink:0;" :style="'background:' + cat.color"></div>
@@ -1461,7 +1467,7 @@
         </div>
 
         <!-- Insights as cards -->
-        <template x-if="monthTotal > 0">
+        <template x-if="periodTotal > 0">
           <div>
             <div class="insight-card">
               <div class="insight-icon" style="background:rgba(0,240,255,0.1);">
@@ -1470,7 +1476,7 @@
               <div>
                 <div style="font-size:13px;font-weight:700;">Promedio diario</div>
                 <div style="font-size:11px;color:var(--muted);margin-top:2px;">
-                  <span class="mono" style="color:var(--text);font-weight:600;" x-text="'$' + fmtMoney(monthTotal / new Date().getDate())"></span> /dia este mes
+                  <span class="mono" style="color:var(--text);font-weight:600;" x-text="'$' + fmtMoney(periodTotal / Math.max(1, dashPeriod === 'semana' ? 7 : dashPeriod === 'año' ? Math.ceil((new Date() - new Date(new Date().getFullYear(),0,1)) / 86400000) : new Date().getDate()))"></span> /día
                 </div>
               </div>
             </div>
@@ -1490,15 +1496,15 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" width="16" height="16"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="2" y1="9" x2="22" y2="9"/></svg>
               </div>
               <div>
-                <div style="font-size:13px;font-weight:700;">Transacciónes</div>
+                <div style="font-size:13px;font-weight:700;">Transacciones</div>
                 <div style="font-size:11px;color:var(--muted);margin-top:2px;">
-                  <span style="color:var(--text);font-weight:600;" x-text="monthExpenses.length"></span> gastos registrados este mes
+                  <span style="color:var(--text);font-weight:600;" x-text="periodExpenses.length"></span> gastos · <span x-text="periodLabel"></span>
                 </div>
               </div>
             </div>
           </div>
         </template>
-        <template x-if="monthTotal === 0">
+        <template x-if="periodTotal === 0">
           <div class="dash-card" style="text-align:center;color:var(--dim);font-size:13px;padding:24px;">
             Agrega gastos para ver insights
           </div>
@@ -1549,11 +1555,10 @@
         <!-- Moneda -->
         <div class="settings-group-title">Moneda</div>
         <div class="settings-group" style="padding:14px;">
-          <div style="font-size:11px;color:var(--muted);letter-spacing:0.6px;font-weight:600;margin-bottom:8px;">PRINCIPAL</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <template x-for="m in [{c:'USD',f:'🇪🇨',s:true},{c:'EUR',f:'🇪🇺'},{c:'COP',f:'🇨🇴'},{c:'PEN',f:'🇵🇪'},{c:'MXN',f:'🇲🇽'}]" :key="m.c">
-              <div style="padding:8px 12px;border-radius:10px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer;" :style="m.s ? 'background:rgba(0,240,255,0.10);border:1px solid var(--cyan);color:var(--text)' : 'background:var(--bg);border:1px solid var(--border);color:var(--muted)'">
-                <span style="font-size:14px;" x-text="m.f"></span><span x-text="m.c"></span>
+              <div style="padding:10px 14px;border-radius:22px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer;transition:all 0.15s;" :style="m.s ? 'background:rgba(0,240,255,0.10);border:1.5px solid var(--cyan);color:var(--text);box-shadow:0 0 12px rgba(0,240,255,0.1)' : 'background:var(--bg);border:1.5px solid var(--border);color:var(--muted)'">
+                <span style="font-size:15px;" x-text="m.f"></span><span x-text="m.c"></span>
                 <template x-if="m.s"><svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="3" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg></template>
               </div>
             </template>
@@ -1561,47 +1566,52 @@
         </div>
 
         <!-- Categorías -->
-        <div class="settings-group-title">Categorías</div>
-        <div class="settings-group" style="padding:12px 14px;">
-          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
-            <template x-for="c in [{e:'🍽',l:'Comida',c:'#FF6B6B'},{e:'🚌',l:'Transporte',c:'#00F0FF'},{e:'💊',l:'Salud',c:'#00E5A0'},{e:'🏠',l:'Hogar',c:'#7000FF'},{e:'🎮',l:'Entretenimiento',c:'#B794F6'},{e:'📚',l:'Educacion',c:'#FFB800'},{e:'✨',l:'Otro',c:'#8888AA'}]" :key="c.l">
-              <div style="padding:7px 10px;border-radius:9px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;" :style="'background:' + c.c + '12;border:1px solid ' + c.c + '30;color:var(--text)'">
-                <span style="font-size:13px;" x-text="c.e"></span><span x-text="c.l"></span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="10" height="10"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <div class="settings-group-title">Categorías de gasto</div>
+        <div class="settings-group" style="padding:14px;">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <template x-for="c in categories" :key="c.key">
+              <div style="padding:8px 12px;border-radius:20px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;" :style="'background:' + c.color + '12;border:1.5px solid ' + c.color + '30;color:var(--text)'">
+                <span style="font-size:14px;" x-text="c.emoji"></span><span x-text="c.label"></span>
               </div>
             </template>
-            <div style="padding:7px 10px;border-radius:9px;font-size:12px;font-weight:600;background:transparent;border:1px dashed var(--cyan);color:var(--cyan);display:flex;align-items:center;gap:6px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="10" height="10"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Agregar
-            </div>
           </div>
-          <div style="font-size:11px;color:var(--dim);">Toca una categoría para editarla.</div>
+        </div>
+        <div class="settings-group-title">Categorías de ingreso</div>
+        <div class="settings-group" style="padding:14px;">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <template x-for="c in incomeCategories" :key="c.key">
+              <div style="padding:8px 12px;border-radius:20px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;" :style="'background:' + c.color + '12;border:1.5px solid ' + c.color + '30;color:var(--text)'">
+                <span style="font-size:14px;" x-text="c.emoji"></span><span x-text="c.label"></span>
+              </div>
+            </template>
+          </div>
         </div>
 
         <!-- Presupuestos -->
         <div class="settings-group-title">Presupuestos</div>
         <div class="settings-group" style="padding:0;">
-          <template x-for="(b, bi) in [{e:'🍽',l:'Comida',c:'#FF6B6B',total:250,used:175},{e:'🚌',l:'Transporte',c:'#00F0FF',total:120,used:48},{e:'🏠',l:'Hogar',c:'#7000FF',total:600,used:480}]" :key="b.l">
-            <div :style="'padding:14px;' + (bi < 2 ? 'border-bottom:1px solid var(--border)' : '')">
+          <template x-if="budgets.length === 0">
+            <div style="padding:20px 14px;text-align:center;color:var(--dim);font-size:13px;">
+              No tienes presupuestos configurados
+            </div>
+          </template>
+          <template x-for="(b, bi) in budgetBars" :key="b.cat">
+            <div :style="'padding:14px;' + (bi < budgetBars.length - 1 ? 'border-bottom:1px solid var(--border)' : '')">
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-                <div style="width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;" :style="'background:' + b.c + '18;border:1px solid ' + b.c + '30'">
-                  <span x-text="b.e"></span>
+                <div style="width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;" :style="'background:' + b.color + '18;border:1px solid ' + b.color + '30'">
+                  <span x-text="b.emoji"></span>
                 </div>
-                <div style="flex:1;font-size:14px;font-weight:600;" x-text="b.l"></div>
+                <div style="flex:1;font-size:14px;font-weight:600;" x-text="b.label"></div>
                 <div style="font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;">
-                  <span style="color:var(--text);font-weight:700;" x-text="'$' + b.used"></span> / $<span x-text="b.total"></span>
+                  <span style="color:var(--text);font-weight:700;" x-text="'$' + fmtMoney(b.spent)"></span> / $<span x-text="fmtMoney(b.limit)"></span>
                 </div>
               </div>
               <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;">
-                <div :style="'height:100%;border-radius:3px;width:' + Math.round(b.used/b.total*100) + '%;background:' + (b.used/b.total >= 0.9 ? 'var(--danger)' : b.used/b.total >= 0.7 ? 'var(--warning)' : 'var(--success)')"></div>
-              </div>
-              <div style="display:flex;gap:4px;margin-top:8px;">
-                <template x-for="th in [50, 75, 90]" :key="th">
-                  <span style="padding:3px 7px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:0.4px;" :style="Math.round(b.used/b.total*100) >= th ? 'background:rgba(255,184,0,0.15);color:var(--warning);border:1px solid rgba(255,184,0,0.3)' : 'background:var(--bg);color:var(--dim);border:1px solid var(--border)'" x-text="th + '%'"></span>
-                </template>
+                <div :style="'height:100%;border-radius:3px;width:' + Math.min(b.pct, 100) + '%;background:' + (b.pct >= 90 ? 'var(--danger)' : b.pct >= 70 ? 'var(--warning)' : 'var(--success)')"></div>
               </div>
             </div>
           </template>
-          <div style="padding:12px 14px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:6px;color:var(--cyan);font-weight:600;font-size:13px;cursor:pointer;">
+          <div @click="budgetSheetOpen = true" style="padding:12px 14px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:6px;color:var(--cyan);font-weight:600;font-size:13px;cursor:pointer;">
             <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Agregar presupuesto
           </div>
         </div>
@@ -1609,24 +1619,24 @@
         <!-- Notificaciones -->
         <div class="settings-group-title">Notificaciones</div>
         <div class="settings-group">
-          <div class="settings-item">
+          <div class="settings-item" @click="notifDaily = !notifDaily" style="cursor:pointer;">
             <span class="si-label">Recordatorio diario</span>
             <span style="font-size:11px;color:var(--muted);margin-left:auto;margin-right:10px;">21:00</span>
-            <div style="width:38px;height:22px;border-radius:11px;background:var(--cyan);position:relative;flex-shrink:0;">
-              <div style="position:absolute;top:2px;left:18px;width:18px;height:18px;border-radius:9px;background:#fff;"></div>
+            <div style="width:38px;height:22px;border-radius:11px;position:relative;flex-shrink:0;transition:background 0.2s;" :style="notifDaily ? 'background:var(--cyan)' : 'background:var(--surface2);border:1px solid var(--border)'">
+              <div style="position:absolute;top:2px;width:18px;height:18px;border-radius:9px;background:#fff;transition:left 0.2s;" :style="notifDaily ? 'left:18px' : 'left:2px'"></div>
             </div>
           </div>
-          <div class="settings-item">
+          <div class="settings-item" @click="notifBudget = !notifBudget" style="cursor:pointer;">
             <span class="si-label">Alertas de presupuesto</span>
-            <span style="font-size:11px;color:var(--muted);margin-left:auto;margin-right:10px;">50%·75%·90%</span>
-            <div style="width:38px;height:22px;border-radius:11px;background:var(--cyan);position:relative;flex-shrink:0;">
-              <div style="position:absolute;top:2px;left:18px;width:18px;height:18px;border-radius:9px;background:#fff;"></div>
+            <span style="font-size:11px;color:var(--muted);margin-left:auto;margin-right:10px;" x-text="budgetAlertThresholds.join('% · ') + '%'"></span>
+            <div style="width:38px;height:22px;border-radius:11px;position:relative;flex-shrink:0;transition:background 0.2s;" :style="notifBudget ? 'background:var(--cyan)' : 'background:var(--surface2);border:1px solid var(--border)'">
+              <div style="position:absolute;top:2px;width:18px;height:18px;border-radius:9px;background:#fff;transition:left 0.2s;" :style="notifBudget ? 'left:18px' : 'left:2px'"></div>
             </div>
           </div>
-          <div class="settings-item">
+          <div class="settings-item" @click="notifWeekly = !notifWeekly" style="cursor:pointer;">
             <span class="si-label">Resumen semanal</span>
-            <div style="width:38px;height:22px;border-radius:11px;background:#2a2a3d;position:relative;flex-shrink:0;margin-left:auto;">
-              <div style="position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:9px;background:#fff;"></div>
+            <div style="width:38px;height:22px;border-radius:11px;position:relative;flex-shrink:0;margin-left:auto;transition:background 0.2s;" :style="notifWeekly ? 'background:var(--cyan)' : 'background:var(--surface2);border:1px solid var(--border)'">
+              <div style="position:absolute;top:2px;width:18px;height:18px;border-radius:9px;background:#fff;transition:left 0.2s;" :style="notifWeekly ? 'left:18px' : 'left:2px'"></div>
             </div>
           </div>
         </div>
@@ -1742,44 +1752,65 @@
         </div>
 
         <div style="padding:0 20px;">
-          <div style="text-align:center;margin-bottom:24px;">
-            <div style="font-size:28px;font-weight:800;letter-spacing:-0.8px;margin-bottom:6px;">
+          <!-- Hero -->
+          <div style="text-align:center;margin-bottom:28px;">
+            <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg, rgba(0,240,255,0.12), rgba(112,0,255,0.12));border:1px solid rgba(0,240,255,0.2);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="url(#planGrad)" stroke-width="1.8" width="28" height="28"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              <svg width="0" height="0"><defs><linearGradient id="planGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00F0FF"/><stop offset="100%" stop-color="#7000FF"/></linearGradient></defs></svg>
+            </div>
+            <div style="font-size:24px;font-weight:800;letter-spacing:-0.6px;margin-bottom:6px;">
               Elige tu <span class="gradient-text">plan</span>
             </div>
-            <div style="font-size:14px;color:var(--muted);">Controla tus finanzas como un pro</div>
+            <div style="font-size:14px;color:var(--muted);line-height:1.5;">Controla tus finanzas como un pro</div>
           </div>
 
-          <!-- Plan cards -->
+          <!-- Plan toggle: Monthly -->
           <template x-for="p in planOptions" :key="p.key">
-            <div style="margin-bottom:14px;padding:1.2px;border-radius:20px;" :style="'background:' + (p.key === 'elite' ? 'var(--gradient)' : p.key === 'pro' ? 'rgba(0,240,255,0.5)' : 'var(--border)')">
-              <div style="padding:20px 18px;border-radius:18.8px;" :style="'background:' + (p.key === 'elite' ? 'linear-gradient(160deg, rgba(0,240,255,0.06), rgba(112,0,255,0.08))' : 'var(--surface)')">
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+            <div style="margin-bottom:12px;border-radius:16px;overflow:hidden;" :style="p.key === 'elite' ? 'background:linear-gradient(135deg, rgba(0,240,255,0.06), rgba(112,0,255,0.08));border:1.5px solid rgba(112,0,255,0.3);box-shadow:0 0 24px rgba(112,0,255,0.08)' : 'background:var(--surface);border:1px solid var(--border)'">
+              <!-- Header -->
+              <div style="padding:18px 18px 0;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
                   <span class="plan-badge" :class="p.key" x-text="p.label"></span>
-                  <span x-show="p.key === userPlan" style="font-size:11px;color:var(--success);font-weight:600;">Actual</span>
-                  <span x-show="p.key === 'elite'" style="font-size:10px;color:var(--warning);font-weight:700;background:rgba(255,184,0,0.12);padding:2px 8px;border-radius:6px;letter-spacing:0.4px;">POPULAR</span>
+                  <span x-show="p.key === userPlan" style="font-size:10px;color:var(--success);font-weight:700;background:rgba(0,229,160,0.12);padding:3px 8px;border-radius:6px;">ACTUAL</span>
+                  <span x-show="p.key === 'elite'" style="font-size:10px;color:var(--warning);font-weight:700;background:rgba(255,184,0,0.12);padding:3px 8px;border-radius:6px;">POPULAR</span>
                 </div>
-                <div style="font-size:14px;color:var(--muted);margin-bottom:12px;" x-text="p.tagline || ''"></div>
+                <div style="font-size:13px;color:var(--muted);margin-bottom:12px;" x-text="p.tagline"></div>
                 <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:16px;">
-                  <span class="gradient-text" style="font-size:36px;font-weight:800;letter-spacing:-1.2px;" x-text="'$' + p.price"></span>
-                  <span style="font-size:13px;color:var(--muted);" x-text="p.price === '0' ? '' : '/mes'"></span>
+                  <span style="font-size:38px;font-weight:800;letter-spacing:-1.5px;color:var(--text);" x-text="'$' + p.price"></span>
+                  <span style="font-size:13px;color:var(--dim);" x-text="p.price === '0' ? 'gratis' : '/mes'"></span>
                 </div>
-                <div style="display:flex;flex-direction:column;gap:8px;">
-                  <template x-for="f in p.features" :key="f">
-                    <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
-                      <div style="width:18px;height:18px;border-radius:9px;background:rgba(0,240,255,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="3" width="10" height="10"><polyline points="20 6 9 17 4 12"/></svg>
-                      </div>
-                      <span x-text="f"></span>
-                    </div>
-                  </template>
-                </div>
-                <button x-show="p.key !== 'free' && p.key !== userPlan" @click="startCheckout(p.key)" style="margin-top:16px;width:100%;height:46px;border-radius:23px;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;" :style="p.key === 'elite' ? 'background:var(--gradient);color:#0A0A0F;' : 'background:transparent;border:1.5px solid var(--cyan);color:var(--cyan);'">
+              </div>
+              <!-- Features -->
+              <div style="padding:0 18px 18px;display:flex;flex-direction:column;gap:10px;">
+                <template x-for="f in p.features" :key="f">
+                  <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5" width="14" height="14" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span x-text="f"></span>
+                  </div>
+                </template>
+              </div>
+              <!-- CTA -->
+              <div style="padding:0 18px 18px;">
+                <button x-show="p.key !== 'free' && p.key !== userPlan" @click="startCheckout(p.key)" style="width:100%;height:48px;border-radius:14px;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;" :style="p.key === 'elite' ? 'background:var(--gradient);color:#0A0A0F;box-shadow:0 4px 16px rgba(0,240,255,0.2)' : 'background:transparent;border:1.5px solid var(--cyan);color:var(--cyan);'">
+                  <svg viewBox="0 0 24 24" fill="none" :stroke="p.key === 'elite' ? '#0A0A0F' : 'var(--cyan)'" stroke-width="2" width="16" height="16"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                   <span x-text="'Mejorar a ' + p.label"></span>
                 </button>
-                <div x-show="p.key === 'free' && userPlan === 'free'" style="margin-top:10px;text-align:center;font-size:12px;color:var(--dim);">Expira dic 2026</div>
+                <div x-show="p.key === userPlan" style="text-align:center;font-size:12px;color:var(--success);font-weight:600;padding:8px 0;">Tu plan actual</div>
+                <div x-show="p.key === 'free' && userPlan === 'free'" style="text-align:center;font-size:11px;color:var(--dim);margin-top:4px;">Gratis hasta dic 2026</div>
               </div>
             </div>
           </template>
+
+          <!-- FAQ -->
+          <div style="margin-top:8px;padding:16px;background:var(--surface);border-radius:14px;border:1px solid var(--border);">
+            <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--text);">Preguntas frecuentes</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:8px;">
+              <strong style="color:var(--text);">¿Puedo cancelar?</strong> Si, en cualquier momento sin cargos.
+            </div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">
+              <strong style="color:var(--text);">¿Métodos de pago?</strong> PayPhone (tarjeta, transferencia).
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2083,7 +2114,7 @@
               <div class="field-box">
                 <div class="field-box-label">CATEGORIA</div>
                 <div class="cat-chip-scroll">
-                  <template x-for="cat in categories" :key="cat.key">
+                  <template x-for="cat in (form.is_income ? incomeCategories : categories)" :key="cat.key">
                     <button class="cat-chip" :class="{ selected: form.category === cat.key }" @click="form.category = cat.key">
                       <div class="cat-icon-box" :style="'background:' + (cat.color || '#888') + '20'">
                         <span x-text="cat.emoji"></span>
@@ -2105,7 +2136,7 @@
 
               <!-- INCOME TOGGLE -->
               <div class="field-box">
-                <div class="field-box-inner" style="cursor:pointer;" @click="form.is_income = !form.is_income">
+                <div class="field-box-inner" style="cursor:pointer;" @click="form.is_income = !form.is_income; form.category = ''">
                   <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" width="18" height="18" style="flex-shrink:0;"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
                   <span style="flex:1;font-size:15px;font-weight:500;">Es un ingreso</span>
                   <div class="split-toggle" :style="form.is_income ? 'background:var(--success)' : 'background:var(--surface2);border:1px solid var(--border)'">
@@ -2137,9 +2168,14 @@
                     </div>
 
                     <div class="field-box" style="margin-bottom:10px;">
-                      <div class="field-box-label">CON QUIEN</div>
+                      <div class="field-box-label">CON QUIÉN</div>
                       <div class="field-box-inner">
-                        <input type="text" placeholder="Nombre de la persona" x-model="form.split_persona">
+                        <input type="text" placeholder="Nombre de la persona" x-model="form.split_persona" list="persona-list">
+                        <datalist id="persona-list">
+                          <template x-for="p in knownPersonas" :key="p">
+                            <option :value="p"></option>
+                          </template>
+                        </datalist>
                       </div>
                     </div>
 
@@ -2255,7 +2291,18 @@ const CATEGORIES = [
   { key: 'taxi', emoji: '🚖', label: 'Taxi', color: '#FFB800' },
   { key: 'other', emoji: '✨', label: 'Otro', color: '#8888AA' },
 ];
-const CAT_MAP = Object.fromEntries(CATEGORIES.map(c => [c.key, c]));
+const INCOME_CATEGORIES = [
+  { key: 'salary', emoji: '💰', label: 'Sueldo', color: '#00E5A0' },
+  { key: 'freelance', emoji: '💻', label: 'Freelance', color: '#00F0FF' },
+  { key: 'business', emoji: '🏪', label: 'Negocio', color: '#7000FF' },
+  { key: 'investment', emoji: '📈', label: 'Inversión', color: '#FFB800' },
+  { key: 'gift', emoji: '🎁', label: 'Regalo', color: '#B794F6' },
+  { key: 'refund', emoji: '🔄', label: 'Reembolso', color: '#00F0FF' },
+  { key: 'rental', emoji: '🏠', label: 'Arriendo', color: '#FF6B6B' },
+  { key: 'sale', emoji: '🏷', label: 'Venta', color: '#C49A6C' },
+  { key: 'other_income', emoji: '✨', label: 'Otro', color: '#8888AA' },
+];
+const CAT_MAP = Object.fromEntries([...CATEGORIES, ...INCOME_CATEGORIES].map(c => [c.key, c]));
 const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
 function zepoApp() {
@@ -2278,7 +2325,13 @@ function zepoApp() {
     authLoading: false,
     expenses: [],
     categories: CATEGORIES,
+    incomeCategories: INCOME_CATEGORIES,
     filterCat: 'all',
+    cobrosSearch: '',
+    notifDaily: true,
+    notifBudget: true,
+    notifWeekly: false,
+    budgetAlertThresholds: [50, 75, 90],
     dashPeriod: 'mes',
     histMonth: new Date().getMonth(),
     histYear: new Date().getFullYear(),
@@ -2505,6 +2558,28 @@ function zepoApp() {
     get monthTotal() { return this.monthExpenses.reduce((s, e) => s + e.amount, 0); },
     get monthIncome() { return this.expenses.filter(e => e.is_income).reduce((s, e) => s + e.amount, 0); },
     get monthBalance() { return this.monthIncome - this.monthTotal; },
+
+    get periodStart() {
+      const now = new Date();
+      if (this.dashPeriod === 'semana') {
+        return new Date(now - 7 * 86400000).toISOString().slice(0, 10);
+      } else if (this.dashPeriod === 'año') {
+        return new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10);
+      }
+      return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+    },
+    get periodExpenses() {
+      return this.expenses.filter(e => !e.is_income && e.date >= this.periodStart);
+    },
+    get periodTotal() { return this.periodExpenses.reduce((s, e) => s + e.amount, 0); },
+    get periodIncome() {
+      return this.expenses.filter(e => e.is_income && e.date >= this.periodStart).reduce((s, e) => s + e.amount, 0);
+    },
+    get periodLabel() {
+      if (this.dashPeriod === 'semana') return 'Esta semana';
+      if (this.dashPeriod === 'año') return 'Este año';
+      return this.currentMonthLabel;
+    },
 
     get currentMonthName() { return MONTH_NAMES[new Date().getMonth()]; },
 
@@ -2869,6 +2944,13 @@ function zepoApp() {
       this.pendingSplits = data || [];
     },
 
+    get knownPersonas() {
+      const names = new Set();
+      this.expenses.forEach(e => { if (e.split_persona) names.add(e.split_persona); });
+      this.pendingSplits.forEach(e => { if (e.split_persona) names.add(e.split_persona); });
+      return [...names].sort();
+    },
+
     get splitsByPersona() {
       const groups = {};
       this.pendingSplits.forEach(e => {
@@ -2877,6 +2959,16 @@ function zepoApp() {
         groups[name].push(e);
       });
       return groups;
+    },
+
+    get filteredSplitsByPersona() {
+      const q = this.cobrosSearch.toLowerCase().trim();
+      if (!q) return this.splitsByPersona;
+      const filtered = {};
+      Object.entries(this.splitsByPersona).forEach(([name, group]) => {
+        if (name.toLowerCase().includes(q)) filtered[name] = group;
+      });
+      return filtered;
     },
 
     async markSplitPaid(id) {
