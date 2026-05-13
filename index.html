@@ -19,6 +19,16 @@
     /* ═══ RESET + BASE ═══ */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; overflow: hidden; }
+    /* Hide number input spinners (Chrome, Safari, Edge, Firefox) */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+    /* Modern date input styling */
+    input[type=date]::-webkit-calendar-picker-indicator {
+      filter: invert(1) opacity(0.6); cursor: pointer;
+    }
+    input[type=date] { color-scheme: dark; }
+    input[type=time] { color-scheme: dark; }
     body {
       font-family: 'Inter', -apple-system, system-ui, sans-serif;
       background: var(--bg);
@@ -473,15 +483,17 @@
       font-variant-numeric: tabular-nums;
     }
     .hero-progress {
-      position: relative; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;
+      position: relative; height: 6px; background: var(--border); border-radius: 3px;
     }
     .hero-progress-fill {
-      position: absolute; inset: 0; border-radius: 3px;
-      background: var(--gradient);
+      position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px;
+      background: var(--gradient); max-width: 100%;
     }
     .hero-progress-marker {
-      position: absolute; top: -2px; width: 1.5px; height: 10px;
-      background: var(--text); opacity: 0.9;
+      position: absolute; top: -4px; width: 2px; height: 14px;
+      background: var(--text); border-radius: 1px; z-index: 2;
+      box-shadow: 0 0 0 2px var(--bg);
+      transform: translateX(-1px);
     }
     .hero-progress-labels {
       display: flex; justify-content: space-between; margin-top: 8px;
@@ -717,6 +729,199 @@
     .sheet-tab-v2.active { background: var(--surface2); border-color: var(--cyan); color: var(--text); }
     .sheet-tab-v2.active svg { stroke: var(--cyan); }
     .sheet-tab-v2 svg { stroke: var(--muted); }
+    .sheet-tab-v2 .lock {
+      width: 10px; height: 10px; opacity: 0.8;
+    }
+
+    /* ─── CD: Texto mode — describe + analyze + detected card ─── */
+    .cd-describe-card {
+      padding: 16px; border-radius: 14px; background: var(--surface);
+      border: 1px solid var(--cyan); box-shadow: 0 0 0 4px rgba(0,240,255,0.08);
+      min-height: 110px; display: flex; flex-direction: column;
+    }
+    .cd-describe-card textarea {
+      width: 100%; border: none; background: transparent; outline: none; resize: none;
+      color: var(--text); font-size: 16px; font-weight: 500; line-height: 1.5;
+      font-family: inherit; flex: 1;
+    }
+    .cd-describe-card textarea::placeholder { color: var(--dim); font-weight: 400; }
+    .cd-describe-footer {
+      margin-top: 14px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .cd-describe-mic {
+      width: 30px; height: 30px; border-radius: 15px;
+      background: var(--surface2); display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border: none;
+    }
+    .cd-char-count {
+      font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums;
+    }
+    .cd-analyze-btn {
+      width: 100%; height: 46px; border-radius: 12px;
+      background: rgba(0,240,255,0.08); border: 1px solid var(--cyan);
+      color: var(--cyan); font-weight: 700; font-size: 14px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      cursor: pointer; font-family: inherit;
+      transition: background 0.15s;
+    }
+    .cd-analyze-btn:hover:not(:disabled) { background: rgba(0,240,255,0.14); }
+    .cd-analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .cd-section-label {
+      font-size: 11px; color: var(--muted); letter-spacing: 1px; font-weight: 600; margin-bottom: 8px;
+    }
+    .cd-detected-card {
+      padding: 1px; border-radius: 16px; background: var(--gradient);
+    }
+    .cd-detected-card-inner {
+      padding: 16px; border-radius: 15px; background: var(--bg);
+    }
+    .cd-meta-chip {
+      padding: 5px 9px; border-radius: 8px; font-size: 11px;
+      background: rgba(0,240,255,0.08); color: var(--cyan);
+      display: inline-flex; align-items: center; gap: 4px; font-weight: 600;
+    }
+
+    /* ─── CD: Voz mode — circular mic with concentric waveform ─── */
+    .cd-voice-wrap {
+      padding: 24px 0; display: flex; flex-direction: column; align-items: center;
+      background: radial-gradient(circle at 50% 32%, rgba(0,240,255,0.12) 0%, transparent 60%);
+      border-radius: 16px;
+    }
+    .cd-voice-circles {
+      position: relative; width: 200px; height: 200px; margin-top: 14px;
+    }
+    .cd-voice-circles .ring {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%; pointer-events: none;
+    }
+    .cd-voice-circles .r1 { width: 200px; height: 200px; background: radial-gradient(circle, rgba(0,240,255,0.15) 0%, transparent 70%); border: 1px solid rgba(0,240,255,0.4); }
+    .cd-voice-circles .r2 { width: 156px; height: 156px; background: radial-gradient(circle, rgba(0,240,255,0.20) 0%, transparent 70%); border: 1px solid rgba(0,240,255,0.32); }
+    .cd-voice-circles .r3 { width: 112px; height: 112px; background: radial-gradient(circle, rgba(0,240,255,0.25) 0%, transparent 70%); border: 1px solid rgba(0,240,255,0.24); }
+    .cd-voice-circles .r4 { width:  68px; height:  68px; background: radial-gradient(circle, rgba(0,240,255,0.30) 0%, transparent 70%); border: 1px solid rgba(0,240,255,0.16); }
+    .cd-voice-mic {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80px; height: 80px; border-radius: 40px;
+      background: var(--gradient);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 32px rgba(0,240,255,0.5);
+      border: none; cursor: pointer;
+    }
+    .cd-voice-recording .cd-voice-mic {
+      background: rgba(255,107,107,0.2); box-shadow: 0 0 32px rgba(255,107,107,0.4);
+      border: 2px solid var(--danger);
+    }
+    .cd-voice-transcript {
+      margin-top: 22px; padding: 12px 16px; border-radius: 14px;
+      background: var(--surface); border: 1px solid var(--border);
+      font-size: 14px; color: var(--text); line-height: 1.4;
+      width: 100%; text-align: center; font-family: 'JetBrains Mono', monospace;
+    }
+    .cd-voice-wave {
+      margin-top: 22px; display: flex; align-items: center; gap: 3px; height: 40px;
+    }
+    .cd-voice-wave-bar {
+      width: 3px; border-radius: 1.5px; background: var(--cyan);
+    }
+
+    /* ─── CD: Foto mode — receipt placeholder with scan line + corner brackets ─── */
+    .cd-receipt-placeholder {
+      height: 220px; border-radius: 16px;
+      background: repeating-linear-gradient(135deg, #1a1a25 0px, #1a1a25 8px, #15151f 8px, #15151f 16px);
+      border: 1px solid var(--border);
+      position: relative; overflow: hidden;
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: 20px;
+    }
+    .cd-receipt-bracket {
+      position: absolute; width: 18px; height: 18px;
+    }
+    .cd-receipt-bracket.tl { top: 12px; left: 12px;  border-top: 2px solid var(--cyan); border-left: 2px solid var(--cyan); }
+    .cd-receipt-bracket.tr { top: 12px; right: 12px; border-top: 2px solid var(--cyan); border-right: 2px solid var(--cyan); }
+    .cd-receipt-bracket.bl { bottom: 12px; left: 12px;  border-bottom: 2px solid var(--cyan); border-left: 2px solid var(--cyan); }
+    .cd-receipt-bracket.br { bottom: 12px; right: 12px; border-bottom: 2px solid var(--cyan); border-right: 2px solid var(--cyan); }
+    .cd-scan-line {
+      position: absolute; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      box-shadow: 0 0 12px var(--cyan);
+      animation: cd-scan 2.4s ease-in-out infinite;
+    }
+    @keyframes cd-scan {
+      0%, 100% { top: 18%; }
+      50% { top: 82%; }
+    }
+    .cd-status-chip {
+      padding: 4px 10px; border-radius: 16px;
+      background: rgba(0,240,255,0.15); color: var(--cyan);
+      font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .cd-status-chip-dot {
+      width: 5px; height: 5px; border-radius: 3px; background: var(--cyan);
+      animation: cd-pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes cd-pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    .cd-extracted-row {
+      padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+    .cd-extracted-row:last-child { border-bottom: none; }
+
+    /* ─── CD: Archivo mode — dropzone + selected file + detected list ─── */
+    .cd-dropzone {
+      padding: 24px 18px; border-radius: 16px;
+      background: rgba(0,240,255,0.04);
+      border: 1.5px dashed var(--cyan);
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      cursor: pointer;
+    }
+    .cd-dropzone-icon {
+      width: 56px; height: 56px; border-radius: 14px;
+      background: linear-gradient(135deg, rgba(0,240,255,0.12), rgba(112,0,255,0.10));
+      border: 1px solid var(--cyan);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 24px rgba(0,240,255,0.15);
+    }
+    .cd-format-badge {
+      padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700;
+      background: var(--bg); color: var(--muted); letter-spacing: 0.6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .cd-selected-file {
+      padding: 14px; background: var(--surface); border-radius: 14px;
+      border: 1px solid var(--cyan); box-shadow: 0 0 0 4px rgba(0,240,255,0.06);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .cd-file-icon {
+      width: 40px; height: 48px; border-radius: 6px;
+      background: linear-gradient(160deg, rgba(255,107,107,0.18), rgba(255,107,107,0.06));
+      border: 1px solid rgba(255,107,107,0.4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 800; color: var(--danger); letter-spacing: 0.6px;
+    }
+    .cd-detected-list-item {
+      display: flex; align-items: center; gap: 12px; padding: 10px 0;
+    }
+
+    .cd-split-name-input {
+      background: transparent; border: none; outline: none;
+      color: var(--text); font-size: 13px; font-weight: 500;
+      width: 100%; min-width: 0;
+      font-family: inherit;
+      -webkit-appearance: none; appearance: none;
+    }
+    .cd-split-name-input::placeholder { color: var(--dim); }
+    .cd-split-pct-input {
+      width: 64px; height: 40px; border-radius: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      text-align: center; font-size: 12px; font-weight: 700;
+      color: var(--text); font-variant-numeric: tabular-nums;
+      outline: none; font-family: inherit;
+    }
     .save-btn {
       width: 100%; padding: 16px; height: 52px;
       border-radius: var(--radius-pill); background: var(--gradient);
@@ -724,6 +929,204 @@
     }
     .save-btn:disabled { opacity: 0.4; }
     .save-btn:active { opacity: 0.8; }
+
+    /* ═══ ONBOARDING ═══ */
+    .onb-splash { background: var(--bg); }
+    .onb-halo {
+      position: absolute; top: 50%; left: 50%;
+      width: 640px; height: 640px; transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(0,240,255,0.22) 0%, rgba(112,0,255,0.16) 35%, transparent 65%);
+      filter: blur(40px); pointer-events: none;
+    }
+    .onb-splash-center {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex; flex-direction: column; align-items: center; gap: 18px;
+      text-align: center;
+    }
+    .onb-logo-big {
+      width: 84px; height: 84px; border-radius: 22px;
+      background: var(--surface); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 44px; font-weight: 800; line-height: 1;
+      box-shadow: 0 0 32px rgba(0,240,255,0.15);
+    }
+    .onb-wordmark {
+      font-size: 56px; font-weight: 800; letter-spacing: -2px; line-height: 1;
+    }
+    .onb-tagline {
+      color: var(--muted); font-size: 14px; letter-spacing: 0.3px; font-weight: 500;
+    }
+    .onb-dots-bottom {
+      position: absolute; bottom: 80px; left: 0; right: 0;
+      display: flex; gap: 6px; justify-content: center;
+    }
+    .onb-dot {
+      width: 6px; height: 6px; border-radius: 3px; background: var(--border2);
+    }
+    .onb-dot.active { background: var(--cyan); }
+    .onb-progress { display: flex; gap: 6px; }
+    .onb-progress-seg {
+      flex: 1; height: 4px; border-radius: 2px; background: var(--border);
+      transition: background 200ms ease;
+    }
+    .onb-progress-seg.active { background: var(--gradient); }
+    .onb-field-label {
+      font-size: 12px; color: var(--muted); margin-bottom: 8px;
+      font-weight: 500; letter-spacing: 0.3px;
+    }
+    .onb-field-wrapper {
+      height: 60px; border-radius: 14px; background: var(--surface);
+      border: 1px solid var(--cyan); padding: 0 18px;
+      display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 0 0 4px rgba(0,240,255,0.08);
+    }
+    .onb-field-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--text); font-family: inherit;
+      font-size: 20px; font-weight: 600; letter-spacing: -0.4px;
+    }
+    .onb-cta {
+      width: 100%; height: 52px; border-radius: 999px;
+      background: var(--gradient); color: #0A0A0F;
+      font-size: 15px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(0,240,255,0.2);
+      transition: transform 120ms ease-out;
+    }
+    .onb-cta:active { transform: scale(0.98); }
+    .onb-cta:disabled { opacity: 0.4; box-shadow: none; }
+    .onb-currency-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    .onb-currency-chip {
+      position: relative; padding: 14px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; text-align: left; cursor: pointer;
+      transition: all 200ms ease;
+    }
+    .onb-currency-chip.selected {
+      background: linear-gradient(135deg, rgba(0,240,255,0.08), rgba(112,0,255,0.08));
+      border-color: var(--cyan);
+    }
+    .onb-currency-flag { font-size: 28px; margin-bottom: 4px; line-height: 1; }
+    .onb-currency-code {
+      font-size: 15px; font-weight: 700; letter-spacing: -0.3px; color: var(--text);
+    }
+    .onb-currency-country { font-size: 11px; color: var(--muted); }
+    .onb-currency-check {
+      position: absolute; top: 10px; right: 10px;
+      width: 18px; height: 18px; border-radius: 9px; background: var(--cyan);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .onb-info-banner {
+      margin-top: 20px; padding: 12px 14px; border-radius: 10px;
+      background: rgba(0,240,255,0.06); border: 1px solid rgba(0,240,255,0.15);
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    /* Plan picker cards (onboarding) */
+    .onb-plan-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 16px; cursor: pointer;
+      transition: all 200ms ease; width: 100%;
+    }
+    .onb-plan-card.selected {
+      background: linear-gradient(135deg, rgba(0,240,255,0.06), rgba(112,0,255,0.06));
+      border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(0,240,255,0.10);
+    }
+    .onb-plan-card.highlight { border-color: rgba(0,240,255,0.4); }
+    .onb-plan-card.gradient {
+      background: linear-gradient(135deg, rgba(0,240,255,0.04), rgba(112,0,255,0.06));
+      border-color: rgba(112,0,255,0.4);
+    }
+    .onb-plan-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .onb-plan-head { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+    .onb-plan-name { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); }
+    .onb-plan-price { font-size: 22px; font-weight: 800; letter-spacing: -1px; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+    .onb-plan-period { font-size: 12px; color: var(--muted); }
+    .onb-plan-strike { font-size: 13px; color: var(--dim); text-decoration: line-through; font-family: 'JetBrains Mono', monospace; margin-left: 4px; }
+    .onb-plan-tag {
+      font-size: 10px; font-weight: 700; padding: 3px 7px;
+      border-radius: 5px; letter-spacing: 0.4px;
+    }
+    .onb-plan-tag.warning { background: rgba(255,184,0,0.12); color: var(--warning); }
+    .onb-plan-tag.cyan    { background: rgba(0,240,255,0.12); color: var(--cyan); }
+    .onb-plan-tag.purple  { background: rgba(112,0,255,0.18); color: #B794F6; }
+    .onb-plan-bullets { display: flex; flex-direction: column; gap: 4px; }
+    .onb-bullet { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+    .onb-check { color: var(--cyan); font-weight: 700; font-size: 12px; }
+    /* First expense / Budget chips */
+    .onb-cat-chip {
+      padding: 8px 12px; border-radius: 10px; font-size: 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--muted); font-weight: 600;
+      display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+      transition: all 150ms ease;
+    }
+    .onb-cat-chip.selected {
+      background: rgba(0,240,255,0.10); border-color: var(--cyan); color: var(--text);
+    }
+    .onb-first-input {
+      height: 48px; border-radius: 12px; background: var(--surface);
+      border: 1px solid var(--border); padding: 0 14px;
+      display: flex; align-items: center;
+    }
+    .onb-first-input input { width: 100%; }
+    /* Method pick cards */
+    .onb-method-card {
+      padding: 18px 16px; border-radius: 16px; background: var(--surface);
+      border: 1px solid var(--border); display: flex; align-items: center;
+      gap: 14px; position: relative; cursor: pointer; transition: all 200ms ease;
+      width: 100%;
+    }
+    .onb-method-card.selected {
+      background: linear-gradient(135deg, rgba(0,240,255,0.08), rgba(112,0,255,0.06));
+      border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(0,240,255,0.06);
+    }
+    .onb-method-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: var(--bg); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all 200ms ease;
+    }
+    .onb-method-icon.active {
+      background: var(--gradient); border-color: transparent;
+      box-shadow: 0 0 16px rgba(0,240,255,0.25);
+    }
+    .onb-method-check {
+      width: 22px; height: 22px; border-radius: 11px; background: var(--cyan);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    /* Cobrar chip */
+    .cobrar-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 12px; border-radius: 999px;
+      background: rgba(0,229,160,0.08); border: 1px solid rgba(0,229,160,0.35);
+      color: var(--success); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.3px; cursor: pointer;
+      transition: all 200ms ease;
+    }
+    .cobrar-chip:hover { background: rgba(0,229,160,0.18); }
+    .cobrar-chip:active { transform: scale(0.96); }
+    /* Home sunset banner */
+    .home-sunset-banner {
+      margin: 0 20px 14px; padding: 10px 14px; border-radius: 12px;
+      background: var(--warning); color: #0A0A0F;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: transform 120ms ease-out;
+    }
+    .home-sunset-banner:active { transform: scale(0.98); }
+    /* Blocked old expenses tease (Free) */
+    .home-blocked-tease {
+      margin: 14px 20px 0; padding: 14px; border-radius: 14px;
+      background: var(--surface2); border: 1px dashed var(--cyan);
+      display: flex; align-items: center; gap: 10px; cursor: pointer;
+    }
+    .home-blocked-tease:active { opacity: 0.7; }
 
     /* ═══ HISTORY SCREEN ═══ */
     .month-nav {
@@ -1074,6 +1477,362 @@
   <template x-if="user">
     <div style="display:flex;flex-direction:column;height:100%;">
 
+      <!-- ══ ONBOARDING · SPLASH ══ -->
+      <div class="main-content onb-splash" x-show="tab === 'onb-splash'" x-cloak style="position:relative;overflow:hidden;padding:0;">
+        <div class="onb-halo"></div>
+        <div class="onb-splash-center">
+          <div class="onb-logo-big"><span class="gradient-text">Z</span></div>
+          <div class="onb-wordmark"><span class="gradient-text">zepo</span></div>
+          <div class="onb-tagline">Tu dinero, claro.</div>
+        </div>
+        <div class="onb-dots-bottom">
+          <span class="onb-dot"></span>
+          <span class="onb-dot active"></span>
+          <span class="onb-dot"></span>
+        </div>
+      </div>
+
+      <!-- ══ ONBOARDING · WELCOME (1/3) ══ -->
+      <div class="main-content" x-show="tab === 'onb-welcome'" x-cloak style="padding:24px 24px 32px;display:flex;flex-direction:column;height:100%;">
+        <div class="onb-progress">
+          <span class="onb-progress-seg active"></span>
+          <span class="onb-progress-seg"></span>
+          <span class="onb-progress-seg"></span>
+        </div>
+        <div style="margin-top:32px;margin-bottom:40px;">
+          <div style="font-size:30px;font-weight:700;letter-spacing:-0.8px;line-height:1.15;margin-bottom:12px;">
+            Hola, <span class="gradient-text" x-text="onboardingName || 'amigo'"></span>.
+          </div>
+          <div style="font-size:16px;color:var(--muted);line-height:1.4;">
+            Vamos a configurar Zepo en 2 pasos.
+          </div>
+        </div>
+        <div style="margin-bottom:24px;">
+          <div class="onb-field-label">NOMBRE EN LA APP</div>
+          <div class="onb-field-wrapper">
+            <input type="text" x-model="onboardingName" class="onb-field-input" placeholder="Tu nombre" autocomplete="given-name">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="18" height="18"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </div>
+          <div style="font-size:12px;color:var(--dim);margin-top:8px;">
+            Puedes editarlo cuando quieras desde Perfil.
+          </div>
+        </div>
+        <div style="flex:1;"></div>
+        <button class="onb-cta" :disabled="!onboardingName" @click="tab = 'onb-currency'">
+          Continuar
+        </button>
+      </div>
+
+      <!-- ══ ONBOARDING · CURRENCY (2/3) ══ -->
+      <div class="main-content" x-show="tab === 'onb-currency'" x-cloak style="padding:24px 24px 32px;display:flex;flex-direction:column;height:100%;">
+        <div class="onb-progress">
+          <span class="onb-progress-seg active"></span>
+          <span class="onb-progress-seg active"></span>
+          <span class="onb-progress-seg"></span>
+        </div>
+        <div style="margin-top:32px;margin-bottom:28px;">
+          <div style="font-size:28px;font-weight:700;letter-spacing:-0.8px;line-height:1.15;margin-bottom:8px;">
+            Tu moneda principal
+          </div>
+          <div style="font-size:14px;color:var(--muted);line-height:1.4;">
+            Es la moneda en que registrarás la mayoría de gastos.
+          </div>
+        </div>
+        <div class="onb-currency-grid">
+          <template x-for="c in onboardingCurrencies" :key="c.code">
+            <button class="onb-currency-chip" :class="{ selected: onboardingCurrency === c.code }" @click="onboardingCurrency = c.code">
+              <div class="onb-currency-flag" x-text="c.flag"></div>
+              <div class="onb-currency-code" x-text="c.code"></div>
+              <div class="onb-currency-country" x-text="c.country"></div>
+              <div class="onb-currency-check" x-show="onboardingCurrency === c.code">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="3.5" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+            </button>
+          </template>
+        </div>
+        <div class="onb-info-banner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="14" height="14" style="flex-shrink:0;margin-top:2px;"><path d="M12 2l2.4 7.4H22l-6.2 4.5L18.2 22 12 17.5 5.8 22l2.4-8.1L2 9.4h7.6L12 2z"/></svg>
+          <div style="font-size:12px;color:var(--muted);line-height:1.45;">
+            Con <span style="color:var(--cyan);font-weight:600;">Pro</span> o <span style="color:var(--cyan);font-weight:600;">Elite</span> puedes registrar gastos en cualquier moneda.
+          </div>
+        </div>
+        <div style="flex:1;"></div>
+        <button class="onb-cta" @click="tab = 'onb-plan'">
+          Continuar
+        </button>
+      </div>
+
+      <!-- ══ ONBOARDING · PLAN PICKER (3/3) ══ -->
+      <div class="main-content" x-show="tab === 'onb-plan'" x-cloak style="padding:24px 20px 32px;display:flex;flex-direction:column;height:100%;">
+        <div class="onb-progress">
+          <span class="onb-progress-seg active"></span>
+          <span class="onb-progress-seg active"></span>
+          <span class="onb-progress-seg active"></span>
+        </div>
+        <div style="margin-top:24px;margin-bottom:20px;">
+          <div style="font-size:26px;font-weight:700;letter-spacing:-0.7px;line-height:1.15;margin-bottom:6px;">
+            Elige tu plan
+          </div>
+          <div style="font-size:13px;color:var(--muted);">
+            Empieza gratis. Mejora cuando quieras.
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <!-- FREE -->
+          <button class="onb-plan-card" :class="{ selected: onboardingPlan === 'free' }" @click="onboardingPlan = 'free'" style="text-align:left;">
+            <div class="onb-plan-row">
+              <div class="onb-plan-head">
+                <span class="onb-plan-name">Free</span>
+                <span class="onb-plan-price">$0</span>
+                <span class="onb-plan-period">/mes</span>
+              </div>
+              <span class="onb-plan-tag warning">HASTA 31 DIC</span>
+            </div>
+            <div class="onb-plan-bullets">
+              <div class="onb-bullet"><span class="onb-check">✓</span> Entrada de texto</div>
+              <div class="onb-bullet"><span class="onb-check">✓</span> 10 gastos / mes</div>
+              <div class="onb-bullet"><span class="onb-check">✓</span> Solo USD</div>
+            </div>
+          </button>
+
+          <!-- PRO -->
+          <button class="onb-plan-card highlight" :class="{ selected: onboardingPlan === 'pro' }" @click="onboardingPlan = 'pro'" style="text-align:left;">
+            <div class="onb-plan-row">
+              <div class="onb-plan-head">
+                <span class="onb-plan-name">Pro</span>
+                <span class="onb-plan-price">$5</span>
+                <span class="onb-plan-period">/mes</span>
+                <span class="onb-plan-strike">$10</span>
+              </div>
+              <span class="onb-plan-tag cyan">MÁS POPULAR</span>
+            </div>
+            <div class="onb-plan-bullets">
+              <div class="onb-bullet"><span class="onb-check">✓</span> IA · texto + voz</div>
+              <div class="onb-bullet"><span class="onb-check">✓</span> Historial ilimitado</div>
+              <div class="onb-bullet"><span class="onb-check">✓</span> Cualquier moneda</div>
+              <div class="onb-bullet"><span class="onb-check">✓</span> Presupuesto mensual</div>
+            </div>
+          </button>
+
+          <!-- ELITE -->
+          <button class="onb-plan-card gradient" :class="{ selected: onboardingPlan === 'elite' }" @click="onboardingPlan = 'elite'" style="text-align:left;">
+            <div class="onb-plan-row">
+              <div class="onb-plan-head">
+                <span class="onb-plan-name">Elite</span>
+                <span class="onb-plan-price">$10</span>
+                <span class="onb-plan-period">/mes</span>
+                <span class="onb-plan-strike">$20</span>
+              </div>
+              <span class="onb-plan-tag purple">COMPLETO</span>
+            </div>
+            <div class="onb-plan-bullets">
+              <div class="onb-bullet"><span class="onb-check">✓</span> Foto recibo + OCR</div>
+              <div class="onb-bullet"><span class="onb-check">✓</span> Dashboard + analytics</div>
+              <div class="onb-bullet"><span class="onb-check">✓</span> Importar PDF / Excel</div>
+            </div>
+          </button>
+        </div>
+
+        <div style="margin-top:14px;padding:10px 14px;border-radius:10px;background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.2);font-size:11px;color:var(--success);line-height:1.45;text-align:center;">
+          🎁 50% OFF para siempre si contratas antes del 31 dic 2026
+        </div>
+
+        <div style="flex:1;"></div>
+        <div style="margin-top:20px;">
+          <button class="onb-cta" @click="onboardingPlan === 'free' ? (tab = 'onb-first') : (checkoutPlan = onboardingPlan, tab = 'checkout')">
+            <span x-text="onboardingPlan === 'free' ? 'Empezar gratis' : 'Continuar con ' + (onboardingPlan === 'pro' ? 'Pro' : 'Elite')"></span>
+          </button>
+          <div style="text-align:center;margin-top:14px;">
+            <button @click="tab = 'plans'" style="font-size:13px;color:var(--muted);text-decoration:underline;background:transparent;">
+              Comparar todos los planes
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ ONBOARDING · FIRST EXPENSE TUTORIAL ══ -->
+      <div class="main-content" x-show="tab === 'onb-first'" x-cloak style="padding:24px 24px 32px;display:flex;flex-direction:column;height:100%;">
+        <div style="margin-bottom:4px;font-size:13px;color:var(--muted);font-weight:500;">
+          Último paso
+        </div>
+        <div style="font-size:24px;font-weight:700;letter-spacing:-0.6px;line-height:1.2;margin-bottom:8px;">
+          Tu primer gasto.
+        </div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:24px;">
+          Te enseñamos en 10 segundos. Edita los datos si quieres.
+        </div>
+
+        <!-- Monto hero -->
+        <div style="text-align:center;margin-bottom:16px;">
+          <div style="font-family:'JetBrains Mono', monospace;font-size:64px;font-weight:800;letter-spacing:-3px;line-height:1;font-feature-settings:'tnum';">
+            <span style="font-size:36px;color:var(--muted);font-weight:600;vertical-align:8px;margin-right:4px;">$</span>
+            <span class="gradient-text" x-text="onboardingFirstAmount || '12.50'"></span>
+          </div>
+          <div style="margin-top:8px;font-size:13px;color:var(--muted);">
+            <span x-text="onboardingCurrency"></span> · Hoy
+          </div>
+        </div>
+
+        <!-- Descripción -->
+        <div class="onb-first-input" style="margin-bottom:16px;">
+          <input type="text" x-model="onboardingFirstDesc" placeholder="Almuerzo en La Tablita" class="onb-field-input" style="font-size:14px;font-weight:500;">
+        </div>
+
+        <!-- Category chips -->
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;">
+          <template x-for="c in [{k:'food',e:'🍽',l:'Comida'},{k:'transport',e:'🚌',l:'Transporte'},{k:'health',e:'💊',l:'Salud'},{k:'fun',e:'🎮',l:'Ocio'},{k:'shop',e:'🛍',l:'Compras'},{k:'other',e:'✨',l:'Otro'}]" :key="c.k">
+            <button @click="onboardingFirstCat = c.k" class="onb-cat-chip" :class="{ selected: onboardingFirstCat === c.k }">
+              <span x-text="c.e"></span>
+              <span x-text="c.l"></span>
+            </button>
+          </template>
+        </div>
+
+        <!-- Mini numpad preview -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:20px;">
+          <template x-for="k in ['1','2','3','4','5','6','7','8','9','.','0','⌫']" :key="k">
+            <div style="height:38px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:var(--text);" x-text="k"></div>
+          </template>
+        </div>
+
+        <div style="flex:1;"></div>
+        <div style="display:flex;gap:10px;">
+          <button @click="tab = 'home'" style="height:50px;padding:0 24px;border-radius:25px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:14px;">
+            Saltar
+          </button>
+          <button class="onb-cta" style="flex:1;height:50px;" @click="finishOnboardingFirst()">
+            Guardar gasto
+          </button>
+        </div>
+      </div>
+
+      <!-- ══ ONBOARDING · BUDGET SETUP (extras) ══ -->
+      <div class="main-content" x-show="tab === 'onb-budget'" x-cloak style="padding:24px 24px 32px;display:flex;flex-direction:column;height:100%;">
+        <button @click="tab = 'home'" style="display:flex;align-items:center;gap:6px;background:transparent;color:var(--muted);font-size:13px;font-weight:500;margin-bottom:18px;width:fit-content;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M15 18l-6-6 6-6"/></svg>
+          Después
+        </button>
+
+        <div style="margin-bottom:24px;">
+          <div style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--cyan);background:rgba(0,240,255,0.10);border:1px solid rgba(0,240,255,0.2);padding:4px 10px;border-radius:999px;margin-bottom:14px;font-weight:600;letter-spacing:0.3px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M12 2v20M2 12h20"/></svg>
+            OPCIONAL
+          </div>
+          <div style="font-size:26px;font-weight:700;letter-spacing:-0.7px;line-height:1.2;margin-bottom:8px;">
+            ¿Cuál es tu presupuesto mensual?
+          </div>
+          <div style="font-size:14px;color:var(--muted);line-height:1.4;">
+            Te avisamos cuando estés cerca del límite. Puedes editarlo después.
+          </div>
+        </div>
+
+        <!-- Amount big input -->
+        <div style="text-align:center;margin-bottom:8px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:56px;font-weight:800;letter-spacing:-2.5px;line-height:1;font-feature-settings:'tnum';">
+            <span style="font-size:32px;color:var(--muted);font-weight:600;vertical-align:6px;margin-right:4px;">$</span>
+            <span class="gradient-text" x-text="onboardingBudget || '0'"></span>
+          </div>
+          <div style="margin-top:8px;font-size:12px;color:var(--muted);">
+            <span x-text="onboardingCurrency"></span> · al mes
+          </div>
+        </div>
+
+        <!-- Quick chips -->
+        <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:18px 0;">
+          <template x-for="amt in [200, 500, 800, 1200, 2000]" :key="amt">
+            <button @click="onboardingBudget = amt" class="onb-cat-chip" :class="{ selected: onboardingBudget == amt }" style="font-family:'JetBrains Mono',monospace;">
+              <span x-text="'$' + amt"></span>
+            </button>
+          </template>
+        </div>
+
+        <!-- Slider -->
+        <div style="padding:8px 4px;">
+          <input type="range" min="0" max="5000" step="50" x-model="onboardingBudget" style="width:100%;accent-color:var(--cyan);">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-top:4px;font-family:'JetBrains Mono',monospace;">
+            <span>$0</span>
+            <span>$5,000</span>
+          </div>
+        </div>
+
+        <div style="flex:1;"></div>
+
+        <div style="display:flex;gap:10px;">
+          <button @click="tab = 'home'" style="height:50px;padding:0 24px;border-radius:25px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:14px;">
+            Saltar
+          </button>
+          <button class="onb-cta" style="flex:1;height:50px;" @click="saveOnboardingBudget()" :disabled="!onboardingBudget || onboardingBudget == 0">
+            Guardar
+          </button>
+        </div>
+      </div>
+
+      <!-- ══ ONBOARDING · METHOD PICK ══ -->
+      <div class="main-content" x-show="tab === 'onb-method'" x-cloak style="padding:24px 24px 32px;display:flex;flex-direction:column;height:100%;">
+        <button @click="finishOnboarding()" style="display:flex;align-items:center;gap:6px;background:transparent;color:var(--muted);font-size:13px;font-weight:500;margin-bottom:14px;width:fit-content;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M15 18l-6-6 6-6"/></svg>
+          Después
+        </button>
+
+        <div style="margin-bottom:24px;">
+          <div style="font-size:26px;font-weight:700;letter-spacing:-0.7px;line-height:1.15;margin-bottom:6px;">
+            ¿Cómo prefieres <span class="gradient-text">registrar?</span>
+          </div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.4;">
+            Elige tu método favorito. Puedes usar todos cuando quieras.
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;flex:1;">
+          <!-- TEXT -->
+          <button class="onb-method-card" :class="{ selected: onboardingMethod === 'text' }" @click="onboardingMethod = 'text'" style="text-align:left;">
+            <div class="onb-method-icon" :class="{ active: onboardingMethod === 'text' }">
+              <svg viewBox="0 0 24 24" fill="none" :stroke="onboardingMethod === 'text' ? '#0A0A0F' : 'var(--muted)'" stroke-width="2.2" width="22" height="22"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:17px;font-weight:700;letter-spacing:-0.3px;">Texto</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px;">Escribe en lenguaje natural</div>
+            </div>
+            <div class="onb-method-check" x-show="onboardingMethod === 'text'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="3.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </button>
+
+          <!-- VOICE -->
+          <button class="onb-method-card" :class="{ selected: onboardingMethod === 'voice' }" @click="onboardingMethod = 'voice'" style="text-align:left;">
+            <div class="onb-method-icon" :class="{ active: onboardingMethod === 'voice' }">
+              <svg viewBox="0 0 24 24" fill="none" :stroke="onboardingMethod === 'voice' ? '#0A0A0F' : 'var(--muted)'" stroke-width="2.2" width="22" height="22"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:17px;font-weight:700;letter-spacing:-0.3px;">Voz</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px;">Habla y nosotros transcribimos</div>
+            </div>
+            <div class="onb-method-check" x-show="onboardingMethod === 'voice'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="3.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </button>
+
+          <!-- PHOTO -->
+          <button class="onb-method-card" :class="{ selected: onboardingMethod === 'photo' }" @click="onboardingMethod = 'photo'" style="text-align:left;">
+            <div class="onb-method-icon" :class="{ active: onboardingMethod === 'photo' }">
+              <svg viewBox="0 0 24 24" fill="none" :stroke="onboardingMethod === 'photo' ? '#0A0A0F' : 'var(--muted)'" stroke-width="2.2" width="22" height="22"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:17px;font-weight:700;letter-spacing:-0.3px;">Foto</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px;">Captura el recibo, listo</div>
+            </div>
+            <div class="onb-method-check" x-show="onboardingMethod === 'photo'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="3.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </button>
+        </div>
+
+        <div style="margin-top:18px;">
+          <button class="onb-cta" @click="finishOnboarding()">Empezar</button>
+        </div>
+      </div>
+
       <!-- ══ HOME ══ -->
       <div class="main-content" x-show="tab === 'home'" x-cloak>
         <div class="page-header">
@@ -1082,6 +1841,12 @@
             <div class="ph-subtitle" x-text="todayLabel"></div>
           </div>
           <div class="ph-actions">
+            <template x-if="userPlan === 'elite'">
+              <span class="plan-badge elite" style="margin-right:6px;">ELITE</span>
+            </template>
+            <template x-if="userPlan === 'pro'">
+              <span class="plan-badge pro" style="margin-right:6px;">PRO</span>
+            </template>
             <button class="ph-icon-btn" @click="tab = 'settings'">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
             </button>
@@ -1089,6 +1854,18 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
               <div class="notif-dot"></div>
             </button>
+          </div>
+        </div>
+
+        <!-- Sunset banner para Free -->
+        <div x-show="_rawUserPlan === 'free'" @click="tab = 'plans'" class="home-sunset-banner">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2.4" width="14" height="14"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>Plan Free vence el 31 dic · <span x-text="daysUntilSunset"></span> días</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:2px;font-weight:700;">
+            Mejorar
+            <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2.6" width="12" height="12"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </div>
         </div>
 
@@ -1122,7 +1899,7 @@
           <div class="stat-card">
             <div class="stat-card-label">ESTA SEMANA</div>
             <div class="stat-card-value mono" x-text="'$' + fmtMoney(weekTotal)"></div>
-            <div class="stat-card-sub" x-text="weekExpenseCount + ' gastos'"></div>
+            <div class="stat-card-sub" x-text="weekExpenseCount + (weekExpenseCount === 1 ? ' gasto' : ' gastos')"></div>
           </div>
           <div class="stat-card">
             <div class="stat-card-label">CATEGORIA TOP</div>
@@ -1132,7 +1909,7 @@
           <div class="stat-card" :class="{ locked: userPlan === 'free' }">
             <div class="stat-card-label">PRESUPUESTO</div>
             <div class="stat-card-value" :style="userPlan === 'free' ? 'color:var(--muted)' : (budgetTotalPct > 80 ? 'color:var(--warning)' : '')" x-text="userPlan === 'free' ? '—' : budgetTotalPct + '%'"></div>
-            <div class="stat-card-sub" x-text="userPlan === 'free' ? 'Pro' : '$' + fmtMoney(monthTotal) + ' / ' + fmtMoney(budgetTotalAmount)"></div>
+            <div class="stat-card-sub" x-text="userPlan === 'free' ? 'Pro' : '$' + fmtMoney(monthTotal) + ' / $' + fmtMoney(budgetTotalAmount)"></div>
             <template x-if="userPlan === 'free'">
               <svg class="lock-icon" width="13" height="13" viewBox="0 0 14 14" fill="none">
                 <rect x="2.5" y="6" width="9" height="6.5" rx="1.5" stroke="var(--cyan)" stroke-width="1.4"/>
@@ -1241,11 +2018,18 @@
         </template>
 
         <div class="history-footer" x-show="historyExpenses.length > 0">
-          <span x-text="historyExpenses.length + ' transacciónes'"></span>
+          <span x-text="historyExpenses.length + (historyExpenses.length === 1 ? ' transacción' : ' transacciones')"></span>
           <span class="gradient-text mono" style="font-size:16px;font-weight:700;" x-text="'$' + fmtMoney(historyTotal)"></span>
         </div>
-        <div x-show="historyExpenses.length === 0" style="text-align:center;padding:48px 20px;color:var(--dim);font-size:14px;">
-          Sin transacciónes en este mes
+        <div x-show="historyExpenses.length === 0" class="empty-state" style="padding:40px 24px;">
+          <div class="empty-icon" style="width:84px;height:84px;border-radius:22px;background:radial-gradient(circle at 30% 30%, rgba(0,240,255,0.15), rgba(112,0,255,0.10) 60%, transparent 80%);border:1px solid rgba(0,240,255,0.25);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.6" width="40" height="40"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="empty-title">Sin transacciones</div>
+          <div class="empty-desc">No hay gastos ni ingresos en <span x-text="historyMonthLabel"></span>.</div>
+          <button @click="tab = 'home'" style="margin-top:18px;padding:10px 22px;border-radius:22px;background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-weight:700;font-size:13px;">
+            Volver al inicio
+          </button>
         </div>
       </div>
 
@@ -1273,11 +2057,7 @@
               </div>
             </div>
             <div class="empty-title">Sin cobros <span class="gradient-text">pendientes</span></div>
-            <div class="empty-desc" style="margin-bottom:22px;">Cuando dividas un gasto, los cobros aparecen aqui automaticamente.</div>
-            <button @click="openNew()" style="width:100%;max-width:280px;height:46px;border-radius:23px;background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Crear cobro manual
-            </button>
+            <div class="empty-desc">Cuando dividas un gasto, los cobros aparecen aqui automaticamente.</div>
           </div>
         </template>
 
@@ -1304,13 +2084,7 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="16" height="16" style="position:absolute;left:14px;top:14px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </div>
 
-            <!-- Nuevo cobro CTA -->
-            <button @click="openNew()" style="width:100%;height:48px;border-radius:14px;border:1px dashed var(--cyan);background:var(--surface);color:var(--cyan);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Nuevo cobro
-            </button>
-
-            <template x-for="(group, persona) in filteredSplitsByPersona" :key="persona">
+<template x-for="(group, persona) in filteredSplitsByPersona" :key="persona">
               <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                   <div style="display:flex;align-items:center;gap:10px;">
@@ -1327,7 +2101,10 @@
                     </div>
                     <div style="display:flex;align-items:center;gap:8px;">
                       <span class="mono" style="font-size:13px;color:var(--muted);" x-text="'$' + fmtMoney(exp.split_pending)"></span>
-                      <button @click="markSplitPaid(exp.id)" style="background:rgba(0,229,160,0.15);color:var(--success);padding:5px 10px;border-radius:8px;font-size:10px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;">COBRADO</button>
+                      <button @click="markSplitPaid(exp.id)" class="cobrar-chip">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
+                        Cobrado
+                      </button>
                     </div>
                   </div>
                 </template>
@@ -1542,7 +2319,7 @@
             </div>
             <div style="font-size:18px;font-weight:700;letter-spacing:-0.3px;margin-bottom:12px;" x-text="'Plan ' + userPlan.charAt(0).toUpperCase() + userPlan.slice(1)"></div>
             <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:8px;">
-              <div style="height:100%;border-radius:2px;background:var(--gradient);width:62%;"></div>
+              <div style="height:100%;border-radius:2px;background:var(--gradient);transition:width 0.3s;" :style="'width:' + (userPlan === 'free' ? Math.min(monthExpenses.length * 10, 100) : monthPct) + '%'"></div>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);">
               <span x-text="monthExpenses.length + ' gastos este mes'"></span>
@@ -1555,11 +2332,12 @@
         <!-- Moneda -->
         <div class="settings-group-title">Moneda</div>
         <div class="settings-group" style="padding:14px;">
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <template x-for="m in [{c:'USD',f:'🇪🇨',s:true},{c:'EUR',f:'🇪🇺'},{c:'COP',f:'🇨🇴'},{c:'PEN',f:'🇵🇪'},{c:'MXN',f:'🇲🇽'}]" :key="m.c">
-              <div style="padding:10px 14px;border-radius:22px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer;transition:all 0.15s;" :style="m.s ? 'background:rgba(0,240,255,0.10);border:1.5px solid var(--cyan);color:var(--text);box-shadow:0 0 12px rgba(0,240,255,0.1)' : 'background:var(--bg);border:1.5px solid var(--border);color:var(--muted)'">
-                <span style="font-size:15px;" x-text="m.f"></span><span x-text="m.c"></span>
-                <template x-if="m.s"><svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="3" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg></template>
+          <div style="font-size:11px;color:var(--muted);letter-spacing:0.6px;font-weight:600;margin-bottom:8px;">PRINCIPAL</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <template x-for="m in [{c:'USD',f:'🇪🇨'},{c:'EUR',f:'🇪🇺'},{c:'COP',f:'🇨🇴'},{c:'PEN',f:'🇵🇪'},{c:'MXN',f:'🇲🇽'}]" :key="m.c">
+              <div @click="userCurrency = m.c" :style="userCurrency === m.c ? 'background:rgba(0,240,255,0.10);border:1px solid var(--cyan);color:var(--text)' : 'background:var(--bg);border:1px solid var(--border);color:var(--muted)'" style="padding:8px 12px;border-radius:10px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer;transition:all 0.15s;">
+                <span style="font-size:14px;" x-text="m.f"></span><span x-text="m.c"></span>
+                <template x-if="userCurrency === m.c"><svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="3" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg></template>
               </div>
             </template>
           </div>
@@ -1567,23 +2345,33 @@
 
         <!-- Categorías -->
         <div class="settings-group-title">Categorías de gasto</div>
-        <div class="settings-group" style="padding:14px;">
-          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <div class="settings-group" style="padding:12px 14px;">
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
             <template x-for="c in categories" :key="c.key">
-              <div style="padding:8px 12px;border-radius:20px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;" :style="'background:' + c.color + '12;border:1.5px solid ' + c.color + '30;color:var(--text)'">
-                <span style="font-size:14px;" x-text="c.emoji"></span><span x-text="c.label"></span>
+              <div style="padding:7px 10px;border-radius:9px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer;" :style="'background:' + c.color + '12;border:1px solid ' + c.color + '30;color:var(--text)'">
+                <span style="font-size:13px;" x-text="c.emoji"></span><span x-text="c.label"></span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" width="10" height="10" style="margin-left:2px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </div>
             </template>
+            <div style="padding:7px 10px;border-radius:9px;font-size:12px;font-weight:600;background:transparent;border:1px dashed var(--cyan);color:var(--cyan);display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.5" width="10" height="10"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Agregar
+            </div>
           </div>
+          <div style="font-size:11px;color:var(--dim);">Toca una categoría para editarla.</div>
         </div>
+
         <div class="settings-group-title">Categorías de ingreso</div>
-        <div class="settings-group" style="padding:14px;">
-          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <div class="settings-group" style="padding:12px 14px;">
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
             <template x-for="c in incomeCategories" :key="c.key">
-              <div style="padding:8px 12px;border-radius:20px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;" :style="'background:' + c.color + '12;border:1.5px solid ' + c.color + '30;color:var(--text)'">
-                <span style="font-size:14px;" x-text="c.emoji"></span><span x-text="c.label"></span>
+              <div style="padding:7px 10px;border-radius:9px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer;" :style="'background:' + c.color + '12;border:1px solid ' + c.color + '30;color:var(--text)'">
+                <span style="font-size:13px;" x-text="c.emoji"></span><span x-text="c.label"></span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" width="10" height="10" style="margin-left:2px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </div>
             </template>
+            <div style="padding:7px 10px;border-radius:9px;font-size:12px;font-weight:600;background:transparent;border:1px dashed var(--cyan);color:var(--cyan);display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.5" width="10" height="10"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Agregar
+            </div>
           </div>
         </div>
 
@@ -1603,11 +2391,16 @@
                 </div>
                 <div style="flex:1;font-size:14px;font-weight:600;" x-text="b.label"></div>
                 <div style="font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;">
-                  <span style="color:var(--text);font-weight:700;" x-text="'$' + fmtMoney(b.spent)"></span> / $<span x-text="fmtMoney(b.limit)"></span>
+                  <span style="color:var(--text);font-weight:700;" x-text="'$' + fmtMoney(b.spent)"></span> / $<span x-text="fmtMoney(b.budget)"></span>
                 </div>
               </div>
               <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;">
                 <div :style="'height:100%;border-radius:3px;width:' + Math.min(b.pct, 100) + '%;background:' + (b.pct >= 90 ? 'var(--danger)' : b.pct >= 70 ? 'var(--warning)' : 'var(--success)')"></div>
+              </div>
+              <div style="display:flex;gap:4px;margin-top:8px;">
+                <template x-for="a in [50, 75, 90]" :key="a">
+                  <div :style="b.pct >= a ? 'background:rgba(255,184,0,0.15);color:var(--warning);border:1px solid rgba(255,184,0,0.3)' : 'background:var(--bg);color:var(--dim);border:1px solid var(--border)'" style="padding:3px 7px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:0.4px;" x-text="a + '%'"></div>
+                </template>
               </div>
             </div>
           </template>
@@ -1740,6 +2533,54 @@
         </div>
       </div>
 
+      <!-- ══ FORGOT PASSWORD ══ -->
+      <div class="main-content" x-show="tab === 'forgotpw'" x-cloak>
+        <div class="page-header">
+          <button @click="tab = user ? 'changepass' : 'auth'; forgotEmail = ''; forgotSent = false" style="width:36px;height:36px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--text)" stroke-width="2" width="18" height="18"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div class="ph-left" style="margin-left:4px;">
+            <div class="ph-title" style="font-size:20px;">Recuperar contraseña</div>
+          </div>
+        </div>
+
+        <div style="padding:0 24px;">
+          <!-- Form state -->
+          <div x-show="!forgotSent">
+            <div style="display:flex;justify-content:center;margin-bottom:20px;">
+              <div style="width:56px;height:56px;border-radius:16px;background:rgba(0,240,255,0.08);border:1px solid rgba(0,240,255,0.3);display:flex;align-items:center;justify-content:center;box-shadow:0 0 32px rgba(0,240,255,0.12);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.8" width="26" height="26"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              </div>
+            </div>
+            <p style="font-size:14px;color:var(--muted);line-height:1.5;margin-bottom:22px;text-align:center;">
+              Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña.
+            </p>
+
+            <div class="field-label">Email</div>
+            <input class="field-input" type="email" x-model="forgotEmail" placeholder="tu@email.com" autocomplete="email" style="font-family:'JetBrains Mono',monospace;">
+
+            <button class="save-btn" style="margin-top:20px;" @click="sendPasswordReset" :disabled="!forgotEmail || forgotLoading">
+              <span x-show="!forgotLoading">Enviar enlace</span>
+              <span x-show="forgotLoading">Enviando...</span>
+            </button>
+          </div>
+
+          <!-- Success state -->
+          <div x-show="forgotSent" style="text-align:center;padding:32px 0;">
+            <div style="width:72px;height:72px;border-radius:20px;background:rgba(0,229,160,0.12);border:1px solid rgba(0,229,160,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;box-shadow:0 0 32px rgba(0,229,160,0.15);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.2" width="32" height="32"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div style="font-size:22px;font-weight:800;margin-bottom:10px;">Revisa tu email</div>
+            <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:28px;">
+              Te enviamos un enlace a <span style="color:var(--text);font-weight:600;" x-text="forgotEmail"></span> para restablecer tu contraseña.
+            </div>
+            <button class="save-btn" @click="tab = user ? 'settings' : 'auth'; forgotEmail = ''; forgotSent = false">
+              <span x-text="user ? 'Volver a configuración' : 'Volver al login'"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- ══ PLANS ══ -->
       <div class="main-content" x-show="tab === 'plans'" x-cloak>
         <div class="page-header">
@@ -1753,59 +2594,110 @@
 
         <div style="padding:0 20px;">
           <!-- Hero -->
-          <div style="text-align:center;margin-bottom:28px;">
-            <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg, rgba(0,240,255,0.12), rgba(112,0,255,0.12));border:1px solid rgba(0,240,255,0.2);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="url(#planGrad)" stroke-width="1.8" width="28" height="28"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-              <svg width="0" height="0"><defs><linearGradient id="planGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00F0FF"/><stop offset="100%" stop-color="#7000FF"/></linearGradient></defs></svg>
+          <div style="margin-bottom:20px;">
+            <div style="font-size:28px;font-weight:700;letter-spacing:-0.8px;line-height:1.15;margin-bottom:6px;">
+              Tu dinero, <span class="gradient-text">claro.</span>
             </div>
-            <div style="font-size:24px;font-weight:800;letter-spacing:-0.6px;margin-bottom:6px;">
-              Elige tu <span class="gradient-text">plan</span>
+            <div style="font-size:14px;color:var(--muted);line-height:1.4;">
+              Empieza gratis. Mejora cuando tu vida financiera se vuelva interesante.
             </div>
-            <div style="font-size:14px;color:var(--muted);line-height:1.5;">Controla tus finanzas como un pro</div>
           </div>
 
-          <!-- Plan toggle: Monthly -->
+          <!-- Mensual / Anual toggle -->
+          <div style="display:flex;background:var(--surface);border-radius:11px;padding:4px;border:1px solid var(--border);margin-bottom:18px;position:relative;">
+            <div @click="annualBilling = false" :style="!annualBilling ? 'background:var(--bg);color:var(--text)' : 'background:transparent;color:var(--muted)'" style="flex:1;text-align:center;padding:8px 0;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;">Mensual</div>
+            <div @click="annualBilling = true" :style="annualBilling ? 'background:var(--bg);color:var(--text)' : 'background:transparent;color:var(--muted)'" style="flex:1;text-align:center;padding:8px 0;border-radius:8px;font-size:13px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:all 0.15s;">
+              Anual
+              <span style="font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;background:rgba(0,229,160,0.2);color:var(--success);letter-spacing:0.4px;">−2 MESES</span>
+            </div>
+          </div>
+
+          <!-- Promo banner -->
+          <div style="margin-bottom:16px;padding:14px 16px;border-radius:14px;background:linear-gradient(135deg, rgba(0,240,255,0.10), rgba(112,0,255,0.10));border:1px solid rgba(0,240,255,0.3);">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+              <span style="font-size:18px;">🎁</span>
+              <div style="font-size:13px;font-weight:700;color:var(--text);">Precio fundador · 50% OFF</div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.5;">
+              Si contratas antes del <strong style="color:var(--text);">31 dic 2026</strong>, mantienes este precio <strong class="gradient-text">para siempre</strong>.
+            </div>
+          </div>
+
+          <!-- Plan cards -->
           <template x-for="p in planOptions" :key="p.key">
-            <div style="margin-bottom:12px;border-radius:16px;overflow:hidden;" :style="p.key === 'elite' ? 'background:linear-gradient(135deg, rgba(0,240,255,0.06), rgba(112,0,255,0.08));border:1.5px solid rgba(112,0,255,0.3);box-shadow:0 0 24px rgba(112,0,255,0.08)' : 'background:var(--surface);border:1px solid var(--border)'">
-              <!-- Header -->
-              <div style="padding:18px 18px 0;">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
-                  <span class="plan-badge" :class="p.key" x-text="p.label"></span>
-                  <span x-show="p.key === userPlan" style="font-size:10px;color:var(--success);font-weight:700;background:rgba(0,229,160,0.12);padding:3px 8px;border-radius:6px;">ACTUAL</span>
-                  <span x-show="p.key === 'elite'" style="font-size:10px;color:var(--warning);font-weight:700;background:rgba(255,184,0,0.12);padding:3px 8px;border-radius:6px;">POPULAR</span>
-                </div>
-                <div style="font-size:13px;color:var(--muted);margin-bottom:12px;" x-text="p.tagline"></div>
-                <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:16px;">
-                  <span style="font-size:38px;font-weight:800;letter-spacing:-1.5px;color:var(--text);" x-text="'$' + p.price"></span>
-                  <span style="font-size:13px;color:var(--dim);" x-text="p.price === '0' ? 'gratis' : '/mes'"></span>
-                </div>
-              </div>
-              <!-- Features -->
-              <div style="padding:0 18px 18px;display:flex;flex-direction:column;gap:10px;">
-                <template x-for="f in p.features" :key="f">
-                  <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text);">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5" width="14" height="14" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
-                    <span x-text="f"></span>
+            <div style="margin-bottom:12px;" :style="p.gradient ? 'padding:1.5px;border-radius:18px;background:var(--gradient);box-shadow:0 0 32px rgba(112,0,255,0.18)' : ''">
+              <div :style="p.gradient ? 'border-radius:16.5px;background:linear-gradient(160deg, rgba(0,240,255,0.06) 0%, rgba(112,0,255,0.08) 100%)' : 'border-radius:18px;background:var(--surface);border:1px solid ' + (p.highlight && !p.gradient ? 'var(--cyan)' : 'var(--border)') + ';' + (p.highlight && !p.gradient ? 'box-shadow:0 0 0 3px rgba(0,240,255,0.06)' : '')">
+                <div style="padding:20px 18px;">
+                  <!-- Header row -->
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:10px;">
+                    <div style="min-width:0;flex:1;">
+                      <div style="font-size:13px;color:var(--muted);font-weight:600;" x-text="p.tagline"></div>
+                      <div style="font-size:22px;font-weight:700;letter-spacing:-0.5px;margin-top:2px;display:flex;align-items:center;gap:8px;">
+                        <span x-text="p.label.charAt(0) + p.label.slice(1).toLowerCase()"></span>
+                        <span x-show="p.key === userPlan" style="font-size:10px;color:var(--success);font-weight:700;background:rgba(0,229,160,0.12);padding:3px 8px;border-radius:6px;letter-spacing:0.4px;">ACTUAL</span>
+                      </div>
+                    </div>
+                    <template x-if="p.warning">
+                      <span style="font-size:9px;font-weight:700;padding:4px 8px;border-radius:5px;background:rgba(255,184,0,0.18);color:var(--warning);letter-spacing:0.6px;white-space:nowrap;" x-text="p.warning.toUpperCase()"></span>
+                    </template>
+                    <template x-if="p.highlight && !p.warning">
+                      <span :style="p.gradient ? 'background:var(--gradient);color:#0A0A0F' : 'background:rgba(0,240,255,0.10);color:var(--cyan)'" style="font-size:9px;font-weight:700;padding:4px 8px;border-radius:5px;letter-spacing:0.6px;white-space:nowrap;" x-text="p.highlight"></span>
+                    </template>
                   </div>
-                </template>
-              </div>
-              <!-- CTA -->
-              <div style="padding:0 18px 18px;">
-                <button x-show="p.key !== 'free' && p.key !== userPlan" @click="startCheckout(p.key)" style="width:100%;height:48px;border-radius:14px;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;" :style="p.key === 'elite' ? 'background:var(--gradient);color:#0A0A0F;box-shadow:0 4px 16px rgba(0,240,255,0.2)' : 'background:transparent;border:1.5px solid var(--cyan);color:var(--cyan);'">
-                  <svg viewBox="0 0 24 24" fill="none" :stroke="p.key === 'elite' ? '#0A0A0F' : 'var(--cyan)'" stroke-width="2" width="16" height="16"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                  <span x-text="'Mejorar a ' + p.label"></span>
-                </button>
-                <div x-show="p.key === userPlan" style="text-align:center;font-size:12px;color:var(--success);font-weight:600;padding:8px 0;">Tu plan actual</div>
-                <div x-show="p.key === 'free' && userPlan === 'free'" style="text-align:center;font-size:11px;color:var(--dim);margin-top:4px;">Gratis hasta dic 2026</div>
+
+                  <!-- Price -->
+                  <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:16px;">
+                    <span class="gradient-text" style="font-size:36px;font-weight:800;letter-spacing:-1.2px;font-variant-numeric:tabular-nums;" x-text="'$' + p.price"></span>
+                    <span style="font-size:14px;color:var(--muted);font-weight:500;" x-text="p.period"></span>
+                    <span x-show="p.priceRegular !== p.price && p.price !== '0.00'" style="font-size:13px;color:var(--dim);text-decoration:line-through;margin-left:6px;font-variant-numeric:tabular-nums;" x-text="'$' + p.priceRegular"></span>
+                  </div>
+
+                  <!-- Features list -->
+                  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+                    <template x-for="(f, fi) in p.features" :key="fi">
+                      <div style="display:flex;align-items:center;gap:10px;font-size:13px;" :style="f.v ? 'color:var(--text)' : 'color:var(--dim)'">
+                        <template x-if="f.v">
+                          <div style="width:18px;height:18px;border-radius:9px;background:rgba(0,240,255,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="3" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
+                          </div>
+                        </template>
+                        <template x-if="!f.v">
+                          <div style="width:18px;height:18px;border-radius:9px;opacity:0.4;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2.5" width="11" height="11"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                          </div>
+                        </template>
+                        <span x-text="f.l"></span>
+                      </div>
+                    </template>
+                  </div>
+
+                  <!-- CTA -->
+                  <template x-if="p.key === userPlan">
+                    <button style="width:100%;height:46px;border-radius:23px;background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="3" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
+                      Plan actual
+                    </button>
+                  </template>
+                  <template x-if="p.key !== userPlan && p.key !== 'free'">
+                    <button @click="startCheckout(p.key)" style="width:100%;height:46px;border-radius:23px;background:var(--gradient);color:#0A0A0F;font-weight:700;font-size:14px;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(0,240,255,0.18);" x-text="'Mejorar a ' + (p.label.charAt(0) + p.label.slice(1).toLowerCase())"></button>
+                  </template>
+                  <template x-if="p.key === 'free' && userPlan !== 'free'">
+                    <button style="width:100%;height:46px;border-radius:23px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:13px;">Disponible siempre</button>
+                  </template>
+                </div>
               </div>
             </div>
           </template>
 
+          <div style="text-align:center;margin-top:16px;margin-bottom:24px;font-size:11px;color:var(--dim);">
+            Cancela cuando quieras · Sin permanencia
+          </div>
+
           <!-- FAQ -->
-          <div style="margin-top:8px;padding:16px;background:var(--surface);border-radius:14px;border:1px solid var(--border);">
+          <div style="padding:16px;background:var(--surface);border-radius:14px;border:1px solid var(--border);">
             <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--text);">Preguntas frecuentes</div>
             <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:8px;">
-              <strong style="color:var(--text);">¿Puedo cancelar?</strong> Si, en cualquier momento sin cargos.
+              <strong style="color:var(--text);">¿Puedo cancelar?</strong> Sí, en cualquier momento sin cargos.
             </div>
             <div style="font-size:12px;color:var(--muted);line-height:1.6;">
               <strong style="color:var(--text);">¿Métodos de pago?</strong> PayPhone (tarjeta, transferencia).
@@ -2005,87 +2897,276 @@
             <!-- Main content area -->
             <div style="padding:0 20px 32px;">
 
-              <!-- 4 Input mode tabs -->
+              <!-- 4 Input mode tabs (CD style with lock icons) -->
               <div :style="editingExpense ? 'display:none' : 'display:flex;gap:6px;margin-bottom:18px;overflow-x:auto;'">
                 <button class="sheet-tab-v2" :class="{ active: inputMode === 'texto' }" @click="inputMode = 'texto'; voiceRecording && toggleVoice()">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   Texto
                 </button>
-                <button class="sheet-tab-v2" :class="{ active: inputMode === 'voz' }" @click="inputMode = 'voz'; voiceRecording && toggleVoice()">
+                <button class="sheet-tab-v2" :class="{ active: inputMode === 'voz' }" @click="if (userPlan === 'free') { tab = 'plans'; sheetOpen = false; return } inputMode = 'voz'; voiceRecording && toggleVoice()">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>
                   Voz
+                  <svg x-show="userPlan === 'free'" class="lock" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                 </button>
-                <button class="sheet-tab-v2" :class="{ active: inputMode === 'foto' }" @click="inputMode = 'foto'">
+                <button class="sheet-tab-v2" :class="{ active: inputMode === 'foto' }" @click="if (userPlan !== 'elite') { tab = 'plans'; sheetOpen = false; return } inputMode = 'foto'">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                   Foto
+                  <svg x-show="userPlan !== 'elite'" class="lock" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                 </button>
-                <button class="sheet-tab-v2" :class="{ active: inputMode === 'archivo' }" @click="inputMode = 'archivo'">
+                <button class="sheet-tab-v2" :class="{ active: inputMode === 'archivo' }" @click="if (userPlan !== 'elite') { tab = 'plans'; sheetOpen = false; return } inputMode = 'archivo'">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
                   Archivo
+                  <svg x-show="userPlan !== 'elite'" class="lock" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                 </button>
               </div>
 
-              <!-- TEXTO MODE (empty, description goes below in shared fields) -->
-              <div x-show="inputMode === 'texto' && !editingExpense"></div>
-
-              <!-- VOZ MODE -->
-              <div x-show="inputMode === 'voz' && !editingExpense" style="padding:24px 0;margin-bottom:18px;border-radius:16px;background:radial-gradient(circle at 50% 32%, rgba(0,240,255,0.10) 0%, transparent 60%);text-align:center;">
-                <div x-show="!voiceRecording" style="display:flex;flex-direction:column;align-items:center;">
-                  <div style="font-size:14px;color:var(--muted);margin-bottom:20px;">Toca para hablar</div>
-                  <button @click="toggleVoice" style="width:80px;height:80px;border-radius:40px;background:var(--gradient);display:inline-flex;align-items:center;justify-content:center;border:none;box-shadow:0 0 32px rgba(0,240,255,0.3);cursor:pointer;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2.4" width="32" height="32"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
-                  </button>
-                  <div style="font-size:12px;color:var(--dim);margin-top:14px;">Describe tu gasto con la voz</div>
+              <!-- TEXTO MODE — CD: Describe → Analizar → DETECTADO -->
+              <div x-show="inputMode === 'texto' && !editingExpense" style="margin-bottom:14px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  <div style="font-size:14px;font-weight:700;letter-spacing:-0.2px;">Describe tu gasto</div>
                 </div>
-                <div x-show="voiceRecording" style="display:flex;flex-direction:column;align-items:center;">
-                  <div style="font-size:14px;color:var(--cyan);margin-bottom:20px;font-weight:600;">Escuchando...</div>
-                  <button @click="toggleVoice" style="width:80px;height:80px;border-radius:40px;background:rgba(255,107,107,0.2);border:2px solid var(--danger);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 32px rgba(255,107,107,0.3);">
-                    <svg viewBox="0 0 24 24" fill="none" width="28" height="28"><rect x="6" y="6" width="12" height="12" rx="2" fill="var(--danger)"/></svg>
-                  </button>
-                  <div style="display:flex;align-items:center;gap:3px;height:28px;margin-top:16px;">
-                    <div style="width:3px;height:12px;border-radius:1.5px;background:var(--cyan);opacity:0.6;"></div>
-                    <div style="width:3px;height:20px;border-radius:1.5px;background:var(--cyan);opacity:0.7;"></div>
-                    <div style="width:3px;height:8px;border-radius:1.5px;background:var(--cyan);opacity:0.5;"></div>
-                    <div style="width:3px;height:28px;border-radius:1.5px;background:var(--cyan);opacity:0.8;"></div>
-                    <div style="width:3px;height:14px;border-radius:1.5px;background:var(--cyan);opacity:0.6;"></div>
-                    <div style="width:3px;height:24px;border-radius:1.5px;background:var(--cyan);opacity:0.7;"></div>
-                    <div style="width:3px;height:10px;border-radius:1.5px;background:var(--cyan);opacity:0.5;"></div>
-                    <div style="width:3px;height:18px;border-radius:1.5px;background:var(--cyan);opacity:0.6;"></div>
+
+                <div class="cd-describe-card">
+                  <textarea x-model="form.description" maxlength="500" rows="3" placeholder="almuerzo 15 dividido con juan · taxi al aeropuerto 8.50 · café 3.20"></textarea>
+                  <div class="cd-describe-footer">
+                    <button type="button" class="cd-describe-mic" @click="inputMode = 'voz'" title="Cambiar a voz">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>
+                    </button>
+                    <div class="cd-char-count"><span x-text="(form.description || '').length"></span>/500</div>
                   </div>
                 </div>
-              </div>
 
-              <!-- FOTO MODE -->
-              <div x-show="inputMode === 'foto' && !editingExpense" style="margin-bottom:18px;">
-                <template x-if="receiptPreview">
-                  <div class="receipt-preview">
-                    <img :src="receiptPreview" alt="Comprobante">
-                    <button class="remove-receipt" @click="removeReceipt">✕</button>
-                  </div>
-                </template>
-                <template x-if="!receiptPreview">
-                  <div style="display:flex;flex-direction:column;align-items:center;padding:32px 0;border-radius:16px;border:1px dashed var(--border2);background:var(--surface);">
-                    <label style="display:flex;flex-direction:column;align-items:center;cursor:pointer;">
-                      <div style="width:64px;height:64px;border-radius:20px;background:rgba(0,240,255,0.08);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="28" height="28"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <button class="cd-analyze-btn" style="margin-top:12px;" @click="analyzeTextInput()" :disabled="analyzing || !form.description || form.description.length < 3">
+                  <template x-if="!analyzing">
+                    <span style="display:inline-flex;align-items:center;gap:8px;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                      Analizar
+                    </span>
+                  </template>
+                  <span x-show="analyzing">Analizando…</span>
+                </button>
+
+                <!-- DETECTADO preview card (after analyze) -->
+                <div x-show="analyzed && form.amount" style="margin-top:18px;">
+                  <div class="cd-section-label">DETECTADO</div>
+                  <div class="cd-detected-card">
+                    <div class="cd-detected-card-inner">
+                      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                        <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+                          <template x-for="c in (form.is_income ? incomeCategories : categories)" :key="c.key">
+                            <div x-show="c.key === form.category" style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;" :style="'background:' + c.color + '20;border:1px solid ' + c.color + '40'">
+                              <span x-text="c.emoji"></span>
+                            </div>
+                          </template>
+                          <div style="min-width:0;">
+                            <template x-for="c in (form.is_income ? incomeCategories : categories)" :key="c.key">
+                              <div x-show="c.key === form.category" style="font-size:13px;font-weight:600;" x-text="c.label"></div>
+                            </template>
+                            <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;" x-text="form.description"></div>
+                          </div>
+                        </div>
+                        <div class="gradient-text" style="font-size:22px;font-weight:800;letter-spacing:-0.8px;font-variant-numeric:tabular-nums;" x-text="'$' + parseFloat(form.amount || 0).toFixed(2)"></div>
                       </div>
-                      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;">Tomar foto</div>
-                      <div style="font-size:12px;color:var(--dim);">Saca foto a tu recibo o factura</div>
-                      <input type="file" accept="image/*" capture="environment" @change="handlePhoto($event)" style="display:none">
-                    </label>
+                      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                        <div class="cd-meta-chip">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="10" height="10"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                          <span x-text="form.date === new Date().toISOString().slice(0,10) ? 'Hoy' : form.date"></span>
+                        </div>
+                        <div class="cd-meta-chip">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="10" height="10"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                          <span x-text="userCurrency"></span>
+                        </div>
+                        <div x-show="form.is_split" class="cd-meta-chip">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="10" height="10"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                          Dividido
+                        </div>
+                      </div>
+                      <div style="margin-top:10px;font-size:11px;color:var(--dim);display:flex;align-items:center;gap:4px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="10" height="10"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        Toca cualquier campo abajo para editar
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- VOZ MODE — CD: concentric waveform circles + transcript + bars -->
+              <div x-show="inputMode === 'voz' && !editingExpense" style="margin-bottom:18px;">
+                <div class="cd-voice-wrap" :class="{ 'cd-voice-recording': voiceRecording }">
+                  <div style="font-size:13px;color:var(--muted);font-weight:500;" x-text="voiceRecording ? 'Habla ahora…' : 'Toca el micrófono para empezar'"></div>
+
+                  <div class="cd-voice-circles">
+                    <div class="ring r1"></div>
+                    <div class="ring r2"></div>
+                    <div class="ring r3"></div>
+                    <div class="ring r4"></div>
+                    <button class="cd-voice-mic" @click="toggleVoice">
+                      <template x-if="!voiceRecording">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2.4" width="32" height="32"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+                      </template>
+                      <template x-if="voiceRecording">
+                        <svg viewBox="0 0 24 24" fill="var(--danger)" width="28" height="28"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                      </template>
+                    </button>
+                  </div>
+
+                  <div x-show="voiceTranscript || voiceRecording" style="width:100%;padding:0 22px;margin-top:30px;">
+                    <div style="font-size:11px;color:var(--muted);letter-spacing:1px;font-weight:600;text-align:center;">TRANSCRIPCIÓN</div>
+                    <div class="cd-voice-transcript" style="margin-top:8px;" x-text="voiceTranscript || (voiceRecording ? 'Escuchando…' : '')"></div>
+                  </div>
+
+                  <div x-show="voiceRecording" class="cd-voice-wave" style="margin-top:22px;">
+                    <template x-for="h in [12,18,8,28,14,32,10,22,36,16,24,12,28,18,10,14,22,16,8,20]" :key="h+''+Math.random()">
+                      <div class="cd-voice-wave-bar" :style="'height:' + h + 'px;opacity:' + (0.5 + h/80)"></div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+
+              <!-- FOTO MODE — CD: receipt placeholder w/ scan line + extracted fields -->
+              <div x-show="inputMode === 'foto' && !editingExpense" style="margin-bottom:18px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="16" height="16"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  <div style="font-size:14px;font-weight:700;">Foto del recibo</div>
+                  <span class="plan-badge elite" style="font-size:9px;">ELITE</span>
+                </div>
+
+                <!-- Capture: no photo yet -->
+                <template x-if="!receiptPreview">
+                  <label style="display:block;cursor:pointer;">
+                    <div class="cd-receipt-placeholder">
+                      <div class="cd-receipt-bracket tl"></div>
+                      <div class="cd-receipt-bracket tr"></div>
+                      <div class="cd-receipt-bracket bl"></div>
+                      <div class="cd-receipt-bracket br"></div>
+                      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;gap:10px;">
+                        <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg, rgba(0,240,255,0.12), rgba(112,0,255,0.10));border:1px solid var(--cyan);display:flex;align-items:center;justify-content:center;box-shadow:0 0 24px rgba(0,240,255,0.15);">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.8" width="26" height="26"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        </div>
+                        <div style="font-size:14px;font-weight:700;color:var(--text);">Tomar foto del recibo</div>
+                        <div style="font-size:11px;color:var(--muted);line-height:1.4;">Detectamos comercio, monto, fecha e items automáticamente</div>
+                      </div>
+                    </div>
+                    <input type="file" accept="image/*" capture="environment" @change="handlePhoto($event)" style="display:none">
+                  </label>
+                </template>
+
+                <!-- Analyzing: photo loaded -->
+                <template x-if="receiptPreview">
+                  <div>
+                    <div class="cd-receipt-placeholder" style="background:none;padding:0;border:none;">
+                      <img :src="receiptPreview" alt="Recibo" style="width:100%;height:100%;object-fit:cover;border-radius:16px;border:1px solid var(--border);">
+                      <div class="cd-receipt-bracket tl"></div>
+                      <div class="cd-receipt-bracket tr"></div>
+                      <div class="cd-receipt-bracket bl"></div>
+                      <div class="cd-receipt-bracket br"></div>
+                      <div class="cd-scan-line" x-show="analyzing"></div>
+                      <button class="remove-receipt" @click="removeReceipt" style="position:absolute;top:10px;right:10px;width:28px;height:28px;border-radius:14px;background:rgba(0,0,0,0.7);color:#fff;border:none;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;">✕</button>
+                      <div style="position:absolute;top:14px;left:14px;" x-show="analyzing">
+                        <div class="cd-status-chip"><span class="cd-status-chip-dot"></span>ANALIZANDO</div>
+                      </div>
+                    </div>
+
+                    <!-- Extracted data (shown after analysis) -->
+                    <div x-show="analyzed && form.amount" style="margin-top:16px;">
+                      <div class="cd-section-label">DATOS EXTRAÍDOS</div>
+                      <div style="background:var(--surface);border-radius:14px;border:1px solid var(--border);padding:4px 0;">
+                        <div class="cd-extracted-row">
+                          <div style="font-size:12px;color:var(--muted);">Total</div>
+                          <div class="gradient-text" style="font-size:16px;font-weight:700;letter-spacing:-0.4px;font-variant-numeric:tabular-nums;" x-text="'$' + parseFloat(form.amount || 0).toFixed(2)"></div>
+                        </div>
+                        <div class="cd-extracted-row" x-show="form.description">
+                          <div style="font-size:12px;color:var(--muted);">Comercio</div>
+                          <div style="font-size:13px;font-weight:500;" x-text="form.description"></div>
+                        </div>
+                        <div class="cd-extracted-row">
+                          <div style="font-size:12px;color:var(--muted);">Fecha</div>
+                          <div style="font-size:13px;font-weight:500;" x-text="form.date"></div>
+                        </div>
+                        <div class="cd-extracted-row" x-show="form.category">
+                          <div style="font-size:12px;color:var(--muted);">Categoría</div>
+                          <template x-for="c in (form.is_income ? incomeCategories : categories)" :key="c.key">
+                            <div x-show="c.key === form.category" style="font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;">
+                              <span x-text="c.emoji"></span><span x-text="c.label"></span>
+                            </div>
+                          </template>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </template>
               </div>
 
-              <!-- ARCHIVO MODE -->
+              <!-- ARCHIVO MODE — CD: dropzone + selected file + detected list -->
               <div x-show="inputMode === 'archivo' && !editingExpense" style="margin-bottom:18px;">
-                <div style="display:flex;flex-direction:column;align-items:center;padding:32px 0;border-radius:16px;border:1px dashed var(--border2);background:var(--surface);">
-                  <div style="width:64px;height:64px;border-radius:20px;background:rgba(112,0,255,0.08);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" width="28" height="28"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
-                  </div>
-                  <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;">Subir archivo</div>
-                  <div style="font-size:12px;color:var(--dim);">Proximamente</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="16" height="16"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+                  <div style="font-size:14px;font-weight:700;">Importar archivo</div>
+                  <span class="plan-badge elite" style="font-size:9px;">ELITE</span>
                 </div>
+
+                <!-- Dropzone: no file yet -->
+                <template x-if="!importedFile">
+                  <label class="cd-dropzone">
+                    <div class="cd-dropzone-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="24" height="24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    </div>
+                    <div style="font-size:14px;font-weight:700;text-align:center;">Sube un PDF, Excel o CSV</div>
+                    <div style="font-size:11px;color:var(--muted);text-align:center;line-height:1.4;">Estado de cuenta, factura electrónica o exportación bancaria</div>
+                    <div style="display:flex;gap:6px;margin-top:4px;">
+                      <div class="cd-format-badge">PDF</div>
+                      <div class="cd-format-badge">XLSX</div>
+                      <div class="cd-format-badge">CSV</div>
+                      <div class="cd-format-badge">XML</div>
+                    </div>
+                    <input type="file" accept=".pdf,.xlsx,.csv,.xml,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,application/xml" @change="handleFileImport($event)" style="display:none">
+                  </label>
+                </template>
+
+                <!-- Selected file + detected list -->
+                <template x-if="importedFile">
+                  <div>
+                    <div class="cd-section-label" style="margin-top:0;">ARCHIVO SELECCIONADO</div>
+                    <div class="cd-selected-file">
+                      <div class="cd-file-icon" x-text="importedFile.ext"></div>
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="importedFile.name"></div>
+                        <div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace;" x-text="importedFile.meta"></div>
+                      </div>
+                      <button @click="importedFile = null" style="background:none;border:none;cursor:pointer;padding:4px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </button>
+                    </div>
+
+                    <div x-show="importedFile && importedExpenses.length > 0" style="margin-top:14px;">
+                      <div class="cd-section-label">GASTOS DETECTADOS · <span x-text="importedExpenses.length"></span></div>
+                      <div style="background:var(--surface);border-radius:14px;border:1px solid var(--border);padding:4px 14px;">
+                        <template x-for="(e, ei) in importedExpenses.slice(0, 3)" :key="ei">
+                          <div>
+                            <div class="cd-detected-list-item">
+                              <template x-for="c in categories" :key="c.key">
+                                <div x-show="c.key === e.category" style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;" :style="'background:' + c.color + '20;border:1px solid ' + c.color + '40'">
+                                  <span x-text="c.emoji"></span>
+                                </div>
+                              </template>
+                              <div style="flex:1;min-width:0;">
+                                <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="e.description"></div>
+                                <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="e.date"></div>
+                              </div>
+                              <div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text);" x-text="'−$' + parseFloat(e.amount).toFixed(2)"></div>
+                              <div style="width:18px;height:18px;border-radius:5px;background:var(--cyan);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="3.4" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
+                              </div>
+                            </div>
+                            <div x-show="ei < Math.min(importedExpenses.length, 3) - 1" style="height:1px;background:var(--border);"></div>
+                          </div>
+                        </template>
+                        <div x-show="importedExpenses.length > 3" style="padding:10px 0;text-align:center;font-size:11px;color:var(--cyan);font-weight:600;border-top:1px solid var(--border);" x-text="'+' + (importedExpenses.length - 3) + ' gastos más · ver todos'"></div>
+                      </div>
+                    </div>
+                  </div>
+                </template>
               </div>
 
               <!-- AMOUNT BOX (gradient) -->
@@ -2101,25 +3182,50 @@
                 <div class="amount-hint">USD · toca para editar</div>
               </div>
 
-              <!-- DESCRIPTION FIELD BOX -->
-              <div class="field-box">
-                <div class="field-box-label">DESCRIPCION</div>
+              <!-- DESCRIPTION FIELD BOX (skip in texto mode — the describe card above is the editor) -->
+              <div class="field-box" x-show="editingExpense || inputMode !== 'texto'">
+                <div class="field-box-label">DESCRIPCIÓN</div>
                 <div class="field-box-inner">
                   <textarea x-model="form.description" placeholder="almuerzo 15, taxi aeropuerto 8.50..." rows="2"></textarea>
                   <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="16" height="16" style="flex-shrink:0;align-self:flex-start;margin-top:14px;"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 </div>
               </div>
 
-              <!-- CATEGORY -->
-              <div class="field-box">
-                <div class="field-box-label">CATEGORIA</div>
-                <div class="cat-chip-scroll">
-                  <template x-for="cat in (form.is_income ? incomeCategories : categories)" :key="cat.key">
-                    <button class="cat-chip" :class="{ selected: form.category === cat.key }" @click="form.category = cat.key">
-                      <div class="cat-icon-box" :style="'background:' + (cat.color || '#888') + '20'">
-                        <span x-text="cat.emoji"></span>
-                      </div>
-                      <span x-text="cat.label"></span>
+              <!-- CATEGORY — CD: dropdown 50px (current) + horizontal scroll of others -->
+              <div style="margin-bottom:12px;">
+                <div class="cd-section-label">CATEGORÍA</div>
+                <!-- Current selected -->
+                <div @click="catDropdownOpen = !catDropdownOpen" style="height:50px;border-radius:12px;background:var(--surface);border:1px solid var(--border);padding:0 14px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+                  <template x-if="form.category">
+                    <template x-for="c in (form.is_income ? incomeCategories : categories)" :key="c.key">
+                      <template x-if="c.key === form.category">
+                        <div style="display:flex;align-items:center;gap:10px;flex:1;">
+                          <div style="width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;" :style="'background:' + c.color + '20;border:1px solid ' + c.color + '40'">
+                            <span x-text="c.emoji"></span>
+                          </div>
+                          <div style="flex:1;font-size:15px;font-weight:500;" x-text="c.label"></div>
+                        </div>
+                      </template>
+                    </template>
+                  </template>
+                  <template x-if="!form.category">
+                    <div style="flex:1;font-size:14px;color:var(--dim);">Selecciona una categoría…</div>
+                  </template>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="16" height="16" :style="catDropdownOpen ? 'transform:rotate(180deg);transition:transform 0.2s' : 'transition:transform 0.2s'"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <!-- Horizontal scroll of other categories -->
+                <div style="display:flex;gap:6px;overflow-x:auto;margin-top:8px;padding-bottom:2px;">
+                  <template x-for="c in (form.is_income ? incomeCategories : categories).filter(c => c.key !== form.category)" :key="c.key">
+                    <button @click="form.category = c.key" style="padding:6px 10px;border-radius:8px;font-size:11px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-weight:600;white-space:nowrap;display:flex;align-items:center;gap:5px;cursor:pointer;flex-shrink:0;">
+                      <span style="font-size:12px;" x-text="c.emoji"></span><span x-text="c.label"></span>
+                    </button>
+                  </template>
+                </div>
+                <!-- Expanded grid (when dropdown clicked) -->
+                <div x-show="catDropdownOpen" style="margin-top:8px;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;display:flex;flex-wrap:wrap;gap:6px;">
+                  <template x-for="c in (form.is_income ? incomeCategories : categories)" :key="c.key">
+                    <button @click="form.category = c.key; catDropdownOpen = false" :style="form.category === c.key ? 'border:1px solid ' + c.color + ';background:' + c.color + '15' : 'border:1px solid var(--border);background:var(--bg)'" style="padding:6px 10px;border-radius:8px;font-size:11px;color:var(--text);font-weight:600;display:flex;align-items:center;gap:5px;cursor:pointer;">
+                      <span style="font-size:12px;" x-text="c.emoji"></span><span x-text="c.label"></span>
                     </button>
                   </template>
                 </div>
@@ -2145,61 +3251,77 @@
                 </div>
               </div>
 
-              <!-- SPLIT SECTION (collapsible) -->
-              <div class="split-container" style="background:var(--surface);border:1px solid var(--border);">
-                <div class="split-header" @click="form.is_split = !form.is_split" style="cursor:pointer;">
-                  <div class="split-icon" style="background:rgba(112,0,255,0.15);">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" width="18" height="18"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+              <!-- SPLIT SECTION — CD: multi-person with proportion bar -->
+              <div :style="form.is_split ? 'background:rgba(0,240,255,0.03);border:1px solid var(--cyan);border-radius:14px;overflow:hidden;margin-bottom:12px' : 'background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px'">
+                <div @click="toggleSplit()" style="padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;">
+                  <div :style="form.is_split ? 'background:rgba(0,240,255,0.12)' : 'background:var(--bg)'" style="width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg viewBox="0 0 24 24" fill="none" :stroke="form.is_split ? 'var(--cyan)' : 'var(--muted)'" stroke-width="2" width="15" height="15"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                   </div>
                   <div style="flex:1;">
-                    <div style="font-size:15px;font-weight:600;">Dividir gasto</div>
-                    <div style="font-size:12px;color:var(--muted);">Compartir con alguien</div>
+                    <div style="font-size:14px;font-weight:600;">Dividir este gasto</div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="form.is_split ? (form.split_people.length + ' personas') : 'Genera cobros automáticos'"></div>
                   </div>
-                  <div class="split-toggle" :style="form.is_split ? 'background:var(--purple)' : 'background:var(--surface2);border:1px solid var(--border)'">
-                    <div class="split-toggle-knob" :style="form.is_split ? 'left:18px' : 'left:2px'"></div>
+                  <div style="width:38px;height:22px;border-radius:11px;position:relative;transition:background 0.2s;" :style="form.is_split ? 'background:var(--cyan)' : 'background:#2a2a3d'">
+                    <div style="position:absolute;top:2px;width:18px;height:18px;border-radius:9px;background:#fff;transition:left 0.2s;" :style="form.is_split ? 'left:18px' : 'left:2px'"></div>
                   </div>
                 </div>
 
                 <template x-if="form.is_split">
                   <div style="padding:0 14px 14px;">
-                    <!-- Proportion bar -->
-                    <div x-show="form.split_pct" style="height:6px;border-radius:3px;background:var(--surface2);overflow:hidden;margin-bottom:14px;">
-                      <div style="height:100%;border-radius:3px;background:var(--purple);transition:width 0.3s;" :style="'width:' + (form.split_pct || 50) + '%'"></div>
+                    <!-- Multi-color proportion bar -->
+                    <div style="height:8px;border-radius:4px;overflow:hidden;display:flex;margin-bottom:12px;background:var(--border);">
+                      <template x-for="p in form.split_people" :key="p.name + p.color">
+                        <div :style="'width:' + p.pct + '%;background:' + p.color + ';transition:width 0.2s'"></div>
+                      </template>
                     </div>
 
-                    <div class="field-box" style="margin-bottom:10px;">
-                      <div class="field-box-label">CON QUIÉN</div>
-                      <div class="field-box-inner">
-                        <input type="text" placeholder="Nombre de la persona" x-model="form.split_persona" list="persona-list">
-                        <datalist id="persona-list">
-                          <template x-for="p in knownPersonas" :key="p">
-                            <option :value="p"></option>
+                    <!-- Person rows -->
+                    <template x-for="(p, pi) in form.split_people" :key="pi">
+                      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                        <div style="width:10px;height:10px;border-radius:2px;flex-shrink:0;" :style="'background:' + p.color"></div>
+                        <div style="flex:1;height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;padding:0 10px;min-width:0;">
+                          <input x-model="p.name" :placeholder="p.you ? 'Tú' : 'Nombre'" :readonly="p.you" :list="p.you ? null : 'persona-list'" class="cd-split-name-input" :style="p.you ? 'font-weight:600;cursor:default;' : ''">
+                          <template x-if="p.you">
+                            <span style="font-size:10px;color:var(--cyan);font-weight:700;margin-left:6px;flex-shrink:0;">· TÚ</span>
                           </template>
-                        </datalist>
+                        </div>
+                        <input type="number" min="0" max="100" x-model.number="p.pct" @input="onSplitPctChange()" class="cd-split-pct-input">
+                        <div style="width:70px;height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--cyan);font-variant-numeric:tabular-nums;" x-text="'$' + (parseFloat(form.amount || 0) * (p.pct || 0) / 100).toFixed(2)"></div>
+                        <button x-show="!p.you" @click="removeSplitPerson(pi)" style="width:30px;height:40px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
                       </div>
+                    </template>
+
+                    <!-- Sum check -->
+                    <div :style="'margin-top:4px;padding:8px 10px;border-radius:8px;display:flex;justify-content:space-between;font-size:11px;font-weight:600;' + (splitSum === 100 ? 'background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2)' : 'background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25)')">
+                      <span style="color:var(--muted);">Suma de partes</span>
+                      <span :style="'color:' + (splitSum === 100 ? 'var(--success)' : 'var(--warning)')" x-text="splitSum + '%' + (splitSum === 100 ? ' ✓' : ' · debe ser 100%')"></span>
                     </div>
 
-                    <div class="field-box" style="margin-bottom:10px;">
-                      <div class="field-box-label">TU PORCENTAJE (%)</div>
-                      <div class="field-box-inner">
-                        <input type="number" min="1" max="99" placeholder="50" x-model="form.split_pct" inputmode="numeric">
-                      </div>
+                    <!-- Actions -->
+                    <div style="display:flex;gap:6px;margin-top:12px;">
+                      <button @click="addSplitPerson()" style="flex:1;height:38px;border-radius:10px;background:var(--surface);border:1px dashed var(--cyan);color:var(--cyan);font-weight:600;font-size:12px;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4" width="12" height="12"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Agregar persona
+                      </button>
+                      <button @click="splitEqual()" style="flex:1;height:38px;border-radius:10px;background:rgba(112,0,255,0.08);border:1px solid rgba(112,0,255,0.3);color:#B794F6;font-weight:600;font-size:12px;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#B794F6" stroke-width="2" width="12" height="12"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+                        Partes iguales
+                      </button>
                     </div>
 
-                    <div x-show="form.amount && form.split_pct" style="background:var(--surface2);border-radius:10px;padding:12px;font-size:13px;line-height:1.8;">
-                      <div style="display:flex;justify-content:space-between;">
-                        <span style="color:var(--muted);">Total</span>
-                        <strong style="color:var(--text);" x-text="'$' + parseFloat(form.amount || 0).toFixed(2)"></strong>
-                      </div>
-                      <div style="display:flex;justify-content:space-between;">
-                        <span style="color:var(--muted);">Tu parte</span>
-                        <strong style="color:var(--cyan);" x-text="'$' + (parseFloat(form.amount || 0) * parseFloat(form.split_pct || 0) / 100).toFixed(2)"></strong>
-                      </div>
-                      <div style="display:flex;justify-content:space-between;">
-                        <span style="color:var(--muted);" x-text="(form.split_persona || 'Persona') + ' debe'"></span>
-                        <strong style="color:var(--warning);" x-text="'$' + (parseFloat(form.amount || 0) * (1 - parseFloat(form.split_pct || 0) / 100)).toFixed(2)"></strong>
-                      </div>
+                    <!-- Bell hint -->
+                    <div style="margin-top:10px;padding:8px 10px;border-radius:8px;background:rgba(0,240,255,0.05);font-size:11px;color:var(--muted);line-height:1.5;display:flex;gap:6px;align-items:flex-start;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="11" height="11" style="flex-shrink:0;margin-top:2px;"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                      <span>Al aprobar, se crearán cobros pendientes en Cobros.</span>
                     </div>
+
+                    <datalist id="persona-list">
+                      <template x-for="p in knownPersonas" :key="p">
+                        <option :value="p"></option>
+                      </template>
+                    </datalist>
                   </div>
                 </template>
               </div>
@@ -2254,17 +3376,30 @@
               <div x-show="userPlan !== 'free'">
             <div class="sheet-title">Presupuestos mensuales</div>
             <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Define límites por categoría. Deja vacío para no limitar.</p>
-            <div class="budget-grid">
+
+            <!-- Total mensual SIEMPRE arriba -->
+            <div class="budget-grid-item" style="margin-bottom:14px;background:linear-gradient(135deg, rgba(0,240,255,0.06), rgba(112,0,255,0.06));border-color:rgba(0,240,255,0.3);">
+              <div style="font-size:12px;color:var(--text);font-weight:600;">📊 Total mensual</div>
+              <input type="number" step="1" min="0" placeholder="—" x-model="budgetForm._total" inputmode="numeric">
+            </div>
+
+            <!-- Pro gate notice for category budgets -->
+            <div x-show="userPlan === 'pro'" style="padding:12px 14px;border-radius:12px;background:rgba(112,0,255,0.06);border:1px solid rgba(112,0,255,0.2);margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#B794F6" stroke-width="1.6" width="20" height="20" style="flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              <div style="flex:1;">
+                <div style="font-size:12px;font-weight:600;color:var(--text);">Presupuestos por categoría</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:2px;">Disponibles en plan <span style="color:#B794F6;font-weight:600;">Elite</span></div>
+              </div>
+              <button @click="budgetSheetOpen = false; tab = 'plans'" style="font-size:11px;color:#B794F6;font-weight:700;background:transparent;">Ver →</button>
+            </div>
+
+            <div class="budget-grid" x-show="userPlan === 'elite'">
               <template x-for="cat in categories" :key="cat.key">
                 <div class="budget-grid-item">
                   <div style="font-size:12px;color:var(--muted);" x-text="cat.emoji + ' ' + cat.label"></div>
                   <input type="number" step="1" min="0" placeholder="—" x-model="budgetForm[cat.key]" inputmode="numeric">
                 </div>
               </template>
-            </div>
-            <div class="budget-grid-item" style="margin-bottom:16px;">
-              <div style="font-size:12px;color:var(--muted);">📊 Total mensual</div>
-              <input type="number" step="1" min="0" placeholder="—" x-model="budgetForm._total" inputmode="numeric">
             </div>
             <button class="save-btn" @click="saveBudgets" :disabled="savingBudget">
               <span x-show="!savingBudget">Guardar presupuestos</span>
@@ -2293,6 +3428,10 @@
 </div>
 
 <script>
+function localDate(d) {
+  d = d || new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
 const SUPABASE_URL = 'https://vchaxqisbypwwtyjjnjr.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjaGF4cWlzYnlwd3d0eWpqbmpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxODMxNjMsImV4cCI6MjA5Mzc1OTE2M30.JFrS9su3R-NaoqEGhnKRNLUW-fnMdPTAhTsyX39iIj0';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -2353,7 +3492,7 @@ function zepoApp() {
     dashPeriod: 'mes',
     histMonth: new Date().getMonth(),
     histYear: new Date().getFullYear(),
-    form: { amount: '', description: '', category: '', date: '', is_income: false, is_split: false, split_persona: '', split_pct: '' },
+    form: { amount: '', description: '', category: '', date: '', is_income: false, is_split: false, split_persona: '', split_pct: '', split_people: [] },
     pendingSplits: [],
     inputMode: 'texto',
     voiceRecording: false,
@@ -2364,11 +3503,45 @@ function zepoApp() {
     budgetForm: {},
     budgetSheetOpen: false,
     savingBudget: false,
-    userPlan: 'free',
+    _rawUserPlan: 'free',
+    get userPlan() {
+      // DEV MODE: unlock all features for QA. Toggle false to restore real plan gating.
+      if (this.devUnlockAll) return 'elite';
+      return this._rawUserPlan;
+    },
+    set userPlan(v) { this._rawUserPlan = v; },
+    devUnlockAll: true,  // ← QA: pon en false antes de producción
+    annualBilling: false,
+    userCurrency: 'USD',
     planExpiresAt: null,
     showDeleteModal: false,
     deleteConfirmText: '',
     pwForm: { current: '', newPw: '', confirm: '' },
+    onboardingName: '',
+    onboardingCurrency: 'USD',
+    onboardingPlan: 'free',
+    onboardingFirstAmount: '',
+    onboardingFirstDesc: '',
+    onboardingFirstCat: 'food',
+    onboardingBudget: 0,
+    onboardingMethod: 'text',
+    analyzing: false,
+    analyzed: false,
+    voiceTranscript: '',
+    importedFile: null,
+    importedExpenses: [],
+    catDropdownOpen: false,
+    onboardingCurrencies: [
+      { code: 'USD', flag: '🇪🇨', name: 'Dólar', country: 'Ecuador' },
+      { code: 'COP', flag: '🇨🇴', name: 'Peso',  country: 'Colombia' },
+      { code: 'PEN', flag: '🇵🇪', name: 'Sol',   country: 'Perú' },
+      { code: 'MXN', flag: '🇲🇽', name: 'Peso',  country: 'México' },
+      { code: 'CLP', flag: '🇨🇱', name: 'Peso',  country: 'Chile' },
+      { code: 'ARS', flag: '🇦🇷', name: 'Peso',  country: 'Argentina' },
+    ],
+    forgotEmail: '',
+    forgotSent: false,
+    forgotLoading: false,
     changingPw: false,
     checkoutPlan: 'pro',
     paymentLoading: false,
@@ -2390,6 +3563,12 @@ function zepoApp() {
         await this.ensureUserRow();
         await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadBudgets(), this.loadUserPlan()]);
         this.handlePaymentReturn();
+      }
+
+      // DEV: ?screen=<tab> permite navegar directo a cualquier pantalla
+      const urlScreen = new URLSearchParams(location.search).get('screen');
+      if (urlScreen) {
+        this.$nextTick(() => { this.tab = urlScreen; });
       }
 
       sb.auth.onAuthStateChange(async (event, session) => {
@@ -2434,14 +3613,14 @@ function zepoApp() {
           const { data, error } = await sb.auth.signUp({
             email: this.authEmail,
             password: this.authPassword,
-            options: { data: { name: this.authEmail.split('@')[0] } }
+            options: { data: { name: this.authName || this.authEmail.split('@')[0] } }
           });
           if (error) throw error;
           if (data.user) {
             await sb.from('users').upsert({
               id: data.user.id,
               telegram_chat_id: -Math.floor(Date.now() / 1000),
-              name: this.authEmail.split('@')[0],
+              name: this.authName || this.authEmail.split('@')[0],
               email: this.authEmail,
               plan: 'free',
               trial_start: new Date().toISOString(),
@@ -2498,8 +3677,8 @@ function zepoApp() {
 
     async loadExpenses() {
       const now = new Date();
-      const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+      const start = new Date(now.getFullYear(), now.getMonth() - 1, 1).toLocaleDateString('en-CA');
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toLocaleDateString('en-CA');
       const { data } = await sb.from('expenses')
         .select('*')
         .eq('user_id', this.user.id)
@@ -2512,8 +3691,8 @@ function zepoApp() {
     },
 
     async loadHistory() {
-      const start = new Date(this.histYear, this.histMonth, 1).toISOString().slice(0, 10);
-      const end = new Date(this.histYear, this.histMonth + 1, 0).toISOString().slice(0, 10);
+      const start = new Date(this.histYear, this.histMonth, 1).toLocaleDateString('en-CA');
+      const end = new Date(this.histYear, this.histMonth + 1, 0).toLocaleDateString('en-CA');
       const { data } = await sb.from('expenses')
         .select('*')
         .eq('user_id', this.user.id)
@@ -2533,8 +3712,8 @@ function zepoApp() {
 
     get filteredHistoryGroups() {
       const groups = {};
-      const today = new Date().toISOString().slice(0, 10);
-      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      const today = localDate();
+      const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA');
       this.historyExpenses.forEach(exp => {
         const d = exp.date;
         let label = d;
@@ -2572,19 +3751,23 @@ function zepoApp() {
       return MONTH_NAMES[now.getMonth()] + ' ' + now.getFullYear();
     },
 
-    get monthExpenses() { return this.expenses.filter(e => !e.is_income); },
+    get currentMonthStart() {
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('en-CA');
+    },
+    get monthExpenses() { return this.expenses.filter(e => !e.is_income && e.date >= this.currentMonthStart); },
     get monthTotal() { return this.monthExpenses.reduce((s, e) => s + e.amount, 0); },
-    get monthIncome() { return this.expenses.filter(e => e.is_income).reduce((s, e) => s + e.amount, 0); },
+    get monthIncome() { return this.expenses.filter(e => e.is_income && e.date >= this.currentMonthStart).reduce((s, e) => s + e.amount, 0); },
     get monthBalance() { return this.monthIncome - this.monthTotal; },
 
     get periodStart() {
       const now = new Date();
       if (this.dashPeriod === 'semana') {
-        return new Date(now - 7 * 86400000).toISOString().slice(0, 10);
+        return new Date(now - 7 * 86400000).toLocaleDateString('en-CA');
       } else if (this.dashPeriod === 'año') {
-        return new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10);
+        return new Date(now.getFullYear(), 0, 1).toLocaleDateString('en-CA');
       }
-      return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+      return new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('en-CA');
     },
     get periodExpenses() {
       return this.expenses.filter(e => !e.is_income && e.date >= this.periodStart);
@@ -2603,8 +3786,8 @@ function zepoApp() {
 
     get monthDelta() {
       const now = new Date();
-      const prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 10);
-      const prevEnd = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().slice(0, 10);
+      const prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toLocaleDateString('en-CA');
+      const prevEnd = new Date(now.getFullYear(), now.getMonth(), 0).toLocaleDateString('en-CA');
       const prevTotal = this.expenses.filter(e => !e.is_income && e.date >= prevStart && e.date <= prevEnd).reduce((s, e) => s + e.amount, 0);
       return this.monthTotal - prevTotal;
     },
@@ -2616,14 +3799,14 @@ function zepoApp() {
     },
 
     get spentPct() {
-      const budget = this.budgets?.reduce((s, b) => s + (b.amount || 0), 0) || 0;
-      if (budget <= 0) return Math.min(100, Math.round((this.monthTotal / Math.max(this.monthTotal, 1)) * 100));
-      return Math.min(100, Math.round((this.monthTotal / budget) * 100));
+      const total = this.budgetTotalAmount;
+      if (total <= 0) return Math.min(100, Math.round((this.monthTotal / Math.max(this.monthTotal, 1)) * 100));
+      return Math.min(100, Math.round((this.monthTotal / total) * 100));
     },
 
     get weekTotal() {
       const now = new Date();
-      const weekAgo = new Date(now - 7 * 86400000).toISOString().slice(0, 10);
+      const weekAgo = new Date(now - 7 * 86400000).toLocaleDateString('en-CA');
       return this.monthExpenses.filter(e => e.date >= weekAgo).reduce((s, e) => s + e.amount, 0);
     },
 
@@ -2655,11 +3838,13 @@ function zepoApp() {
 
     get weekExpenseCount() {
       const now = new Date();
-      const weekAgo = new Date(now - 7 * 86400000).toISOString().slice(0, 10);
+      const weekAgo = new Date(now - 7 * 86400000).toLocaleDateString('en-CA');
       return this.monthExpenses.filter(e => e.date >= weekAgo).length;
     },
 
     get budgetTotalAmount() {
+      const total = this.budgets?.find(b => !b.category);
+      if (total) return total.amount || 0;
       return this.budgets?.reduce((s, b) => s + (b.amount || 0), 0) || 0;
     },
 
@@ -2685,6 +3870,7 @@ function zepoApp() {
       rec.maxAlternatives = 1;
       rec.onresult = (e) => {
         const text = e.results[0][0].transcript;
+        this.voiceTranscript = text;
         this.parseVoiceText(text);
         this.voiceRecording = false;
       };
@@ -2734,6 +3920,71 @@ function zepoApp() {
       this.receiptPreview = null;
     },
 
+    handleFileImport(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const ext = (file.name.split('.').pop() || '').toUpperCase().slice(0, 4);
+      const sizeKb = Math.round(file.size / 1024);
+      const sizeStr = sizeKb >= 1024 ? (sizeKb / 1024).toFixed(1) + ' MB' : sizeKb + ' KB';
+      this.importedFile = {
+        name: file.name,
+        ext: ext || 'FILE',
+        meta: sizeStr,
+        raw: file,
+      };
+      this.importedExpenses = [];
+    },
+
+    splitColorPalette: ['#00F0FF', '#7000FF', '#FFB800', '#FF6B6B', '#00E5A0', '#7FB8FF', '#FF8AC4', '#B794F6'],
+
+    toggleSplit() {
+      this.form.is_split = !this.form.is_split;
+      if (this.form.is_split && (!this.form.split_people || this.form.split_people.length === 0)) {
+        this.form.split_people = [
+          { name: 'Tú', pct: 50, you: true, color: this.splitColorPalette[0] },
+          { name: '', pct: 50, color: this.splitColorPalette[1] },
+        ];
+      }
+    },
+
+    addSplitPerson() {
+      const used = this.form.split_people.map(p => p.color);
+      const nextColor = this.splitColorPalette.find(c => !used.includes(c)) || '#888';
+      const n = this.form.split_people.length;
+      const equal = Math.floor(100 / (n + 1));
+      this.form.split_people.forEach(p => p.pct = equal);
+      this.form.split_people.push({ name: '', pct: 100 - equal * n, color: nextColor });
+    },
+
+    removeSplitPerson(idx) {
+      if (this.form.split_people[idx]?.you) return;
+      this.form.split_people.splice(idx, 1);
+      if (this.form.split_people.length < 2) {
+        this.form.is_split = false;
+        this.form.split_people = [];
+      }
+    },
+
+    splitEqual() {
+      const n = this.form.split_people.length;
+      if (n === 0) return;
+      const base = Math.floor(100 / n);
+      const remainder = 100 - base * n;
+      this.form.split_people.forEach((p, i) => p.pct = base + (i === n - 1 ? remainder : 0));
+    },
+
+    onSplitPctChange() {
+      this.form.split_people.forEach(p => {
+        const v = parseFloat(p.pct);
+        p.pct = isNaN(v) ? 0 : Math.max(0, Math.min(100, v));
+      });
+    },
+
+    get splitSum() {
+      if (!this.form.split_people || !this.form.split_people.length) return 0;
+      return this.form.split_people.reduce((s, p) => s + (parseFloat(p.pct) || 0), 0);
+    },
+
     async uploadReceipt(expenseId) {
       if (!this.receiptFile || !this.user) return null;
       const ext = this.receiptFile.name.split('.').pop() || 'jpg';
@@ -2772,6 +4023,8 @@ function zepoApp() {
         const rows = [];
         for (const [key, val] of Object.entries(this.budgetForm)) {
           if (!val || parseFloat(val) <= 0) continue;
+          // Pro plan: only total budget. Elite: per-category budgets too.
+          if (this.userPlan === 'pro' && key !== '_total') continue;
           rows.push({
             user_id: this.user.id,
             category: key === '_total' ? null : key,
@@ -2813,6 +4066,7 @@ function zepoApp() {
 
     // ── Export Excel ──
     async exportExcel() {
+      if (this.userPlan !== 'elite') { this.tab = 'plans'; return this.showToast('Exportar requiere plan Elite'); }
       const { data } = await sb.from('expenses').select('*').eq('user_id', this.user.id).order('date', { ascending: false });
       if (!data || !data.length) return this.showToast('No hay datos');
       const header = ['Fecha','Categoría','Descripción','Monto','Tipo','Split','Persona','Pendiente'];
@@ -2849,15 +4103,23 @@ function zepoApp() {
     openNew() {
       this.editingExpense = null;
       this.inputMode = 'texto';
+      this.saving = false;
+      this.analyzing = false;
+      this.analyzed = false;
+      this.voiceTranscript = '';
+      this.importedFile = null;
+      this.importedExpenses = [];
+      this.catDropdownOpen = false;
       this.form = {
         amount: '',
         description: '',
         category: '',
-        date: new Date().toISOString().slice(0, 10),
+        date: localDate(),
         is_income: false,
         is_split: false,
         split_persona: '',
-        split_pct: ''
+        split_pct: '',
+        split_people: [],
       };
       this.removeReceipt();
       this.sheetOpen = true;
@@ -2865,6 +4127,21 @@ function zepoApp() {
 
     openEdit(exp) {
       this.editingExpense = exp;
+      this.saving = false;
+      this.removeReceipt();
+      // Rebuild split_people array from legacy split_persona (comma-separated names) + split_pct (your %)
+      let splitPeople = [];
+      if (exp.is_split && exp.split_pct != null) {
+        const others = (exp.split_persona || '').split(',').map(s => s.trim()).filter(Boolean);
+        const tuPct = parseFloat(exp.split_pct) || 50;
+        const othersTotalPct = Math.max(0, 100 - tuPct);
+        const eachOtherPct = others.length > 0 ? othersTotalPct / others.length : othersTotalPct;
+        splitPeople = [
+          { name: 'Tú', pct: tuPct, you: true, color: this.splitColorPalette[0] },
+          ...others.map((name, i) => ({ name, pct: eachOtherPct, color: this.splitColorPalette[(i + 1) % this.splitColorPalette.length] })),
+        ];
+        if (splitPeople.length < 2) splitPeople.push({ name: '', pct: othersTotalPct, color: this.splitColorPalette[1] });
+      }
       this.form = {
         amount: exp.is_split ? exp.split_total : exp.amount,
         description: exp.description || '',
@@ -2873,7 +4150,8 @@ function zepoApp() {
         is_income: exp.is_income || false,
         is_split: exp.is_split || false,
         split_persona: exp.split_persona || '',
-        split_pct: exp.split_pct || ''
+        split_pct: exp.split_pct || '',
+        split_people: splitPeople,
       };
       this.sheetOpen = true;
     },
@@ -2881,12 +4159,29 @@ function zepoApp() {
     async saveExpense() {
       if (!this.form.amount) return this.showToast('Ingresa un monto');
       if (!this.form.category) return this.showToast('Selecciona una categoría');
-      if (!this.form.date) this.form.date = new Date().toISOString().slice(0, 10);
+      if (!this.form.date) this.form.date = localDate();
+      if (this.userPlan === 'free' && !this.editingExpense && this.monthExpenses.length >= 10) {
+        this.showToast('Límite de 10 gastos/mes alcanzado');
+        this.tab = 'plans';
+        this.sheetOpen = false;
+        return;
+      }
       this.saving = true;
       try {
         const totalAmount = parseFloat(this.form.amount);
-        const isSplit = !!(this.form.is_split && this.form.split_pct);
-        const pct = isSplit ? parseFloat(this.form.split_pct) : 0;
+        // Map multi-person split (split_people) → legacy split_persona/split_pct for backwards compat
+        let isSplit = false, pct = 0, persona = '';
+        if (this.form.is_split && this.form.split_people && this.form.split_people.length >= 2) {
+          const tuPerson = this.form.split_people.find(p => p.you);
+          const others = this.form.split_people.filter(p => !p.you);
+          if (tuPerson && others.length > 0 && this.splitSum > 0) {
+            isSplit = true;
+            pct = parseFloat(tuPerson.pct) || 50;
+            persona = others.map(p => p.name || 'Sin nombre').filter(Boolean).join(', ') || 'Sin nombre';
+            this.form.split_persona = persona;
+            this.form.split_pct = pct;
+          }
+        }
         const miParte = isSplit ? Math.round(totalAmount * pct / 100 * 100) / 100 : totalAmount;
         const pendiente = isSplit ? Math.round((totalAmount - miParte) * 100) / 100 : 0;
 
@@ -2900,7 +4195,7 @@ function zepoApp() {
           is_split: isSplit,
           split_total: isSplit ? totalAmount : null,
           split_pct: isSplit ? pct : null,
-          split_persona: isSplit ? (this.form.split_persona || 'Sin nombre') : null,
+          split_persona: isSplit ? persona : null,
           split_pending: isSplit ? pendiente : null,
           split_status: isSplit ? 'pendiente' : null
         };
@@ -2939,16 +4234,19 @@ function zepoApp() {
 
     async deleteExpense() {
       if (!this.editingExpense) return;
+      if (!confirm('¿Eliminar este gasto? Esta acción no se puede deshacer.')) return;
       try {
         const { error } = await sb.from('expenses')
           .delete()
           .eq('id', this.editingExpense.id);
         if (error) throw error;
         this.sheetOpen = false;
+        this.editingExpense = null;
         this.showToast('Gasto eliminado');
         await this.loadExpenses();
         await this.loadSplits();
       } catch (e) {
+        console.error('deleteExpense error:', e);
         this.showToast('Error: ' + e.message);
       }
     },
@@ -3000,6 +4298,7 @@ function zepoApp() {
     },
 
     async exportData() {
+      if (this.userPlan !== 'elite') { this.tab = 'plans'; return this.showToast('Exportar requiere plan Elite'); }
       const { data } = await sb.from('expenses')
         .select('*')
         .eq('user_id', this.user.id)
@@ -3038,8 +4337,8 @@ function zepoApp() {
 
     formatDate(d) {
       if (!d) return '';
-      const today = new Date().toISOString().slice(0, 10);
-      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      const today = localDate();
+      const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA');
       if (d === today) return 'Hoy';
       if (d === yesterday) return 'Ayer';
       return new Date(d + 'T12:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
@@ -3078,10 +4377,13 @@ function zepoApp() {
     },
 
     async changePassword() {
+      if (!this.pwForm.current) return this.showToast('Ingresa tu contraseña actual');
       if (this.pwForm.newPw !== this.pwForm.confirm) return this.showToast('Las contraseñas no coinciden');
       if (this.pwForm.newPw.length < 6) return this.showToast('Minimo 6 caracteres');
       this.changingPw = true;
       try {
+        const { error: authErr } = await sb.auth.signInWithPassword({ email: this.user.email, password: this.pwForm.current });
+        if (authErr) throw new Error('Contraseña actual incorrecta');
         const { error } = await sb.auth.updateUser({ password: this.pwForm.newPw });
         if (error) throw error;
         this.pwForm = { current: '', newPw: '', confirm: '' };
@@ -3091,6 +4393,84 @@ function zepoApp() {
         this.showToast('Error: ' + e.message);
       }
       this.changingPw = false;
+    },
+
+    async finishOnboardingFirst() {
+      // Save first expense if user filled it, then navigate to home
+      const amount = parseFloat(this.onboardingFirstAmount) || 12.50;
+      const desc = this.onboardingFirstDesc || 'Almuerzo de prueba';
+      this.form = {
+        amount: amount,
+        description: desc,
+        category: this.onboardingFirstCat || 'food',
+        date: localDate(),
+        is_income: false, is_split: false, split_persona: '', split_pct: '', split_people: []
+      };
+      this.editingExpense = null;
+      try {
+        await this.saveExpense();
+      } catch (e) { /* ignore — go to home anyway */ }
+      this.tab = 'onb-budget';
+    },
+
+    async saveOnboardingBudget() {
+      const amount = parseFloat(this.onboardingBudget);
+      if (!amount || amount <= 0) { this.tab = 'onb-method'; return; }
+      const now = new Date();
+      try {
+        await sb.from('budgets').insert({
+          user_id: this.user.id,
+          category: null,
+          amount: amount,
+          month: now.getMonth() + 1,
+          year: now.getFullYear()
+        });
+        await this.loadBudgets();
+        this.showToast('Presupuesto guardado');
+      } catch (e) { this.showToast('Error: ' + e.message); }
+      this.tab = 'onb-method';
+    },
+
+    get daysUntilSunset() {
+      const sunset = new Date('2026-12-31');
+      const today = new Date();
+      const diff = Math.ceil((sunset - today) / 86400000);
+      return Math.max(0, diff);
+    },
+
+    analyzeTextInput() {
+      const text = this.form.description || '';
+      if (!text || text.length < 2) return;
+      this.analyzing = true;
+      // Use existing heuristic parser (parseVoiceText) — it sets amount + category + is_income
+      setTimeout(() => {
+        this.parseVoiceText(text);
+        this.analyzing = false;
+        this.analyzed = true;
+        setTimeout(() => { this.analyzed = false; }, 4000);
+      }, 600);
+    },
+
+    finishOnboarding() {
+      // Mark onboarding complete + go home
+      localStorage.setItem('zepo:onboarded', '1');
+      if (this.onboardingMethod) localStorage.setItem('zepo:preferred-method', this.onboardingMethod);
+      this.tab = 'home';
+    },
+
+    async sendPasswordReset() {
+      if (!this.forgotEmail || !this.forgotEmail.includes('@')) return this.showToast('Email inválido');
+      this.forgotLoading = true;
+      try {
+        const { error } = await sb.auth.resetPasswordForEmail(this.forgotEmail, {
+          redirectTo: window.location.origin + window.location.pathname
+        });
+        if (error) throw error;
+        this.forgotSent = true;
+      } catch (e) {
+        this.showToast('Error: ' + e.message);
+      }
+      this.forgotLoading = false;
     },
 
     async confirmDeleteAccount() {
@@ -3109,10 +4489,53 @@ function zepoApp() {
     },
 
     get planOptions() {
+      const annual = this.annualBilling;
+      const monthly = (m) => annual ? (m * 10 / 12).toFixed(2) : m.toFixed(2);
       return [
-        { key: 'free', label: 'FREE', price: '0', tagline: 'Empieza gratis', features: ['IA · texto basico', '10 gastos/mes', 'Moneda USD', 'Expira dic 2026'] },
-        { key: 'pro', label: 'PRO', price: '5.00', tagline: 'Para uso personal serio', features: ['IA · texto + voz', 'Historial ilimitado', 'Multi-moneda LATAM', 'Exportar CSV/Excel', 'Presupuestos'] },
-        { key: 'elite', label: 'ELITE', price: '10.00', tagline: 'Control total de tus finanzas', features: ['Todo de Pro', 'Foto de recibo · OCR', 'Importar PDF/CSV', 'Dashboard + analytics', 'Soporte prioritario'] },
+        {
+          key: 'free', label: 'FREE', tagline: 'Para empezar a registrar',
+          price: '0', priceRegular: '0', period: '/mes',
+          warning: 'Hasta 31 dic 2026',
+          features: [
+            { v: true,  l: 'Entrada manual de gastos' },
+            { v: true,  l: 'Historial de 1 mes' },
+            { v: true,  l: '6 categorías fijas' },
+            { v: true,  l: 'Solo USD' },
+            { v: false, l: 'IA · texto + voz' },
+            { v: false, l: 'Foto de recibo · OCR' },
+            { v: false, l: 'Dashboard con gráficos' },
+          ],
+        },
+        {
+          key: 'pro', label: 'PRO', tagline: 'Para llevarlo en serio',
+          price: monthly(5), priceRegular: '10.00', period: '/mes',
+          highlight: 'MÁS POPULAR',
+          features: [
+            { v: true, l: 'Todo de Free' },
+            { v: true, l: 'IA · texto libre + voz' },
+            { v: true, l: 'Historial ilimitado' },
+            { v: true, l: 'Categorías ilimitadas + custom' },
+            { v: true, l: 'Cualquier moneda LATAM' },
+            { v: true, l: 'Presupuesto mensual + alertas' },
+            { v: false, l: 'Foto de recibo · OCR' },
+            { v: false, l: 'Dashboard + analytics' },
+          ],
+        },
+        {
+          key: 'elite', label: 'ELITE', tagline: 'Cuando quieres todo automático',
+          price: monthly(10), priceRegular: '20.00', period: '/mes',
+          highlight: 'COMPLETO', gradient: true,
+          features: [
+            { v: true, l: 'Todo de Pro' },
+            { v: true, l: 'Foto de recibo · OCR' },
+            { v: true, l: 'Importar PDF/CSV/Excel' },
+            { v: true, l: 'Presupuesto por categoría' },
+            { v: true, l: 'Exportar CSV / Excel' },
+            { v: true, l: 'Dashboard + analytics' },
+            { v: true, l: 'Resumen semanal email' },
+            { v: true, l: 'Soporte prioritario' },
+          ],
+        },
       ];
     },
 
@@ -3188,7 +4611,7 @@ function zepoApp() {
       for (let i = 6; i >= 0; i--) {
         const d = new Date(today);
         d.setDate(d.getDate() - i);
-        const dateStr = d.toISOString().slice(0, 10);
+        const dateStr = d.toLocaleDateString('en-CA');
         const total = this.monthExpenses.filter(e => e.date === dateStr).reduce((s, e) => s + e.amount, 0);
         if (total > max) max = total;
         result.push({ label: days[d.getDay()], total, isToday: i === 0 });

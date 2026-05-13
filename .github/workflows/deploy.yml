@@ -1,18 +1,39 @@
-name: Deploy to Cloudflare Pages
+name: Deploy PWA to Cloudflare
 
 on:
   push:
-    branches: [master]
+    branches: [master, main]
+    paths:
+      - 'index.html'
+      - 'manifest.json'
+      - 'sw.js'
+      - 'icons/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-pwa
+  cancel-in-progress: true
 
 jobs:
   deploy:
+    name: Deploy to app.zepo.lynoia.com
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Prepare clean deploy folder
+        run: |
+          mkdir -p _deploy
+          cp index.html _deploy/
+          cp manifest.json _deploy/
+          cp sw.js _deploy/
+          cp -r icons _deploy/
+          ls -la _deploy/
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy . --project-name=zepo
+          command: pages deploy _deploy --project-name=zepo --branch=main --commit-dirty=true
