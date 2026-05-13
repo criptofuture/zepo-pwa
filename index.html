@@ -2235,6 +2235,23 @@
           <div class="sheet-backdrop" @click="budgetSheetOpen = false"></div>
           <div class="sheet">
             <div class="sheet-grabber"></div>
+
+            <!-- FREE UPSELL -->
+              <div x-show="userPlan === 'free'" style="text-align:center;padding:10px 0 6px;">
+                <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg, rgba(0,240,255,0.12), rgba(112,0,255,0.12));border:1px solid rgba(0,240,255,0.2);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.8" width="28" height="28"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                </div>
+                <div style="font-size:18px;font-weight:800;margin-bottom:6px;">Presupuestos</div>
+                <div style="font-size:14px;color:var(--muted);line-height:1.5;margin-bottom:20px;">Esta función está disponible en el plan <span class="gradient-text" style="font-weight:700;">Pro</span>. Controla tus gastos con límites por categoría.</div>
+                <button @click="budgetSheetOpen = false; tab = 'plans'" style="width:100%;height:48px;border-radius:14px;background:var(--gradient);color:#0A0A0F;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2" width="16" height="16"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                  Ver planes
+                </button>
+                <button @click="budgetSheetOpen = false" style="margin-top:10px;width:100%;height:40px;background:transparent;color:var(--muted);font-size:13px;font-weight:600;">Cancelar</button>
+              </div>
+
+            <!-- PRO/ELITE BUDGET FORM -->
+              <div x-show="userPlan !== 'free'">
             <div class="sheet-title">Presupuestos mensuales</div>
             <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Define límites por categoría. Deja vacío para no limitar.</p>
             <div class="budget-grid">
@@ -2253,6 +2270,7 @@
               <span x-show="!savingBudget">Guardar presupuestos</span>
               <span x-show="savingBudget">Guardando...</span>
             </button>
+              </div>
           </div>
         </div>
       </template>
@@ -2861,7 +2879,8 @@ function zepoApp() {
     },
 
     async saveExpense() {
-      if (!this.form.amount || !this.form.category) return;
+      if (!this.form.amount) return this.showToast('Ingresa un monto');
+      if (!this.form.category) return this.showToast('Selecciona una categoría');
       if (!this.form.date) this.form.date = new Date().toISOString().slice(0, 10);
       this.saving = true;
       try {
