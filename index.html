@@ -4765,6 +4765,51 @@ function withTimeout(promise, ms, label) {
   ]);
 }
 
+// Devuelve un access_token FRESCO (refrescando via REST si el actual está expirado o cerca).
+// Resuelve el bug "HTTP 401" al llamar edge functions con token caducado del localStorage.
+async function sbFreshToken() {
+  const RAW_KEY = 'sb-vchaxqisbypwwtyjjnjr-auth-token';
+  let raw = localStorage.getItem(RAW_KEY);
+  if (!raw) return SUPABASE_KEY;
+  let j;
+  try { j = JSON.parse(raw); } catch { return SUPABASE_KEY; }
+  if (!j || !j.access_token) return SUPABASE_KEY;
+
+  // Decode expiry del JWT
+  let expSec = 0;
+  try {
+    const payload = JSON.parse(atob(j.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    expSec = payload.exp || 0;
+  } catch { /* token malformado, intenta refrescar igual */ }
+
+  const now = Math.floor(Date.now() / 1000);
+  if (expSec - now > 60) return j.access_token; // todavía válido con margen 1 min
+
+  // Refresh via REST con timeout corto
+  if (!j.refresh_token) return j.access_token; // sin refresh_token nada que hacer
+  try {
+    const resp = await Promise.race([
+      fetch(SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY },
+        body: JSON.stringify({ refresh_token: j.refresh_token }),
+      }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('refresh timeout')), 6000)),
+    ]);
+    if (!resp.ok) return j.access_token;
+    const data = await resp.json();
+    if (data && data.access_token) {
+      j.access_token = data.access_token;
+      j.refresh_token = data.refresh_token || j.refresh_token;
+      if (data.expires_at) j.expires_at = data.expires_at;
+      if (data.expires_in) j.expires_in = data.expires_in;
+      localStorage.setItem(RAW_KEY, JSON.stringify(j));
+      return data.access_token;
+    }
+  } catch { /* timeout o red caída — devolvemos el viejo, edge function dirá 401 si pasa */ }
+  return j.access_token;
+}
+
 const CATEGORIES = [
   { key: 'food', emoji: '🍽', label: 'Comida', color: '#FF6B6B' },
   { key: 'transport', emoji: '🚌', label: 'Transporte', color: '#00F0FF' },
@@ -6732,17 +6777,25 @@ function zepoApp() {
       try {
         // Plan correcto a enviar (incluye anual)
         const planParam = this.annualBilling ? (this.checkoutPlan + '_annual') : this.checkoutPlan;
-        const headers = sbAuthHeaders();
+        // Refresca el JWT si está caducado (bug 401 con token viejo de localStorage)
+        const token = await sbFreshToken();
         const resp = await withTimeout(
           fetch(SUPABASE_URL + '/functions/v1/create-payment', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: headers.Authorization, apikey: headers.apikey },
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: 'Bearer ' + token,
+              apikey: SUPABASE_KEY,
+            },
             body: JSON.stringify({ plan: planParam }),
           }),
           12000, 'create-payment'
         );
         let result;
         try { result = await resp.json(); } catch { result = {}; }
+        if (resp.status === 401) {
+          throw new Error('Tu sesión expiró. Cierra sesión y vuelve a iniciar para continuar.');
+        }
         if (!resp.ok) throw new Error(result.error || ('HTTP ' + resp.status));
         if (result.paymentUrl) {
           this.tab = 'pay-processing';
@@ -6765,11 +6818,15 @@ function zepoApp() {
       if (!payId || !clientTxId) return;
       this.tab = 'pay-processing';
       try {
-        const headers = sbAuthHeaders();
+        const token = await sbFreshToken();
         const resp = await withTimeout(
           fetch(SUPABASE_URL + '/functions/v1/confirm-payment', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: headers.Authorization, apikey: headers.apikey },
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: 'Bearer ' + token,
+              apikey: SUPABASE_KEY,
+            },
             body: JSON.stringify({ id: parseInt(payId), clientTransactionId: clientTxId }),
           }),
           12000, 'confirm-payment'
