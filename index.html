@@ -6777,7 +6777,9 @@ function zepoApp() {
       try {
         // Plan correcto a enviar (incluye anual)
         const planParam = this.annualBilling ? (this.checkoutPlan + '_annual') : this.checkoutPlan;
-        // Refresca el JWT si está caducado (bug 401 con token viejo de localStorage)
+        // Paso 1: edge function autentica, guarda payment pending en BD,
+        // y nos devuelve el body+token para llamar PayPhone desde el browser.
+        // (PayPhone bloquea requests originadas en Supabase Edge regions.)
         const token = await sbFreshToken();
         const resp = await withTimeout(
           fetch(SUPABASE_URL + '/functions/v1/create-payment', {
@@ -6797,11 +6799,35 @@ function zepoApp() {
           throw new Error('Tu sesión expiró. Cierra sesión y vuelve a iniciar para continuar.');
         }
         if (!resp.ok) throw new Error(result.error || ('HTTP ' + resp.status));
-        if (result.paymentUrl) {
+        if (!result.payPhoneToken || !result.payPhoneBody) {
+          throw new Error('Respuesta inválida del servidor (sin datos de pago)');
+        }
+
+        // Paso 2: POST directo a PayPhone desde el browser
+        const ppResp = await withTimeout(
+          fetch(result.payPhoneUrl, {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + result.payPhoneToken,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(result.payPhoneBody),
+          }),
+          15000, 'payphone-prepare'
+        );
+        let ppData;
+        try { ppData = await ppResp.json(); } catch {
+          const txt = await ppResp.text().catch(() => '');
+          throw new Error('PayPhone respondió ' + ppResp.status + ': ' + txt.substring(0, 200));
+        }
+        if (!ppResp.ok) {
+          throw new Error('PayPhone ' + ppResp.status + ': ' + (ppData.message || JSON.stringify(ppData).substring(0, 200)));
+        }
+        if (ppData.payWithCard) {
           this.tab = 'pay-processing';
-          window.location.href = result.paymentUrl;
+          window.location.href = ppData.payWithCard;
         } else {
-          throw new Error('Respuesta inválida del servidor (sin paymentUrl)');
+          throw new Error('Respuesta de PayPhone sin URL de pago');
         }
       } catch (e) {
         console.warn('[initiatePayment]', e.message);
