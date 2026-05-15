@@ -2332,9 +2332,189 @@
       box-shadow: 0 0 18px rgba(0,240,255,0.18);
     }
     .es-cta-arrow svg { animation: es-arrow-bounce 1.4s ease-in-out infinite; }
+
+    /* ─── Install Gate (cuando se abre en navegador, no instalado) ─── */
+    #install-gate { display: none; }
+    html.browser-mode #install-gate {
+      display: flex; flex-direction: column;
+      position: fixed; inset: 0; z-index: 99998;
+      background: #0A0A0F; color: #fff;
+      align-items: center; justify-content: center;
+      padding: 32px 24px;
+      overflow-y: auto;
+    }
+    html.browser-mode #app, html.browser-mode #zepo-splash { display: none !important; }
+    .ig-stage { position: relative; width: 112px; height: 112px; display: flex; align-items: center; justify-content: center; margin-bottom: 28px; }
+    .ig-ring {
+      position: absolute; inset: 0; border-radius: 50%;
+      background: conic-gradient(from 0deg, transparent 0deg, transparent 220deg, #00F0FF 285deg, #7000FF 350deg, transparent 360deg);
+      -webkit-mask: radial-gradient(circle, transparent 50px, #000 52px);
+              mask: radial-gradient(circle, transparent 50px, #000 52px);
+      animation: cd-spin 3.5s linear infinite;
+      filter: drop-shadow(0 0 12px rgba(0, 240, 255, 0.35));
+    }
+    .ig-logo {
+      position: relative; width: 80px; height: 80px; border-radius: 22px;
+      background: linear-gradient(135deg, #00F0FF, #7000FF);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 40px; color: #0A0A0F; letter-spacing: -2px;
+      box-shadow: 0 8px 32px rgba(0, 240, 255, 0.18);
+    }
+    .ig-title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; text-align: center; margin-bottom: 6px; }
+    .ig-title .grad { background: linear-gradient(135deg, #00F0FF, #7000FF); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .ig-sub { font-size: 14px; color: #8888AA; text-align: center; max-width: 320px; line-height: 1.5; margin-bottom: 28px; }
+    .ig-card {
+      width: 100%; max-width: 360px;
+      background: #13131A; border: 1px solid #1E1E2E;
+      border-radius: 18px; padding: 20px;
+      margin-bottom: 14px;
+    }
+    .ig-step { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+    .ig-step:last-child { margin-bottom: 0; }
+    .ig-step-num {
+      flex: 0 0 26px; width: 26px; height: 26px; border-radius: 50%;
+      background: linear-gradient(135deg, #00F0FF, #7000FF); color: #0A0A0F;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 13px;
+    }
+    .ig-step-text { font-size: 14px; line-height: 1.5; color: #D8D8E5; }
+    .ig-step-text b { color: #fff; }
+    .ig-step-icon { display: inline-flex; vertical-align: middle; margin: 0 3px; }
+    .ig-btn {
+      width: 100%; max-width: 360px;
+      padding: 16px 20px; border-radius: 14px;
+      background: linear-gradient(135deg, #00F0FF, #7000FF);
+      color: #0A0A0F; font-weight: 800; font-size: 15px;
+      border: none; cursor: pointer;
+      box-shadow: 0 8px 24px rgba(0, 240, 255, 0.22);
+      letter-spacing: 0.2px;
+    }
+    .ig-btn:active { transform: scale(0.98); }
+    .ig-foot { margin-top: 18px; font-size: 12px; color: #5A5A75; text-align: center; }
+    .ig-tabs { display: flex; gap: 6px; background: #13131A; border: 1px solid #1E1E2E; border-radius: 12px; padding: 4px; margin-bottom: 18px; }
+    .ig-tab { flex: 1; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 700; color: #8888AA; text-align: center; cursor: pointer; transition: all 0.15s; }
+    .ig-tab.active { background: #1E1E2E; color: #fff; }
   </style>
 </head>
 <body>
+
+<!-- ░░░ INSTALL GATE — visible solo cuando se abre en navegador (no instalado) ░░░ -->
+<div id="install-gate">
+  <div class="ig-stage">
+    <div class="ig-ring"></div>
+    <div class="ig-logo">Z</div>
+  </div>
+  <h1 class="ig-title">Instala <span class="grad">Zepo</span></h1>
+  <p class="ig-sub">Zepo es una app. Para usarla, instálala en tu pantalla de inicio.</p>
+
+  <div id="ig-tabs" class="ig-tabs" style="display:none;">
+    <div class="ig-tab" data-platform="android">Android</div>
+    <div class="ig-tab" data-platform="ios">iPhone</div>
+  </div>
+
+  <!-- Android / Chrome instalable -->
+  <div id="ig-android" class="ig-card" style="display:none;">
+    <div class="ig-step">
+      <div class="ig-step-num">1</div>
+      <div class="ig-step-text">Toca el botón <b>Instalar app</b> abajo.</div>
+    </div>
+    <div class="ig-step">
+      <div class="ig-step-num">2</div>
+      <div class="ig-step-text">Confirma <b>Instalar</b> en el aviso del navegador.</div>
+    </div>
+    <div class="ig-step">
+      <div class="ig-step-num">3</div>
+      <div class="ig-step-text">Abre Zepo desde el ícono de tu pantalla de inicio.</div>
+    </div>
+  </div>
+
+  <!-- iOS / Safari instalable solo manual -->
+  <div id="ig-ios" class="ig-card" style="display:none;">
+    <div class="ig-step">
+      <div class="ig-step-num">1</div>
+      <div class="ig-step-text">Toca el botón <b>Compartir</b>
+        <span class="ig-step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M20 14v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6"/></svg></span>
+        abajo en Safari.</div>
+    </div>
+    <div class="ig-step">
+      <div class="ig-step-num">2</div>
+      <div class="ig-step-text">Selecciona <b>Añadir a inicio</b>
+        <span class="ig-step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8"/><path d="M8 12h8"/></svg></span>.</div>
+    </div>
+    <div class="ig-step">
+      <div class="ig-step-num">3</div>
+      <div class="ig-step-text">Toca <b>Añadir</b> y abre Zepo desde tu pantalla de inicio.</div>
+    </div>
+  </div>
+
+  <!-- Desktop -->
+  <div id="ig-desktop" class="ig-card" style="display:none;">
+    <div class="ig-step">
+      <div class="ig-step-num">·</div>
+      <div class="ig-step-text">Zepo está pensado para celular. Abre <b>zepo.lynoia.com</b> desde tu teléfono para instalar.</div>
+    </div>
+  </div>
+
+  <button id="ig-install-btn" class="ig-btn" style="display:none;">Instalar app</button>
+  <div class="ig-foot">Una vez instalado, ya no verás esta pantalla.</div>
+</div>
+
+<script>
+  (function() {
+    var isStandalone = window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true
+      || document.referrer.indexOf('android-app://') === 0;
+    if (isStandalone) return;
+    document.documentElement.classList.add('browser-mode');
+
+    var ua = navigator.userAgent || '';
+    var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+    var isAndroid = /Android/.test(ua);
+    var isMobile = isIOS || isAndroid || /Mobile/.test(ua);
+
+    function showPanel(p) {
+      document.getElementById('ig-android').style.display = (p === 'android') ? 'block' : 'none';
+      document.getElementById('ig-ios').style.display = (p === 'ios') ? 'block' : 'none';
+      document.getElementById('ig-desktop').style.display = (p === 'desktop') ? 'block' : 'none';
+      document.getElementById('ig-install-btn').style.display = (p === 'android') ? 'block' : 'none';
+      var tabs = document.querySelectorAll('#ig-tabs .ig-tab');
+      tabs.forEach(function(t) {
+        t.classList.toggle('active', t.getAttribute('data-platform') === p);
+      });
+    }
+
+    if (!isMobile) {
+      showPanel('desktop');
+    } else {
+      // Mobile: mostrar tabs y panel correspondiente
+      document.getElementById('ig-tabs').style.display = 'flex';
+      showPanel(isIOS ? 'ios' : 'android');
+      document.querySelectorAll('#ig-tabs .ig-tab').forEach(function(t) {
+        t.addEventListener('click', function() { showPanel(t.getAttribute('data-platform')); });
+      });
+    }
+
+    var deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      deferredPrompt = e;
+    });
+
+    document.getElementById('ig-install-btn').addEventListener('click', function() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function() { deferredPrompt = null; });
+      } else {
+        // Fallback: instrucciones manuales Android
+        alert('Abre el menú del navegador (⋮) y toca "Instalar app" o "Añadir a pantalla de inicio".');
+      }
+    });
+
+    window.addEventListener('appinstalled', function() {
+      document.documentElement.classList.remove('browser-mode');
+    });
+  })();
+</script>
 <!-- ═══════════════════ ALPINE APP ═══════════════════ -->
 <div id="app" x-data="zepoApp()" x-init="init()">
 
@@ -2349,7 +2529,6 @@
       <div class="zepo-splash-ring"></div>
       <div class="zepo-splash-logo">Z</div>
     </div>
-    <div class="zepo-splash-name">Zepo</div>
   </div>
 
   <!-- ░░░ AUTH: LOGIN / SIGNUP ░░░ -->
