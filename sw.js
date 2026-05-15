@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zepo-v13';
+const CACHE_NAME = 'zepo-v14';
 const ASSETS = [
   './manifest.json',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',

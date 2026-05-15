@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, interactive-widget=overlays-content">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#0A0A0F">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -4937,6 +4937,7 @@
               <!-- Text wrap -->
               <div class="bib-textwrap">
                 <textarea
+                  id="bib-input"
                   x-model="form.description"
                   @keydown.enter.prevent="analyzeTextInput()"
                   :placeholder="(receiptFile || importedFile) ? 'Contexto opcional · luego toca →' : 'café 5, taxi 8.50…'"
@@ -7254,6 +7255,10 @@ function zepoApp() {
       };
       this.removeReceipt();
       this.sheetOpen = true;
+      this.$nextTick(() => {
+        const el = document.getElementById('bib-input');
+        if (el) el.focus();
+      });
     },
 
     openEdit(exp) {
