@@ -217,14 +217,14 @@
     .tab-bar {
       position: absolute;
       bottom: 0; left: 0; right: 0;
-      height: 84px;
+      min-height: 60px;
       background: var(--surface);
       border-top: 1px solid var(--border);
       display: flex;
       justify-content: space-around;
       align-items: center;
       padding-top: 8px;
-      padding-bottom: calc(var(--safe-bottom) + 24px);
+      padding-bottom: max(env(safe-area-inset-bottom), 12px);
       z-index: 50;
     }
     .tab-item {
@@ -5886,21 +5886,22 @@ function zepoApp() {
       if (session) {
         this.user = session.user;
         this.userName = session.user.user_metadata?.name || session.user.user_metadata?.full_name || session.user.email.split('@')[0];
-        try { await withTimeout(this.ensureUserRow(), 5000, 'ensureUserRow'); }
-        catch (e) { console.warn('[init] ensureUserRow falló:', e?.message); }
-        // allSettled: si una query falla, el resto sigue. El splash NO se queda colgado.
-        try {
-          await Promise.allSettled([
+        // Soltar splash YA: el usuario ve home con skeletons mientras carga data en background
+        this.authReady = true;
+        this.dataReady = true;
+        // ensureUserRow + data en background (no bloquea splash)
+        (async () => {
+          try { await withTimeout(this.ensureUserRow(), 5000, 'ensureUserRow'); }
+          catch (e) { console.warn('[init bg] ensureUserRow falló:', e?.message); }
+          Promise.allSettled([
             withTimeout(this.loadExpenses(), 6000, 'loadExpenses'),
             withTimeout(this.loadSplits(), 6000, 'loadSplits'),
             withTimeout(this.loadBudgets(), 6000, 'loadBudgets'),
             withTimeout(this.loadUserPlan(), 6000, 'loadUserPlan'),
           ]);
-        } catch (e) { console.warn('[init] data load falló:', e?.message); }
-        this.authReady = true;
-        this.dataReady = true;
-        try { this.handlePaymentReturn(); } catch (e) { console.warn('[init] handlePaymentReturn:', e?.message); }
-        try { this.initWelcomeCarousel(); } catch (e) { console.warn('[init] initWelcomeCarousel:', e?.message); }
+          try { this.handlePaymentReturn(); } catch (e) { console.warn('[init bg] handlePaymentReturn:', e?.message); }
+          try { this.initWelcomeCarousel(); } catch (e) { console.warn('[init bg] initWelcomeCarousel:', e?.message); }
+        })();
       } else {
         this.authReady = true;
         this.dataReady = true;
