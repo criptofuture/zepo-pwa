@@ -4293,7 +4293,7 @@
               </div>
 
               <!-- ═════════ ITEMS DETECTADOS (incluye 1 solo) ═════════ -->
-              <div x-show="!editingExpense && parsedItems.length >= 1 && !receiptPreview && !importedFile" style="margin-bottom:14px;">
+              <div x-show="!editingExpense && parsedItems.length >= 1 && !importedFile" style="margin-bottom:14px;">
                 <div class="cd-section-label" style="display:flex;align-items:center;justify-content:space-between;">
                   <span><span x-text="parsedItems.length"></span> <span x-text="parsedItems.length === 1 ? 'ELEMENTO DETECTADO' : 'ELEMENTOS DETECTADOS'"></span></span>
                   <span x-show="parsedItems.length >= 2" style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:0.4px;">SE GUARDARÁN POR SEPARADO</span>
@@ -4348,8 +4348,14 @@
                       </div>
                     </div>
 
-                    <!-- Extracted data (shown after analysis) -->
-                    <div x-show="analyzed && form.amount" style="margin-top:16px;">
+                    <!-- Analizar CTA (before analysis) -->
+                    <button type="button" x-show="!analyzed && !analyzing && parsedItems.length === 0" @click="analyzeTextInput()" :disabled="analyzing" style="width:100%;margin-top:14px;padding:14px;border-radius:14px;background:linear-gradient(135deg, var(--cyan), var(--purple));border:none;color:#000;font-weight:800;font-size:14px;letter-spacing:0.3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" width="16" height="16"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                      <span x-text="form.description ? 'Analizar foto + contexto' : 'Analizar foto'"></span>
+                    </button>
+
+                    <!-- Extracted data legacy (shown after analysis si no hay parsedItems) -->
+                    <div x-show="analyzed && form.amount && parsedItems.length === 0" style="margin-top:16px;">
                       <div class="cd-section-label">DATOS EXTRAÍDOS</div>
                       <div style="background:var(--surface);border-radius:14px;border:1px solid var(--border);padding:4px 0;">
                         <div class="cd-extracted-row">
@@ -4401,9 +4407,46 @@
                         <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="importedFile.name"></div>
                         <div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace;" x-text="importedFile.meta"></div>
                       </div>
-                      <button @click="importedFile = null" style="background:none;border:none;cursor:pointer;padding:4px;">
+                      <button @click="importedFile = null; parsedItems = []; analyzed = false;" style="background:none;border:none;cursor:pointer;padding:4px;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                       </button>
+                    </div>
+
+                    <!-- Analizar CTA archivo -->
+                    <button type="button" x-show="!analyzed && !analyzing && parsedItems.length === 0" @click="analyzeTextInput()" :disabled="analyzing" style="width:100%;margin-top:14px;padding:14px;border-radius:14px;background:linear-gradient(135deg, var(--cyan), var(--purple));border:none;color:#000;font-weight:800;font-size:14px;letter-spacing:0.3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" width="16" height="16"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                      <span x-text="form.description ? 'Analizar archivo + contexto' : 'Analizar archivo'"></span>
+                    </button>
+
+                    <!-- Loading state -->
+                    <div x-show="analyzing" style="margin-top:14px;padding:12px;border-radius:12px;background:rgba(0,240,255,0.06);border:1px solid rgba(0,240,255,0.2);display:flex;align-items:center;gap:10px;">
+                      <svg class="cd-spin" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4" width="16" height="16"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+                      <div style="font-size:12px;color:var(--text);font-weight:600;">Analizando con IA...</div>
+                    </div>
+
+                    <!-- Items detectados (post-analisis) -->
+                    <div x-show="parsedItems.length >= 1" style="margin-top:14px;">
+                      <div class="cd-section-label"><span x-text="parsedItems.length"></span> <span x-text="parsedItems.length === 1 ? 'GASTO DETECTADO' : 'GASTOS DETECTADOS'"></span></div>
+                      <div style="display:flex;flex-direction:column;gap:8px;">
+                        <template x-for="(it, idx) in parsedItems" :key="'imp-' + idx">
+                          <div style="padding:12px;border-radius:14px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+                            <button type="button" @click="openCatPicker(idx)" style="position:relative;width:38px;height:38px;flex-shrink:0;padding:0;border:none;background:transparent;cursor:pointer;">
+                              <div style="width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;" :style="{ background: it.color + '20', border: '1px solid ' + it.color + '40' }" x-text="it.emoji"></div>
+                              <div style="position:absolute;bottom:-3px;right:-3px;width:14px;height:14px;border-radius:7px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="3" width="8" height="8"><polyline points="6 9 12 15 18 9"/></svg>
+                              </div>
+                            </button>
+                            <div style="flex:1;min-width:0;">
+                              <input type="text" x-model="it.description" autocomplete="off" spellcheck="false" style="background:transparent;border:none;outline:none;color:var(--text);font-size:13px;font-weight:600;font-family:inherit;width:100%;padding:0;">
+                              <div style="font-size:10px;color:var(--muted);letter-spacing:0.4px;margin-top:2px;" x-text="it.label.toUpperCase()"></div>
+                            </div>
+                            <input type="number" step="0.01" min="0" x-model.number="it.amount" inputmode="decimal" style="width:80px;text-align:right;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;background:transparent;border:none;outline:none;color:var(--text);font-family:inherit;">
+                            <button type="button" @click="removeParsedItem(idx)" style="width:28px;height:28px;border-radius:14px;background:transparent;border:none;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </button>
+                          </div>
+                        </template>
+                      </div>
                     </div>
 
                     <div x-show="importedFile && importedExpenses.length > 0" style="margin-top:14px;">
@@ -4655,7 +4698,7 @@
                 <textarea
                   x-model="form.description"
                   @keydown.enter.prevent="analyzeTextInput()"
-                  placeholder="café 5, taxi 8.50…"
+                  :placeholder="(receiptFile || importedFile) ? 'Contexto opcional · luego toca →' : 'café 5, taxi 8.50…'"
                   rows="1"
                   autocomplete="off"
                   autocorrect="off"
@@ -4671,7 +4714,7 @@
               </button>
 
               <!-- Enter / Send -->
-              <button type="button" class="bib-send" @click="analyzeTextInput()" :disabled="analyzing || !form.description" title="Procesar">
+              <button type="button" class="bib-send" @click="analyzeTextInput()" :disabled="analyzing || (!form.description && !receiptFile && !importedFile)" :title="(receiptFile || importedFile) ? 'Analizar con IA' : 'Procesar'">
                 <svg x-show="!analyzing" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" width="16" height="16"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 <svg x-show="analyzing" class="cd-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="16" height="16"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
               </button>
@@ -6167,31 +6210,94 @@ function zepoApp() {
 
     // ── Photo Upload ──
     async handlePhoto(event) {
-      const file = event.target.files?.[0];
-      if (!file) return;
-      this.receiptFile = file;
-      this.receiptPreview = URL.createObjectURL(file);
+      try {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        if (file.size > 6 * 1024 * 1024) {
+          this.showToast('Foto muy grande (máx 6MB)');
+          event.target.value = '';
+          return;
+        }
+        if (!/^image\//.test(file.type)) {
+          this.showToast('No es una imagen válida');
+          event.target.value = '';
+          return;
+        }
+        if (this.receiptPreview) { try { URL.revokeObjectURL(this.receiptPreview); } catch (_) {} }
+        this.receiptFile = file;
+        this.receiptPreview = URL.createObjectURL(file);
+        this.importedFile = null;
+        this.parsedItems = [];
+        this.analyzed = false;
+        event.target.value = '';
+      } catch (e) {
+        console.error('[handlePhoto]', e);
+        this.showToast('No se pudo cargar la foto');
+      }
     },
 
     removeReceipt() {
       this.receiptFile = null;
       if (this.receiptPreview) URL.revokeObjectURL(this.receiptPreview);
       this.receiptPreview = null;
+      this.parsedItems = [];
+      this.analyzed = false;
     },
 
     handleFileImport(event) {
-      const file = event.target.files?.[0];
-      if (!file) return;
-      const ext = (file.name.split('.').pop() || '').toUpperCase().slice(0, 4);
-      const sizeKb = Math.round(file.size / 1024);
-      const sizeStr = sizeKb >= 1024 ? (sizeKb / 1024).toFixed(1) + ' MB' : sizeKb + ' KB';
-      this.importedFile = {
-        name: file.name,
-        ext: ext || 'FILE',
-        meta: sizeStr,
-        raw: file,
+      try {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        if (file.size > 6 * 1024 * 1024) {
+          this.showToast('Archivo muy grande (máx 6MB)');
+          event.target.value = '';
+          return;
+        }
+        const ext = (file.name.split('.').pop() || '').toUpperCase().slice(0, 4);
+        const sizeKb = Math.round(file.size / 1024);
+        const sizeStr = sizeKb >= 1024 ? (sizeKb / 1024).toFixed(1) + ' MB' : sizeKb + ' KB';
+        this.importedFile = {
+          name: file.name,
+          ext: ext || 'FILE',
+          meta: sizeStr,
+          raw: file,
+        };
+        this.importedExpenses = [];
+        this.removeReceipt();
+        this.parsedItems = [];
+        this.analyzed = false;
+        event.target.value = '';
+      } catch (e) {
+        console.error('[handleFileImport]', e);
+        this.showToast('No se pudo cargar el archivo');
+      }
+    },
+
+    _fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = String(reader.result || '');
+          const idx = result.indexOf(',');
+          resolve(idx >= 0 ? result.slice(idx + 1) : result);
+        };
+        reader.onerror = () => reject(reader.error || new Error('read_fail'));
+        reader.readAsDataURL(file);
+      });
+    },
+
+    _mimeOf(file, fallback) {
+      const t = (file && file.type) || '';
+      if (t) return t;
+      const name = (file && file.name) || '';
+      const ext = name.split('.').pop().toLowerCase();
+      const map = {
+        pdf: 'application/pdf', csv: 'text/csv', txt: 'text/plain',
+        json: 'application/json', xls: 'application/vnd.ms-excel',
+        xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
       };
-      this.importedExpenses = [];
+      return map[ext] || fallback || 'application/octet-stream';
     },
 
     splitColorPalette: ['#00F0FF', '#7000FF', '#FFB800', '#FF6B6B', '#00E5A0', '#7FB8FF', '#FF8AC4', '#B794F6'],
@@ -6310,7 +6416,7 @@ function zepoApp() {
         }
         const id = kind === 'camera' ? 'plus-camera-input' : 'plus-photo-input';
         const el = document.getElementById(id);
-        if (el) el.click();
+        if (el) { el.value = ''; el.click(); }
       } else if (kind === 'file') {
         if (this.userPlan !== 'elite') {
           this.showFeatureLock(
@@ -6321,7 +6427,7 @@ function zepoApp() {
           return;
         }
         const el = document.getElementById('plus-file-input');
-        if (el) el.click();
+        if (el) { el.value = ''; el.click(); }
       }
     },
 
@@ -7410,44 +7516,127 @@ function zepoApp() {
       return Math.max(0, diff);
     },
 
-    analyzeTextInput() {
-      const text = this.form.description || '';
-      if (!text || text.length < 2) return;
+    async analyzeTextInput() {
+      const text = (this.form.description || '').trim();
+      const hasMedia = !!(this.receiptFile || (this.importedFile && this.importedFile.raw));
+      if (!text && !hasMedia) return;
+      if (this.analyzing) return;
       this.analyzing = true;
       this.parsedItems = [];
-      setTimeout(() => {
-        const items = this.splitItems(text);
-        if (items.length >= 2) {
-          // Multi-item flow: parse each segment separately
-          const parsed = items.map(s => this.parseSingleItem(s)).filter(it => it.amount > 0);
-          if (parsed.length >= 2) {
-            // Detect global is_income from majority
-            const incCount = parsed.filter(p => p.is_income).length;
-            this.form.is_income = incCount > parsed.length / 2;
-            this.parsedItems = parsed;
-            this.form.amount = parsed.reduce((s, p) => s + p.amount, 0).toFixed(2);
-            // Use first item to fill single-form fields (in case user saves as one)
-            this.form.category = parsed[0].category;
-            this.analyzing = false;
-            this.analyzed = true;
-            return;
-          }
+      try {
+        const ok = await this._analyzeWithGemini(text, this.receiptFile, this.importedFile?.raw);
+        if (!ok && !hasMedia) {
+          // Fallback regex SOLO si no hay foto/archivo (no podemos parsearlos sin LLM)
+          this._analyzeLocal(text);
+        } else if (!ok) {
+          this.showToast('No se pudo analizar · revisa tu conexión');
         }
-        // Fallback single item: también poblar parsedItems con 1 fila para que use la misma vista
-        const single = this.parseSingleItem(text);
-        if (single.amount > 0) {
-          this.form.is_income = single.is_income;
-          this.parsedItems = [single];
-          this.form.amount = single.amount.toFixed(2);
-          this.form.category = single.category;
-          // No tocar form.description — el input bar mantiene el texto original que escribio el usuario
+      } catch (e) {
+        console.error('[analyze]', e);
+        if (!hasMedia) {
+          this._analyzeLocal(text);
         } else {
-          // Sin monto detectado: caer al parser legacy que llena form sin items
-          this.parseVoiceText(text);
+          this.showToast('Error analizando · intenta de nuevo');
         }
+      } finally {
         this.analyzing = false;
         this.analyzed = true;
-      }, 600);
+      }
+    },
+
+    async _analyzeWithGemini(text, imageFile, docFile) {
+      try {
+        const body = {};
+        if (text) body.prompt = text;
+        if (imageFile) {
+          body.image = await this._fileToBase64(imageFile);
+          body.image_mime = this._mimeOf(imageFile, 'image/jpeg');
+        }
+        if (docFile) {
+          const mime = this._mimeOf(docFile, 'application/pdf');
+          // Gemini soporta nativamente imagenes y pdf inline. CSV/JSON/TXT van como texto.
+          if (mime.startsWith('image/')) {
+            body.image = await this._fileToBase64(docFile);
+            body.image_mime = mime;
+          } else if (mime === 'application/pdf') {
+            body.file = await this._fileToBase64(docFile);
+            body.file_mime = mime;
+          } else {
+            // CSV/TXT/JSON: leer como texto y meter en prompt
+            const txt = await docFile.text();
+            const truncated = txt.slice(0, 30000);
+            body.prompt = (body.prompt ? body.prompt + '\n\n' : '') + 'Contenido del archivo ' + docFile.name + ':\n' + truncated;
+          }
+        }
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) { this.showToast('Sesión expirada · vuelve a entrar'); return false; }
+        const res = await fetch(SUPABASE_URL + '/functions/v1/gemini-analyze', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + session.access_token,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || !Array.isArray(json.items)) {
+          console.warn('[gemini]', res.status, json);
+          return false;
+        }
+        const items = json.items.map(it => {
+          const key = it.category;
+          const cat = CAT_MAP[key] || {};
+          return {
+            amount: parseFloat(it.amount) || 0,
+            description: it.description || '',
+            category: key,
+            is_income: !!it.is_income,
+            emoji: cat.emoji || '✨',
+            label: cat.label || key,
+            color: cat.color || '#8888AA',
+            date: it.date || undefined,
+          };
+        }).filter(it => it.amount > 0 && it.category);
+        if (items.length === 0) {
+          this.showToast(json.note || 'No detecté movimientos · agrega contexto');
+          return false;
+        }
+        const incCount = items.filter(p => p.is_income).length;
+        this.form.is_income = incCount > items.length / 2;
+        this.parsedItems = items;
+        this.form.amount = items.reduce((s, p) => s + p.amount, 0).toFixed(2);
+        this.form.category = items[0].category;
+        // si el modelo devolvio fecha y todos coinciden, usar la del modelo
+        if (items[0].date) this.form.date = items[0].date;
+        return true;
+      } catch (e) {
+        console.error('[gemini-call]', e);
+        return false;
+      }
+    },
+
+    _analyzeLocal(text) {
+      const items = this.splitItems(text);
+      if (items.length >= 2) {
+        const parsed = items.map(s => this.parseSingleItem(s)).filter(it => it.amount > 0);
+        if (parsed.length >= 2) {
+          const incCount = parsed.filter(p => p.is_income).length;
+          this.form.is_income = incCount > parsed.length / 2;
+          this.parsedItems = parsed;
+          this.form.amount = parsed.reduce((s, p) => s + p.amount, 0).toFixed(2);
+          this.form.category = parsed[0].category;
+          return;
+        }
+      }
+      const single = this.parseSingleItem(text);
+      if (single.amount > 0) {
+        this.form.is_income = single.is_income;
+        this.parsedItems = [single];
+        this.form.amount = single.amount.toFixed(2);
+        this.form.category = single.category;
+      } else {
+        this.parseVoiceText(text);
+      }
     },
 
     splitItems(text) {
