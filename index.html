@@ -2296,8 +2296,17 @@
     Sin conexion — mostrando datos guardados
   </div>
 
+  <!-- ░░░ SPLASH: mientras carga la sesion ░░░ -->
+  <div x-show="!authReady" x-cloak class="zepo-splash" style="position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;">
+    <div style="width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--cyan),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:32px;color:#000;letter-spacing:-1px;">Z</div>
+    <div style="font-size:13px;color:var(--muted);letter-spacing:0.4px;font-weight:600;">Zepo</div>
+    <div style="margin-top:6px;width:32px;height:32px;">
+      <svg class="cd-spin" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="32" height="32"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+    </div>
+  </div>
+
   <!-- ░░░ AUTH: LOGIN / SIGNUP ░░░ -->
-  <template x-if="!user">
+  <template x-if="authReady && !user">
     <div class="auth-screen">
       <div class="auth-logo-row" style="margin-bottom:40px;">
         <div class="auth-logo" style="width:36px;height:36px;border-radius:10px;font-size:20px;"><span class="gradient-text">Z</span></div>
@@ -5450,6 +5459,7 @@ function zepoApp() {
   return {
     user: null,
     userName: '',
+    authReady: false,
     tab: 'home',
     prevTab: 'home',
     offline: !navigator.onLine,
@@ -5631,10 +5641,13 @@ function zepoApp() {
       if (session) {
         this.user = session.user;
         this.userName = session.user.user_metadata?.name || session.user.user_metadata?.full_name || session.user.email.split('@')[0];
+        this.authReady = true;
         await this.ensureUserRow();
         await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadBudgets(), this.loadUserPlan()]);
         this.handlePaymentReturn();
         this.initWelcomeCarousel();
+      } else {
+        this.authReady = true;
       }
 
       // Limpia tokens de OAuth en el hash para que la URL quede limpia
