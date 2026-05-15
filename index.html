@@ -5886,22 +5886,21 @@ function zepoApp() {
       if (session) {
         this.user = session.user;
         this.userName = session.user.user_metadata?.name || session.user.user_metadata?.full_name || session.user.email.split('@')[0];
-        // Soltar splash YA: el usuario ve home con skeletons mientras carga data en background
+        // ensureUserRow corre EN PARALELO con queries (no son interdependientes)
+        // y timeouts mas cortos (3s) para no bloquear UI si red anda lenta.
+        try {
+          await Promise.allSettled([
+            withTimeout(this.ensureUserRow(), 3000, 'ensureUserRow'),
+            withTimeout(this.loadExpenses(), 3000, 'loadExpenses'),
+            withTimeout(this.loadSplits(), 3000, 'loadSplits'),
+            withTimeout(this.loadBudgets(), 3000, 'loadBudgets'),
+            withTimeout(this.loadUserPlan(), 3000, 'loadUserPlan'),
+          ]);
+        } catch (e) { console.warn('[init] data load fallo:', e?.message); }
         this.authReady = true;
         this.dataReady = true;
-        // ensureUserRow + data en background (no bloquea splash)
-        (async () => {
-          try { await withTimeout(this.ensureUserRow(), 5000, 'ensureUserRow'); }
-          catch (e) { console.warn('[init bg] ensureUserRow falló:', e?.message); }
-          Promise.allSettled([
-            withTimeout(this.loadExpenses(), 6000, 'loadExpenses'),
-            withTimeout(this.loadSplits(), 6000, 'loadSplits'),
-            withTimeout(this.loadBudgets(), 6000, 'loadBudgets'),
-            withTimeout(this.loadUserPlan(), 6000, 'loadUserPlan'),
-          ]);
-          try { this.handlePaymentReturn(); } catch (e) { console.warn('[init bg] handlePaymentReturn:', e?.message); }
-          try { this.initWelcomeCarousel(); } catch (e) { console.warn('[init bg] initWelcomeCarousel:', e?.message); }
-        })();
+        try { this.handlePaymentReturn(); } catch (e) { console.warn('[init] handlePaymentReturn:', e?.message); }
+        try { this.initWelcomeCarousel(); } catch (e) { console.warn('[init] initWelcomeCarousel:', e?.message); }
       } else {
         this.authReady = true;
         this.dataReady = true;
