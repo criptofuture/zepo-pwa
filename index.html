@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, interactive-widget=overlays-content">
   <meta name="theme-color" content="#0A0A0F">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -890,12 +890,14 @@
 
     /* ─── Bottom input bar (Añadir registro) ─── */
     .bottom-input-bar {
-      position: fixed; left: 0; right: 0; bottom: 0;
+      position: fixed; left: 0; right: 0;
+      bottom: var(--kb, 0px);
       max-width: 480px; margin: 0 auto;
       padding: 10px 14px calc(10px + env(safe-area-inset-bottom)) 14px;
       background: linear-gradient(180deg, rgba(10,10,15,0) 0%, var(--bg) 35%);
       display: flex; align-items: flex-end; gap: 8px;
       z-index: 110;
+      transition: bottom 0.12s linear;
     }
     .bib-plus, .bib-mic, .bib-send {
       width: 40px; height: 40px; border-radius: 20px;
@@ -2513,6 +2515,19 @@
     window.addEventListener('appinstalled', function() {
       document.documentElement.classList.remove('browser-mode');
     });
+  })();
+
+  // ─── Keyboard tracker: eleva SOLO el bottom-input-bar cuando teclado abre ───
+  (function() {
+    var vv = window.visualViewport;
+    if (!vv) return;
+    function sync() {
+      var offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      document.documentElement.style.setProperty('--kb', offset + 'px');
+    }
+    vv.addEventListener('resize', sync);
+    vv.addEventListener('scroll', sync);
+    sync();
   })();
 </script>
 <!-- ═══════════════════ ALPINE APP ═══════════════════ -->
