@@ -5858,6 +5858,16 @@ function zepoApp() {
         }
       });
 
+      // Safety net: pase lo que pase, despues de 8s el splash se quita.
+      // Si algo se cuelga (red, RLS, Supabase down), el usuario al menos ve el app.
+      const safetyTimer = setTimeout(() => {
+        if (!this.authReady || !this.dataReady) {
+          console.warn('[init] safety timeout — forzando entrada');
+          this.authReady = true;
+          this.dataReady = true;
+        }
+      }, 8000);
+
       let session = null;
       try {
         const r = await withTimeout(sb.auth.getSession(), 4000, 'getSession');
@@ -5875,16 +5885,26 @@ function zepoApp() {
       if (session) {
         this.user = session.user;
         this.userName = session.user.user_metadata?.name || session.user.user_metadata?.full_name || session.user.email.split('@')[0];
-        await this.ensureUserRow();
-        await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadBudgets(), this.loadUserPlan()]);
+        try { await withTimeout(this.ensureUserRow(), 5000, 'ensureUserRow'); }
+        catch (e) { console.warn('[init] ensureUserRow falló:', e?.message); }
+        // allSettled: si una query falla, el resto sigue. El splash NO se queda colgado.
+        try {
+          await Promise.allSettled([
+            withTimeout(this.loadExpenses(), 6000, 'loadExpenses'),
+            withTimeout(this.loadSplits(), 6000, 'loadSplits'),
+            withTimeout(this.loadBudgets(), 6000, 'loadBudgets'),
+            withTimeout(this.loadUserPlan(), 6000, 'loadUserPlan'),
+          ]);
+        } catch (e) { console.warn('[init] data load falló:', e?.message); }
         this.authReady = true;
         this.dataReady = true;
-        this.handlePaymentReturn();
-        this.initWelcomeCarousel();
+        try { this.handlePaymentReturn(); } catch (e) { console.warn('[init] handlePaymentReturn:', e?.message); }
+        try { this.initWelcomeCarousel(); } catch (e) { console.warn('[init] initWelcomeCarousel:', e?.message); }
       } else {
         this.authReady = true;
         this.dataReady = true;
       }
+      clearTimeout(safetyTimer);
 
       // Limpia tokens de OAuth en el hash para que la URL quede limpia
       if (window.location.hash && window.location.hash.includes('access_token=')) {
@@ -5900,11 +5920,18 @@ function zepoApp() {
       sb.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
           this.user = session.user;
-          this.userName = session.user.user_metadata?.name || session.user.email.split('@')[0];
-          await this.ensureUserRow();
-          this.loadExpenses();
-          this.loadUserPlan();
-          this.initWelcomeCarousel();
+          this.userName = session.user.user_metadata?.name || session.user.user_metadata?.full_name || session.user.email.split('@')[0];
+          try { await withTimeout(this.ensureUserRow(), 5000, 'ensureUserRow-signin'); }
+          catch (e) { console.warn('[signin] ensureUserRow:', e?.message); }
+          Promise.allSettled([
+            withTimeout(this.loadExpenses(), 6000, 'loadExpenses-signin'),
+            withTimeout(this.loadSplits(), 6000, 'loadSplits-signin'),
+            withTimeout(this.loadBudgets(), 6000, 'loadBudgets-signin'),
+            withTimeout(this.loadUserPlan(), 6000, 'loadUserPlan-signin'),
+          ]);
+          this.authReady = true;
+          this.dataReady = true;
+          try { this.initWelcomeCarousel(); } catch (e) { console.warn('[signin] welcome:', e?.message); }
         }
         if (event === 'SIGNED_OUT') {
           this.user = null;
