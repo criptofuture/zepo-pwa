@@ -432,8 +432,9 @@
     .dash-period-btn.active {
       background: var(--bg); color: var(--text);
     }
-    .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 110px; }
-    .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .bar-chart { display: flex; align-items: stretch; gap: 8px; height: 140px; padding-bottom: 4px; }
+    .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; height: 100%; }
+    .bar-fill-wrap { width: 100%; flex: 1; display: flex; flex-direction: column; justify-content: flex-end; }
     .bar-fill { width: 100%; border-radius: 4px; min-height: 4px; transition: height 0.4s; }
     .bar-label { font-size: 10px; color: var(--dim); }
     .insight-card {
@@ -495,8 +496,8 @@
     }
     .hero-progress-marker {
       position: absolute; top: -4px; width: 2px; height: 14px;
-      background: var(--text); border-radius: 1px; z-index: 2;
-      box-shadow: 0 0 0 2px var(--bg);
+      background: var(--cyan); border-radius: 1px; z-index: 2;
+      box-shadow: 0 0 0 2px var(--bg), 0 0 6px rgba(0,240,255,0.6);
       transform: translateX(-1px);
     }
     .hero-progress-labels {
@@ -839,6 +840,232 @@
     .cd-send-btn svg { stroke: #0A0A0F; }
     @keyframes cd-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .cd-send-btn .cd-spin { animation: cd-spin 0.8s linear infinite; }
+
+    /* ─── Bottom input bar (Añadir registro) ─── */
+    .bottom-input-bar {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      max-width: 480px; margin: 0 auto;
+      padding: 10px 14px calc(10px + env(safe-area-inset-bottom)) 14px;
+      background: linear-gradient(180deg, rgba(10,10,15,0) 0%, var(--bg) 35%);
+      display: flex; align-items: flex-end; gap: 8px;
+      z-index: 110;
+    }
+    .bib-plus, .bib-mic, .bib-send {
+      width: 40px; height: 40px; border-radius: 20px;
+      display: inline-flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0;
+      font-family: inherit; padding: 0; border: none;
+      transition: transform 0.12s, background 0.15s;
+    }
+    .bib-plus {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .bib-plus:active { transform: scale(0.92); }
+    .bib-plus.is-open { background: rgba(0,240,255,0.12); border-color: var(--cyan); color: var(--cyan); }
+    .bib-mic {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--muted);
+      position: relative;
+    }
+    .bib-mic.recording { background: rgba(255,77,109,0.15); border-color: var(--danger); color: var(--danger); }
+    .bib-mic .lock-badge {
+      position: absolute; bottom: -3px; right: -3px;
+      width: 12px; height: 12px; padding: 1px;
+      background: var(--bg); border-radius: 50%;
+    }
+    .bib-send {
+      background: var(--gradient); color: #0A0A0F;
+      box-shadow: 0 2px 12px rgba(0,240,255,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
+    }
+    .bib-send:disabled { opacity: 0.35; box-shadow: none; cursor: not-allowed; }
+    .bib-send:active:not(:disabled) { transform: scale(0.92); }
+    .bib-textwrap {
+      flex: 1; min-width: 0;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+      padding: 6px 14px;
+      display: flex; align-items: center;
+      min-height: 40px;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+    .bib-textwrap:focus-within {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(0,240,255,0.08);
+    }
+    .bib-textwrap textarea {
+      width: 100%; background: transparent; border: none; outline: none; resize: none;
+      color: var(--text); font-family: inherit; font-size: 15px; line-height: 1.4;
+      max-height: 100px; overflow-y: auto; padding: 4px 0;
+    }
+    .bib-textwrap textarea::placeholder { color: var(--dim); }
+
+    /* Mini-menu flotante para "+" — alineado al + del bottom-input-bar */
+    .plus-menu {
+      position: fixed;
+      left: max(14px, calc(50% - 226px));
+      bottom: calc(64px + env(safe-area-inset-bottom));
+      width: 240px; max-width: calc(100vw - 28px);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 6px;
+      display: flex; flex-direction: column; gap: 2px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.55);
+      z-index: 112;
+      animation: plus-menu-in 0.16s ease-out;
+    }
+    @keyframes plus-menu-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .plus-menu-item-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .plus-menu-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 10px;
+      background: transparent; border: none; cursor: pointer;
+      color: var(--text); font-size: 14px; font-weight: 500;
+      font-family: inherit; text-align: left;
+      transition: background 0.12s;
+    }
+    .plus-menu-item:hover { background: var(--surface2); }
+    .plus-menu-item svg { stroke: var(--cyan); flex-shrink: 0; }
+    .plus-menu-item .lock-mini {
+      margin-left: auto; width: 12px; height: 12px;
+      stroke: var(--muted);
+    }
+    .plus-menu-backdrop {
+      position: fixed; inset: 0; z-index: 111; background: transparent;
+    }
+
+    /* ─── Boton compacto de "editar categoria" sobre icono de gasto/ingreso ─── */
+    .cat-edit-btn {
+      position: relative; flex-shrink: 0;
+      width: 40px; height: 40px; padding: 0;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .cat-edit-btn.sm {
+      width: 32px; height: 32px;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+    .cat-edit-badge {
+      position: absolute; bottom: -3px; right: -3px;
+      width: 14px; height: 14px; border-radius: 7px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ─── Saving overlay (resistente a Alpine x-show que strippea display:flex inline) ─── */
+    .saving-overlay-centered {
+      display: flex !important;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .saving-overlay-centered[style*="display: none"],
+    .saving-overlay-centered[style*="display:none"] { display: none !important; }
+
+    /* ─── Category picker sheet (parsedItems) ─── */
+    .cat-picker-backdrop {
+      position: fixed; inset: 0; z-index: 130;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(2px);
+      animation: cat-picker-fade 0.18s ease-out;
+    }
+    .cat-picker-sheet {
+      position: fixed; left: 50%; top: 50%;
+      width: calc(100% - 28px); max-width: 420px;
+      background: var(--surface);
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      padding: 14px 16px 18px;
+      z-index: 131;
+      max-height: 75vh; overflow-y: auto;
+      box-shadow: 0 24px 70px rgba(0,0,0,0.55);
+      animation: cat-picker-pop 0.22s cubic-bezier(.2,.8,.2,1) forwards;
+    }
+    .cat-picker-sheet.is-drill {
+      max-width: 460px; max-height: 75vh;
+      padding: 12px 14px 18px;
+    }
+    @keyframes cat-picker-fade { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes cat-picker-pop {
+      from { transform: translate(-50%, -48%) scale(0.96); opacity: 0; }
+      to   { transform: translate(-50%, -50%) scale(1);     opacity: 1; }
+    }
+    .cat-picker-handle { display: none; }
+    .cat-picker-title {
+      font-size: 13px; font-weight: 700; letter-spacing: 0.6px;
+      color: var(--muted); text-transform: uppercase;
+      margin: 0 4px 12px;
+    }
+    .cat-picker-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    }
+    .cat-picker-tile {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 12px 6px; border-radius: 12px;
+      background: var(--bg); border: 1px solid var(--border);
+      cursor: pointer; font-family: inherit;
+      transition: transform 0.12s, background 0.15s, border-color 0.15s;
+    }
+    .cat-picker-tile:active { transform: scale(0.96); }
+    .cat-picker-tile.is-active { font-weight: 700; }
+    .cat-picker-tile-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .cat-picker-tile-label {
+      font-size: 11px; color: var(--text); text-align: center; line-height: 1.2;
+    }
+
+    /* Approve screen necesita padding-bottom para no quedar tapado por la input bar */
+    .approve-screen.with-input-bar { padding-bottom: 96px; }
+
+    /* Monto display siempre visible (en add mode) */
+    .monto-display {
+      padding: 18px 16px; border-radius: 16px; margin-bottom: 12px;
+      background: linear-gradient(135deg, rgba(0,240,255,0.06), rgba(112,0,255,0.06));
+      border: 1px solid rgba(0,240,255,0.2);
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .monto-display-label {
+      font-size: 10px; color: var(--muted); letter-spacing: 1.4px; font-weight: 700;
+    }
+    .monto-display-value {
+      font-size: 32px; font-weight: 800; letter-spacing: -1px;
+      font-variant-numeric: tabular-nums;
+    }
+    .monto-display-value.empty { color: var(--dim); }
+    .monto-display-value.filled { color: var(--text); }
+    .monto-display-hint {
+      font-size: 11px; color: var(--muted);
+    }
+
+    /* Reprocesar preview (editar gasto) */
+    .reprocess-preview {
+      margin-top: 10px; padding: 14px;
+      border-radius: 14px; background: rgba(112,0,255,0.06);
+      border: 1px solid rgba(112,0,255,0.3);
+    }
+    .reprocess-btn {
+      width: 100%; height: 42px; border-radius: 21px;
+      background: rgba(112,0,255,0.10); border: 1px solid rgba(112,0,255,0.4);
+      color: #B794F6; font-weight: 600; font-size: 13px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      cursor: pointer; font-family: inherit;
+      transition: background 0.15s;
+    }
+    .reprocess-btn:hover:not(:disabled) { background: rgba(112,0,255,0.18); }
+    .reprocess-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .approve-close {
       width: 36px; height: 36px; border-radius: 18px;
       background: var(--surface); border: 1px solid var(--border);
@@ -2582,8 +2809,8 @@
               <div class="hero-progress-marker" :style="'left:' + monthPct + '%'"></div>
             </div>
             <div class="hero-progress-labels">
-              <span x-text="spentPct + '% gastado'"></span>
-              <span x-text="monthPct + '% del mes transcurrido'"></span>
+              <span class="gradient-text" style="font-weight:600;" x-text="spentPct + '% gastado'"></span>
+              <span style="color:var(--cyan);font-weight:600;" x-text="monthPct + '% del mes transcurrido'"></span>
             </div>
           </div>
         </div>
@@ -2628,20 +2855,71 @@
           <button class="section-action" @click="tab = 'history'; histAll = true; loadHistory()">Ver todo <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
         </div>
         <div class="expense-list">
-          <template x-for="exp in recentExpenses" :key="exp.id">
-            <div class="expense-row" @click="openEdit(exp)">
-              <div class="expense-icon" :style="'background:' + getCatColor(exp.category) + '15;border:1px solid ' + getCatColor(exp.category) + '30'">
-                <span x-text="getCatEmoji(exp.category)"></span>
-              </div>
-              <div class="expense-info">
-                <div class="expense-desc" x-text="exp.description || getCatLabel(exp.category)"></div>
-                <div class="expense-meta" x-text="formatDate(exp.date)"></div>
-              </div>
-              <svg x-show="exp.receipt_image_path" class="receipt-indicator" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              <div class="expense-amount" :class="{ income: exp.is_income }" x-text="(exp.is_income ? '+' : '-') + '$' + fmtMoney(exp.amount)"></div>
+          <template x-for="g in groupedRecent" :key="g.key">
+            <div>
+              <!-- Grupo de 1 sola entrada: row normal clickeable -->
+              <template x-if="g.items.length === 1">
+                <div class="expense-row" @click="openEdit(g.items[0])">
+                  <button type="button" class="cat-edit-btn" @click.stop="openExpenseCatPicker(g.items[0])" :style="'background:' + getCatColor(g.items[0].category) + '15;border:1px solid ' + getCatColor(g.items[0].category) + '30;'" title="Cambiar categoría">
+                    <span x-text="getCatEmoji(g.items[0].category)"></span>
+                    <span class="cat-edit-badge">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="3" width="7" height="7"><polyline points="6 9 12 15 18 9"/></svg>
+                    </span>
+                  </button>
+                  <div class="expense-info">
+                    <div class="expense-desc" x-text="g.items[0].description || getCatLabel(g.items[0].category)"></div>
+                    <div class="expense-meta" x-text="formatDate(g.items[0].date)"></div>
+                  </div>
+                  <svg x-show="g.items[0].receipt_image_path" class="receipt-indicator" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  <div class="expense-amount" :class="{ income: g.items[0].is_income }" x-text="(g.items[0].is_income ? '+' : '-') + '$' + fmtMoney(g.items[0].amount)"></div>
+                </div>
+              </template>
+
+              <!-- Grupo multi-item: acordeon -->
+              <template x-if="g.items.length >= 2">
+                <div>
+                  <div class="expense-row" @click="toggleGroup(g.key)" style="cursor:pointer;">
+                    <div class="expense-icon" style="background:linear-gradient(135deg, rgba(0,240,255,0.12), rgba(112,0,255,0.12));border:1px solid rgba(0,240,255,0.3);position:relative;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                      <div style="position:absolute;bottom:-3px;right:-3px;background:var(--bg);border:1px solid var(--cyan);border-radius:8px;min-width:16px;height:16px;padding:0 3px;font-size:9px;font-weight:800;color:var(--cyan);display:flex;align-items:center;justify-content:center;" x-text="g.items.length"></div>
+                    </div>
+                    <div class="expense-info">
+                      <div class="expense-desc">
+                        <span x-text="g.items.length + (g.is_income ? ' ingresos' : ' gastos')"></span>
+                        <span style="color:var(--muted);font-weight:500;"> · </span>
+                        <span style="color:var(--muted);font-weight:500;" x-text="g.items.slice(0,3).map(i => i.description || getCatLabel(i.category)).join(', ') + (g.items.length > 3 ? '…' : '')"></span>
+                      </div>
+                      <div class="expense-meta">
+                        <span x-text="formatDate(g.date)"></span>
+                        <span style="margin-left:6px;color:var(--cyan);font-size:10px;font-weight:700;" x-text="openGroups[g.key] ? '▲ ocultar' : '▼ ver detalles'"></span>
+                      </div>
+                    </div>
+                    <div class="expense-amount" :class="{ income: g.is_income }" x-text="(g.is_income ? '+' : '-') + '$' + fmtMoney(g.total)"></div>
+                  </div>
+
+                  <!-- Subregistros expandidos -->
+                  <div x-show="openGroups[g.key]" x-cloak style="margin:0 0 10px 24px;padding:8px 0 8px 14px;border-left:2px dashed rgba(0,240,255,0.3);">
+                    <template x-for="sub in g.items" :key="sub.id">
+                      <div class="expense-row" @click="openEdit(sub)" style="padding:8px 10px;background:transparent;border-bottom:1px solid var(--border);">
+                        <button type="button" class="cat-edit-btn sm" @click.stop="openExpenseCatPicker(sub)" :style="'background:' + getCatColor(sub.category) + '15;border:1px solid ' + getCatColor(sub.category) + '30;'" title="Cambiar categoría">
+                          <span x-text="getCatEmoji(sub.category)"></span>
+                          <span class="cat-edit-badge">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="3" width="7" height="7"><polyline points="6 9 12 15 18 9"/></svg>
+                          </span>
+                        </button>
+                        <div class="expense-info">
+                          <div class="expense-desc" style="font-size:13px;" x-text="sub.description || getCatLabel(sub.category)"></div>
+                          <div class="expense-meta" style="font-size:10px;" x-text="getCatLabel(sub.category)"></div>
+                        </div>
+                        <div class="expense-amount" style="font-size:14px;" :class="{ income: sub.is_income }" x-text="(sub.is_income ? '+' : '-') + '$' + fmtMoney(sub.amount)"></div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
             </div>
           </template>
-          <template x-if="recentExpenses.length === 0">
+          <template x-if="groupedRecent.length === 0">
             <div class="empty-state" style="padding:36px 28px 28px;">
               <div class="es-icon-wrap">
                 <span class="es-spark s1"></span>
@@ -2894,14 +3172,14 @@
             <div class="cd-section-label" style="margin-bottom:10px;">POR CATEGORÍA</div>
             <div style="display:flex;flex-direction:column;gap:8px;">
               <template x-for="b in budgetBars" :key="b.cat">
-                <div style="padding:14px;background:var(--surface);border-radius:14px;border:1px solid var(--border);">
+                <div @click="openCatDrill(b.cat)" style="padding:14px;background:var(--surface);border-radius:14px;border:1px solid var(--border);cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--cyan)'" onmouseout="this.style.borderColor='var(--border)'">
                   <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
                     <div :style="'width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:' + (b.color || 'var(--border)') + '18;border:1px solid ' + (b.color || 'var(--border)') + '30'">
                       <span x-text="b.emoji"></span>
                     </div>
                     <div style="flex:1;min-width:0;">
-                      <div style="font-size:14px;font-weight:600;" x-text="b.label"></div>
-                      <div style="font-size:11px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums;" x-text="'$' + fmtMoney(b.spent) + ' de $' + fmtMoney(b.budget)"></div>
+                      <div style="font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px;" x-text="b.label"></div>
+                      <div style="font-size:11px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums;" x-text="'$' + fmtMoney(b.spent) + ' de $' + fmtMoney(b.budget) + ' · ver gastos →'"></div>
                     </div>
                     <div :style="'font-size:16px;font-weight:800;letter-spacing:-0.4px;font-variant-numeric:tabular-nums;color:' + (b.pct >= 100 ? 'var(--danger)' : b.pct >= 80 ? 'var(--warning)' : 'var(--success)')" x-text="b.pct + '%'"></div>
                   </div>
@@ -2938,6 +3216,50 @@
         </template>
       </div>
 
+      <!-- ══ CATEGORY DRILL-DOWN SHEET (from Presupuestos) ══ -->
+      <template x-if="catDrillKey !== null">
+        <div>
+          <div class="cat-picker-backdrop" @click="closeCatDrill()"></div>
+          <div class="cat-picker-sheet is-drill">
+            <div class="cat-picker-handle"></div>
+            <div style="display:flex;align-items:center;gap:10px;margin:0 4px 14px;">
+              <div :style="'width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;background:' + (getCatColor(catDrillKey) || 'var(--border)') + '18;border:1px solid ' + (getCatColor(catDrillKey) || 'var(--border)') + '30'">
+                <span x-text="getCatEmoji(catDrillKey)"></span>
+              </div>
+              <div style="flex:1;min-width:0;overflow:hidden;">
+                <div style="font-size:15px;font-weight:700;letter-spacing:-0.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="getCatLabel(catDrillKey)"></div>
+                <div style="font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="catDrillExpenses.length + ' gastos · $' + fmtMoney(catDrillTotal) + ' este mes'"></div>
+              </div>
+              <button @click="closeCatDrill()" style="width:32px;height:32px;border-radius:50%;background:var(--bg);border:1px solid var(--border);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <template x-if="catDrillExpenses.length === 0">
+              <div style="padding:30px 12px;text-align:center;color:var(--muted);font-size:13px;">Sin gastos en esta categoría este mes.</div>
+            </template>
+
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <template x-for="exp in catDrillExpenses" :key="exp.id">
+                <div class="expense-row" @click="closeCatDrill(); openEdit(exp);" style="cursor:pointer;background:var(--bg);padding:10px 12px;border-radius:10px;">
+                  <button type="button" class="cat-edit-btn" @click.stop="openExpenseCatPicker(exp)" :style="'background:' + getCatColor(exp.category) + '15;border:1px solid ' + getCatColor(exp.category) + '30;'" title="Cambiar categoría">
+                    <span x-text="getCatEmoji(exp.category)"></span>
+                    <span class="cat-edit-badge">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="3" width="7" height="7"><polyline points="6 9 12 15 18 9"/></svg>
+                    </span>
+                  </button>
+                  <div class="expense-info">
+                    <div class="expense-desc" x-text="exp.description || getCatLabel(exp.category)"></div>
+                    <div class="expense-meta" x-text="formatDate(exp.date)"></div>
+                  </div>
+                  <div class="expense-amount" :class="{ income: exp.is_income }" x-text="(exp.is_income ? '+' : '-') + '$' + fmtMoney(exp.amount)"></div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </template>
+
       <!-- ══ DASHBOARD ══ -->
       <div class="main-content" x-show="tab === 'dash'" x-cloak>
         <div class="page-header">
@@ -2967,7 +3289,9 @@
           <div class="bar-chart">
             <template x-for="(b, bi) in periodChart" :key="bi + '-' + b.label">
               <div class="bar-col">
-                <div class="bar-fill" :style="'height:' + b.pct + '%;background:' + (b.isToday ? 'var(--gradient)' : 'var(--border2)') + (b.isToday ? ';box-shadow:0 0 12px rgba(0,240,255,0.3)' : '')"></div>
+                <div class="bar-fill-wrap">
+                  <div class="bar-fill" :style="'height:' + Math.max(b.pct, b.total > 0 ? 6 : 2) + '%;background:' + (b.isToday ? 'var(--gradient)' : (b.total > 0 ? 'var(--cyan)' : 'var(--border2)')) + (b.isToday ? ';box-shadow:0 0 12px rgba(0,240,255,0.3)' : '')"></div>
+                </div>
                 <div class="bar-label" :style="b.isToday ? 'color:var(--cyan);font-weight:700' : ''" x-text="b.label"></div>
               </div>
             </template>
@@ -3019,6 +3343,68 @@
               <span>Más</span>
             </div>
             <div>Máx día · <span class="mono" style="color:var(--text);font-weight:700;" x-text="'$' + fmtMoney(monthlyDayGrid.max)"></span></div>
+          </div>
+        </div>
+
+        <!-- Meses del año (cuadrantes) — solo en vista año -->
+        <div class="dash-card" x-show="dashPeriod === 'año'">
+          <div class="dash-card-title">Meses del año</div>
+          <div class="dash-card-subtitle">Cuadrantes · un mes cada uno</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;">
+            <template x-for="(m, mi) in yearlyMonthsGrid.months" :key="'ym-' + mi">
+              <div :style="{
+                aspectRatio: '1.1',
+                borderRadius: '10px',
+                position: 'relative',
+                padding: '8px 10px',
+                background: m.isCurrent
+                  ? 'var(--gradient)'
+                  : m.isFuture
+                    ? 'rgba(255,255,255,0.02)'
+                    : (m.total > 0 ? 'rgba(0,240,255,' + (0.08 + m.intensity * 0.42) + ')' : 'var(--surface)'),
+                border: m.isCurrent ? '1px solid var(--cyan)' : '1px solid var(--border)',
+                opacity: m.isFuture ? 0.5 : 1,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }">
+                <div :style="{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.6px', color: m.isCurrent ? '#0A0A0F' : 'var(--dim)', textTransform: 'uppercase' }" x-text="m.label"></div>
+                <div :style="{ fontSize: '13px', fontWeight: 800, letterSpacing: '-0.3px', color: m.isCurrent ? '#0A0A0F' : 'var(--text)', fontVariantNumeric: 'tabular-nums' }" x-text="m.total > 0 ? '$' + fmtMoney(m.total) : '—'"></div>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Semanas del mes (cuadrantes) — solo en vista mes -->
+        <div class="dash-card" x-show="dashPeriod === 'mes'">
+          <div class="dash-card-title">Semanas del mes</div>
+          <div class="dash-card-subtitle">Cuadrantes · una semana cada uno</div>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px;">
+            <template x-for="(w, wi) in monthlyWeeksGrid.weeks" :key="'w-' + wi">
+              <div :style="{
+                aspectRatio: '1.6',
+                borderRadius: '12px',
+                position: 'relative',
+                padding: '10px 12px',
+                background: w.isCurrent
+                  ? 'var(--gradient)'
+                  : w.isFuture
+                    ? 'rgba(255,255,255,0.02)'
+                    : (w.total > 0 ? 'rgba(0,240,255,' + (0.08 + w.intensity * 0.42) + ')' : 'var(--surface)'),
+                border: w.isCurrent ? '1px solid var(--cyan)' : '1px solid var(--border)',
+                opacity: w.isFuture ? 0.5 : 1,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }">
+                <div :style="{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', color: w.isCurrent ? '#0A0A0F' : 'var(--dim)', textTransform: 'uppercase' }" x-text="'Semana ' + (wi + 1)"></div>
+                <div>
+                  <div :style="{ fontSize: '9px', color: w.isCurrent ? '#0A0A0F' : 'var(--muted)', marginBottom: '2px' }" x-text="'Día ' + w.start + '–' + w.end"></div>
+                  <div :style="{ fontSize: '17px', fontWeight: 800, letterSpacing: '-0.4px', color: w.isCurrent ? '#0A0A0F' : 'var(--text)', fontVariantNumeric: 'tabular-nums' }" x-text="'$' + fmtMoney(w.total)"></div>
+                </div>
+                <div x-show="w.isCurrent" style="position:absolute;top:8px;right:10px;font-size:8px;font-weight:800;letter-spacing:0.5px;color:#0A0A0F;background:rgba(10,10,15,0.18);padding:2px 6px;border-radius:6px;">ESTA SEMANA</div>
+              </div>
+            </template>
           </div>
         </div>
 
@@ -3129,9 +3515,10 @@
           <div style="font-size:11px;color:var(--muted);letter-spacing:0.6px;font-weight:600;margin-bottom:8px;">PRINCIPAL</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
             <template x-for="m in [{c:'USD',f:'🇪🇨'},{c:'EUR',f:'🇪🇺'},{c:'COP',f:'🇨🇴'},{c:'PEN',f:'🇵🇪'},{c:'MXN',f:'🇲🇽'}]" :key="m.c">
-              <div @click="userCurrency = m.c" class="cd-currency-pill" :class="{ active: userCurrency === m.c }">
+              <div @click="m.c === 'USD' || userPlan !== 'free' ? (userCurrency = m.c) : showFeatureLock('Multi-moneda', 'Cambia entre USD, EUR, COP, PEN, MXN. Disponible en planes pagos.', 'Pro')" class="cd-currency-pill" :class="{ active: userCurrency === m.c }">
                 <span style="font-size:14px;" x-text="m.f"></span><span x-text="m.c"></span>
                 <template x-if="userCurrency === m.c"><svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="3" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg></template>
+                <template x-if="m.c !== 'USD' && userPlan === 'free'"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="10" height="10"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></template>
               </div>
             </template>
           </div>
@@ -3225,8 +3612,8 @@
           <!-- Alertas presupuesto -->
           <div>
             <div class="settings-item">
-              <span class="si-label">Alertas de presupuesto</span>
-              <div class="cd-toggle" :class="{ on: notifBudget }" @click="notifBudget = !notifBudget" style="margin-left:auto;">
+              <span class="si-label">Alertas de presupuesto <span x-show="userPlan === 'free'" style="font-size:10px;">🔒</span></span>
+              <div class="cd-toggle" :class="{ on: notifBudget }" @click="userPlan === 'free' ? showFeatureLock('Alertas de presupuesto', 'Avisos cuando te acercas al límite (50/75/90/100%). Disponible en planes pagos.', 'Pro') : notifBudget = !notifBudget" style="margin-left:auto;">
                 <div class="cd-toggle-knob"></div>
               </div>
             </div>
@@ -3241,8 +3628,8 @@
           <!-- Resumen semanal -->
           <div>
             <div class="settings-item">
-              <span class="si-label">Resumen semanal</span>
-              <div class="cd-toggle" :class="{ on: notifWeekly }" @click="notifWeekly = !notifWeekly" style="margin-left:auto;">
+              <span class="si-label">Resumen semanal <span x-show="userPlan !== 'elite'" style="font-size:10px;">🔒</span></span>
+              <div class="cd-toggle" :class="{ on: notifWeekly }" @click="userPlan !== 'elite' ? showFeatureLock('Resumen por email', 'Recibe un resumen semanal con tus gastos por categoría. Disponible en Elite.', 'Elite') : notifWeekly = !notifWeekly" style="margin-left:auto;">
                 <div class="cd-toggle-knob"></div>
               </div>
             </div>
@@ -3820,7 +4207,7 @@
       </div>
 
       <!-- ══ GENERIC SAVING OVERLAY (estilo procesando pago) ══ -->
-      <div x-show="saving || savingBudget" x-cloak style="position:fixed;inset:0;max-width:430px;margin:0 auto;z-index:300;background:rgba(10,10,15,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(8px);">
+      <div x-show="saving || savingBudget" x-cloak class="saving-overlay-centered" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:300;background:rgba(10,10,15,0.92);backdrop-filter:blur(8px);">
         <div class="pay-spinner" style="margin-bottom:24px;">
           <div class="track"></div>
           <div class="arc"></div>
@@ -3849,9 +4236,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
           Cobros
         </button>
-        <button class="tab-item" :class="{ active: tab === 'dash' }" @click="tab = 'dash'">
+        <button class="tab-item" :class="{ active: tab === 'dash' }" @click="userPlan === 'elite' ? tab = 'dash' : showFeatureLock('Dashboard analytics', 'Heatmaps, comparativas mensuales, breakdown por categoría. Disponible en Elite.', 'Elite')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
           Dash
+          <span x-show="userPlan !== 'elite'" style="position:absolute;top:6px;right:18px;font-size:9px;">🔒</span>
         </button>
       </nav>
 
@@ -3863,7 +4251,7 @@
       <!-- ══ INPUT / EDIT SHEET (Full-screen Approve) ══ -->
       <template x-if="sheetOpen">
         <div>
-          <div class="approve-screen">
+          <div class="approve-screen" :class="{ 'with-input-bar': !editingExpense }">
             <!-- Sticky header -->
             <div class="approve-header">
               <button class="approve-back" @click="sheetOpen = false" title="Volver">
@@ -3900,58 +4288,20 @@
                 </div>
               </div>
 
-              <!-- DESCRIBE CARD con iconos inline (mic + foto + archivo) -->
-              <div x-show="!editingExpense && !receiptPreview && !importedFile" style="margin-bottom:12px;">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  <div style="font-size:14px;font-weight:700;letter-spacing:-0.2px;">Describe el registro</div>
+              <!-- ═════════ MONTO DISPLAY (siempre visible en create mode, vacio inicial) ═════════ -->
+              <div x-show="!editingExpense && !receiptPreview && !importedFile" class="monto-display">
+                <div class="monto-display-label">MONTO</div>
+                <div class="monto-display-value" :class="parsedItems.length >= 1 ? 'filled' : 'empty'">
+                  <span x-text="parsedItems.length >= 1 ? ('$' + parsedItems.reduce((s,p) => s + (parseFloat(p.amount)||0), 0).toFixed(2)) : '—'"></span>
                 </div>
+                <div class="monto-display-hint" x-text="parsedItems.length >= 2 ? (parsedItems.length + ' elementos detectados') : (parsedItems.length === 1 ? 'Listo · revisa y aprueba' : (analyzing ? 'Analizando...' : (form.description ? 'Toca ↵ para procesar' : 'Escribe abajo para empezar')))"></div>
+              </div>
 
-                <div class="cd-describe-card">
-                  <textarea x-model="form.description" maxlength="500" rows="3" :placeholder="form.is_income ? 'sueldo octubre 1200 · freelance diseño 350' : 'almuerzo 15 dividido con juan · taxi 8.50 · café 3.20'"></textarea>
-                  <div class="cd-describe-footer">
-                    <div style="display:flex;gap:6px;align-items:center;">
-                      <!-- Mic (voz) -->
-                      <button type="button" class="cd-inline-action" @click="if (userPlan === 'free') { tab = 'plans'; sheetOpen = false; return } toggleVoice()" :style="voiceRecording ? 'background:rgba(255,77,109,0.15);border-color:var(--danger)' : ''" title="Voz">
-                        <template x-if="!voiceRecording">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
-                        </template>
-                        <template x-if="voiceRecording">
-                          <svg viewBox="0 0 24 24" fill="var(--danger)" width="11" height="11"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-                        </template>
-                        <svg x-show="userPlan === 'free'" class="cd-inline-lock" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                      </button>
-
-                      <!-- Foto (camara) -->
-                      <label class="cd-inline-action" :style="userPlan !== 'elite' ? 'opacity:0.7' : ''" title="Foto del recibo" @click="if (userPlan !== 'elite') { $event.preventDefault(); tab = 'plans'; sheetOpen = false; } else { triggerCoachPhoto(); }">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                        <input type="file" accept="image/*" capture="environment" @change="handlePhoto($event)" style="display:none" :disabled="userPlan !== 'elite'">
-                        <svg x-show="userPlan !== 'elite'" class="cd-inline-lock" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                      </label>
-
-                      <!-- Archivo (clip) -->
-                      <label class="cd-inline-action" :style="userPlan !== 'elite' ? 'opacity:0.7' : ''" title="Importar archivo" @click="if (userPlan !== 'elite') { $event.preventDefault(); tab = 'plans'; sheetOpen = false; }">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
-                        <input type="file" accept=".pdf,.xlsx,.csv,.xml,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,application/xml" @change="handleFileImport($event)" style="display:none" :disabled="userPlan !== 'elite'">
-                        <svg x-show="userPlan !== 'elite'" class="cd-inline-lock" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                      </label>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:10px;">
-                      <div class="cd-char-count"><span x-text="(form.description || '').length"></span>/500</div>
-                      <button type="button" class="cd-send-btn" @click="analyzeTextInput()" :disabled="analyzing || !form.description || form.description.length < 3" title="Analizar">
-                        <svg x-show="!analyzing" viewBox="0 0 24 24" fill="none" stroke-width="2.6" width="14" height="14"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-                        <svg x-show="analyzing" class="cd-spin" viewBox="0 0 24 24" fill="none" stroke-width="2.4" width="14" height="14"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Voice waveform inline (mientras se graba) -->
-                <div x-show="voiceRecording" style="margin-top:10px;padding:10px 14px;border-radius:12px;background:rgba(255,77,109,0.05);border:1px solid rgba(255,77,109,0.2);display:flex;align-items:center;gap:10px;">
-                  <div style="width:8px;height:8px;border-radius:4px;background:var(--danger);animation:pulse 1s infinite;flex-shrink:0;"></div>
-                  <div style="flex:1;font-size:12px;color:var(--text);font-weight:500;" x-text="voiceTranscript || 'Escuchando...'"></div>
-                  <button @click="toggleVoice" style="font-size:11px;color:var(--danger);font-weight:700;background:transparent;border:none;cursor:pointer;">DETENER</button>
-                </div>
+              <!-- Voice waveform (cuando grabando) -->
+              <div x-show="voiceRecording && !editingExpense" style="margin-bottom:12px;padding:10px 14px;border-radius:12px;background:rgba(255,77,109,0.05);border:1px solid rgba(255,77,109,0.2);display:flex;align-items:center;gap:10px;">
+                <div style="width:8px;height:8px;border-radius:4px;background:var(--danger);animation:pulse 1s infinite;flex-shrink:0;"></div>
+                <div style="flex:1;font-size:12px;color:var(--text);font-weight:500;" x-text="voiceTranscript || 'Escuchando...'"></div>
+                <button @click="toggleVoice" style="font-size:11px;color:var(--danger);font-weight:700;background:transparent;border:none;cursor:pointer;">DETENER</button>
               </div>
 
               <!-- ═════════ ITEMS DETECTADOS (incluye 1 solo) ═════════ -->
@@ -3963,16 +4313,14 @@
                 <div style="display:flex;flex-direction:column;gap:8px;">
                   <template x-for="(it, idx) in parsedItems" :key="idx">
                     <div style="padding:12px;border-radius:14px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;gap:10px;">
-                      <div style="position:relative;width:38px;height:38px;flex-shrink:0;">
-                        <div style="width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;pointer-events:none;" :style="{ background: it.color + '20', border: '1px solid ' + it.color + '40' }" x-text="it.emoji"></div>
-                        <select :value="it.category" @change="updateParsedItemCat(idx, $event.target.value)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-family:inherit;">
-                          <template x-for="c in (it.is_income ? incomeCategories : categories)" :key="c.key">
-                            <option :value="c.key" x-text="c.emoji + '  ' + c.label"></option>
-                          </template>
-                        </select>
-                      </div>
+                      <button type="button" @click="openCatPicker(idx)" style="position:relative;width:38px;height:38px;flex-shrink:0;padding:0;border:none;background:transparent;cursor:pointer;" title="Cambiar categoría">
+                        <div style="width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;" :style="{ background: it.color + '20', border: '1px solid ' + it.color + '40' }" x-text="it.emoji"></div>
+                        <div style="position:absolute;bottom:-3px;right:-3px;width:14px;height:14px;border-radius:7px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="3" width="8" height="8"><polyline points="6 9 12 15 18 9"/></svg>
+                        </div>
+                      </button>
                       <div style="flex:1;min-width:0;">
-                        <input type="text" x-model="it.description" style="background:transparent;border:none;outline:none;color:var(--text);font-size:13px;font-weight:600;font-family:inherit;width:100%;padding:0;" placeholder="descripción">
+                        <input type="text" x-model="it.description" autocomplete="off" spellcheck="false" style="background:transparent;border:none;outline:none;color:var(--text);font-size:13px;font-weight:600;font-family:inherit;width:100%;padding:0;" placeholder="descripción">
                         <div style="font-size:10px;color:var(--muted);letter-spacing:0.4px;margin-top:2px;" x-text="it.label.toUpperCase()"></div>
                       </div>
                       <input type="number" step="0.01" min="0" x-model.number="it.amount" inputmode="decimal" style="width:80px;text-align:right;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;background:transparent;border:none;outline:none;color:var(--text);font-family:inherit;">
@@ -3985,35 +4333,6 @@
                 <div style="margin-top:10px;padding:10px 14px;border-radius:10px;background:linear-gradient(135deg, rgba(0,240,255,0.06), rgba(112,0,255,0.06));border:1px solid rgba(0,240,255,0.2);display:flex;align-items:center;justify-content:space-between;">
                   <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--muted);">TOTAL</span>
                   <span class="gradient-text" style="font-size:18px;font-weight:800;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;" x-text="'$' + parsedItems.reduce((s,p) => s + (parseFloat(p.amount)||0), 0).toFixed(2)"></span>
-                </div>
-              </div>
-
-              <!-- DETECTADO preview card (despues de analizar texto) — solo si NO hay parsedItems en lista -->
-              <div x-show="!editingExpense && analyzed && form.amount && parsedItems.length === 0 && !receiptPreview && !importedFile" style="margin-bottom:14px;">
-                <div class="cd-section-label">DETECTADO</div>
-                <div class="cd-detected-card">
-                  <div class="cd-detected-card-inner">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                      <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-                        <template x-for="c in (form.is_income ? incomeCategories : categories)" :key="c.key">
-                          <div x-show="c.key === form.category" style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;" :style="{ background: c.color + '20', border: '1px solid ' + c.color + '40' }">
-                            <span x-text="c.emoji"></span>
-                          </div>
-                        </template>
-                        <div style="min-width:0;">
-                          <template x-for="c in (form.is_income ? incomeCategories : categories)" :key="c.key">
-                            <div x-show="c.key === form.category" style="font-size:13px;font-weight:600;" x-text="c.label"></div>
-                          </template>
-                          <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;" x-text="form.description"></div>
-                        </div>
-                      </div>
-                      <input type="number" step="0.01" min="0" x-model="form.amount" inputmode="decimal" class="gradient-text" style="font-size:22px;font-weight:800;letter-spacing:-0.8px;font-variant-numeric:tabular-nums;background:transparent;border:none;outline:none;text-align:right;width:110px;font-family:inherit;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">
-                    </div>
-                    <div style="font-size:11px;color:var(--dim);display:flex;align-items:center;gap:4px;">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="10" height="10"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                      Toca el monto o cambia la categoría abajo
-                    </div>
-                  </div>
                 </div>
               </div>
 
@@ -4059,11 +4378,16 @@
                         </div>
                         <div class="cd-extracted-row" x-show="form.category">
                           <div style="font-size:12px;color:var(--muted);">Categoría</div>
-                          <template x-for="c in (form.is_income ? incomeCategories : categories)" :key="c.key">
-                            <div x-show="c.key === form.category" style="font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;">
-                              <span x-text="c.emoji"></span><span x-text="c.label"></span>
-                            </div>
-                          </template>
+                          <button type="button" @click="formCatPickerOpen = true" style="background:transparent;border:none;padding:0;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;" title="Cambiar categoría">
+                            <template x-for="c in (form.is_income ? incomeCategories : categories)" :key="c.key">
+                              <div x-show="c.key === form.category" style="font-size:13px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:6px;">
+                                <span x-text="c.emoji"></span><span x-text="c.label"></span>
+                              </div>
+                            </template>
+                            <span style="width:18px;height:18px;border-radius:9px;background:var(--bg);border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="3" width="9" height="9"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -4100,11 +4424,12 @@
                         <template x-for="(e, ei) in importedExpenses.slice(0, 3)" :key="ei">
                           <div>
                             <div class="cd-detected-list-item">
-                              <template x-for="c in categories" :key="c.key">
-                                <div x-show="c.key === e.category" style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;" :style="{ background: c.color + '20', border: '1px solid ' + c.color + '40' }">
-                                  <span x-text="c.emoji"></span>
-                                </div>
-                              </template>
+                              <button type="button" class="cat-edit-btn sm" @click.stop="importedCatPickerIdx = ei" :style="'background:' + getCatColor(e.category) + '20;border:1px solid ' + getCatColor(e.category) + '40;'" title="Cambiar categoría">
+                                <span x-text="getCatEmoji(e.category)"></span>
+                                <span class="cat-edit-badge">
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="3" width="7" height="7"><polyline points="6 9 12 15 18 9"/></svg>
+                                </span>
+                              </button>
                               <div style="flex:1;min-width:0;">
                                 <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="e.description"></div>
                                 <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="e.date"></div>
@@ -4124,10 +4449,10 @@
                 </template>
               </div>
 
-              <!-- ═════════ EDIT MODE: campos completos editables ═════════ -->
+              <!-- ═════════ EDIT MODE: vista tipo "post-procesado" + reprocesar ═════════ -->
               <template x-if="editingExpense">
                 <div>
-                  <!-- Amount editable -->
+                  <!-- Amount editable (estilo monto-display pero editable) -->
                   <div class="amount-box">
                     <div class="amount-label">MONTO</div>
                     <div class="amount-row">
@@ -4139,13 +4464,63 @@
                     <div class="amount-hint">USD · toca para editar</div>
                   </div>
 
-                  <!-- Description -->
+                  <!-- Description + Reprocesar -->
                   <div class="field-box">
-                    <div class="field-box-label">DESCRIPCIÓN</div>
+                    <div class="field-box-label" style="display:flex;align-items:center;justify-content:space-between;">
+                      <span>DESCRIPCIÓN</span>
+                      <span x-show="reprocessPreview" style="font-size:9px;color:#B794F6;font-weight:700;letter-spacing:0.6px;">REPROCESANDO…</span>
+                    </div>
                     <div class="field-box-inner">
                       <textarea x-model="form.description" placeholder="almuerzo 15, taxi 8.50..." rows="2"></textarea>
                     </div>
                   </div>
+
+                  <button class="reprocess-btn" @click="startReprocess()" :disabled="reprocessing || !form.description" style="margin-bottom:12px;">
+                    <svg x-show="!reprocessing" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                    <svg x-show="reprocessing" class="cd-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+                    <span x-text="reprocessing ? 'Analizando…' : 'Reprocesar descripción'"></span>
+                  </button>
+
+                  <!-- Preview del reproceso -->
+                  <template x-if="reprocessPreview">
+                    <div class="reprocess-preview">
+                      <div style="font-size:11px;color:#B794F6;font-weight:700;letter-spacing:0.8px;margin-bottom:10px;">NUEVO RESULTADO</div>
+                      <template x-if="!reprocessPreview.isMulti">
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                          <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+                            <div style="width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;" :style="{ background: reprocessPreview.items[0].color + '20', border: '1px solid ' + reprocessPreview.items[0].color + '40' }" x-text="reprocessPreview.items[0].emoji"></div>
+                            <div style="min-width:0;">
+                              <div style="font-size:13px;font-weight:600;" x-text="reprocessPreview.items[0].label"></div>
+                              <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;" x-text="reprocessPreview.items[0].description"></div>
+                            </div>
+                          </div>
+                          <div style="font-size:18px;font-weight:800;letter-spacing:-0.4px;font-variant-numeric:tabular-nums;color:var(--text);" x-text="'$' + reprocessPreview.items[0].amount.toFixed(2)"></div>
+                        </div>
+                      </template>
+                      <template x-if="reprocessPreview.isMulti">
+                        <div>
+                          <div style="font-size:12px;color:var(--muted);margin-bottom:8px;" x-text="reprocessPreview.items.length + ' items detectados (se sumarán)'"></div>
+                          <template x-for="(it, idx) in reprocessPreview.items" :key="idx">
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(112,0,255,0.15);">
+                              <div style="display:flex;align-items:center;gap:8px;font-size:12px;">
+                                <span x-text="it.emoji"></span>
+                                <span x-text="it.description"></span>
+                              </div>
+                              <span style="font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;" x-text="'$' + it.amount.toFixed(2)"></span>
+                            </div>
+                          </template>
+                          <div style="display:flex;justify-content:space-between;padding-top:10px;font-size:13px;font-weight:700;">
+                            <span style="color:var(--muted);">Total</span>
+                            <span class="gradient-text" x-text="'$' + reprocessPreview.total.toFixed(2)"></span>
+                          </div>
+                        </div>
+                      </template>
+                      <div style="display:flex;gap:8px;margin-top:12px;">
+                        <button @click="cancelReprocess()" style="flex:1;height:40px;border-radius:20px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:13px;font-family:inherit;cursor:pointer;">Cancelar</button>
+                        <button @click="applyReprocess()" style="flex:1;height:40px;border-radius:20px;background:#B794F6;border:none;color:#0A0A0F;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;">Aplicar</button>
+                      </div>
+                    </div>
+                  </template>
 
                   <!-- Date -->
                   <div class="field-box">
@@ -4159,8 +4534,8 @@
                 </div>
               </template>
 
-              <!-- ═════════ CATEGORY GRID (solo cuando no hay items en lista; los items tienen su propio selector) ═════════ -->
-              <div x-show="parsedItems.length === 0 && (editingExpense || analyzed || form.amount)" style="margin-bottom:12px;">
+              <!-- ═════════ CATEGORY GRID (solo en edit mode; en create los items tienen su propio selector) ═════════ -->
+              <div x-cloak x-show="editingExpense && parsedItems.length === 0" style="margin-bottom:12px;">
                 <div class="cd-section-label" style="display:flex;align-items:center;justify-content:space-between;">
                   <span>CATEGORÍA</span>
                   <button type="button" @click="openCatManager()" style="font-size:10px;color:var(--cyan);font-weight:700;background:transparent;display:inline-flex;align-items:center;gap:4px;cursor:pointer;letter-spacing:0.4px;border:none;">
@@ -4180,8 +4555,8 @@
                 </div>
               </div>
 
-              <!-- SPLIT SECTION — CD: multi-person with proportion bar -->
-              <div x-show="parsedItems.length < 2" style="border-radius:14px;overflow:hidden;margin-bottom:12px;" :style="form.is_split ? { background: 'rgba(0,240,255,0.03)', border: '1px solid var(--cyan)' } : { background: 'var(--surface)', border: '1px solid var(--border)' }">
+              <!-- SPLIT SECTION — CD: multi-person with proportion bar (visible siempre que haya items o monto, incluido edit) -->
+              <div x-cloak x-show="!receiptPreview && !importedFile && (editingExpense || parsedItems.length >= 1 || parseFloat(form.amount) > 0)" style="border-radius:14px;overflow:hidden;margin-bottom:12px;" :style="form.is_split ? { background: 'rgba(0,240,255,0.03)', border: '1px solid var(--cyan)' } : { background: 'var(--surface)', border: '1px solid var(--border)' }">
                 <div @click="toggleSplit()" style="padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;">
                   <div style="width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;" :style="{ background: form.is_split ? 'rgba(0,240,255,0.12)' : 'var(--bg)' }">
                     <svg viewBox="0 0 24 24" fill="none" :stroke="form.is_split ? 'var(--cyan)' : 'var(--muted)'" stroke-width="2" width="15" height="15"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -4189,7 +4564,7 @@
                   <div style="flex:1;min-width:0;">
                     <div style="font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
                       <span x-text="form.is_income ? 'Dividir este ingreso' : 'Dividir este gasto'"></span>
-                      <span x-show="effectivePlan !== 'elite'" style="font-size:9px;padding:2px 6px;border-radius:4px;background:linear-gradient(135deg, rgba(0,240,255,0.18), rgba(112,0,255,0.18));border:1px solid rgba(0,240,255,0.4);color:var(--cyan);font-weight:700;letter-spacing:0.6px;">ELITE</span>
+                      <span x-show="userPlan !== 'elite'" style="font-size:9px;padding:2px 6px;border-radius:4px;background:linear-gradient(135deg, rgba(0,240,255,0.18), rgba(112,0,255,0.18));border:1px solid rgba(0,240,255,0.4);color:var(--cyan);font-weight:700;letter-spacing:0.6px;">ELITE</span>
                     </div>
                     <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="form.is_split ? (form.split_people.length + ' personas') : (form.is_income ? 'Reparte el monto entre personas' : 'Genera cobros automáticos')"></div>
                   </div>
@@ -4212,7 +4587,7 @@
                       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                         <div style="width:10px;height:10px;border-radius:2px;flex-shrink:0;" :style="'background:' + p.color"></div>
                         <div style="flex:1;height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;padding:0 10px;min-width:0;">
-                          <input x-model="p.name" :placeholder="p.you ? 'Tú' : 'Nombre'" :readonly="p.you === true" :list="p.you === true ? null : 'persona-list'" class="cd-split-name-input" :class="{ 'cd-split-name-you': p.you === true }">
+                          <input x-model="p.name" :placeholder="p.you ? 'Tú' : 'Nombre'" :readonly="p.you === true" :list="p.you === true ? null : 'persona-list'" @blur="!p.you && (p.name = normalizePersona(p.name))" class="cd-split-name-input" :class="{ 'cd-split-name-you': p.you === true }">
                           <template x-if="p.you">
                             <span style="font-size:10px;color:var(--cyan);font-weight:700;margin-left:6px;flex-shrink:0;">· TÚ</span>
                           </template>
@@ -4258,8 +4633,8 @@
                 </template>
               </div>
 
-              <!-- APPROVE BUTTON (green) -->
-              <div style="margin-top:20px;">
+              <!-- APPROVE BUTTON (green) — solo cuando hay datos procesados -->
+              <div style="margin-top:20px;" x-show="editingExpense || parsedItems.length >= 1 || analyzed || receiptPreview || importedFile">
                 <button class="approve-btn" @click="saveExpense" :disabled="saving || (parsedItems.length >= 1 && !form.is_split ? parsedItems.filter(i => i.amount > 0 && i.category).length < 1 : (!form.amount || !form.category))">
                   <template x-if="!saving">
                     <span style="display:flex;align-items:center;gap:8px;">
@@ -4276,6 +4651,172 @@
                 </button>
               </div>
 
+            </div>
+          </div>
+
+          <!-- ═════════ BOTTOM INPUT BAR (solo create mode) ═════════ -->
+          <template x-if="!editingExpense">
+            <div class="bottom-input-bar">
+              <!-- + button (left) -->
+              <button type="button" class="bib-plus" @click="togglePlusMenu()" :class="{ 'is-open': plusMenuOpen }" title="Más opciones">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="18" height="18"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+
+              <!-- Text wrap -->
+              <div class="bib-textwrap">
+                <textarea
+                  x-model="form.description"
+                  @keydown.enter.prevent="analyzeTextInput()"
+                  placeholder="café 5, taxi 8.50…"
+                  rows="1"
+                  autocomplete="off"
+                  autocorrect="off"
+                  autocapitalize="off"
+                  spellcheck="false"
+                  :disabled="analyzing"></textarea>
+              </div>
+
+              <!-- Mic (left of enter) -->
+              <button type="button" class="bib-mic" @click="toggleVoice" :class="{ 'recording': voiceRecording }" title="Voz">
+                <svg x-show="!voiceRecording" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="16" height="16"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                <svg x-show="voiceRecording" viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+              </button>
+
+              <!-- Enter / Send -->
+              <button type="button" class="bib-send" @click="analyzeTextInput()" :disabled="analyzing || !form.description" title="Procesar">
+                <svg x-show="!analyzing" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" width="16" height="16"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                <svg x-show="analyzing" class="cd-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="16" height="16"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+              </button>
+            </div>
+          </template>
+
+          <!-- Hidden file inputs para el menu (+) -->
+          <input type="file" id="plus-camera-input" accept="image/*" capture="environment" @change="handlePhoto($event); closePlusMenu()" style="display:none;">
+          <input type="file" id="plus-photo-input" accept="image/*" @change="handlePhoto($event); closePlusMenu()" style="display:none;">
+          <input type="file" id="plus-file-input" accept=".csv,.xlsx,.xls,.pdf,.json,.txt" @change="handleFileImport($event); closePlusMenu()" style="display:none;">
+
+          <!-- Plus menu floating -->
+          <template x-if="plusMenuOpen">
+            <div>
+              <div class="plus-menu-backdrop" @click="closePlusMenu()"></div>
+              <div class="plus-menu">
+                <button type="button" class="plus-menu-item" @click="plusMenuPick('camera')">
+                  <div class="plus-menu-item-icon" style="background:rgba(0,240,255,0.12);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="18" height="18"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  </div>
+                  <div style="flex:1;text-align:left;">
+                    <div style="font-size:14px;font-weight:600;color:var(--text);">Cámara</div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:1px;">Tomar foto de recibo</div>
+                  </div>
+                  <span class="plan-badge elite" style="font-size:9px;">ELITE</span>
+                </button>
+
+                <button type="button" class="plus-menu-item" @click="plusMenuPick('photo')">
+                  <div class="plus-menu-item-icon" style="background:rgba(112,0,255,0.12);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#B794F6" stroke-width="2" width="18" height="18"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  </div>
+                  <div style="flex:1;text-align:left;">
+                    <div style="font-size:14px;font-weight:600;color:var(--text);">Foto guardada</div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:1px;">Elegir de la galería</div>
+                  </div>
+                  <span class="plan-badge elite" style="font-size:9px;">ELITE</span>
+                </button>
+
+                <button type="button" class="plus-menu-item" @click="plusMenuPick('file')">
+                  <div class="plus-menu-item-icon" style="background:rgba(0,229,160,0.12);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" width="18" height="18"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  </div>
+                  <div style="flex:1;text-align:left;">
+                    <div style="font-size:14px;font-weight:600;color:var(--text);">Archivo</div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:1px;">CSV, Excel, PDF, JSON</div>
+                  </div>
+                  <span class="plan-badge elite" style="font-size:9px;">ELITE</span>
+                </button>
+              </div>
+            </div>
+          </template>
+
+          <!-- ═════════ CATEGORY PICKER SHEET (para parsedItems) ═════════ -->
+          <template x-if="catPickerIdx !== null">
+            <div>
+              <div class="cat-picker-backdrop" @click="closeCatPicker()"></div>
+              <div class="cat-picker-sheet">
+                <div class="cat-picker-handle"></div>
+                <div class="cat-picker-title" x-text="(parsedItems[catPickerIdx]?.is_income ? 'Categoría de ingreso' : 'Categoría de gasto')"></div>
+                <div class="cat-picker-grid">
+                  <template x-for="c in (parsedItems[catPickerIdx]?.is_income ? incomeCategories : categories)" :key="c.key">
+                    <button type="button" @click="pickCatForItem(c.key)" class="cat-picker-tile" :class="{ 'is-active': parsedItems[catPickerIdx]?.category === c.key }" :style="parsedItems[catPickerIdx]?.category === c.key ? 'border-color:' + c.color + ';background:' + c.color + '15' : ''">
+                      <div class="cat-picker-tile-icon" :style="'background:' + c.color + '20;border:1px solid ' + c.color + '40'">
+                        <span x-text="c.emoji"></span>
+                      </div>
+                      <span class="cat-picker-tile-label" x-text="c.label"></span>
+                    </button>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </template>
+
+      <!-- ═════════ CATEGORY PICKER SHEET (para gasto/ingreso existente · home subregistros & drill) ═════════ -->
+      <template x-if="expenseCatPickerExp !== null">
+        <div>
+          <div class="cat-picker-backdrop" @click="closeExpenseCatPicker()"></div>
+          <div class="cat-picker-sheet">
+            <div class="cat-picker-handle"></div>
+            <div class="cat-picker-title" x-text="(expenseCatPickerExp?.is_income ? 'Categoría de ingreso' : 'Categoría de gasto')"></div>
+            <div class="cat-picker-grid">
+              <template x-for="c in (expenseCatPickerExp?.is_income ? incomeCategories : categories)" :key="c.key">
+                <button type="button" @click="setExpenseCategory(c.key)" class="cat-picker-tile" :class="{ 'is-active': expenseCatPickerExp?.category === c.key }" :style="expenseCatPickerExp?.category === c.key ? 'border-color:' + c.color + ';background:' + c.color + '15' : ''">
+                  <div class="cat-picker-tile-icon" :style="'background:' + c.color + '20;border:1px solid ' + c.color + '40'">
+                    <span x-text="c.emoji"></span>
+                  </div>
+                  <span class="cat-picker-tile-label" x-text="c.label"></span>
+                </button>
+              </template>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ═════════ CATEGORY PICKER SHEET (para item de archivo importado · antes de guardar) ═════════ -->
+      <template x-if="importedCatPickerIdx !== null">
+        <div>
+          <div class="cat-picker-backdrop" @click="importedCatPickerIdx = null"></div>
+          <div class="cat-picker-sheet">
+            <div class="cat-picker-handle"></div>
+            <div class="cat-picker-title">Categoría del gasto</div>
+            <div class="cat-picker-grid">
+              <template x-for="c in categories" :key="c.key">
+                <button type="button" @click="importedExpenses[importedCatPickerIdx].category = c.key; importedCatPickerIdx = null" class="cat-picker-tile" :class="{ 'is-active': importedExpenses[importedCatPickerIdx]?.category === c.key }" :style="importedExpenses[importedCatPickerIdx]?.category === c.key ? 'border-color:' + c.color + ';background:' + c.color + '15' : ''">
+                  <div class="cat-picker-tile-icon" :style="'background:' + c.color + '20;border:1px solid ' + c.color + '40'">
+                    <span x-text="c.emoji"></span>
+                  </div>
+                  <span class="cat-picker-tile-label" x-text="c.label"></span>
+                </button>
+              </template>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ═════════ CATEGORY PICKER SHEET (para form.category · foto antes de guardar) ═════════ -->
+      <template x-if="formCatPickerOpen">
+        <div>
+          <div class="cat-picker-backdrop" @click="formCatPickerOpen = false"></div>
+          <div class="cat-picker-sheet">
+            <div class="cat-picker-handle"></div>
+            <div class="cat-picker-title" x-text="(form.is_income ? 'Categoría de ingreso' : 'Categoría de gasto')"></div>
+            <div class="cat-picker-grid">
+              <template x-for="c in (form.is_income ? incomeCategories : categories)" :key="c.key">
+                <button type="button" @click="form.category = c.key; formCatPickerOpen = false" class="cat-picker-tile" :class="{ 'is-active': form.category === c.key }" :style="form.category === c.key ? 'border-color:' + c.color + ';background:' + c.color + '15' : ''">
+                  <div class="cat-picker-tile-icon" :style="'background:' + c.color + '20;border:1px solid ' + c.color + '40'">
+                    <span x-text="c.emoji"></span>
+                  </div>
+                  <span class="cat-picker-tile-label" x-text="c.label"></span>
+                </button>
+              </template>
             </div>
           </div>
         </div>
@@ -4464,6 +5005,11 @@
                 </button>
               </template>
 
+              <button @click="editExpenseFromCobro()" style="width:100%;height:46px;border-radius:23px;background:var(--surface);border:1px solid var(--cyan);color:var(--cyan);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Editar registro original
+              </button>
+
               <button @click="removeSplit(activeCobro.id); cobroDetailOpen = false" style="width:100%;height:46px;border-radius:23px;background:transparent;border:1px solid var(--border);color:var(--danger);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 01-2 2H9a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
                 Quitar división
@@ -4540,6 +5086,33 @@
               <span x-show="savingBudget">Guardando...</span>
             </button>
               </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ══ FEATURE LOCK MODAL (reutilizable: Pro/Elite upsell) ══ -->
+      <template x-if="featureLockOpen">
+        <div>
+          <div class="sheet-backdrop" @click="closeFeatureLock()"></div>
+          <div class="sheet">
+            <div class="sheet-grabber"></div>
+            <div style="text-align:center;padding:10px 0 6px;">
+              <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg, rgba(0,240,255,0.12), rgba(112,0,255,0.12));border:1px solid rgba(0,240,255,0.2);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.8" width="28" height="28"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              </div>
+              <div style="font-size:18px;font-weight:800;margin-bottom:6px;" x-text="featureLockData.title"></div>
+              <div style="font-size:14px;color:var(--muted);line-height:1.5;margin-bottom:8px;">
+                <span x-text="featureLockData.desc"></span>
+              </div>
+              <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:20px;">
+                Disponible en el plan <span class="gradient-text" style="font-weight:700;" x-text="featureLockData.requiredPlan"></span>.
+              </div>
+              <button @click="goToPlansFromLock()" style="width:100%;height:48px;border-radius:14px;background:var(--gradient);color:#0A0A0F;font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2" width="16" height="16"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                Ver planes
+              </button>
+              <button @click="closeFeatureLock()" style="margin-top:10px;width:100%;height:40px;background:transparent;color:var(--muted);font-size:13px;font-weight:600;border:none;cursor:pointer;font-family:inherit;">Cancelar</button>
+            </div>
           </div>
         </div>
       </template>
@@ -4895,6 +5468,20 @@ function zepoApp() {
     parsedItems: [],
     faqOpen: null,
     inputMode: 'texto',
+    // Feature-lock modal (reemplaza redirects bruscos a tab='plans')
+    featureLockOpen: false,
+    featureLockData: { title: '', desc: '', requiredPlan: 'Pro' },
+    // Mini-menu del boton "+" en input bar (camara/foto/archivo)
+    plusMenuOpen: false,
+    catPickerIdx: null, // index del parsedItem cuyo cat se esta editando (null = cerrado)
+    openGroups: {}, // map keyId → bool: que grupos de la home estan expandidos
+    catDrillKey: null, // categoria seleccionada en pantalla Presupuestos (para ver gastos del mes)
+    expenseCatPickerExp: null, // expense cuyo cat se cambia rapido desde home/drill (sin abrir Edit completo)
+    formCatPickerOpen: false, // picker para cambiar form.category desde foto (antes de guardar)
+    importedCatPickerIdx: null, // picker para cambiar categoria de un item de importedExpenses
+    // Reprocesar en editar gasto
+    reprocessing: false,
+    reprocessPreview: null,
     voiceRecording: false,
     voiceRecognition: null,
     receiptFile: null,
@@ -4920,7 +5507,7 @@ function zepoApp() {
       return this._rawUserPlan;
     },
     set userPlan(v) { this._rawUserPlan = v; },
-    devUnlockAll: false,  // PRODUCCIÓN — solo true para QA local
+    devUnlockAll: true,  // QA — apagar antes de commit final
     annualBilling: false,
     userCurrency: 'USD',
     planExpiresAt: null,
@@ -4988,6 +5575,12 @@ function zepoApp() {
 
       this.$watch('tab', (val, old) => {
         if (!['settings','changepass','plans','checkout','pay-processing','pay-success','pay-failed','forgotpw'].includes(val)) this.prevTab = val;
+        // Cerrar sheet de Anadir/Editar al cambiar de tab principal (evita ver categorias detras)
+        if (this.sheetOpen && val !== old) {
+          this.sheetOpen = false;
+          this.catPickerIdx = null;
+          this.plusMenuOpen = false;
+        }
       });
 
       let session = null;
@@ -5433,11 +6026,109 @@ function zepoApp() {
 
     get recentExpenses() { return this.expenses.slice(0, 8); },
 
+    // Agrupa expenses por proximidad de created_at (mismo "save" multi-item).
+    // Mismo date + created_at dentro de ±6s = mismo grupo.
+    get groupedRecent() {
+      const list = this.expenses.slice(0, 24); // mas amplio para que el grupo entero entre
+      const groups = [];
+      let cur = null;
+      for (const e of list) {
+        const ts = e.created_at ? new Date(e.created_at).getTime() : 0;
+        if (cur && cur.date === e.date && Math.abs(cur.ts - ts) < 6000 && cur.is_income === !!e.is_income && cur.items.length < 12) {
+          cur.items.push(e);
+          cur.total += (parseFloat(e.amount) || 0);
+        } else {
+          if (cur) groups.push(cur);
+          cur = {
+            key: 'g-' + e.id,
+            ts,
+            date: e.date,
+            is_income: !!e.is_income,
+            items: [e],
+            total: parseFloat(e.amount) || 0,
+          };
+        }
+      }
+      if (cur) groups.push(cur);
+      return groups.slice(0, 8);
+    },
+
+    toggleGroup(key) {
+      this.openGroups = { ...this.openGroups, [key]: !this.openGroups[key] };
+    },
+
+    openCatDrill(catKey) {
+      this.catDrillKey = catKey;
+    },
+    closeCatDrill() {
+      this.catDrillKey = null;
+    },
+    get catDrillExpenses() {
+      if (!this.catDrillKey) return [];
+      return this.monthExpenses
+        .filter(e => e.category === this.catDrillKey)
+        .sort((a, b) => (b.date || '').localeCompare(a.date || '') || ((b.created_at || '').localeCompare(a.created_at || '')));
+    },
+    get catDrillTotal() {
+      return this.catDrillExpenses.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+    },
+
+    // ── Quick category edit (desde home subregistros o drill de presupuestos) ──
+    openExpenseCatPicker(exp) {
+      if (!exp) return;
+      this.expenseCatPickerExp = exp;
+    },
+    closeExpenseCatPicker() {
+      this.expenseCatPickerExp = null;
+    },
+    async setExpenseCategory(catKey) {
+      if (!this.expenseCatPickerExp) return;
+      const id = this.expenseCatPickerExp.id;
+      const prev = this.expenseCatPickerExp.category;
+      if (catKey === prev) { this.expenseCatPickerExp = null; return; }
+      // Optimista: actualizar en arrays locales
+      const update = (arr) => {
+        const found = arr.find(e => e.id === id);
+        if (found) found.category = catKey;
+      };
+      update(this.expenses);
+      update(this.monthExpenses);
+      this.expenseCatPickerExp = null;
+      // Persistir
+      try {
+        await withTimeout(
+          sb.from('expenses').update({ category: catKey }).eq('id', id).then(r => { if (r.error) throw r.error; }),
+          4000, 'setExpenseCategory'
+        );
+      } catch (e) {
+        try {
+          await sbRestUpdate('expenses', 'id', id, { category: catKey });
+        } catch (e2) {
+          // Rollback si falla todo
+          const rollback = (arr) => { const f = arr.find(x => x.id === id); if (f) f.category = prev; };
+          rollback(this.expenses);
+          rollback(this.monthExpenses);
+          this.showToast('No se pudo cambiar la categoría');
+          return;
+        }
+      }
+      this.showToast('Categoría actualizada');
+    },
+
     // ── Voice Input ──
     toggleVoice() {
       if (this.voiceRecording) {
         if (this.voiceRecognition) this.voiceRecognition.stop();
         this.voiceRecording = false;
+        return;
+      }
+      // Gate: voz es Pro+
+      if (this.userPlan === 'free') {
+        this.showFeatureLock(
+          'Entrada por voz',
+          'Dicta tu gasto y Zepo lo registra al instante. Disponible en planes pagos.',
+          'Pro'
+        );
         return;
       }
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -5515,12 +6206,115 @@ function zepoApp() {
 
     splitColorPalette: ['#00F0FF', '#7000FF', '#FFB800', '#FF6B6B', '#00E5A0', '#7FB8FF', '#FF8AC4', '#B794F6'],
 
+    showFeatureLock(title, desc, requiredPlan) {
+      this.featureLockData = { title, desc, requiredPlan: requiredPlan || 'Pro' };
+      this.featureLockOpen = true;
+    },
+    closeFeatureLock() { this.featureLockOpen = false; },
+    goToPlansFromLock() {
+      this.featureLockOpen = false;
+      this.sheetOpen = false;
+      this.tab = 'plans';
+    },
+
+    togglePlusMenu() { this.plusMenuOpen = !this.plusMenuOpen; },
+    closePlusMenu() { this.plusMenuOpen = false; },
+    plusMenuPick(kind) {
+      this.plusMenuOpen = false;
+      if (kind === 'camera' || kind === 'photo') {
+        if (this.userPlan !== 'elite') {
+          this.showFeatureLock(
+            'Foto del recibo',
+            'Captura una foto y Zepo extrae monto, comercio y fecha automáticamente.',
+            'Elite'
+          );
+          return;
+        }
+        const id = kind === 'camera' ? 'plus-camera-input' : 'plus-photo-input';
+        const el = document.getElementById(id);
+        if (el) el.click();
+      } else if (kind === 'file') {
+        if (this.userPlan !== 'elite') {
+          this.showFeatureLock(
+            'Importar archivo',
+            'Importa PDFs, CSV o XML de tu banco. Detectamos cada gasto automáticamente.',
+            'Elite'
+          );
+          return;
+        }
+        const el = document.getElementById('plus-file-input');
+        if (el) el.click();
+      }
+    },
+
+    editExpenseFromCobro() {
+      const c = this.activeCobro;
+      if (!c) return;
+      this.cobroDetailOpen = false;
+      this.openEdit(c);
+    },
+
+    startReprocess() {
+      if (!this.form.description || this.form.description.length < 2) {
+        this.showToast('Describe primero el gasto');
+        return;
+      }
+      this.reprocessing = true;
+      this.reprocessPreview = null;
+      setTimeout(() => {
+        const items = this.splitItems(this.form.description);
+        if (items.length >= 2) {
+          const parsed = items.map(s => this.parseSingleItem(s)).filter(it => it.amount > 0);
+          if (parsed.length >= 2) {
+            this.reprocessPreview = {
+              isMulti: true,
+              items: parsed,
+              total: parsed.reduce((s, p) => s + p.amount, 0),
+            };
+            this.reprocessing = false;
+            return;
+          }
+        }
+        const single = this.parseSingleItem(this.form.description);
+        if (single.amount > 0) {
+          this.reprocessPreview = {
+            isMulti: false,
+            items: [single],
+            total: single.amount,
+          };
+        } else {
+          this.showToast('No detecté un monto. Edita manualmente o cambia el texto.');
+        }
+        this.reprocessing = false;
+      }, 500);
+    },
+    applyReprocess() {
+      const r = this.reprocessPreview;
+      if (!r) return;
+      if (r.isMulti) {
+        // En edit mode no convertimos a multi-item (es 1 fila en DB). Tomamos suma + primera categoria.
+        this.form.amount = r.total.toFixed(2);
+        this.form.category = r.items[0].category;
+        this.form.is_income = !!r.items[0].is_income;
+        this.showToast('Suma aplicada. Categoría puede ajustarse abajo.');
+      } else {
+        const it = r.items[0];
+        this.form.amount = it.amount.toFixed(2);
+        this.form.category = it.category;
+        this.form.is_income = !!it.is_income;
+      }
+      this.reprocessPreview = null;
+    },
+    cancelReprocess() { this.reprocessPreview = null; },
+
     toggleSplit() {
       // Dividir cuentas: solo Elite
-      if (this.effectivePlan !== 'elite') {
-        this.tab = 'plans';
-        this.sheetOpen = false;
-        this.showToast('Dividir cuentas está en Elite. Actualiza tu plan.');
+      if (this.userPlan !== 'elite') {
+        this.showFeatureLock(
+          'Dividir cuentas',
+          'Divide un gasto entre varias personas y genera cobros automáticos.',
+          'Elite'
+        );
         return;
       }
       this.form.is_split = !this.form.is_split;
@@ -6207,6 +7001,17 @@ function zepoApp() {
       return [...names].sort();
     },
 
+    // Normaliza un nombre escrito por el usuario al casing canonico:
+    // si ya existe "Bea" guardado, escribir "bea" → "Bea". Si no existe, capitaliza la primera letra.
+    normalizePersona(raw) {
+      const s = String(raw || '').trim();
+      if (!s) return s;
+      const lower = s.toLowerCase();
+      const match = this.knownPersonas.find(p => p.toLowerCase() === lower);
+      if (match) return match;
+      return s.charAt(0).toUpperCase() + s.slice(1);
+    },
+
     get splitsByPersona() {
       const groups = {};
       this.pendingSplits.forEach(e => {
@@ -6557,7 +7362,7 @@ function zepoApp() {
           this.parsedItems = [single];
           this.form.amount = single.amount.toFixed(2);
           this.form.category = single.category;
-          this.form.description = single.description;
+          // No tocar form.description — el input bar mantiene el texto original que escribio el usuario
         } else {
           // Sin monto detectado: caer al parser legacy que llena form sin items
           this.parseVoiceText(text);
@@ -6598,13 +7403,14 @@ function zepoApp() {
         invest_out: ['inversion','inversión','invertí','inverti','acciones','crypto','bitcoin','etf','fondo'],
       };
       const incCats = {
-        salary: ['sueldo','salario','nomina','nómina','quincena'],
-        freelance: ['freelance','proyecto','cliente','factura'],
-        gift: ['regalo','aguinaldo','bono'],
-        investment: ['dividendo','interes','interés','inversion','inversión'],
+        salary: ['sueldo','salario','nomina','nómina','quincena','pago'],
+        sales: ['venta','ventas','vendí','vendi','clientes pagaron','cobré','cobre','abono'],
+        freelance: ['freelance','proyecto','factura','honorarios','servicio','consultoria','consultoría'],
+        gift: ['regalo','aguinaldo','bono','propina','tip'],
+        investment: ['dividendo','interes','interés','rendimiento','renta cobrada','alquiler cobrado'],
       };
       let category = '';
-      let is_income = /(ingreso|cobr|recibi|me pag|deposit|transfer|sueldo|salario)/i.test(text);
+      let is_income = /(ingreso|cobr|recibi|recibí|me pag|deposit|transfer|sueldo|salario|venta|vendi|vendí|aguinaldo|bonifica|propina|honorario|dividendo|rendimiento|abono)/i.test(text);
       const map = is_income ? incCats : expCats;
       for (const [key, words] of Object.entries(map)) {
         if (words.some(w => lower.includes(w))) { category = key; break; }
@@ -6645,6 +7451,18 @@ function zepoApp() {
       it.emoji = cat.emoji;
       it.label = cat.label;
       it.color = cat.color;
+    },
+
+    openCatPicker(idx) {
+      this.catPickerIdx = idx;
+    },
+    closeCatPicker() {
+      this.catPickerIdx = null;
+    },
+    pickCatForItem(key) {
+      if (this.catPickerIdx == null) return;
+      this.updateParsedItemCat(this.catPickerIdx, key);
+      this.catPickerIdx = null;
     },
 
     finishOnboarding() {
@@ -6952,6 +7770,81 @@ function zepoApp() {
       const rows = [];
       for (let i = 0; i < cells.length; i += 7) rows.push(cells.slice(i, i + 7));
       return { rows, max, total: Object.values(totalsByDay).reduce((s, v) => s + v, 0) };
+    },
+
+    get monthlyWeeksGrid() {
+      // 4-5 semanas del mes actual como cuadrantes (paralelo a monthlyDayGrid pero agrupado por semana ISO)
+      const now = new Date();
+      const month = now.getMonth(), year = now.getFullYear();
+      const todayDay = now.getDate();
+      const firstOfMonth = new Date(year, month, 1);
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      let firstDow = (firstOfMonth.getDay() + 6) % 7; // Lun=0..Dom=6
+      const totalsByDay = {};
+      this.monthExpenses.forEach(e => {
+        if (e.is_income) return;
+        const d = new Date(e.date + 'T12:00:00');
+        if (d.getMonth() !== month || d.getFullYear() !== year) return;
+        const day = d.getDate();
+        totalsByDay[day] = (totalsByDay[day] || 0) + e.amount;
+      });
+      // Construir semanas: cada semana tiene start, end, total, isCurrent, isFuture
+      const weeks = [];
+      let dayCursor = 1;
+      let weekIdx = 0;
+      // primera semana: completar desde firstDow hasta domingo
+      const firstWeekLen = 7 - firstDow;
+      let weekStart = 1;
+      let weekEnd = Math.min(firstWeekLen, daysInMonth);
+      while (weekStart <= daysInMonth) {
+        let weekTotal = 0;
+        let weekHasToday = false;
+        let weekAllFuture = true;
+        for (let d = weekStart; d <= weekEnd; d++) {
+          weekTotal += totalsByDay[d] || 0;
+          if (d === todayDay) weekHasToday = true;
+          if (d <= todayDay) weekAllFuture = false;
+        }
+        weeks.push({
+          idx: weekIdx,
+          start: weekStart,
+          end: weekEnd,
+          total: weekTotal,
+          isCurrent: weekHasToday,
+          isFuture: weekAllFuture && !weekHasToday,
+        });
+        weekIdx++;
+        weekStart = weekEnd + 1;
+        weekEnd = Math.min(weekStart + 6, daysInMonth);
+      }
+      const max = Math.max(1, ...weeks.map(w => w.total));
+      weeks.forEach(w => { w.intensity = w.total / max; });
+      return { weeks, max };
+    },
+
+    get yearlyMonthsGrid() {
+      const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+      const now = new Date();
+      const year = now.getFullYear();
+      const currentMonth = now.getMonth();
+      const buckets = months.map((label, i) => ({
+        idx: i, label, total: 0,
+        isCurrent: i === currentMonth,
+        isFuture: i > currentMonth,
+      }));
+      const all = [...(this.monthExpenses || []), ...(this.historyData || [])];
+      const seen = new Set();
+      all.forEach(e => {
+        if (seen.has(e.id)) return;
+        seen.add(e.id);
+        if (e.is_income) return;
+        const d = new Date(e.date + 'T12:00:00');
+        if (d.getFullYear() !== year) return;
+        buckets[d.getMonth()].total += parseFloat(e.amount) || 0;
+      });
+      const max = Math.max(1, ...buckets.map(b => b.total));
+      buckets.forEach(b => { b.intensity = b.total / max; });
+      return { months: buckets, max };
     },
 
     get yearlyChart() {
