@@ -6253,19 +6253,31 @@ function zepoApp() {
           event.target.value = '';
           return;
         }
-        // Comprimir antes de subir: 1600px lado largo, JPEG 0.82
+        // Comprimir antes de subir: 1600px lado largo, JPEG 0.82.
+        // Tambien transcodifica HEIC/HEIF a JPEG cuando el navegador puede decodificar.
+        const isHeic = /heic|heif/i.test(raw.type) || /\.(heic|heif)$/i.test(raw.name);
         let file = raw;
         try {
-          if (raw.size > 600 * 1024) {
+          if (raw.size > 600 * 1024 || isHeic) {
             file = await this._compressImage(raw, 1600, 0.82);
           }
         } catch (cmpErr) {
           console.warn('[compress] usando original:', cmpErr);
         }
-        if (this.receiptPreview) { try { URL.revokeObjectURL(this.receiptPreview); } catch (_) {} }
+        // Preview robusto via data URL (sobrevive blob/SW/Android quirks)
+        let previewUrl;
+        try {
+          previewUrl = await this._fileToDataUrl(file);
+        } catch (purlErr) {
+          console.warn('[preview-dataurl] fallback a blob:', purlErr);
+          previewUrl = URL.createObjectURL(file);
+        }
+        if (this.receiptPreview && this.receiptPreview.startsWith('blob:')) {
+          try { URL.revokeObjectURL(this.receiptPreview); } catch (_) {}
+        }
         this.receiptFile = file;
         this.receiptPreviewBroken = false;
-        this.receiptPreview = URL.createObjectURL(file);
+        this.receiptPreview = previewUrl;
         this.importedFile = null;
         this.parsedItems = [];
         this.analyzed = false;
@@ -6307,8 +6319,11 @@ function zepoApp() {
 
     removeReceipt() {
       this.receiptFile = null;
-      if (this.receiptPreview) URL.revokeObjectURL(this.receiptPreview);
+      if (this.receiptPreview && this.receiptPreview.startsWith('blob:')) {
+        try { URL.revokeObjectURL(this.receiptPreview); } catch (_) {}
+      }
       this.receiptPreview = null;
+      this.receiptPreviewBroken = false;
       this.parsedItems = [];
       this.analyzed = false;
     },
@@ -6340,6 +6355,15 @@ function zepoApp() {
         console.error('[handleFileImport]', e);
         this.showToast('No se pudo cargar el archivo');
       }
+    },
+
+    _fileToDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('reader_error'));
+        reader.readAsDataURL(file);
+      });
     },
 
     _fileToBase64(file) {
