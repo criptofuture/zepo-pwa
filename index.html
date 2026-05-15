@@ -5860,6 +5860,28 @@ function zepoApp() {
         }
       });
 
+      // INSTANT BOOT: si hay sesion + cache en localStorage, mostramos home YA
+      // (datos viejos pero validos), y la red refresca en background.
+      let usedCache = false;
+      try {
+        const tokenRaw = localStorage.getItem('sb-vchaxqisbypwwtyjjnjr-auth-token');
+        const expCache = localStorage.getItem('zepo_cache');
+        const planCache = localStorage.getItem('zepo_plan');
+        if (tokenRaw && expCache) {
+          const t = JSON.parse(tokenRaw);
+          const u = t?.user || t?.currentSession?.user;
+          if (u?.id) {
+            this.user = u;
+            this.userName = u.user_metadata?.name || u.user_metadata?.full_name || (u.email || '').split('@')[0] || 'Tu';
+            this.expenses = JSON.parse(expCache) || [];
+            if (planCache) this.userPlan = planCache;
+            this.authReady = true;
+            this.dataReady = true;
+            usedCache = true;
+          }
+        }
+      } catch (e) { console.warn('[init cache] miss, normal flow:', e?.message); }
+
       // Safety net: pase lo que pase, despues de 8s el splash se quita.
       // Si algo se cuelga (red, RLS, Supabase down), el usuario al menos ve el app.
       const safetyTimer = setTimeout(() => {
@@ -8150,6 +8172,7 @@ function zepoApp() {
       if (data) {
         this.userPlan = data.plan || 'free';
         this.planExpiresAt = data.plan_expires_at;
+        try { localStorage.setItem('zepo_plan', this.userPlan); } catch {}
       }
     },
 
