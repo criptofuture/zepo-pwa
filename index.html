@@ -6293,35 +6293,45 @@ function zepoApp() {
           event.target.value = '';
           return;
         }
-        // Comprimir antes de subir: 1600px lado largo, JPEG 0.82.
-        // Tambien transcodifica HEIC/HEIF a JPEG cuando el navegador puede decodificar.
-        const isHeic = /heic|heif/i.test(raw.type) || /\.(heic|heif)$/i.test(raw.name);
-        let file = raw;
-        try {
-          if (raw.size > 600 * 1024 || isHeic) {
-            file = await this._compressImage(raw, 1600, 0.82);
-          }
-        } catch (cmpErr) {
-          console.warn('[compress] usando original:', cmpErr);
-        }
-        // Preview robusto via data URL (sobrevive blob/SW/Android quirks)
-        let previewUrl;
-        try {
-          previewUrl = await this._fileToDataUrl(file);
-        } catch (purlErr) {
-          console.warn('[preview-dataurl] fallback a blob:', purlErr);
-          previewUrl = URL.createObjectURL(file);
-        }
+
+        // Limpiar estado anterior
         if (this.receiptPreview && this.receiptPreview.startsWith('blob:')) {
           try { URL.revokeObjectURL(this.receiptPreview); } catch (_) {}
         }
-        this.receiptFile = file;
-        this.receiptPreviewBroken = false;
-        this.receiptPreview = previewUrl;
         this.importedFile = null;
         this.parsedItems = [];
         this.analyzed = false;
+        this.receiptPreviewBroken = false;
+        this.receiptFile = raw;
         event.target.value = '';
+
+        // PASO 1: PREVIEW INSTANTANEO con data URL del raw — aparece antes de comprimir
+        try {
+          this.receiptPreview = await this._fileToDataUrl(raw);
+        } catch (e) {
+          console.warn('[preview-raw]', e);
+          // Fallback a blob URL si FileReader falla
+          try { this.receiptPreview = URL.createObjectURL(raw); }
+          catch (_) { this.receiptPreviewBroken = true; }
+        }
+
+        // PASO 2: compresion en background para aligerar el upload
+        const isHeic = /heic|heif/i.test(raw.type) || /\.(heic|heif)$/i.test(raw.name);
+        if (raw.size > 600 * 1024 || isHeic) {
+          this._compressImage(raw, 1600, 0.82).then(async (compressed) => {
+            this.receiptFile = compressed;
+            try {
+              const newUrl = await this._fileToDataUrl(compressed);
+              if (this.receiptPreview && this.receiptPreview.startsWith('blob:')) {
+                try { URL.revokeObjectURL(this.receiptPreview); } catch (_) {}
+              }
+              this.receiptPreview = newUrl;
+              this.receiptPreviewBroken = false;
+            } catch (e2) { console.warn('[preview-compressed]', e2); }
+          }).catch((cmpErr) => {
+            console.warn('[compress] usando original:', cmpErr);
+          });
+        }
       } catch (e) {
         console.error('[handlePhoto]', e);
         this.showToast('No se pudo cargar la foto');
