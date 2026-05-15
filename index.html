@@ -6286,8 +6286,8 @@ function zepoApp() {
       try {
         const file = event.target.files?.[0];
         if (!file) return;
-        if (file.size > 6 * 1024 * 1024) {
-          this.showToast('Archivo muy grande (máx 6MB)');
+        if (file.size > 15 * 1024 * 1024) {
+          this.showToast('Archivo muy grande (máx 15MB)');
           event.target.value = '';
           return;
         }
