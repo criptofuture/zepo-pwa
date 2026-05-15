@@ -3346,65 +3346,53 @@
           </div>
         </div>
 
-        <!-- Meses del año (cuadrantes) — solo en vista año -->
+        <!-- Calendario anual (heatmap 12 meses × 4 semanas) — solo en vista año -->
         <div class="dash-card" x-show="dashPeriod === 'año'">
-          <div class="dash-card-title">Meses del año</div>
-          <div class="dash-card-subtitle">Cuadrantes · un mes cada uno</div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;">
-            <template x-for="(m, mi) in yearlyMonthsGrid.months" :key="'ym-' + mi">
-              <div :style="{
-                aspectRatio: '1.1',
-                borderRadius: '10px',
-                position: 'relative',
-                padding: '8px 10px',
-                background: m.isCurrent
-                  ? 'var(--gradient)'
-                  : m.isFuture
-                    ? 'rgba(255,255,255,0.02)'
-                    : (m.total > 0 ? 'rgba(0,240,255,' + (0.08 + m.intensity * 0.42) + ')' : 'var(--surface)'),
-                border: m.isCurrent ? '1px solid var(--cyan)' : '1px solid var(--border)',
-                opacity: m.isFuture ? 0.5 : 1,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between'
-              }">
-                <div :style="{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.6px', color: m.isCurrent ? '#0A0A0F' : 'var(--dim)', textTransform: 'uppercase' }" x-text="m.label"></div>
-                <div :style="{ fontSize: '13px', fontWeight: 800, letterSpacing: '-0.3px', color: m.isCurrent ? '#0A0A0F' : 'var(--text)', fontVariantNumeric: 'tabular-nums' }" x-text="m.total > 0 ? '$' + fmtMoney(m.total) : '—'"></div>
-              </div>
+          <div class="dash-card-title">Calendario anual</div>
+          <div class="dash-card-subtitle">Heatmap semanal · cada fila un mes</div>
+          <div style="display:grid;grid-template-columns:34px repeat(4,1fr);gap:4px;margin-top:10px;align-items:center;">
+            <div></div>
+            <template x-for="wl in ['S1','S2','S3','S4']" :key="'yh-' + wl">
+              <div style="font-size:9px;text-align:center;color:var(--dim);font-weight:700;letter-spacing:0.5px;padding-bottom:4px;" x-text="wl"></div>
+            </template>
+            <template x-for="row in yearlyWeeksGrid.rows" :key="'yr-' + row.monthIdx">
+              <template x-for="item in [{type:'label', row}, ...row.cells.map(c => ({type:'cell', c, row}))]" :key="'yi-' + row.monthIdx + '-' + (item.type === 'label' ? 'l' : item.c.weekIdx)">
+                <div>
+                  <template x-if="item.type === 'label'">
+                    <div :style="{ fontSize: '10px', fontWeight: 700, color: item.row.isCurrent ? 'var(--cyan)' : 'var(--dim)', textAlign: 'right', paddingRight: '4px', opacity: item.row.isFuture ? 0.5 : 1, fontVariantNumeric: 'tabular-nums' }" x-text="item.row.label"></div>
+                  </template>
+                  <template x-if="item.type === 'cell'">
+                    <div :style="{
+                      aspectRatio: '1.4',
+                      borderRadius: '5px',
+                      background: item.c.isCurrentWeek
+                        ? 'var(--gradient)'
+                        : item.c.isFutureWeek
+                          ? 'rgba(255,255,255,0.02)'
+                          : (item.c.total > 0 ? 'rgba(0,240,255,' + (0.08 + item.c.intensity * 0.55) + ')' : 'var(--surface)'),
+                      border: item.c.isCurrentWeek ? '1px solid var(--cyan)' : '1px solid var(--border)',
+                      opacity: item.c.isFutureWeek ? 0.35 : 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }">
+                      <span x-show="item.c.total > 0" :style="{ fontSize: '9px', fontWeight: 700, color: item.c.isCurrentWeek ? '#0A0A0F' : 'var(--text)', fontVariantNumeric: 'tabular-nums' }" x-text="item.c.total >= 1000 ? '$' + Math.round(item.c.total/100)/10 + 'k' : '$' + Math.round(item.c.total)"></span>
+                    </div>
+                  </template>
+                </div>
+              </template>
             </template>
           </div>
-        </div>
-
-        <!-- Semanas del mes (cuadrantes) — solo en vista mes -->
-        <div class="dash-card" x-show="dashPeriod === 'mes'">
-          <div class="dash-card-title">Semanas del mes</div>
-          <div class="dash-card-subtitle">Cuadrantes · una semana cada uno</div>
-          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px;">
-            <template x-for="(w, wi) in monthlyWeeksGrid.weeks" :key="'w-' + wi">
-              <div :style="{
-                aspectRatio: '1.6',
-                borderRadius: '12px',
-                position: 'relative',
-                padding: '10px 12px',
-                background: w.isCurrent
-                  ? 'var(--gradient)'
-                  : w.isFuture
-                    ? 'rgba(255,255,255,0.02)'
-                    : (w.total > 0 ? 'rgba(0,240,255,' + (0.08 + w.intensity * 0.42) + ')' : 'var(--surface)'),
-                border: w.isCurrent ? '1px solid var(--cyan)' : '1px solid var(--border)',
-                opacity: w.isFuture ? 0.5 : 1,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between'
-              }">
-                <div :style="{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', color: w.isCurrent ? '#0A0A0F' : 'var(--dim)', textTransform: 'uppercase' }" x-text="'Semana ' + (wi + 1)"></div>
-                <div>
-                  <div :style="{ fontSize: '9px', color: w.isCurrent ? '#0A0A0F' : 'var(--muted)', marginBottom: '2px' }" x-text="'Día ' + w.start + '–' + w.end"></div>
-                  <div :style="{ fontSize: '17px', fontWeight: 800, letterSpacing: '-0.4px', color: w.isCurrent ? '#0A0A0F' : 'var(--text)', fontVariantNumeric: 'tabular-nums' }" x-text="'$' + fmtMoney(w.total)"></div>
-                </div>
-                <div x-show="w.isCurrent" style="position:absolute;top:8px;right:10px;font-size:8px;font-weight:800;letter-spacing:0.5px;color:#0A0A0F;background:rgba(10,10,15,0.18);padding:2px 6px;border-radius:6px;">ESTA SEMANA</div>
-              </div>
-            </template>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:11px;color:var(--muted);">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span>Menos</span>
+              <div style="width:14px;height:14px;border-radius:4px;background:rgba(0,240,255,0.08);border:1px solid var(--border);"></div>
+              <div style="width:14px;height:14px;border-radius:4px;background:rgba(0,240,255,0.25);border:1px solid var(--border);"></div>
+              <div style="width:14px;height:14px;border-radius:4px;background:rgba(0,240,255,0.42);border:1px solid var(--border);"></div>
+              <div style="width:14px;height:14px;border-radius:4px;background:rgba(0,240,255,0.60);border:1px solid var(--border);"></div>
+              <span>Más</span>
+            </div>
+            <div>Máx semana · <span class="mono" style="color:var(--text);font-weight:700;" x-text="'$' + fmtMoney(yearlyWeeksGrid.max)"></span></div>
           </div>
         </div>
 
@@ -5631,6 +5619,8 @@ function zepoApp() {
           this.expenses = [];
         }
       });
+
+      this._navInit();
     },
 
     async ensureUserRow() {
@@ -6215,6 +6205,61 @@ function zepoApp() {
       this.featureLockOpen = false;
       this.sheetOpen = false;
       this.tab = 'plans';
+    },
+
+    // ── Back gesture (Android, browser back) ──
+    // Empuja una entry de history cada vez que se abre algo que el user
+    // espera poder "cerrar" con back. popstate cierra el más profundo abierto.
+    _backNav: false,
+    _lastNavPush: 0,
+    _pushNavEntry() {
+      if (this._backNav) return;
+      const now = Date.now();
+      if (now - this._lastNavPush < 80) return; // dedupe contra dobles dispatches de Alpine
+      this._lastNavPush = now;
+      try { window.history.pushState({ zepoNav: now }, ''); } catch {}
+    },
+    _navInit() {
+      try {
+        if (!window.history.state || !('zepoNav' in (window.history.state || {}))) {
+          window.history.replaceState({ zepoNav: 0 }, '');
+        }
+        window.addEventListener('popstate', () => this._handleBackNav());
+        const pushOnTrue = (key, isOpen) => this.$watch(key, (v) => {
+          if (isOpen(v)) this._pushNavEntry();
+        });
+        pushOnTrue('featureLockOpen', v => !!v);
+        pushOnTrue('expenseCatPickerExp', v => v !== null && v !== undefined);
+        pushOnTrue('formCatPickerOpen', v => !!v);
+        pushOnTrue('importedCatPickerIdx', v => v !== null && v !== undefined);
+        pushOnTrue('catPickerIdx', v => v !== null && v !== undefined);
+        pushOnTrue('catDrillKey', v => v !== null && v !== undefined);
+        pushOnTrue('plusMenuOpen', v => !!v);
+        pushOnTrue('sheetOpen', v => !!v);
+        this.$watch('tab', (v) => {
+          if (v && v !== 'home') this._pushNavEntry();
+        });
+      } catch (e) { console.warn('[navInit]', e); }
+    },
+    _lastBackHandle: 0,
+    _handleBackNav() {
+      const now = Date.now();
+      if (now - this._lastBackHandle < 120) return;
+      this._lastBackHandle = now;
+      this._backNav = true;
+      try {
+        if (this.featureLockOpen) { this.featureLockOpen = false; return; }
+        if (this.expenseCatPickerExp) { this.expenseCatPickerExp = null; return; }
+        if (this.formCatPickerOpen) { this.formCatPickerOpen = false; return; }
+        if (this.importedCatPickerIdx !== null && this.importedCatPickerIdx !== undefined) { this.importedCatPickerIdx = null; return; }
+        if (this.catPickerIdx !== null && this.catPickerIdx !== undefined) { this.catPickerIdx = null; return; }
+        if (this.catDrillKey !== null && this.catDrillKey !== undefined) { if (typeof this.closeCatDrill === 'function') this.closeCatDrill(); else this.catDrillKey = null; return; }
+        if (this.plusMenuOpen) { this.plusMenuOpen = false; return; }
+        if (this.sheetOpen) { this.sheetOpen = false; this.editingExpense = null; return; }
+        if (this.tab && this.tab !== 'home') { this.tab = 'home'; return; }
+      } finally {
+        setTimeout(() => { this._backNav = false; }, 0);
+      }
     },
 
     togglePlusMenu() { this.plusMenuOpen = !this.plusMenuOpen; },
@@ -7772,79 +7817,58 @@ function zepoApp() {
       return { rows, max, total: Object.values(totalsByDay).reduce((s, v) => s + v, 0) };
     },
 
-    get monthlyWeeksGrid() {
-      // 4-5 semanas del mes actual como cuadrantes (paralelo a monthlyDayGrid pero agrupado por semana ISO)
-      const now = new Date();
-      const month = now.getMonth(), year = now.getFullYear();
-      const todayDay = now.getDate();
-      const firstOfMonth = new Date(year, month, 1);
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      let firstDow = (firstOfMonth.getDay() + 6) % 7; // Lun=0..Dom=6
-      const totalsByDay = {};
-      this.monthExpenses.forEach(e => {
-        if (e.is_income) return;
-        const d = new Date(e.date + 'T12:00:00');
-        if (d.getMonth() !== month || d.getFullYear() !== year) return;
-        const day = d.getDate();
-        totalsByDay[day] = (totalsByDay[day] || 0) + e.amount;
-      });
-      // Construir semanas: cada semana tiene start, end, total, isCurrent, isFuture
-      const weeks = [];
-      let dayCursor = 1;
-      let weekIdx = 0;
-      // primera semana: completar desde firstDow hasta domingo
-      const firstWeekLen = 7 - firstDow;
-      let weekStart = 1;
-      let weekEnd = Math.min(firstWeekLen, daysInMonth);
-      while (weekStart <= daysInMonth) {
-        let weekTotal = 0;
-        let weekHasToday = false;
-        let weekAllFuture = true;
-        for (let d = weekStart; d <= weekEnd; d++) {
-          weekTotal += totalsByDay[d] || 0;
-          if (d === todayDay) weekHasToday = true;
-          if (d <= todayDay) weekAllFuture = false;
-        }
-        weeks.push({
-          idx: weekIdx,
-          start: weekStart,
-          end: weekEnd,
-          total: weekTotal,
-          isCurrent: weekHasToday,
-          isFuture: weekAllFuture && !weekHasToday,
-        });
-        weekIdx++;
-        weekStart = weekEnd + 1;
-        weekEnd = Math.min(weekStart + 6, daysInMonth);
-      }
-      const max = Math.max(1, ...weeks.map(w => w.total));
-      weeks.forEach(w => { w.intensity = w.total / max; });
-      return { weeks, max };
-    },
-
-    get yearlyMonthsGrid() {
+    get yearlyWeeksGrid() {
+      // Heatmap 12 meses x 4 semanas. Cada celda = total de la semana del mes.
+      // Semanas: 1-7, 8-14, 15-21, 22-fin.
       const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
       const now = new Date();
       const year = now.getFullYear();
       const currentMonth = now.getMonth();
-      const buckets = months.map((label, i) => ({
-        idx: i, label, total: 0,
-        isCurrent: i === currentMonth,
-        isFuture: i > currentMonth,
-      }));
+      const todayDay = now.getDate();
       const all = [...(this.monthExpenses || []), ...(this.historyData || [])];
       const seen = new Set();
+      const exps = [];
       all.forEach(e => {
         if (seen.has(e.id)) return;
         seen.add(e.id);
         if (e.is_income) return;
-        const d = new Date(e.date + 'T12:00:00');
-        if (d.getFullYear() !== year) return;
-        buckets[d.getMonth()].total += parseFloat(e.amount) || 0;
+        exps.push(e);
       });
-      const max = Math.max(1, ...buckets.map(b => b.total));
-      buckets.forEach(b => { b.intensity = b.total / max; });
-      return { months: buckets, max };
+      const rows = months.map((label, mi) => {
+        const daysInMonth = new Date(year, mi + 1, 0).getDate();
+        const ranges = [
+          { start: 1, end: Math.min(7, daysInMonth) },
+          { start: 8, end: Math.min(14, daysInMonth) },
+          { start: 15, end: Math.min(21, daysInMonth) },
+          { start: 22, end: daysInMonth },
+        ];
+        const cells = ranges.map((r, wi) => {
+          let total = 0;
+          if (r.start <= daysInMonth) {
+            exps.forEach(e => {
+              const d = new Date(e.date + 'T12:00:00');
+              if (d.getFullYear() !== year || d.getMonth() !== mi) return;
+              const day = d.getDate();
+              if (day >= r.start && day <= r.end) total += parseFloat(e.amount) || 0;
+            });
+          }
+          const isCurrentWeek = mi === currentMonth && todayDay >= r.start && todayDay <= r.end;
+          const isFutureWeek = mi > currentMonth || (mi === currentMonth && r.start > todayDay) || r.start > daysInMonth;
+          return { weekIdx: wi, start: r.start, end: r.end, total, isCurrentWeek, isFutureWeek };
+        });
+        return {
+          monthIdx: mi,
+          label,
+          isCurrent: mi === currentMonth,
+          isFuture: mi > currentMonth,
+          cells,
+        };
+      });
+      let max = 0;
+      rows.forEach(r => r.cells.forEach(c => { if (c.total > max) max = c.total; }));
+      if (max === 0) max = 1;
+      rows.forEach(r => r.cells.forEach(c => { c.intensity = c.total / max; }));
+      return { rows, max };
     },
 
     get yearlyChart() {
