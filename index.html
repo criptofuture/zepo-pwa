@@ -6211,17 +6211,26 @@ function zepoApp() {
     // ── Photo Upload ──
     async handlePhoto(event) {
       try {
-        const file = event.target.files?.[0];
-        if (!file) return;
-        if (file.size > 6 * 1024 * 1024) {
-          this.showToast('Foto muy grande (máx 6MB)');
+        const raw = event.target.files?.[0];
+        if (!raw) return;
+        if (raw.size > 25 * 1024 * 1024) {
+          this.showToast('Foto enorme (máx 25MB)');
           event.target.value = '';
           return;
         }
-        if (!/^image\//.test(file.type)) {
+        if (!/^image\//.test(raw.type) && !/\.(jpe?g|png|webp|heic|heif)$/i.test(raw.name)) {
           this.showToast('No es una imagen válida');
           event.target.value = '';
           return;
+        }
+        // Comprimir antes de subir: 1600px lado largo, JPEG 0.82
+        let file = raw;
+        try {
+          if (raw.size > 600 * 1024) {
+            file = await this._compressImage(raw, 1600, 0.82);
+          }
+        } catch (cmpErr) {
+          console.warn('[compress] usando original:', cmpErr);
         }
         if (this.receiptPreview) { try { URL.revokeObjectURL(this.receiptPreview); } catch (_) {} }
         this.receiptFile = file;
@@ -6234,6 +6243,35 @@ function zepoApp() {
         console.error('[handlePhoto]', e);
         this.showToast('No se pudo cargar la foto');
       }
+    },
+
+    _compressImage(file, maxSide, quality) {
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const { width: w, height: h } = img;
+            const scale = Math.min(1, maxSide / Math.max(w, h));
+            const tw = Math.round(w * scale);
+            const th = Math.round(h * scale);
+            const canvas = document.createElement('canvas');
+            canvas.width = tw;
+            canvas.height = th;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, tw, th);
+            URL.revokeObjectURL(url);
+            canvas.toBlob((blob) => {
+              if (!blob) return reject(new Error('toBlob_null'));
+              const name = (file.name || 'foto').replace(/\.[^.]+$/, '') + '.jpg';
+              const out = new File([blob], name, { type: 'image/jpeg', lastModified: Date.now() });
+              resolve(out);
+            }, 'image/jpeg', quality);
+          } catch (e) { URL.revokeObjectURL(url); reject(e); }
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('img_load_fail')); };
+        img.src = url;
+      });
     },
 
     removeReceipt() {
