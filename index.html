@@ -8299,8 +8299,25 @@ function zepoApp() {
   };
 }
 
+// ── App version + agresivo SW update ──
+window.ZEPO_VERSION = 'v10-2026-05-15';
+console.log('%c⚡ Zepo ' + window.ZEPO_VERSION, 'color:#00F0FF;font-weight:bold;');
+
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
+  navigator.serviceWorker.register('sw.js').then((reg) => {
+    // Poll updates cada 60s mientras la app esta abierta
+    setInterval(() => { reg.update().catch(() => {}); }, 60_000);
+
+    // Si el SW nuevo toma control, recarga la pagina para que el HTML
+    // tambien se actualice (sino el usuario sigue en el HTML viejo).
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloaded) return;
+      reloaded = true;
+      console.log('[zepo] nuevo SW activo, recargando para refresh completo');
+      window.location.reload();
+    });
+  }).catch((e) => console.warn('[sw-register]', e));
 }
 </script>
 </body>
