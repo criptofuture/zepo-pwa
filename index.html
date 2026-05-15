@@ -6229,11 +6229,22 @@ function zepoApp() {
           if (isOpen(v)) this._pushNavEntry();
         });
         pushOnTrue('featureLockOpen', v => !!v);
+        pushOnTrue('showDeleteModal', v => !!v);
+        pushOnTrue('cobroDetailOpen', v => !!v);
+        pushOnTrue('showCoachPhoto', v => !!v);
+        pushOnTrue('showWelcomeCarousel', v => !!v);
         pushOnTrue('expenseCatPickerExp', v => v !== null && v !== undefined);
         pushOnTrue('formCatPickerOpen', v => !!v);
         pushOnTrue('importedCatPickerIdx', v => v !== null && v !== undefined);
         pushOnTrue('catPickerIdx', v => v !== null && v !== undefined);
+        pushOnTrue('catDropdownOpen', v => !!v);
+        pushOnTrue('exportSheetOpen', v => !!v);
+        pushOnTrue('budgetSheetOpen', v => !!v);
+        pushOnTrue('catManagerOpen', v => !!v);
+        pushOnTrue('editingCatKey', v => v !== null && v !== undefined);
         pushOnTrue('catDrillKey', v => v !== null && v !== undefined);
+        pushOnTrue('reprocessPreview', v => v !== null && v !== undefined);
+        pushOnTrue('faqOpen', v => v !== null && v !== undefined);
         pushOnTrue('plusMenuOpen', v => !!v);
         pushOnTrue('sheetOpen', v => !!v);
         this.$watch('tab', (v) => {
@@ -6248,15 +6259,37 @@ function zepoApp() {
       this._lastBackHandle = now;
       this._backNav = true;
       try {
+        // ── Capa 1: modales/overlays (lo más profundo primero) ──
         if (this.featureLockOpen) { this.featureLockOpen = false; return; }
+        if (this.showDeleteModal) { this.showDeleteModal = false; return; }
+        if (this.cobroDetailOpen) { this.cobroDetailOpen = false; this.activeCobro = null; return; }
+        if (this.showCoachPhoto) { this.showCoachPhoto = false; return; }
+        if (this.showWelcomeCarousel) { this.showWelcomeCarousel = false; return; }
+        // ── Capa 2: pickers (encima de sheets) ──
         if (this.expenseCatPickerExp) { this.expenseCatPickerExp = null; return; }
         if (this.formCatPickerOpen) { this.formCatPickerOpen = false; return; }
         if (this.importedCatPickerIdx !== null && this.importedCatPickerIdx !== undefined) { this.importedCatPickerIdx = null; return; }
         if (this.catPickerIdx !== null && this.catPickerIdx !== undefined) { this.catPickerIdx = null; return; }
+        if (this.catDropdownOpen) { this.catDropdownOpen = false; return; }
+        // ── Capa 3: sub-sheets (cierran y vuelven a su contexto) ──
+        if (this.editingCatKey !== null && this.editingCatKey !== undefined) { this.editingCatKey = null; return; }
+        if (this.exportSheetOpen) { this.exportSheetOpen = false; return; }
+        if (this.budgetSheetOpen) { this.budgetSheetOpen = false; return; }
+        if (this.catManagerOpen) { this.catManagerOpen = false; return; }
+        if (this.reprocessPreview) { this.reprocessPreview = null; return; }
+        if (this.faqOpen !== null && this.faqOpen !== undefined) { this.faqOpen = null; return; }
+        // ── Capa 4: drill de categoría ──
         if (this.catDrillKey !== null && this.catDrillKey !== undefined) { if (typeof this.closeCatDrill === 'function') this.closeCatDrill(); else this.catDrillKey = null; return; }
+        // ── Capa 5: menús y sheets ──
         if (this.plusMenuOpen) { this.plusMenuOpen = false; return; }
         if (this.sheetOpen) { this.sheetOpen = false; this.editingExpense = null; return; }
+        // ── Capa 6: sub-tabs → padre lógico ──
+        if (this.tab === 'changepass') { this.tab = 'settings'; return; }
+        if (['checkout','pay-processing','pay-success','pay-failed'].includes(this.tab)) { this.tab = 'plans'; return; }
+        if (this.tab === 'forgotpw') { this.tab = 'home'; return; }
+        // ── Capa 7: cualquier otro tab → home ──
         if (this.tab && this.tab !== 'home') { this.tab = 'home'; return; }
+        // En home sin nada abierto: dejar que el browser salga (no hacer nada)
       } finally {
         setTimeout(() => { this._backNav = false; }, 0);
       }
