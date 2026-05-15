@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, interactive-widget=overlays-content">
   <meta name="theme-color" content="#0A0A0F">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -6488,14 +6488,19 @@ function zepoApp() {
     async handlePhoto(event) {
       try {
         const raw = event.target.files?.[0];
-        if (!raw) return;
+        if (!raw) { this.showToast('No llegó archivo del picker'); return; }
+        const sizeMB = (raw.size / 1048576).toFixed(1);
+        const typeStr = raw.type || '(sin tipo)';
+        const ext = (raw.name || '').split('.').pop() || '?';
+        // Toast diagnostico visible — para saber que la foto si llego
+        this.showToast(`Foto: ${sizeMB}MB · ${typeStr} · .${ext}`);
         if (raw.size > 25 * 1024 * 1024) {
-          this.showToast('Foto enorme (máx 25MB)');
+          this.showToast(`Foto enorme: ${sizeMB}MB (máx 25MB)`);
           event.target.value = '';
           return;
         }
         if (!/^image\//.test(raw.type) && !/\.(jpe?g|png|webp|heic|heif)$/i.test(raw.name)) {
-          this.showToast('No es una imagen válida');
+          this.showToast(`Tipo no válido: ${typeStr}/${ext}`);
           event.target.value = '';
           return;
         }
@@ -6511,14 +6516,26 @@ function zepoApp() {
         this.receiptFile = raw;
         event.target.value = '';
 
-        // PASO 1: PREVIEW INSTANTANEO con data URL del raw — aparece antes de comprimir
+        // PASO 1: PREVIEW INSTANTANEO — primero blob URL (rapidisimo), luego upgrade a data URL
         try {
-          this.receiptPreview = await this._fileToDataUrl(raw);
+          this.receiptPreview = URL.createObjectURL(raw);
+        } catch (e0) {
+          console.warn('[preview-blob]', e0);
+        }
+        // Tambien probar data URL (mas confiable cross-browser pero mas lento)
+        try {
+          const durl = await this._fileToDataUrl(raw);
+          // Si tenemos data URL, reemplazar la blob URL
+          if (this.receiptPreview && this.receiptPreview.startsWith('blob:')) {
+            try { URL.revokeObjectURL(this.receiptPreview); } catch (_) {}
+          }
+          this.receiptPreview = durl;
         } catch (e) {
           console.warn('[preview-raw]', e);
-          // Fallback a blob URL si FileReader falla
-          try { this.receiptPreview = URL.createObjectURL(raw); }
-          catch (_) { this.receiptPreviewBroken = true; }
+          if (!this.receiptPreview) {
+            this.receiptPreviewBroken = true;
+            this.showToast(`Preview falló: ${e?.message || 'reader_error'}`);
+          }
         }
 
         // PASO 2: compresion en background para aligerar el upload
@@ -6536,11 +6553,12 @@ function zepoApp() {
             } catch (e2) { console.warn('[preview-compressed]', e2); }
           }).catch((cmpErr) => {
             console.warn('[compress] usando original:', cmpErr);
+            this.showToast(`Compresión falló (usando original): ${cmpErr?.message || cmpErr}`);
           });
         }
       } catch (e) {
         console.error('[handlePhoto]', e);
-        this.showToast('No se pudo cargar la foto');
+        this.showToast(`Error foto: ${e?.message || e}`);
       }
     },
 
