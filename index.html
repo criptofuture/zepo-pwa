@@ -869,9 +869,11 @@
       background: conic-gradient(from 0deg, transparent 0deg, transparent 220deg, #00F0FF 285deg, #7000FF 350deg, transparent 360deg);
       -webkit-mask: radial-gradient(circle, transparent 50px, #000 52px);
               mask: radial-gradient(circle, transparent 50px, #000 52px);
-      animation: cd-spin 1.1s linear infinite;
+      animation: cd-spin 1.1s linear infinite, zepo-ring-fadein 0.35s ease-out 0.35s forwards;
       filter: drop-shadow(0 0 12px rgba(0, 240, 255, 0.35));
+      opacity: 0;
     }
+    @keyframes zepo-ring-fadein { to { opacity: 1; } }
     .zepo-splash-chip {
       position: absolute; top: 50%; left: 50%;
       transform: translate(-50%, -50%);
@@ -912,11 +914,11 @@
       box-shadow: 0 8px 32px rgba(0, 240, 255, 0.18);
     }
     .zepo-splash-name {
-      font-size: 13px;
+      font-size: 18px;
       font-weight: 700;
-      letter-spacing: 0.5px;
-      color: #7c7c8a;
-      text-transform: uppercase;
+      letter-spacing: 0.2px;
+      color: #FFFFFF;
+      margin-top: 4px;
     }
 
     /* ─── Bottom input bar (Añadir registro) ─── */
@@ -2657,6 +2659,7 @@
       <div class="zepo-splash-ring"></div>
       <div class="zepo-splash-logo">Z</div>
     </div>
+    <div class="zepo-splash-name">Zepo</div>
   </div>
 
   <!-- ░░░ AUTH: LOGIN / SIGNUP ░░░ -->
