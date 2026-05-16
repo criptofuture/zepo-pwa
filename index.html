@@ -6293,17 +6293,26 @@ function zepoApp() {
           sb.from('expenses').select('*').eq('user_id', this.user.id).gte('date', start).lte('date', end).order('date', { ascending: false }).order('created_at', { ascending: false }),
           2500, 'loadExpenses'
         );
+        if (r.error) throw r.error;
         data = r.data;
       } catch (e) {
         console.warn('[loadExpenses] fallback REST:', e.message);
         try {
           const url = SUPABASE_URL + '/rest/v1/expenses?user_id=eq.' + encodeURIComponent(this.user.id) + '&date=gte.' + start + '&date=lte.' + end + '&order=date.desc,created_at.desc';
           const res = await fetch(url, { headers: sbAuthHeaders() });
-          data = res.ok ? await res.json() : [];
-        } catch (e2) { data = []; }
+          if (!res.ok) throw new Error('REST ' + res.status);
+          data = await res.json();
+        } catch (e2) {
+          console.warn('[loadExpenses] REST también falló:', e2.message);
+          data = null;
+        }
       }
-      this.expenses = data || [];
-      try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
+      // Solo sobreescribimos si la carga tuvo éxito. Si falló (data === null) conservamos
+      // lo que ya estaba en pantalla y en cache, para que el Inicio no quede en blanco.
+      if (Array.isArray(data)) {
+        this.expenses = data;
+        try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
+      }
     },
 
     async loadHistory() {
@@ -6323,16 +6332,19 @@ function zepoApp() {
         filterUrl += '&limit=1000';
       }
       try {
-        const { data } = await withTimeout(q, 2500, 'loadHistory');
-        this.historyData = data || [];
+        const r = await withTimeout(q, 2500, 'loadHistory');
+        if (r.error) throw r.error;
+        this.historyData = r.data || [];
       } catch (e) {
         console.warn('[loadHistory] fallback REST:', e.message);
         try {
           const headers = sbAuthHeaders();
           const res = await fetch(SUPABASE_URL + filterUrl, { headers });
-          this.historyData = res.ok ? await res.json() : [];
+          if (!res.ok) throw new Error('REST ' + res.status);
+          this.historyData = await res.json();
         } catch (e2) {
-          this.historyData = [];
+          console.warn('[loadHistory] REST también falló:', e2.message);
+          // Conservamos historyData previo en lugar de vaciarlo ante un fallo de red.
         }
       }
     },
@@ -8153,17 +8165,27 @@ function zepoApp() {
             body.prompt = (body.prompt ? body.prompt + '\n\n' : '') + 'Contenido del archivo ' + docFile.name + ':\n' + truncated;
           }
         }
-        const { data: { session } } = await sb.auth.getSession();
-        if (!session) { this.showToast('Sesión expirada · vuelve a entrar'); return false; }
+        // Token vía sbFreshToken (lee localStorage + refresca por REST). sb.auth.getSession()
+        // puede colgarse indefinidamente en webviews y dejar el botón girando para siempre.
+        const token = await sbFreshToken();
         body.user_type = this.form.is_income ? 'income' : 'expense';
-        const res = await fetch(SUPABASE_URL + '/functions/v1/gemini-analyze', {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + session.access_token,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(body),
-        });
+        // AbortController: corta la petición a los 30s para que el botón nunca quede colgado.
+        const ctrl = new AbortController();
+        const killer = setTimeout(() => ctrl.abort(), 30000);
+        let res;
+        try {
+          res = await fetch(SUPABASE_URL + '/functions/v1/gemini-analyze', {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + token,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body),
+            signal: ctrl.signal,
+          });
+        } finally {
+          clearTimeout(killer);
+        }
         const json = await res.json().catch(() => ({}));
         if (!res.ok || !Array.isArray(json.items)) {
           console.warn('[gemini]', res.status, json);
