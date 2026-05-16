@@ -2432,18 +2432,38 @@
   <div id="ig-ios" class="ig-card" style="display:none;">
     <div class="ig-step">
       <div class="ig-step-num">1</div>
-      <div class="ig-step-text">Toca el botón <b>Compartir</b>
+      <div class="ig-step-text">En <b>Safari</b>, toca el botón <b>Compartir</b>
         <span class="ig-step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M20 14v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6"/></svg></span>
-        abajo en Safari.</div>
+        en la barra inferior.</div>
     </div>
     <div class="ig-step">
       <div class="ig-step-num">2</div>
-      <div class="ig-step-text">Selecciona <b>Añadir a inicio</b>
+      <div class="ig-step-text">Selecciona <b>Añadir a pantalla de inicio</b>
         <span class="ig-step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00F0FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8"/><path d="M8 12h8"/></svg></span>.</div>
     </div>
     <div class="ig-step">
       <div class="ig-step-num">3</div>
       <div class="ig-step-text">Toca <b>Añadir</b> y abre Zepo desde tu pantalla de inicio.</div>
+    </div>
+  </div>
+
+  <!-- iOS pero NO Safari (Chrome/Brave/Firefox iOS) -->
+  <div id="ig-ios-nonsafari" class="ig-card" style="display:none;border-color:#FF6B6B;">
+    <div class="ig-step">
+      <div class="ig-step-num" style="background:linear-gradient(135deg,#FF6B6B,#FFB36B);">!</div>
+      <div class="ig-step-text"><b>iPhone solo permite instalar PWAs desde Safari.</b> Estás en otro navegador.</div>
+    </div>
+    <div class="ig-step">
+      <div class="ig-step-num">1</div>
+      <div class="ig-step-text">Copia el enlace con el botón de abajo.</div>
+    </div>
+    <div class="ig-step">
+      <div class="ig-step-num">2</div>
+      <div class="ig-step-text">Abre <b>Safari</b> y pega el enlace en la barra de direcciones.</div>
+    </div>
+    <div class="ig-step">
+      <div class="ig-step-num">3</div>
+      <div class="ig-step-text">Toca <b>Compartir</b> → <b>Añadir a pantalla de inicio</b>.</div>
     </div>
   </div>
 
@@ -2456,6 +2476,7 @@
   </div>
 
   <button id="ig-install-btn" class="ig-btn" style="display:none;">Instalar app</button>
+  <button id="ig-copy-btn" class="ig-btn" style="display:none;background:#13131A;color:#fff;border:1px solid #00F0FF;box-shadow:0 0 0 1px rgba(0,240,255,0.15);">Copiar enlace</button>
   <div class="ig-foot">Una vez instalado, ya no verás esta pantalla.</div>
 </div>
 
@@ -2471,12 +2492,15 @@
     var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
     var isAndroid = /Android/.test(ua);
     var isMobile = isIOS || isAndroid || /Mobile/.test(ua);
+    var isIOSNonSafari = isIOS && /CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|GSA\//.test(ua);
 
     function showPanel(p) {
       document.getElementById('ig-android').style.display = (p === 'android') ? 'block' : 'none';
-      document.getElementById('ig-ios').style.display = (p === 'ios') ? 'block' : 'none';
+      document.getElementById('ig-ios').style.display = (p === 'ios' && !isIOSNonSafari) ? 'block' : 'none';
+      document.getElementById('ig-ios-nonsafari').style.display = (p === 'ios' && isIOSNonSafari) ? 'block' : 'none';
       document.getElementById('ig-desktop').style.display = (p === 'desktop') ? 'block' : 'none';
       document.getElementById('ig-install-btn').style.display = (p === 'android') ? 'block' : 'none';
+      document.getElementById('ig-copy-btn').style.display = (p === 'ios') ? 'block' : 'none';
       var tabs = document.querySelectorAll('#ig-tabs .ig-tab');
       tabs.forEach(function(t) {
         t.classList.toggle('active', t.getAttribute('data-platform') === p);
@@ -2493,6 +2517,23 @@
         t.addEventListener('click', function() { showPanel(t.getAttribute('data-platform')); });
       });
     }
+
+    document.getElementById('ig-copy-btn').addEventListener('click', function() {
+      var url = window.location.origin + window.location.pathname;
+      var btn = this;
+      var done = function() {
+        var orig = btn.textContent;
+        btn.textContent = '¡Copiado!';
+        setTimeout(function() { btn.textContent = orig; }, 1800);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(done).catch(function() {
+          window.prompt('Copia este enlace y ábrelo en Safari:', url);
+        });
+      } else {
+        window.prompt('Copia este enlace y ábrelo en Safari:', url);
+      }
+    });
 
     var deferredPrompt = null;
     window.addEventListener('beforeinstallprompt', function(e) {
