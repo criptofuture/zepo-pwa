@@ -848,7 +848,7 @@
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       gap: 22px;
-      transition: opacity 0.25s ease-out;
+      transition: opacity 0.4s ease-out 0.55s, visibility 0s 0.95s;
     }
     .zepo-splash.is-hidden {
       opacity: 0;
@@ -857,11 +857,13 @@
     }
     .zepo-splash-stage {
       position: relative;
-      width: 112px; height: 112px;
+      width: 280px; height: 280px;
       display: flex; align-items: center; justify-content: center;
     }
     .zepo-splash-ring {
-      position: absolute; inset: 0;
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 112px; height: 112px;
       border-radius: 50%;
       background: conic-gradient(from 0deg, transparent 0deg, transparent 220deg, #00F0FF 285deg, #7000FF 350deg, transparent 360deg);
       -webkit-mask: radial-gradient(circle, transparent 50px, #000 52px);
@@ -869,6 +871,32 @@
       animation: cd-spin 1.1s linear infinite;
       filter: drop-shadow(0 0 12px rgba(0, 240, 255, 0.35));
     }
+    .zepo-splash-chip {
+      position: absolute; inset: 0;
+      pointer-events: none;
+      opacity: 0;
+    }
+    .zepo-splash-chip path,
+    .zepo-splash-chip circle {
+      stroke-dasharray: 220;
+      stroke-dashoffset: 220;
+      fill: none;
+      stroke-linecap: square;
+    }
+    .zepo-splash.is-hidden .zepo-splash-chip { opacity: 1; }
+    .zepo-splash.is-hidden .zepo-splash-chip path,
+    .zepo-splash.is-hidden .zepo-splash-chip circle {
+      animation: chip-draw 0.55s cubic-bezier(.4,0,.2,1) forwards;
+    }
+    .zepo-splash.is-hidden .zepo-splash-chip path:nth-child(2) { animation-delay: 0.04s; }
+    .zepo-splash.is-hidden .zepo-splash-chip path:nth-child(3) { animation-delay: 0.08s; }
+    .zepo-splash.is-hidden .zepo-splash-chip path:nth-child(4) { animation-delay: 0.12s; }
+    .zepo-splash.is-hidden .zepo-splash-chip path:nth-child(5) { animation-delay: 0.16s; }
+    .zepo-splash.is-hidden .zepo-splash-chip path:nth-child(6) { animation-delay: 0.20s; }
+    .zepo-splash.is-hidden .zepo-splash-chip path:nth-child(7) { animation-delay: 0.24s; }
+    .zepo-splash.is-hidden .zepo-splash-chip path:nth-child(8) { animation-delay: 0.28s; }
+    .zepo-splash.is-hidden .zepo-splash-chip circle { animation-delay: 0.48s; animation-duration: 0.2s; }
+    @keyframes chip-draw { to { stroke-dashoffset: 0; } }
     .zepo-splash-logo {
       position: relative;
       width: 80px; height: 80px;
@@ -2568,6 +2596,26 @@
   <!-- ░░░ SPLASH: anillo orbital + logo. Visible antes de Alpine ░░░ -->
   <div id="zepo-splash" class="zepo-splash" :class="{ 'is-hidden': authReady && dataReady }">
     <div class="zepo-splash-stage">
+      <svg class="zepo-splash-chip" viewBox="0 0 280 280" stroke-width="1.5">
+        <!-- 8 trazas PCB con angulos rectos saliendo del logo central (logo 80x80 centrado en 140,140 = 100-180 x/y) -->
+        <path d="M140 100 L140 50 L210 50" stroke="#00F0FF"/>
+        <path d="M180 140 L230 140 L230 70" stroke="#7000FF"/>
+        <path d="M180 140 L230 140 L230 210" stroke="#00F0FF"/>
+        <path d="M140 180 L140 230 L210 230" stroke="#7000FF"/>
+        <path d="M140 180 L140 230 L70 230" stroke="#00F0FF"/>
+        <path d="M100 140 L50 140 L50 210" stroke="#7000FF"/>
+        <path d="M100 140 L50 140 L50 70" stroke="#00F0FF"/>
+        <path d="M140 100 L140 50 L70 50" stroke="#7000FF"/>
+        <!-- nodos finales -->
+        <circle cx="210" cy="50" r="3" stroke="#00F0FF" fill="#00F0FF"/>
+        <circle cx="230" cy="70" r="3" stroke="#7000FF" fill="#7000FF"/>
+        <circle cx="230" cy="210" r="3" stroke="#00F0FF" fill="#00F0FF"/>
+        <circle cx="210" cy="230" r="3" stroke="#7000FF" fill="#7000FF"/>
+        <circle cx="70" cy="230" r="3" stroke="#00F0FF" fill="#00F0FF"/>
+        <circle cx="50" cy="210" r="3" stroke="#7000FF" fill="#7000FF"/>
+        <circle cx="50" cy="70" r="3" stroke="#00F0FF" fill="#00F0FF"/>
+        <circle cx="70" cy="50" r="3" stroke="#7000FF" fill="#7000FF"/>
+      </svg>
       <div class="zepo-splash-ring"></div>
       <div class="zepo-splash-logo">Z</div>
     </div>
@@ -7958,19 +8006,18 @@ function zepoApp() {
       if (!text && !hasMedia) return;
       if (this.analyzing) return;
       this.analyzing = true;
-      this.parsedItems = [];
+      let newItems = [];
       try {
-        const ok = await this._analyzeWithGemini(text, this.receiptFile, this.importedFile?.raw);
-        if (!ok && !hasMedia) {
-          // Fallback regex SOLO si no hay foto/archivo (no podemos parsearlos sin LLM)
-          this._analyzeLocal(text);
-        } else if (!ok) {
+        newItems = await this._analyzeWithGemini(text, this.receiptFile, this.importedFile?.raw);
+        if (!newItems.length && !hasMedia) {
+          newItems = this._analyzeLocal(text);
+        } else if (!newItems.length) {
           this.showToast('No se pudo analizar · revisa tu conexión');
         }
       } catch (e) {
         console.error('[analyze]', e);
         if (!hasMedia) {
-          this._analyzeLocal(text);
+          newItems = this._analyzeLocal(text);
         } else {
           this.showToast('Error analizando · intenta de nuevo');
         }
@@ -7978,6 +8025,56 @@ function zepoApp() {
         this.analyzing = false;
         this.analyzed = true;
       }
+      if (newItems && newItems.length) {
+        const forced = !!this.form.is_income;
+        newItems = newItems.map(it => this._coerceItemType(it, forced));
+        // Concat: añade al final en lugar de reemplazar
+        this.parsedItems = [...this.parsedItems, ...newItems];
+        this.form.amount = this.parsedItems.reduce((s,p) => s + (parseFloat(p.amount)||0), 0).toFixed(2);
+        if (!this.form.category) this.form.category = this.parsedItems[0].category;
+        if (this.parsedItems[0].date) this.form.date = this.parsedItems[0].date;
+        // Limpia input/media para próxima entrada
+        this.form.description = '';
+        if (this.receiptFile) this.receiptFile = null;
+        if (this.importedFile) this.importedFile = null;
+      }
+    },
+
+    _coerceItemType(it, is_income) {
+      const cats = is_income ? this.incomeCategories : this.categories;
+      const catKeys = new Set(cats.map(c => c.key));
+      let category = it.category;
+      if (!catKeys.has(category)) {
+        const lower = (it.description || '').toLowerCase();
+        const dict = is_income ? {
+          salary: ['sueldo','salario','nomina','nómina','quincena','pago'],
+          sales: ['venta','vendi','vendí','cliente','cobré','cobre','abono'],
+          freelance: ['freelance','proyecto','factura','honorarios','servicio','consultoría','consultoria'],
+          gift: ['regalo','aguinaldo','bono','propina','tip'],
+          investment: ['dividendo','interes','interés','rendimiento','alquiler cobrado'],
+        } : {
+          food: ['comida','almuerzo','desayuno','cena','restaurante','pollo','arroz','menu','pizza'],
+          transport: ['bus','transporte','gasolina','pasaje','metro','taxi','uber','cabify'],
+          coffee: ['cafe','café','capuchino','latte','espresso'],
+          health: ['medicina','farmacia','doctor','hospital','salud','consulta'],
+          market: ['mercado','supermercado','megamaxi','supermaxi','tienda','santa maria'],
+          shop: ['ropa','zapato','amazon','compra','regalo'],
+          rent: ['arriendo','alquiler','luz','agua','internet','servicios','renta'],
+          fun: ['cine','netflix','juego','spotify','fiesta','bar','trago'],
+          pets: ['perro','gato','mascota','veterinario','vet'],
+          savings: ['ahorro','meta','alcancia','alcancía'],
+        };
+        for (const [k, words] of Object.entries(dict)) {
+          if (catKeys.has(k) && words.some(w => lower.includes(w))) { category = k; break; }
+        }
+        if (!catKeys.has(category)) category = cats[0]?.key || category;
+      }
+      const cat = CAT_MAP[category] || {};
+      return { ...it, is_income, category,
+        emoji: cat.emoji || it.emoji || '✨',
+        label: cat.label || it.label || category,
+        color: cat.color || it.color || '#8888AA',
+      };
     },
 
     async _analyzeWithGemini(text, imageFile, docFile) {
@@ -8006,6 +8103,7 @@ function zepoApp() {
         }
         const { data: { session } } = await sb.auth.getSession();
         if (!session) { this.showToast('Sesión expirada · vuelve a entrar'); return false; }
+        body.user_type = this.form.is_income ? 'income' : 'expense';
         const res = await fetch(SUPABASE_URL + '/functions/v1/gemini-analyze', {
           method: 'POST',
           headers: {
@@ -8017,7 +8115,7 @@ function zepoApp() {
         const json = await res.json().catch(() => ({}));
         if (!res.ok || !Array.isArray(json.items)) {
           console.warn('[gemini]', res.status, json);
-          return false;
+          return [];
         }
         const items = json.items.map(it => {
           const key = it.category;
@@ -8035,19 +8133,12 @@ function zepoApp() {
         }).filter(it => it.amount > 0 && it.category);
         if (items.length === 0) {
           this.showToast(json.note || 'No detecté movimientos · agrega contexto');
-          return false;
+          return [];
         }
-        const incCount = items.filter(p => p.is_income).length;
-        this.form.is_income = incCount > items.length / 2;
-        this.parsedItems = items;
-        this.form.amount = items.reduce((s, p) => s + p.amount, 0).toFixed(2);
-        this.form.category = items[0].category;
-        // si el modelo devolvio fecha y todos coinciden, usar la del modelo
-        if (items[0].date) this.form.date = items[0].date;
-        return true;
+        return items;
       } catch (e) {
         console.error('[gemini-call]', e);
-        return false;
+        return [];
       }
     },
 
@@ -8055,24 +8146,12 @@ function zepoApp() {
       const items = this.splitItems(text);
       if (items.length >= 2) {
         const parsed = items.map(s => this.parseSingleItem(s)).filter(it => it.amount > 0);
-        if (parsed.length >= 2) {
-          const incCount = parsed.filter(p => p.is_income).length;
-          this.form.is_income = incCount > parsed.length / 2;
-          this.parsedItems = parsed;
-          this.form.amount = parsed.reduce((s, p) => s + p.amount, 0).toFixed(2);
-          this.form.category = parsed[0].category;
-          return;
-        }
+        if (parsed.length >= 2) return parsed;
       }
       const single = this.parseSingleItem(text);
-      if (single.amount > 0) {
-        this.form.is_income = single.is_income;
-        this.parsedItems = [single];
-        this.form.amount = single.amount.toFixed(2);
-        this.form.category = single.category;
-      } else {
-        this.parseVoiceText(text);
-      }
+      if (single.amount > 0) return [single];
+      this.parseVoiceText(text);
+      return [];
     },
 
     splitItems(text) {
