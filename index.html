@@ -841,14 +841,14 @@
     @keyframes cd-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .cd-spin { animation: cd-spin 0.8s linear infinite; transform-origin: 50% 50%; }
 
-    /* ─── Splash unico con anillo orbital ─── */
+    /* ─── Splash: logo + anillo orbital alrededor ─── */
     .zepo-splash {
       position: fixed; inset: 0; z-index: 9999;
       background: #0A0A0F;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 22px;
-      transition: opacity 0.4s ease-out 0.55s, visibility 0s 0.95s;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.3s ease-out, visibility 0s 0.3s;
+      --splash-logo: min(17vw, 100px);
+      --splash-stage: min(34vw, 200px);
     }
     .zepo-splash.is-hidden {
       opacity: 0;
@@ -857,78 +857,50 @@
     }
     .zepo-splash-stage {
       position: relative;
-      width: 112px; height: 112px;
+      width: var(--splash-stage); height: var(--splash-stage);
       display: flex; align-items: center; justify-content: center;
       overflow: visible;
     }
-    .zepo-splash-ring-outline {
+    .zepo-splash-ring-svg {
       position: absolute; top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      width: 112px; height: 112px;
-      border-radius: 50%;
-      border: 1.5px solid rgba(0, 240, 255, 0.22);
+      width: var(--splash-stage); height: var(--splash-stage);
       pointer-events: none;
       opacity: 0;
-      animation: zepo-ring-fadein 0.35s ease-out 0.35s forwards;
+      animation: zepo-ring-fadein 0.4s ease-out 0.4s forwards;
+      overflow: visible;
     }
-    .zepo-splash-ring {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 112px; height: 112px;
-      border-radius: 50%;
-      background: conic-gradient(from 0deg, transparent 0deg, transparent 200deg, #00F0FF 285deg, #7000FF 355deg, transparent 360deg);
-      -webkit-mask: radial-gradient(circle, transparent 53px, #000 55px);
-              mask: radial-gradient(circle, transparent 53px, #000 55px);
-      animation: cd-spin 1.1s linear infinite, zepo-ring-fadein 0.35s ease-out 0.35s forwards;
-      filter: drop-shadow(0 0 12px rgba(0, 240, 255, 0.35));
-      opacity: 0;
+    .zepo-splash-ring-svg .ring-bg {
+      fill: none;
+      stroke: rgba(0, 240, 255, 0.22);
+      stroke-width: 2;
+    }
+    .zepo-splash-ring-svg .ring-arc {
+      fill: none;
+      stroke: url(#zepo-ring-grad);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-dasharray: 180 700;
+      transform-origin: 112px 112px;
+      animation: cd-spin 1.4s linear infinite;
     }
     @keyframes zepo-ring-fadein { to { opacity: 1; } }
-    .zepo-splash-chip {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 400px; height: 400px;
-      pointer-events: none;
-      opacity: 0;
-    }
-    .zepo-splash-chip path {
-      stroke-dasharray: 300;
-      stroke-dashoffset: 300;
-      fill: none;
-      stroke-linecap: square;
-      stroke-linejoin: miter;
-    }
-    .zepo-splash-chip rect,
-    .zepo-splash-chip circle {
-      opacity: 0;
-    }
-    .zepo-splash.is-hidden .zepo-splash-chip { opacity: 1; }
-    .zepo-splash.is-hidden .zepo-splash-chip path {
-      animation: chip-draw 0.5s cubic-bezier(.4,0,.2,1) forwards;
-    }
-    .zepo-splash.is-hidden .zepo-splash-chip rect,
-    .zepo-splash.is-hidden .zepo-splash-chip circle {
-      animation: chip-pad 0.18s ease-out forwards;
-    }
-    @keyframes chip-draw { to { stroke-dashoffset: 0; } }
-    @keyframes chip-pad { to { opacity: 1; } }
     .zepo-splash-logo {
       position: relative;
-      width: 80px; height: 80px;
-      border-radius: 22px;
+      width: var(--splash-logo); height: var(--splash-logo);
+      border-radius: 24%;
       background: linear-gradient(135deg, #00F0FF, #7000FF);
       display: flex; align-items: center; justify-content: center;
-      font-weight: 900; font-size: 40px;
+      font-weight: 900; font-size: calc(var(--splash-logo) * 0.5);
       color: #0A0A0F;
-      letter-spacing: -2px;
-      box-shadow: 0 8px 32px rgba(0, 240, 255, 0.18);
+      letter-spacing: -0.05em;
+      box-shadow: 0 8px 32px rgba(0, 240, 255, 0.22);
+      animation: zepo-heartbeat 1.6s ease-in-out infinite;
+      transform-origin: center;
     }
-    .zepo-splash-name {
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: 0.2px;
-      color: #FFFFFF;
-      margin-top: 4px;
+    @keyframes zepo-heartbeat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
     }
 
     /* ─── Bottom input bar (Añadir registro) ─── */
@@ -2611,66 +2583,18 @@
   <!-- ░░░ SPLASH: anillo orbital + logo. Visible antes de Alpine ░░░ -->
   <div id="zepo-splash" class="zepo-splash" :class="{ 'is-hidden': authReady && dataReady }">
     <div class="zepo-splash-stage">
-      <svg class="zepo-splash-chip" viewBox="0 0 400 400" stroke-width="1.4">
-        <!-- 20 trazas PCB radiando del logo central (centro 200,200 · ring r=56) -->
-        <path d="M200 140 L200 95 L260 95 L260 65" stroke="#00F0FF" style="animation-delay:0s"/>
-        <path d="M220 145 L255 110 L255 70 L300 70" stroke="#00F0FF" style="animation-delay:0.02s"/>
-        <path d="M232 152 L290 152 L290 105 L330 105" stroke="#7000FF" style="animation-delay:0.04s"/>
-        <path d="M260 200 L320 200 L320 145 L370 145" stroke="#00F0FF" style="animation-delay:0.06s"/>
-        <path d="M260 215 L300 215 L300 250 L370 250" stroke="#7000FF" style="animation-delay:0.08s"/>
-        <path d="M252 235 L295 280 L340 280" stroke="#00F0FF" style="animation-delay:0.10s"/>
-        <path d="M232 248 L280 248 L280 305 L330 305" stroke="#7000FF" style="animation-delay:0.12s"/>
-        <path d="M215 258 L215 310 L270 310 L270 355" stroke="#00F0FF" style="animation-delay:0.14s"/>
-        <path d="M200 260 L200 320 L150 320 L150 365" stroke="#7000FF" style="animation-delay:0.16s"/>
-        <path d="M185 258 L185 310 L130 310 L130 355" stroke="#00F0FF" style="animation-delay:0.18s"/>
-        <path d="M170 250 L120 250 L120 305 L70 305" stroke="#7000FF" style="animation-delay:0.20s"/>
-        <path d="M148 235 L105 280 L60 280" stroke="#00F0FF" style="animation-delay:0.22s"/>
-        <path d="M140 215 L100 215 L100 250 L30 250" stroke="#7000FF" style="animation-delay:0.24s"/>
-        <path d="M140 200 L80 200 L80 145 L30 145" stroke="#00F0FF" style="animation-delay:0.26s"/>
-        <path d="M148 165 L110 165 L110 110 L70 110" stroke="#7000FF" style="animation-delay:0.28s"/>
-        <path d="M160 152 L125 117 L125 75 L80 75" stroke="#00F0FF" style="animation-delay:0.30s"/>
-        <path d="M170 145 L170 95 L130 95 L130 60" stroke="#7000FF" style="animation-delay:0.32s"/>
-        <path d="M185 142 L185 105 L155 105 L155 70" stroke="#00F0FF" style="animation-delay:0.34s"/>
-        <path d="M210 142 L210 110 L240 110" stroke="#7000FF" style="animation-delay:0.36s"/>
-        <path d="M190 258 L190 290 L160 290" stroke="#00F0FF" style="animation-delay:0.38s"/>
-        <!-- pads cuadrados en los extremos -->
-        <rect x="254" y="59" width="12" height="12" fill="#00F0FF" style="animation-delay:0.40s"/>
-        <rect x="294" y="64" width="12" height="12" fill="#00F0FF" style="animation-delay:0.42s"/>
-        <rect x="324" y="99" width="12" height="12" fill="#7000FF" style="animation-delay:0.42s"/>
-        <rect x="364" y="139" width="12" height="12" fill="#00F0FF" style="animation-delay:0.44s"/>
-        <rect x="364" y="244" width="12" height="12" fill="#7000FF" style="animation-delay:0.44s"/>
-        <rect x="334" y="274" width="12" height="12" fill="#00F0FF" style="animation-delay:0.46s"/>
-        <rect x="324" y="299" width="12" height="12" fill="#7000FF" style="animation-delay:0.46s"/>
-        <rect x="264" y="349" width="12" height="12" fill="#00F0FF" style="animation-delay:0.48s"/>
-        <rect x="144" y="359" width="12" height="12" fill="#7000FF" style="animation-delay:0.48s"/>
-        <rect x="124" y="349" width="12" height="12" fill="#00F0FF" style="animation-delay:0.50s"/>
-        <rect x="64" y="299" width="12" height="12" fill="#7000FF" style="animation-delay:0.50s"/>
-        <rect x="54" y="274" width="12" height="12" fill="#00F0FF" style="animation-delay:0.52s"/>
-        <rect x="24" y="244" width="12" height="12" fill="#7000FF" style="animation-delay:0.52s"/>
-        <rect x="24" y="139" width="12" height="12" fill="#00F0FF" style="animation-delay:0.54s"/>
-        <rect x="64" y="104" width="12" height="12" fill="#7000FF" style="animation-delay:0.54s"/>
-        <rect x="74" y="69" width="12" height="12" fill="#00F0FF" style="animation-delay:0.56s"/>
-        <rect x="124" y="54" width="12" height="12" fill="#7000FF" style="animation-delay:0.56s"/>
-        <rect x="149" y="64" width="12" height="12" fill="#00F0FF" style="animation-delay:0.58s"/>
-        <!-- vías pequeñas a lo largo de algunas trazas -->
-        <circle cx="255" cy="110" r="2.5" fill="#00F0FF" style="animation-delay:0.36s"/>
-        <circle cx="290" cy="152" r="2.5" fill="#7000FF" style="animation-delay:0.38s"/>
-        <circle cx="300" cy="215" r="2.5" fill="#7000FF" style="animation-delay:0.40s"/>
-        <circle cx="280" cy="248" r="2.5" fill="#7000FF" style="animation-delay:0.42s"/>
-        <circle cx="215" cy="310" r="2.5" fill="#00F0FF" style="animation-delay:0.44s"/>
-        <circle cx="150" cy="320" r="2.5" fill="#7000FF" style="animation-delay:0.46s"/>
-        <circle cx="120" cy="250" r="2.5" fill="#7000FF" style="animation-delay:0.48s"/>
-        <circle cx="100" cy="215" r="2.5" fill="#7000FF" style="animation-delay:0.50s"/>
-        <circle cx="80" cy="145" r="2.5" fill="#00F0FF" style="animation-delay:0.52s"/>
-        <circle cx="110" cy="165" r="2.5" fill="#7000FF" style="animation-delay:0.54s"/>
-        <circle cx="125" cy="95" r="2.5" fill="#00F0FF" style="animation-delay:0.56s"/>
-        <circle cx="170" cy="95" r="2.5" fill="#7000FF" style="animation-delay:0.58s"/>
+      <svg class="zepo-splash-ring-svg" viewBox="0 0 224 224">
+        <defs>
+          <linearGradient id="zepo-ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00F0FF"/>
+            <stop offset="100%" stop-color="#7000FF"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-bg" cx="112" cy="112" r="110"/>
+        <circle class="ring-arc" cx="112" cy="112" r="110"/>
       </svg>
-      <div class="zepo-splash-ring-outline"></div>
-      <div class="zepo-splash-ring"></div>
       <div class="zepo-splash-logo">Z</div>
     </div>
-    <div class="zepo-splash-name">Zepo</div>
   </div>
 
   <!-- ░░░ AUTH: LOGIN / SIGNUP ░░░ -->
