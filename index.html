@@ -637,13 +637,21 @@
       margin: 0 auto;
       background: var(--bg);
       z-index: 101;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    /* Área scrollable interna — iOS no puede scrollear .approve-screen (overflow:hidden) */
+    .approve-body {
+      flex: 1;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
     }
+    .approve-screen.with-input-bar .approve-body { padding-bottom: 96px; }
     .approve-header {
       display: flex; align-items: center; gap: 12px;
       padding: calc(var(--safe-top) + 14px) 20px 12px;
-      position: sticky; top: 0; background: var(--bg); z-index: 10;
+      background: var(--bg); flex-shrink: 0;
     }
     .approve-back {
       width: 36px; height: 36px; border-radius: 18px;
@@ -1090,8 +1098,7 @@
       font-size: 11px; color: var(--text); text-align: center; line-height: 1.2;
     }
 
-    /* Approve screen necesita padding-bottom para no quedar tapado por la input bar */
-    .approve-screen.with-input-bar { padding-bottom: 96px; }
+    /* padding-bottom movido a .approve-body (ver .approve-screen.with-input-bar .approve-body) */
 
     /* Monto display siempre visible (en add mode) */
     .monto-display {
@@ -2603,7 +2610,6 @@
   </div>
 
   <button id="ig-install-btn" class="ig-btn" style="display:none;">Instalar app</button>
-  <button id="ig-copy-btn" class="ig-btn" style="display:none;background:#13131A;color:#fff;border:1px solid #00F0FF;box-shadow:0 0 0 1px rgba(0,240,255,0.15);">Copiar enlace</button>
   <div class="ig-foot">Una vez instalado, ya no verás esta pantalla.</div>
 </div>
 
@@ -2627,7 +2633,6 @@
       document.getElementById('ig-ios-nonsafari').style.display = (p === 'ios' && isIOSNonSafari) ? 'block' : 'none';
       document.getElementById('ig-desktop').style.display = (p === 'desktop') ? 'block' : 'none';
       document.getElementById('ig-install-btn').style.display = (p === 'android') ? 'block' : 'none';
-      document.getElementById('ig-copy-btn').style.display = (p === 'ios') ? 'block' : 'none';
       var tabs = document.querySelectorAll('#ig-tabs .ig-tab');
       tabs.forEach(function(t) {
         t.classList.toggle('active', t.getAttribute('data-platform') === p);
@@ -2645,22 +2650,6 @@
       });
     }
 
-    document.getElementById('ig-copy-btn').addEventListener('click', function() {
-      var url = window.location.origin + window.location.pathname;
-      var btn = this;
-      var done = function() {
-        var orig = btn.textContent;
-        btn.textContent = '¡Copiado!';
-        setTimeout(function() { btn.textContent = orig; }, 1800);
-      };
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(done).catch(function() {
-          window.prompt('Copia este enlace y ábrelo en Safari:', url);
-        });
-      } else {
-        window.prompt('Copia este enlace y ábrelo en Safari:', url);
-      }
-    });
 
     var deferredPrompt = null;
     window.addEventListener('beforeinstallprompt', function(e) {
@@ -4664,7 +4653,8 @@
               </button>
             </div>
 
-            <!-- Main content area -->
+            <!-- Main content area — dentro de approve-body (overflow-y:auto) -->
+            <div class="approve-body">
             <div style="padding:0 20px 32px;">
 
               <!-- ═════════ CREATE MODE: nuevo orden ═════════ -->
@@ -5116,6 +5106,7 @@
               </div>
 
             </div>
+            </div><!-- end approve-body -->
           </div>
 
           <!-- ═════════ BOTTOM INPUT BAR (solo create mode) ═════════ -->
@@ -7597,6 +7588,7 @@ function zepoApp() {
       }
       if (!this.form.amount) return this.showToast('Ingresa un monto');
       if (!this.form.category) return this.showToast('Selecciona una categoría');
+      if (this.form.is_split && this.splitSum !== 100) return this.showToast('Los porcentajes deben sumar 100%');
       if (!this.form.date) this.form.date = localDate();
       if (this.userPlan === 'free' && !this.editingExpense && this.monthExpenses.length >= 10) {
         this.showToast('Límite de 10 gastos/mes alcanzado');
@@ -7693,21 +7685,42 @@ function zepoApp() {
       this.saving = true;
       try {
         const date = this.form.date || localDate();
-        // Items divididos con la misma persona comparten un split_group → un cobro consolidado.
+
+        // Split desde el formulario (form.is_split) — se aplica a ítems sin split_with propio.
+        const tuPerson = this.form.is_split && this.form.split_people
+          ? this.form.split_people.find(p => p.you) : null;
+        const formPct = tuPerson ? (parseFloat(tuPerson.pct) || 50) : 50;
+        const formOthers = this.form.is_split && this.form.split_people
+          ? this.form.split_people.filter(p => !p.you).map(p => (p.name || '').trim()).filter(Boolean)
+          : [];
+        const formSplitWith = formOthers.length > 0 ? formOthers.join(', ') : null;
+
+        // Contar ítems por persona: split_group solo si 2+ ítems van a la misma persona.
+        const validItems = this.parsedItems.filter(it => it.amount > 0 && it.category);
+        const personCount = {};
+        validItems.forEach(it => {
+          const p = (it.split_with || formSplitWith || '').trim();
+          if (p) personCount[p] = (personCount[p] || 0) + 1;
+        });
+
         const groupByPerson = {};
-        const rows = this.parsedItems
-          .filter(it => it.amount > 0 && it.category)
-          .map(it => {
-            const person = (it.split_with || '').trim();
+        const rows = validItems.map(it => {
+            const person = (it.split_with || formSplitWith || '').trim();
             if (person) {
               const total = it.amount;
-              const pct = (it.split_pct > 0 && it.split_pct < 100) ? it.split_pct : 50;
+              const pct = it.split_with
+                ? ((it.split_pct > 0 && it.split_pct < 100) ? it.split_pct : 50)
+                : formPct;
               const miParte = Math.round(total * pct / 100 * 100) / 100;
               const pendiente = Math.round((total - miParte) * 100) / 100;
-              if (!groupByPerson[person]) {
-                groupByPerson[person] = (crypto.randomUUID
-                  ? crypto.randomUUID()
-                  : ('g' + Date.now() + Math.random().toString(36).slice(2)));
+              let splitGroup = null;
+              if (personCount[person] >= 2) {
+                if (!groupByPerson[person]) {
+                  groupByPerson[person] = (crypto.randomUUID
+                    ? crypto.randomUUID()
+                    : ('g' + Date.now() + Math.random().toString(36).slice(2)));
+                }
+                splitGroup = groupByPerson[person];
               }
               return {
                 user_id: this.user.id,
@@ -7722,7 +7735,7 @@ function zepoApp() {
                 split_persona: person,
                 split_pending: pendiente,
                 split_status: 'pendiente',
-                split_group: groupByPerson[person],
+                split_group: splitGroup,
               };
             }
             return {
@@ -7750,7 +7763,9 @@ function zepoApp() {
           await sbRestInsert('expenses', rows);
         }
         const anySplit = rows.some(r => r.is_split);
-        this.showToast(rows.length === 1 ? 'Registro guardado' : (rows.length + ' registros guardados'));
+        this.showToast(rows.length === 1
+          ? (anySplit ? '💸 Split guardado' : 'Registro guardado')
+          : (anySplit ? rows.length + ' registros · cobros creados' : rows.length + ' registros guardados'));
         this.parsedItems = [];
         this.sheetOpen = false;
         await this.loadExpenses();
