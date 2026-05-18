@@ -3393,7 +3393,7 @@
                           <span style="margin-left:6px;font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(112,0,255,0.18);color:#B794F6;font-weight:700;letter-spacing:0.4px;vertical-align:1px;">AUTO</span>
                         </template>
                       </div>
-                      <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="(c.description || getCatLabel(c.category)) + ' · ' + relativeTime(c.date)"></div>
+                      <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="(c._consolidated ? (c._items.length + (c._items.length === 1 ? ' gasto' : ' gastos')) : (c.description || getCatLabel(c.category))) + ' · ' + relativeTime(c.date)"></div>
                     </div>
                     <div style="text-align:right;flex-shrink:0;">
                       <div style="font-size:16px;font-weight:700;letter-spacing:-0.3px;color:var(--text);font-variant-numeric:tabular-nums;" x-text="'$' + c._amount.toFixed(2)"></div>
@@ -3413,7 +3413,7 @@
                     <div style="width:38px;height:38px;border-radius:19px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--muted);flex-shrink:0;text-decoration:line-through;" x-text="(c._person || '?').charAt(0).toUpperCase()"></div>
                     <div style="flex:1;min-width:0;">
                       <div style="font-size:14px;font-weight:600;color:var(--muted);" x-text="c._person"></div>
-                      <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="(c.description || getCatLabel(c.category)) + ' · ' + relativeTime(c.date)"></div>
+                      <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="(c._consolidated ? (c._items.length + (c._items.length === 1 ? ' gasto' : ' gastos')) : (c.description || getCatLabel(c.category))) + ' · ' + relativeTime(c.date)"></div>
                     </div>
                     <div style="text-align:right;flex-shrink:0;">
                       <div style="font-size:16px;font-weight:700;letter-spacing:-0.3px;color:var(--muted);font-variant-numeric:tabular-nums;text-decoration:line-through;" x-text="'$' + c._amount.toFixed(2)"></div>
@@ -4611,6 +4611,7 @@
                       <div style="flex:1;min-width:0;">
                         <input type="text" x-model="it.description" autocomplete="off" spellcheck="false" style="background:transparent;border:none;outline:none;color:var(--text);font-size:13px;font-weight:600;font-family:inherit;width:100%;padding:0;" placeholder="descripción">
                         <div style="font-size:10px;color:var(--muted);letter-spacing:0.4px;margin-top:2px;" x-text="it.label.toUpperCase()"></div>
+                        <div x-show="it.split_with" style="font-size:10px;color:var(--cyan);letter-spacing:0.3px;margin-top:3px;font-weight:700;">÷ <span x-text="it.split_with"></span> · pagas <span x-text="(it.split_pct||50)"></span>%</div>
                       </div>
                       <input type="number" step="0.01" min="0" x-model.number="it.amount" inputmode="decimal" style="width:80px;text-align:right;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;background:transparent;border:none;outline:none;color:var(--text);font-family:inherit;">
                       <button type="button" @click="removeParsedItem(idx)" style="width:28px;height:28px;border-radius:14px;background:transparent;border:none;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Quitar">
@@ -4758,6 +4759,7 @@
                             <div style="flex:1;min-width:0;">
                               <input type="text" x-model="it.description" autocomplete="off" spellcheck="false" style="background:transparent;border:none;outline:none;color:var(--text);font-size:13px;font-weight:600;font-family:inherit;width:100%;padding:0;">
                               <div style="font-size:10px;color:var(--muted);letter-spacing:0.4px;margin-top:2px;" x-text="it.label.toUpperCase()"></div>
+                              <div x-show="it.split_with" style="font-size:10px;color:var(--cyan);letter-spacing:0.3px;margin-top:3px;font-weight:700;">÷ <span x-text="it.split_with"></span> · pagas <span x-text="(it.split_pct||50)"></span>%</div>
                             </div>
                             <input type="number" step="0.01" min="0" x-model.number="it.amount" inputmode="decimal" style="width:80px;text-align:right;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;background:transparent;border:none;outline:none;color:var(--text);font-family:inherit;">
                             <button type="button" @click="removeParsedItem(idx)" style="width:28px;height:28px;border-radius:14px;background:transparent;border:none;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -5329,7 +5331,7 @@
                 <div :style="'width:54px;height:54px;border-radius:27px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;flex-shrink:0;' + (activeCobro.split_status === 'cobrado' ? 'background:var(--bg);border:1px solid var(--border);color:var(--muted);' : 'background:var(--gradient);color:#0A0A0F;')" x-text="(activeCobro._person || '?').charAt(0).toUpperCase()"></div>
                 <div style="flex:1;min-width:0;">
                   <div style="font-size:18px;font-weight:700;letter-spacing:-0.3px;" x-text="activeCobro._person"></div>
-                  <div style="font-size:12px;color:var(--muted);margin-top:2px;" x-text="(activeCobro.description || getCatLabel(activeCobro.category)) + ' · ' + relativeTime(activeCobro.date)"></div>
+                  <div style="font-size:12px;color:var(--muted);margin-top:2px;" x-text="(activeCobro._consolidated ? (activeCobro._items.length + (activeCobro._items.length === 1 ? ' gasto' : ' gastos')) : (activeCobro.description || getCatLabel(activeCobro.category))) + ' · ' + relativeTime(activeCobro.date)"></div>
                 </div>
               </div>
 
@@ -5342,15 +5344,30 @@
                 <div :style="'font-size:11px;font-weight:700;padding:6px 10px;border-radius:6px;letter-spacing:0.6px;' + (activeCobro.split_status === 'cobrado' ? 'background:rgba(0,229,160,0.15);color:var(--success);' : 'background:rgba(255,184,0,0.15);color:var(--warning);')" x-text="activeCobro.split_status === 'cobrado' ? 'PAGADO' : 'PENDIENTE'"></div>
               </div>
 
+              <!-- Gastos del cobro consolidado -->
+              <template x-if="activeCobro._consolidated && activeCobro._items && activeCobro._items.length > 1">
+                <div style="margin-bottom:18px;">
+                  <div style="font-size:10px;color:var(--muted);letter-spacing:1.2px;font-weight:700;margin-bottom:8px;">GASTOS EN ESTE COBRO · <span x-text="activeCobro._items.length"></span></div>
+                  <div style="background:var(--surface);border-radius:14px;border:1px solid var(--border);overflow:hidden;">
+                    <template x-for="(it, ii) in activeCobro._items" :key="ii">
+                      <div :style="'padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;' + (ii < activeCobro._items.length - 1 ? 'border-bottom:1px solid var(--border)' : '')">
+                        <span style="font-size:13px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="it.description || getCatLabel(it.category)"></span>
+                        <span style="font-size:13px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;flex-shrink:0;" x-text="'$' + ((it.split_total || it.amount) || 0).toFixed(2)"></span>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+
               <!-- Acciones -->
               <template x-if="activeCobro.split_status !== 'cobrado'">
-                <button @click="markSplitPaid(activeCobro.id); cobroDetailOpen = false" style="width:100%;height:50px;border-radius:25px;background:var(--gradient);color:#0A0A0F;font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;">
+                <button @click="markCobroPaid(activeCobro); cobroDetailOpen = false" style="width:100%;height:50px;border-radius:25px;background:var(--gradient);color:#0A0A0F;font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;">
                   <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2.6" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
                   Marcar como pagado
                 </button>
               </template>
               <template x-if="activeCobro.split_status === 'cobrado'">
-                <button @click="unmarkSplitPaid(activeCobro.id); cobroDetailOpen = false" style="width:100%;height:50px;border-radius:25px;background:rgba(255,184,0,0.15);border:1px solid rgba(255,184,0,0.35);color:var(--warning);font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;">
+                <button @click="unmarkCobroPaid(activeCobro); cobroDetailOpen = false" style="width:100%;height:50px;border-radius:25px;background:rgba(255,184,0,0.15);border:1px solid rgba(255,184,0,0.35);color:var(--warning);font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;">
                   <svg viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2.2" width="16" height="16"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
                   Marcar como pendiente
                 </button>
@@ -5361,7 +5378,7 @@
                 Editar registro original
               </button>
 
-              <button @click="removeSplit(activeCobro.id); cobroDetailOpen = false" style="width:100%;height:46px;border-radius:23px;background:transparent;border:1px solid var(--border);color:var(--danger);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+              <button @click="removeCobro(activeCobro); cobroDetailOpen = false" style="width:100%;height:46px;border-radius:23px;background:transparent;border:1px solid var(--border);color:var(--danger);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 01-2 2H9a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
                 Quitar división
               </button>
@@ -7669,31 +7686,35 @@ function zepoApp() {
       return Math.round(total * othersPct / 100 * 100) / 100;
     },
 
-    get filteredPendingCobros() {
+    _buildCobros(splits) {
       const q = (this.cobrosSearch || '').toLowerCase().trim();
+      const groups = {};
       const rows = [];
-      this.pendingSplits.forEach(exp => {
-        const others = (exp.split_persona || 'Sin nombre').split(',').map(s => s.trim()).filter(Boolean);
-        const amt = this.cobroFor(exp);
-        others.forEach(name => {
-          if (!q || name.toLowerCase().includes(q)) rows.push({ ...exp, _person: name, _amount: amt });
-        });
+      (splits || []).forEach(exp => {
+        if (exp.split_group) {
+          // Cobro consolidado: varios gastos divididos con la misma persona.
+          let g = groups[exp.split_group];
+          if (!g) {
+            g = { ...exp, _person: (exp.split_persona || 'Sin nombre'),
+                  _amount: 0, _items: [], _ids: [], _consolidated: true, _group: exp.split_group };
+            groups[exp.split_group] = g;
+            rows.push(g);
+          }
+          g._amount = Math.round((g._amount + this.cobroFor(exp)) * 100) / 100;
+          g._items.push(exp);
+          g._ids.push(exp.id);
+        } else {
+          // Split individual (legacy / un solo gasto).
+          const others = (exp.split_persona || 'Sin nombre').split(',').map(s => s.trim()).filter(Boolean);
+          const amt = this.cobroFor(exp);
+          others.forEach(name => rows.push({ ...exp, _person: name, _amount: amt, _ids: [exp.id], _items: [exp] }));
+        }
       });
-      return rows;
+      return rows.filter(r => !q || (r._person || '').toLowerCase().includes(q));
     },
 
-    get filteredPaidCobros() {
-      const q = (this.cobrosSearch || '').toLowerCase().trim();
-      const rows = [];
-      this.paidSplits.forEach(exp => {
-        const others = (exp.split_persona || 'Sin nombre').split(',').map(s => s.trim()).filter(Boolean);
-        const amt = this.cobroFor(exp);
-        others.forEach(name => {
-          if (!q || name.toLowerCase().includes(q)) rows.push({ ...exp, _person: name, _amount: amt });
-        });
-      });
-      return rows;
-    },
+    get filteredPendingCobros() { return this._buildCobros(this.pendingSplits); },
+    get filteredPaidCobros() { return this._buildCobros(this.paidSplits); },
 
     get totalPendingAmount() {
       return this.filteredPendingCobros.reduce((s, c) => s + (c._amount || 0), 0);
@@ -7771,6 +7792,57 @@ function zepoApp() {
         }
         this.showToast('✅ Cobro registrado');
         await this.loadSplits();
+      } catch (e) { this.showToast('Error: ' + e.message); }
+    },
+
+    // Cobro consolidado: opera sobre todos los gastos del grupo (cobro._ids).
+    async markCobroPaid(cobro) {
+      const ids = (cobro && cobro._ids && cobro._ids.length) ? cobro._ids : [cobro.id];
+      try {
+        for (const id of ids) {
+          try {
+            await withTimeout(sb.from('expenses').update({ split_status: 'cobrado', split_pending: 0 }).eq('id', id).then(r => { if (r.error) throw r.error; return r; }), 4000, 'markPaid');
+          } catch (e) {
+            await sbRestUpdate('expenses', 'id', id, { split_status: 'cobrado', split_pending: 0 });
+          }
+        }
+        this.showToast(ids.length > 1 ? ('✅ ' + ids.length + ' gastos cobrados') : '✅ Cobro registrado');
+        await this.loadSplits();
+      } catch (e) { this.showToast('Error: ' + e.message); }
+    },
+
+    async unmarkCobroPaid(cobro) {
+      const items = (cobro && cobro._items && cobro._items.length) ? cobro._items : [cobro];
+      try {
+        for (const exp of items) {
+          const total = exp && exp.split_total ? parseFloat(exp.split_total) : 0;
+          const miParte = exp ? parseFloat(exp.amount || 0) : 0;
+          const pendiente = Math.max(0, Math.round((total - miParte) * 100) / 100);
+          try {
+            await withTimeout(sb.from('expenses').update({ split_status: 'pendiente', split_pending: pendiente }).eq('id', exp.id).then(r => { if (r.error) throw r.error; return r; }), 4000, 'unmarkPaid');
+          } catch (e) {
+            await sbRestUpdate('expenses', 'id', exp.id, { split_status: 'pendiente', split_pending: pendiente });
+          }
+        }
+        this.showToast('Marcado como pendiente');
+        await this.loadSplits();
+      } catch (e) { this.showToast('Error: ' + e.message); }
+    },
+
+    async removeCobro(cobro) {
+      const ids = (cobro && cobro._ids && cobro._ids.length) ? cobro._ids : [cobro.id];
+      const payload = { is_split: false, split_status: null, split_persona: null, split_pct: null, split_total: null, split_pending: null, split_group: null };
+      try {
+        for (const id of ids) {
+          try {
+            await withTimeout(sb.from('expenses').update(payload).eq('id', id).then(r => { if (r.error) throw r.error; return r; }), 4000, 'removeSplit');
+          } catch (e) {
+            await sbRestUpdate('expenses', 'id', id, payload);
+          }
+        }
+        this.showToast('División quitada');
+        await this.loadSplits();
+        await this.loadExpenses();
       } catch (e) { this.showToast('Error: ' + e.message); }
     },
 
