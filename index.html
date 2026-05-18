@@ -2345,7 +2345,8 @@
     .es-spark.s2 { top: 8%; right: -8px; animation: es-spark 2.2s ease-in-out infinite 0.7s; background: var(--purple); box-shadow: 0 0 10px var(--purple); }
     .es-spark.s3 { bottom: -4px; left: 40%; animation: es-spark 2.2s ease-in-out infinite 1.4s; }
     .es-cta-arrow {
-      margin-top: 18px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+      /* margin reducido para que la flecha no quede sobre el FAB en pantallas pequeñas */
+      margin-top: 10px; display: flex; flex-direction: column; align-items: center; gap: 8px;
       color: var(--cyan);
     }
     .es-cta-pill {
@@ -2701,6 +2702,20 @@
   <!-- ░░░ AUTH: LOGIN / SIGNUP ░░░ -->
   <template x-if="authReady && !user">
     <div class="auth-screen">
+
+      <!-- Pantalla post-signup: confirma email -->
+      <template x-if="signupConfirmPending">
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:20px;text-align:center;padding:32px 24px;">
+          <div style="font-size:52px;">📬</div>
+          <div style="font-size:22px;font-weight:800;color:var(--text);">Revisa tu correo</div>
+          <div style="font-size:14px;color:var(--muted);line-height:1.6;">Enviamos un enlace de confirmación a<br><strong style="color:var(--cyan)" x-text="authEmail"></strong></div>
+          <div style="font-size:13px;color:var(--dim);line-height:1.5;">Haz clic en el enlace del email para activar tu cuenta. Puede tardar 1-2 minutos.</div>
+          <button @click="signupConfirmPending = false; authMode = 'login'" style="margin-top:8px;padding:14px 32px;border-radius:50px;background:var(--gradient);color:#0A0A0F;font-weight:700;font-size:15px;">Ya confirmé → Iniciar sesión</button>
+        </div>
+      </template>
+
+      <template x-if="!signupConfirmPending">
+      <div style="display:contents;">
       <div class="auth-logo-row" style="margin-bottom:40px;">
         <div class="auth-logo" style="width:36px;height:36px;border-radius:10px;font-size:20px;"><span class="gradient-text">Z</span></div>
         <span class="auth-logo-name">Zepo</span>
@@ -2715,9 +2730,11 @@
       <div x-show="authError" class="auth-error" style="margin-bottom:12px;" x-text="authError"></div>
 
       <form class="auth-form" @submit.prevent="handleAuth">
+        <!-- honeypot: bots lo rellenan, usuarios reales no -->
+        <input type="text" name="website" style="position:absolute;left:-9999px;opacity:0;pointer-events:none;" x-model="authHoneypot" autocomplete="off" tabindex="-1" aria-hidden="true">
         <input x-show="authMode === 'signup'" class="auth-input" type="text" placeholder="Nombre completo" x-model="authName" autocomplete="name">
         <input class="auth-input" type="email" placeholder="Email" x-model="authEmail" required autocomplete="email">
-        <input class="auth-input" type="password" :placeholder="authMode === 'login' ? 'Contraseña' : 'Minimo 8 caracteres'" x-model="authPassword" required minlength="6" :autocomplete="authMode === 'login' ? 'current-password' : 'new-password'">
+        <input class="auth-input" type="password" :placeholder="authMode === 'login' ? 'Contraseña' : 'Mínimo 8 caracteres'" x-model="authPassword" required :minlength="authMode === 'signup' ? 8 : 1" :autocomplete="authMode === 'login' ? 'current-password' : 'new-password'">
         <div x-show="authMode === 'signup' && authPassword.length > 0" style="display:flex;align-items:center;gap:8px;margin-top:-4px;">
           <div style="flex:1;height:4px;border-radius:2px;background:var(--border);overflow:hidden;">
             <div :style="'width:' + (authPassword.length >= 12 ? '100' : authPassword.length >= 8 ? '70' : authPassword.length >= 4 ? '40' : '15') + '%;height:100%;background:' + (authPassword.length >= 12 ? 'var(--success)' : authPassword.length >= 8 ? 'var(--success)' : authPassword.length >= 4 ? 'var(--warning)' : 'var(--danger)')"></div>
@@ -2751,6 +2768,9 @@
         <a href="/privacidad.html" style="color:var(--cyan);text-decoration:underline;" target="_blank">política de privacidad</a> y los
         <a href="/terminos.html" style="color:var(--cyan);text-decoration:underline;" target="_blank">términos de servicio</a>.
       </p>
+      </div><!-- /display:contents -->
+      </template><!-- /!signupConfirmPending -->
+
     </div>
   </template>
 
@@ -3119,7 +3139,7 @@
         <div class="page-header">
           <div class="ph-left">
             <div class="ph-title">Hola, <span x-text="userName"></span></div>
-            <div class="ph-subtitle" x-text="todayLabel"></div>
+            <div class="ph-subtitle" x-text="todayLabel" @dblclick="showToast('ID: ' + (user?.id?.slice(0,8) || '?') + ' · ' + (user?.email || '?'))"></div>
           </div>
           <div class="ph-actions">
             <template x-if="userPlan === 'elite'">
@@ -3322,7 +3342,7 @@
             </div>
           </template>
           <template x-if="groupedRecent.length === 0">
-            <div class="empty-state" style="padding:36px 28px 28px;">
+            <div class="empty-state" style="padding:36px 28px calc(120px + env(safe-area-inset-bottom, 20px));">
               <div class="es-icon-wrap">
                 <span class="es-spark s1"></span>
                 <span class="es-spark s2"></span>
@@ -5926,6 +5946,8 @@ function zepoApp() {
     authName: '',
     authError: '',
     authLoading: false,
+    authHoneypot: '',
+    signupConfirmPending: false,
     oauthLoading: false,
     expenses: [],
     categories: [...CATEGORIES],
@@ -6249,6 +6271,12 @@ function zepoApp() {
       this.authLoading = true;
       try {
         if (this.authMode === 'signup') {
+          if (this.authPassword.length < 8) {
+            this.authError = 'La contraseña debe tener al menos 8 caracteres';
+            this.authLoading = false;
+            return;
+          }
+          if (this.authHoneypot) { this.authLoading = false; return; }
           const { data, error } = await withTimeout(
             sb.auth.signUp({
               email: this.authEmail,
@@ -6288,6 +6316,11 @@ function zepoApp() {
                   created_at: new Date().toISOString()
                 });
               } catch (e3) { console.warn('[handleAuth signup REST]', e3.message); }
+            }
+            // Si no hay sesión activa → Supabase requiere confirmación de email
+            if (!data.session) {
+              this.signupConfirmPending = true;
+              return;
             }
           }
         } else {
@@ -6725,6 +6758,11 @@ function zepoApp() {
           'Pro'
         );
         return;
+      }
+      // En iOS PWA standalone, webkitSpeechRecognition no está disponible
+      const isIOSStandalone = /iPad|iPhone|iPod/.test(navigator.userAgent) && !!navigator.standalone;
+      if (isIOSStandalone) {
+        return this.showToast('Voz no disponible en iOS · usa texto o foto');
       }
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SR) return this.showToast('Tu navegador no soporta voz');
@@ -8406,23 +8444,16 @@ function zepoApp() {
       if (!text && !hasMedia) return;
       if (this.analyzing) return;
 
-      // Modo edición conversacional: ya hay items en revisión + texto sin media.
-      // El comando ("borra el de 20", "taxi 8") va a Gemini con la lista actual.
+      // Modo edición conversacional: solo si el texto contiene keywords de edición
+      // ("borra", "cambia", etc.) o NO tiene número (es un comando puro, no un item).
+      // Si el texto tiene número Y no tiene keyword de edición → item nuevo, no editar.
       if (text && !hasMedia && this.parsedItems.length > 0) {
-        return this._editItemsByCommand(text);
-      }
-
-      // Vía rápida: texto simple sin media → parser local instantáneo, sin red.
-      // Solo si el parser local detectó monto Y categoría real en cada item.
-      if (text && !hasMedia) {
-        try {
-          const local = this._analyzeLocal(text);
-          if (local.length && local.every(it => it._localConfident)) {
-            this.analyzed = true;
-            this._applyParsedItems(local);
-            return;
-          }
-        } catch (e) { console.warn('[local-fast]', e); }
+        const EDIT_KEYWORDS = /\b(borra|elimina|quita|cambia|modifica|reemplaza|sube|baja|pon\s+|suma\s+|resta\s+)\b/i;
+        const looksLikeNewItem = /\d/.test(text) && !EDIT_KEYWORDS.test(text);
+        if (!looksLikeNewItem) {
+          return this._editItemsByCommand(text);
+        }
+        // Tiene número y no hay keyword de edición → cae al flujo normal para agregar
       }
 
       this.analyzing = true;
