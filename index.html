@@ -7981,6 +7981,20 @@ function zepoApp() {
       const hasMedia = !!(this.receiptFile || (this.importedFile && this.importedFile.raw));
       if (!text && !hasMedia) return;
       if (this.analyzing) return;
+
+      // Vía rápida: texto simple sin media → parser local instantáneo, sin red.
+      // Solo si el parser local detectó monto Y categoría real en cada item.
+      if (text && !hasMedia) {
+        try {
+          const local = this._analyzeLocal(text);
+          if (local.length && local.every(it => it._localConfident)) {
+            this.analyzed = true;
+            this._applyParsedItems(local);
+            return;
+          }
+        } catch (e) { console.warn('[local-fast]', e); }
+      }
+
       this.analyzing = true;
       let newItems = [];
       try {
@@ -8001,19 +8015,26 @@ function zepoApp() {
         this.analyzing = false;
         this.analyzed = true;
       }
-      if (newItems && newItems.length) {
-        const forced = !!this.form.is_income;
-        newItems = newItems.map(it => this._coerceItemType(it, forced));
-        // Concat: añade al final en lugar de reemplazar
-        this.parsedItems = [...this.parsedItems, ...newItems];
-        this.form.amount = this.parsedItems.reduce((s,p) => s + (parseFloat(p.amount)||0), 0).toFixed(2);
-        if (!this.form.category) this.form.category = this.parsedItems[0].category;
-        if (this.parsedItems[0].date) this.form.date = this.parsedItems[0].date;
-        // Limpia input/media para próxima entrada
-        this.form.description = '';
-        if (this.receiptFile) this.receiptFile = null;
-        if (this.importedFile) this.importedFile = null;
-      }
+      this._applyParsedItems(newItems);
+    },
+
+    _applyParsedItems(newItems) {
+      if (!newItems || !newItems.length) return;
+      const forced = !!this.form.is_income;
+      newItems = newItems.map(it => {
+        const c = this._coerceItemType(it, forced);
+        delete c._localConfident;
+        return c;
+      });
+      // Concat: añade al final en lugar de reemplazar
+      this.parsedItems = [...this.parsedItems, ...newItems];
+      this.form.amount = this.parsedItems.reduce((s,p) => s + (parseFloat(p.amount)||0), 0).toFixed(2);
+      if (!this.form.category) this.form.category = this.parsedItems[0].category;
+      if (this.parsedItems[0].date) this.form.date = this.parsedItems[0].date;
+      // Limpia input/media para próxima entrada
+      this.form.description = '';
+      if (this.receiptFile) this.receiptFile = null;
+      if (this.importedFile) this.importedFile = null;
     },
 
     _coerceItemType(it, is_income) {
@@ -8173,6 +8194,7 @@ function zepoApp() {
       for (const [key, words] of Object.entries(map)) {
         if (words.some(w => lower.includes(w))) { category = key; break; }
       }
+      const catDetected = !!category;
       // Fallback: use builtin first category of correct type
       if (!category) {
         const builtin = is_income ? this.incomeCategories[0] : this.categories[0];
@@ -8187,6 +8209,7 @@ function zepoApp() {
         emoji: cat.emoji || '✨',
         label: cat.label || category,
         color: cat.color || '#8888AA',
+        _localConfident: catDetected && amount > 0,
       };
     },
 
