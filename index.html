@@ -7994,6 +7994,12 @@ function zepoApp() {
       if (!text && !hasMedia) return;
       if (this.analyzing) return;
 
+      // Modo edición conversacional: ya hay items en revisión + texto sin media.
+      // El comando ("borra el de 20", "taxi 8") va a Gemini con la lista actual.
+      if (text && !hasMedia && this.parsedItems.length > 0) {
+        return this._editItemsByCommand(text);
+      }
+
       // Vía rápida: texto simple sin media → parser local instantáneo, sin red.
       // Solo si el parser local detectó monto Y categoría real en cada item.
       if (text && !hasMedia) {
@@ -8075,6 +8081,79 @@ function zepoApp() {
         this.analyzed = true;
       }
       this._applyParsedItems(newItems);
+    },
+
+    async _editItemsByCommand(command) {
+      if (this.analyzing) return;
+      this.analyzing = true;
+      let result = null;
+      try {
+        result = await this._sendEditCommand(command, this.parsedItems);
+      } catch (e) {
+        console.error('[edit-cmd]', e);
+      } finally {
+        this.analyzing = false;
+      }
+      if (!result || !result.ok) {
+        this.showToast('No pude editar · revisa tu conexión');
+        return;
+      }
+      const forced = !!this.form.is_income;
+      this.parsedItems = result.items.map(it => {
+        const c = this._coerceItemType(it, forced);
+        delete c._localConfident;
+        return c;
+      });
+      if (this.parsedItems.length) {
+        this.form.amount = this.parsedItems.reduce((s,p) => s + (parseFloat(p.amount)||0), 0).toFixed(2);
+      } else {
+        this.form.amount = '';
+        this.analyzed = false;
+      }
+      this.form.description = '';
+    },
+
+    async _sendEditCommand(command, items) {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { this.showToast('Sesión expirada · vuelve a entrar'); return null; }
+      const body = {
+        prompt: command,
+        current_items: items.map(it => ({
+          description: it.description,
+          amount: it.amount,
+          category: it.category,
+          is_income: it.is_income,
+        })),
+        user_type: this.form.is_income ? 'income' : 'expense',
+      };
+      const res = await fetch(SUPABASE_URL + '/functions/v1/gemini-analyze', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + session.access_token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !Array.isArray(json.items)) {
+        console.warn('[edit]', res.status, json);
+        return null;
+      }
+      const items2 = json.items.map(it => {
+        const key = it.category;
+        const cat = CAT_MAP[key] || {};
+        return {
+          amount: parseFloat(it.amount) || 0,
+          description: it.description || '',
+          category: key,
+          is_income: !!it.is_income,
+          emoji: cat.emoji || '✨',
+          label: cat.label || key,
+          color: cat.color || '#8888AA',
+          date: it.date || undefined,
+        };
+      }).filter(it => it.amount > 0 && it.category);
+      return { ok: true, items: items2 };
     },
 
     _coerceItemType(it, is_income) {
