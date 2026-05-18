@@ -4655,11 +4655,17 @@
                       </div>
                     </div>
 
-                    <!-- Analizar CTA (before analysis) -->
-                    <button type="button" x-show="!analyzed && !analyzing && parsedItems.length === 0" @click="analyzeTextInput()" :disabled="analyzing" style="width:100%;margin-top:14px;padding:14px;border-radius:14px;background:linear-gradient(135deg, var(--cyan), var(--purple));border:none;color:#000;font-weight:800;font-size:14px;letter-spacing:0.3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" width="16" height="16"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                      <span x-text="form.description ? 'Analizar foto + contexto' : 'Analizar foto'"></span>
-                    </button>
+                    <!-- Analizar CTA: 2 botones (Procesar todo / Extraer con instrucción) -->
+                    <div x-show="!analyzed && !analyzing && parsedItems.length === 0" style="margin-top:14px;display:flex;flex-direction:column;gap:8px;">
+                      <button type="button" @click="analyzeMedia(false)" :disabled="analyzing" style="width:100%;padding:14px;border-radius:14px;background:linear-gradient(135deg, var(--cyan), var(--purple));border:none;color:#000;font-weight:800;font-size:14px;letter-spacing:0.3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" width="16" height="16"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        <span>Procesar todo</span>
+                      </button>
+                      <button type="button" @click="analyzeMedia(true)" :disabled="analyzing" style="width:100%;padding:13px;border-radius:14px;background:var(--surface);border:1px solid var(--cyan);color:var(--cyan);font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                        <span x-text="form.description.trim() ? ('Extraer: ' + form.description.trim().slice(0,22)) : 'Extraer con instrucción'"></span>
+                      </button>
+                    </div>
 
                     <!-- Extracted data legacy (shown after analysis si no hay parsedItems) -->
                     <div x-show="analyzed && form.amount && parsedItems.length === 0" style="margin-top:16px;">
@@ -4719,11 +4725,17 @@
                       </button>
                     </div>
 
-                    <!-- Analizar CTA archivo -->
-                    <button type="button" x-show="!analyzed && !analyzing && parsedItems.length === 0" @click="analyzeTextInput()" :disabled="analyzing" style="width:100%;margin-top:14px;padding:14px;border-radius:14px;background:linear-gradient(135deg, var(--cyan), var(--purple));border:none;color:#000;font-weight:800;font-size:14px;letter-spacing:0.3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" width="16" height="16"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                      <span x-text="form.description ? 'Analizar archivo + contexto' : 'Analizar archivo'"></span>
-                    </button>
+                    <!-- Analizar CTA archivo: 2 botones (Procesar todo / Extraer con instrucción) -->
+                    <div x-show="!analyzed && !analyzing && parsedItems.length === 0" style="margin-top:14px;display:flex;flex-direction:column;gap:8px;">
+                      <button type="button" @click="analyzeMedia(false)" :disabled="analyzing" style="width:100%;padding:14px;border-radius:14px;background:linear-gradient(135deg, var(--cyan), var(--purple));border:none;color:#000;font-weight:800;font-size:14px;letter-spacing:0.3px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" width="16" height="16"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        <span>Procesar todo</span>
+                      </button>
+                      <button type="button" @click="analyzeMedia(true)" :disabled="analyzing" style="width:100%;padding:13px;border-radius:14px;background:var(--surface);border:1px solid var(--cyan);color:var(--cyan);font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                        <span x-text="form.description.trim() ? ('Extraer: ' + form.description.trim().slice(0,22)) : 'Extraer con instrucción'"></span>
+                      </button>
+                    </div>
 
                     <!-- Loading state -->
                     <div x-show="analyzing" style="margin-top:14px;padding:12px;border-radius:12px;background:rgba(0,240,255,0.06);border:1px solid rgba(0,240,255,0.2);display:flex;align-items:center;gap:10px;">
@@ -8035,6 +8047,34 @@ function zepoApp() {
       this.form.description = '';
       if (this.receiptFile) this.receiptFile = null;
       if (this.importedFile) this.importedFile = null;
+    },
+
+    async analyzeMedia(withInstruction) {
+      const hasMedia = !!(this.receiptFile || (this.importedFile && this.importedFile.raw));
+      if (!hasMedia || this.analyzing) return;
+      const instr = (this.form.description || '').trim();
+      if (withInstruction && !instr) {
+        this.showToast('Escribe o dicta qué extraer');
+        this.$nextTick(() => {
+          const el = document.getElementById('bib-input');
+          if (el) { el.focus(); el.scrollIntoView({ block: 'center' }); }
+        });
+        return;
+      }
+      this.analyzing = true;
+      let newItems = [];
+      try {
+        const promptText = withInstruction ? instr : '';
+        newItems = await this._analyzeWithGemini(promptText, this.receiptFile, this.importedFile?.raw);
+        if (!newItems.length) this.showToast('No se pudo analizar · revisa tu conexión');
+      } catch (e) {
+        console.error('[analyze-media]', e);
+        this.showToast('Error analizando · intenta de nuevo');
+      } finally {
+        this.analyzing = false;
+        this.analyzed = true;
+      }
+      this._applyParsedItems(newItems);
     },
 
     _coerceItemType(it, is_income) {
