@@ -3991,9 +3991,13 @@
           <!-- Recordatorio diario -->
           <div>
             <div class="settings-item">
-              <span class="si-label">Recordatorio diario</span>
-              <input type="time" x-model="reminderTime" x-show="notifDaily" class="cd-time-input" @click.stop>
-              <div class="cd-toggle" :class="{ on: notifDaily }" @click="notifDaily = !notifDaily" style="margin-left:auto;">
+              <div style="flex:1;min-width:0;">
+                <span class="si-label">Recordatorio diario</span>
+                <div x-show="notifDaily && pushSupported" style="font-size:10px;color:var(--success);margin-top:2px;font-weight:600;">ACTIVO · push</div>
+                <div x-show="notifDaily && !pushSupported" style="font-size:10px;color:var(--warning);margin-top:2px;">Instala la app para recibir push</div>
+              </div>
+              <input type="time" x-model="reminderTime" x-show="notifDaily" class="cd-time-input" @change="saveNotifSettings()" @click.stop>
+              <div class="cd-toggle" :class="{ on: notifDaily }" @click="toggleDailyNotif()" style="margin-left:8px;">
                 <div class="cd-toggle-knob"></div>
               </div>
             </div>
@@ -4018,13 +4022,16 @@
           <!-- Resumen semanal -->
           <div>
             <div class="settings-item">
-              <span class="si-label">Resumen semanal <span x-show="userPlan !== 'elite'" style="font-size:10px;">🔒</span></span>
-              <div class="cd-toggle" :class="{ on: notifWeekly }" @click="userPlan !== 'elite' ? showFeatureLock('Resumen por email', 'Recibe un resumen semanal con tus gastos por categoría. Disponible en Elite.', 'Elite') : notifWeekly = !notifWeekly" style="margin-left:auto;">
+              <div style="flex:1;min-width:0;">
+                <span class="si-label">Resumen semanal por email <span x-show="userPlan !== 'elite'" style="font-size:10px;">🔒</span></span>
+                <div x-show="notifWeekly" style="font-size:10px;color:var(--success);margin-top:2px;font-weight:600;">ACTIVO · email</div>
+              </div>
+              <div class="cd-toggle" :class="{ on: notifWeekly }" @click="userPlan !== 'elite' ? showFeatureLock('Resumen por email', 'Recibe un resumen semanal con tus gastos por categoría. Disponible en Elite.', 'Elite') : toggleWeeklyNotif()" style="margin-left:8px;">
                 <div class="cd-toggle-knob"></div>
               </div>
             </div>
-            <div x-show="notifWeekly" style="padding:0 16px 14px;display:flex;align-items:center;gap:8px;">
-              <select x-model.number="weeklyDay" class="cd-day-select">
+            <div x-show="notifWeekly" style="padding:0 16px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <select x-model.number="weeklyDay" class="cd-day-select" @change="saveNotifSettings()">
                 <option value="1">Lunes</option>
                 <option value="2">Martes</option>
                 <option value="3">Miércoles</option>
@@ -4033,7 +4040,7 @@
                 <option value="6">Sábado</option>
                 <option value="0">Domingo</option>
               </select>
-              <input type="time" x-model="weeklyTime" class="cd-time-input">
+              <input type="time" x-model="weeklyTime" class="cd-time-input" @change="saveNotifSettings()">
             </div>
           </div>
 
@@ -5765,6 +5772,7 @@ function localDate(d) {
 }
 const SUPABASE_URL = 'https://vchaxqisbypwwtyjjnjr.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjaGF4cWlzYnlwd3d0eWpqbmpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxODMxNjMsImV4cCI6MjA5Mzc1OTE2M30.JFrS9su3R-NaoqEGhnKRNLUW-fnMdPTAhTsyX39iIj0';
+const VAPID_PUBLIC_KEY = 'BFarnYqUAFW5QEds5F0JQoL4BBpkApdV0hi9unggIHSky4wLmOJgEpIQEGVbHIJ36pL0kvv14mOlYD8orYzqXAM';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // iOS: position:fixed elements hidden behind keyboard because Safari ignores
@@ -5933,6 +5941,7 @@ function zepoApp() {
     weeklyDay: 6,
     weeklyTime: '09:00',
     budgetAlertThresholds: [50, 75, 90],
+    pushSupported: ('serviceWorker' in navigator && 'PushManager' in window),
     dashPeriod: 'mes',
     histMonth: new Date().getMonth(),
     histYear: new Date().getFullYear(),
@@ -6143,6 +6152,7 @@ function zepoApp() {
             withTimeout(this.loadSplits(), 3000, 'loadSplits'),
             withTimeout(this.loadBudgets(), 3000, 'loadBudgets'),
             withTimeout(this.loadUserPlan(), 3000, 'loadUserPlan'),
+            withTimeout(this.loadNotifSettings(), 3000, 'loadNotifSettings'),
           ]);
         } catch (e) { console.warn('[init] data load fallo:', e?.message); }
         this.authReady = true;
@@ -6177,6 +6187,7 @@ function zepoApp() {
             withTimeout(this.loadSplits(), 6000, 'loadSplits-signin'),
             withTimeout(this.loadBudgets(), 6000, 'loadBudgets-signin'),
             withTimeout(this.loadUserPlan(), 6000, 'loadUserPlan-signin'),
+            withTimeout(this.loadNotifSettings(), 6000, 'loadNotifSettings-signin'),
           ]);
           this.authReady = true;
           this.dataReady = true;
@@ -7943,6 +7954,117 @@ function zepoApp() {
         arr.sort((a, b) => a - b);
       }
       this.budgetAlertThresholds = arr;
+    },
+
+    // ── Notificaciones ─────────────────────────────────────────
+
+    async loadNotifSettings() {
+      if (!this.user) return;
+      try {
+        const { data } = await sb.from('user_settings').select('*').eq('user_id', this.user.id).maybeSingle();
+        if (data) {
+          this.notifDaily        = data.notif_daily        ?? this.notifDaily;
+          this.notifWeekly       = data.notif_weekly       ?? this.notifWeekly;
+          this.notifBudget       = data.notif_budget       ?? this.notifBudget;
+          this.reminderTime      = data.reminder_time      ?? this.reminderTime;
+          this.weeklyDay         = data.weekly_day         ?? this.weeklyDay;
+          this.weeklyTime        = data.weekly_time        ?? this.weeklyTime;
+          this.budgetAlertThresholds = data.budget_thresholds ?? this.budgetAlertThresholds;
+        }
+      } catch (e) { console.warn('[loadNotifSettings]', e.message); }
+    },
+
+    async saveNotifSettings() {
+      if (!this.user) return;
+      const payload = {
+        user_id:            this.user.id,
+        notif_daily:        this.notifDaily,
+        notif_weekly:       this.notifWeekly,
+        notif_budget:       this.notifBudget,
+        reminder_time:      this.reminderTime,
+        weekly_day:         this.weeklyDay,
+        weekly_time:        this.weeklyTime,
+        budget_thresholds:  this.budgetAlertThresholds,
+        timezone_offset:    -5,
+      };
+      try {
+        await sb.from('user_settings').upsert(payload, { onConflict: 'user_id' });
+      } catch (e) { console.warn('[saveNotifSettings]', e.message); }
+    },
+
+    async toggleDailyNotif() {
+      if (!this.pushSupported) {
+        this.showToast('Instala Zepo en tu pantalla de inicio para activar push');
+        return;
+      }
+      if (this.notifDaily) {
+        // Desactivar: cancelar suscripción
+        this.notifDaily = false;
+        await this.saveNotifSettings();
+        await this._unsubscribePush();
+        return;
+      }
+      // Activar: pedir permiso + suscribir
+      try {
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') {
+          this.showToast('Permiso de notificaciones denegado');
+          return;
+        }
+        const sub = await this._subscribePush();
+        if (!sub) { this.showToast('No se pudo activar las notificaciones'); return; }
+        this.notifDaily = true;
+        await this.saveNotifSettings();
+        this.showToast('✅ Recordatorio diario activado');
+      } catch (e) {
+        this.showToast('Error: ' + e.message);
+      }
+    },
+
+    async toggleWeeklyNotif() {
+      this.notifWeekly = !this.notifWeekly;
+      await this.saveNotifSettings();
+      if (this.notifWeekly) this.showToast('✅ Resumen semanal activado · recibirás un email');
+    },
+
+    async _subscribePush() {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        // Convertir VAPID public key de base64url a Uint8Array
+        const b64 = VAPID_PUBLIC_KEY.replace(/-/g, '+').replace(/_/g, '/');
+        const raw = Uint8Array.from(atob(b64 + '=='.slice((b64.length % 4 || 4) - 4)), c => c.charCodeAt(0));
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: raw,
+        });
+        const { endpoint, keys } = sub.toJSON();
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) return null;
+        await fetch(SUPABASE_URL + '/functions/v1/save-push-sub', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint, p256dh: keys.p256dh, auth: keys.auth }),
+        });
+        return sub;
+      } catch (e) {
+        console.warn('[subscribePush]', e.message);
+        return null;
+      }
+    },
+
+    async _unsubscribePush() {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) await sub.unsubscribe();
+        const { data: { session } } = await sb.auth.getSession();
+        if (session) {
+          await fetch(SUPABASE_URL + '/functions/v1/save-push-sub', {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + session.access_token },
+          });
+        }
+      } catch (e) { console.warn('[unsubscribePush]', e.message); }
     },
 
     async markSplitPaid(id) {

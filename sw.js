@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zepo-v33';
+const CACHE_NAME = 'zepo-v34';
 const ASSETS = [
   './manifest.json',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
@@ -46,6 +46,48 @@ self.addEventListener('fetch', e => {
         return resp;
       }).catch(() => cached);
       return cached || networkFetch;
+    })
+  );
+});
+
+// ── Push Notifications ────────────────────────────────────────────
+
+self.addEventListener('push', e => {
+  let data = { title: 'Zepo 💸', body: '¿Registraste todos tus gastos de hoy?', url: '/' };
+  try {
+    const parsed = e.data?.json();
+    if (parsed) data = { ...data, ...parsed };
+  } catch {}
+
+  e.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: '/icons/icon-192.png',
+      badge: '/icons/favicon-32.png',
+      tag: 'zepo-reminder',          // reemplaza notificación anterior si no fue vista
+      renotify: false,
+      data: { url: data.url || '/' },
+      actions: [
+        { action: 'open',    title: 'Abrir Zepo' },
+        { action: 'dismiss', title: 'Descartar' },
+      ],
+    })
+  );
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  if (e.action === 'dismiss') return;
+
+  const targetUrl = (e.notification.data?.url) || '/';
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+      // Si la app ya está abierta, enfocarla
+      for (const c of clients) {
+        if (c.url.includes('zepo.lynoia.com') && 'focus' in c) return c.focus();
+      }
+      // Si no, abrir nueva ventana
+      if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
     })
   );
 });
