@@ -22,7 +22,7 @@
     /* Hide ALL scrollbars (PWA-grade) */
     * { scrollbar-width: none; -ms-overflow-style: none; }
     *::-webkit-scrollbar { display: none; width: 0; height: 0; background: transparent; }
-    html, body { height: 100%; height: 100dvh; overflow: hidden; overscroll-behavior: none; }
+    html, body { height: 100%; height: 100svh; overflow: hidden; overscroll-behavior: none; }
     /* Hide number input spinners (Chrome, Safari, Edge, Firefox) */
     input[type=number]::-webkit-inner-spin-button,
     input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -5945,7 +5945,7 @@ function zepoApp() {
     dashPeriod: 'mes',
     histMonth: new Date().getMonth(),
     histYear: new Date().getFullYear(),
-    histAll: false,
+    histAll: true,
     form: { amount: '', description: '', category: '', date: '', is_income: false, is_split: false, split_persona: '', split_pct: '', split_people: [] },
     pendingSplits: [],
     paidSplits: [],
