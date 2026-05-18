@@ -6068,6 +6068,22 @@ function zepoApp() {
       window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); this.installPrompt = e; });
       this.loadCustomCategories();
 
+      // Google OAuth direct callback: llega como #id_token=...
+      const _ghash = window.location.hash;
+      if (_ghash.includes('id_token=')) {
+        try {
+          const _hp = new URLSearchParams(_ghash.slice(1));
+          const _idToken = _hp.get('id_token');
+          const _nonce = sessionStorage.getItem('google_oauth_nonce');
+          sessionStorage.removeItem('google_oauth_nonce');
+          history.replaceState(null, '', window.location.pathname);
+          if (_idToken && _nonce) {
+            const { error: _e } = await sb.auth.signInWithIdToken({ provider: 'google', token: _idToken, nonce: _nonce });
+            if (_e) console.warn('[google-cb]', _e.message);
+          }
+        } catch (_ex) { console.warn('[google-cb]', _ex.message); }
+      }
+
       this.$watch('tab', (val, old) => {
         if (!['settings','changepass','plans','checkout','pay-processing','pay-success','pay-failed','forgotpw'].includes(val)) this.prevTab = val;
         // Cerrar sheet de Anadir/Editar al cambiar de tab principal (evita ver categorias detras)
@@ -6301,20 +6317,23 @@ function zepoApp() {
       this.authError = '';
       this.oauthLoading = true;
       try {
-        const redirectTo = window.location.origin + window.location.pathname;
-        const { data, error } = await withTimeout(
-          sb.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-              redirectTo,
-              queryParams: { access_type: 'offline', prompt: 'consent' }
-            }
-          }),
-          8000, 'oauth-google'
-        );
-        if (error) throw error;
-        // Supabase redirige; si vuelve aqui sin redirigir, manejamos manualmente
-        if (data?.url) window.location.href = data.url;
+        // Generar nonce: Google lo incluye en el id_token, Supabase lo verifica
+        const nonceArr = new Uint8Array(16);
+        crypto.getRandomValues(nonceArr);
+        const nonce = Array.from(nonceArr, b => b.toString(16).padStart(2, '0')).join('');
+        const hashBuf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(nonce));
+        const hashHex = Array.from(new Uint8Array(hashBuf), b => b.toString(16).padStart(2, '0')).join('');
+        sessionStorage.setItem('google_oauth_nonce', nonce);
+        // URL directa a Google: el consentimiento mostrara "Ir a app.zepo.lynoia.com"
+        const params = new URLSearchParams({
+          client_id: '29513444600-qaosoiu34jbb0dgefho8ss2oumhjaiu2.apps.googleusercontent.com',
+          redirect_uri: 'https://app.zepo.lynoia.com/',
+          response_type: 'id_token',
+          scope: 'openid email profile',
+          nonce: hashHex,
+          response_mode: 'fragment',
+        });
+        window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
       } catch (e) {
         console.warn('[signInWithGoogle]', e.message);
         this.authError = e.message || 'No se pudo iniciar Google. Intenta de nuevo.';
