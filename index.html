@@ -642,7 +642,7 @@
     }
     .approve-header {
       display: flex; align-items: center; gap: 12px;
-      padding: 14px 20px 12px;
+      padding: calc(var(--safe-top) + 14px) 20px 12px;
       position: sticky; top: 0; background: var(--bg); z-index: 10;
     }
     .approve-back {
@@ -1937,6 +1937,7 @@
         var(--bg);
       display: flex; flex-direction: column;
       overflow: hidden;
+      padding-top: var(--safe-top);
     }
     .wc-overlay::before {
       content: ''; position: absolute; inset: -50%;
