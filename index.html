@@ -6224,22 +6224,36 @@ function zepoApp() {
       const start = new Date(now.getFullYear(), now.getMonth() - 1, 1).toLocaleDateString('en-CA');
       const end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toLocaleDateString('en-CA');
       let data = null;
+      let ok = false;
       try {
         const r = await withTimeout(
           sb.from('expenses').select('*').eq('user_id', this.user.id).gte('date', start).lte('date', end).order('date', { ascending: false }).order('created_at', { ascending: false }),
-          2500, 'loadExpenses'
+          8000, 'loadExpenses'
         );
+        if (r.error) throw r.error;
         data = r.data;
+        ok = Array.isArray(data);
       } catch (e) {
-        console.warn('[loadExpenses] fallback REST:', e.message);
+        console.warn('[loadExpenses] fallback REST:', e.message || e);
         try {
           const url = SUPABASE_URL + '/rest/v1/expenses?user_id=eq.' + encodeURIComponent(this.user.id) + '&date=gte.' + start + '&date=lte.' + end + '&order=date.desc,created_at.desc';
           const res = await fetch(url, { headers: sbAuthHeaders() });
-          data = res.ok ? await res.json() : [];
-        } catch (e2) { data = []; }
+          if (res.ok) { data = await res.json(); ok = Array.isArray(data); }
+        } catch (e2) { /* ok permanece false */ }
       }
-      this.expenses = data || [];
-      try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
+      if (ok) {
+        this.expenses = data || [];
+        try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
+      } else {
+        // Carga fallida (red lenta/error): NO pisar el cache con vacío.
+        console.warn('[loadExpenses] carga fallida, se conserva el cache');
+        if (!this.expenses || this.expenses.length === 0) {
+          try {
+            const cached = JSON.parse(localStorage.getItem('zepo_cache') || '[]');
+            if (Array.isArray(cached) && cached.length) this.expenses = cached;
+          } catch {}
+        }
+      }
     },
 
     async loadHistory() {
@@ -6258,20 +6272,29 @@ function zepoApp() {
         q = q.limit(1000);
         filterUrl += '&limit=1000';
       }
+      let data = null;
+      let ok = false;
       try {
-        const { data } = await withTimeout(q, 2500, 'loadHistory');
-        this.historyData = data || [];
+        const r = await withTimeout(q, 8000, 'loadHistory');
+        if (r.error) throw r.error;
+        data = r.data;
+        ok = Array.isArray(data);
       } catch (e) {
-        console.warn('[loadHistory] fallback REST:', e.message);
+        console.warn('[loadHistory] fallback REST:', e.message || e);
         try {
           const headers = sbAuthHeaders();
           const res = await fetch(SUPABASE_URL + filterUrl, { headers });
-          this.historyData = res.ok ? await res.json() : [];
-        } catch (e2) {
-          this.historyData = [];
-        }
+          if (res.ok) { data = await res.json(); ok = Array.isArray(data); }
+        } catch (e2) { /* ok permanece false */ }
+      }
+      if (ok) {
+        this.historyData = data || [];
+      } else {
+        // Carga fallida: no borrar lo que ya estaba en pantalla.
+        console.warn('[loadHistory] carga fallida, se conserva lo mostrado');
       }
     },
+
 
     historyData: [],
 
@@ -7506,17 +7529,48 @@ function zepoApp() {
       this.saving = true;
       try {
         const date = this.form.date || localDate();
+        // Items divididos con la misma persona comparten un split_group → un cobro consolidado.
+        const groupByPerson = {};
         const rows = this.parsedItems
           .filter(it => it.amount > 0 && it.category)
-          .map(it => ({
-            user_id: this.user.id,
-            amount: it.amount,
-            category: it.category,
-            description: it.description,
-            date,
-            is_income: !!it.is_income,
-            is_split: false,
-          }));
+          .map(it => {
+            const person = (it.split_with || '').trim();
+            if (person) {
+              const total = it.amount;
+              const pct = (it.split_pct > 0 && it.split_pct < 100) ? it.split_pct : 50;
+              const miParte = Math.round(total * pct / 100 * 100) / 100;
+              const pendiente = Math.round((total - miParte) * 100) / 100;
+              if (!groupByPerson[person]) {
+                groupByPerson[person] = (crypto.randomUUID
+                  ? crypto.randomUUID()
+                  : ('g' + Date.now() + Math.random().toString(36).slice(2)));
+              }
+              return {
+                user_id: this.user.id,
+                amount: miParte,
+                category: it.category,
+                description: it.description,
+                date,
+                is_income: !!it.is_income,
+                is_split: true,
+                split_total: total,
+                split_pct: pct,
+                split_persona: person,
+                split_pending: pendiente,
+                split_status: 'pendiente',
+                split_group: groupByPerson[person],
+              };
+            }
+            return {
+              user_id: this.user.id,
+              amount: it.amount,
+              category: it.category,
+              description: it.description,
+              date,
+              is_income: !!it.is_income,
+              is_split: false,
+            };
+          });
         if (rows.length === 0) {
           this.showToast('No hay items válidos');
           this.saving = false;
@@ -7531,10 +7585,12 @@ function zepoApp() {
           console.warn('[saveMultiItems] sb insert failed, fallback REST:', e.message);
           await sbRestInsert('expenses', rows);
         }
+        const anySplit = rows.some(r => r.is_split);
         this.showToast(rows.length === 1 ? 'Registro guardado' : (rows.length + ' registros guardados'));
         this.parsedItems = [];
         this.sheetOpen = false;
         await this.loadExpenses();
+        if (anySplit) await this.loadSplits();
       } catch (e) {
         this.showToast('Error: ' + e.message);
       }
@@ -8142,7 +8198,7 @@ function zepoApp() {
       const items2 = json.items.map(it => {
         const key = it.category;
         const cat = CAT_MAP[key] || {};
-        return {
+        const o = {
           amount: parseFloat(it.amount) || 0,
           description: it.description || '',
           category: key,
@@ -8152,6 +8208,11 @@ function zepoApp() {
           color: cat.color || '#8888AA',
           date: it.date || undefined,
         };
+        if (typeof it.split_with === 'string' && it.split_with.trim()) {
+          o.split_with = it.split_with.trim();
+          o.split_pct = (it.split_pct > 0 && it.split_pct < 100) ? Math.round(it.split_pct) : 50;
+        }
+        return o;
       }).filter(it => it.amount > 0 && it.category);
       return { ok: true, items: items2 };
     },
