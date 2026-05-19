@@ -80,5 +80,5 @@ jobs:
             supabase secrets set VAPID_EMAIL --project-ref vchaxqisbypwwtyjjnjr
           echo "${{ secrets.RESEND_API_KEY }}" | \
             supabase secrets set RESEND_API_KEY --project-ref vchaxqisbypwwtyjjnjr
-          echo "Zepo <hola@zepo.app>" | \
+          echo "Zepo <hola@zepo.lynoia.com>" | \
             supabase secrets set FROM_EMAIL --project-ref vchaxqisbypwwtyjjnjr
