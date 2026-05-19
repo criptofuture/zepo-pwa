@@ -70,14 +70,12 @@ jobs:
       - name: Set Edge Function secrets
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         run: |
-          echo "xb579mNED3fUmBGPIeA2FUlXIi6yBpTI24ZpLrx3890" | \
-            supabase secrets set VAPID_PRIVATE_KEY --project-ref vchaxqisbypwwtyjjnjr
-          echo "BFarnYqUAFW5QEds5F0JQoL4BBpkApdV0hi9unggIHSky4wLmOJgEpIQEGVbHIJ36pL0kvv14mOlYD8orYzqXAM" | \
-            supabase secrets set VAPID_PUBLIC_KEY --project-ref vchaxqisbypwwtyjjnjr
-          echo "hola@zepo.app" | \
-            supabase secrets set VAPID_EMAIL --project-ref vchaxqisbypwwtyjjnjr
-          echo "${{ secrets.RESEND_API_KEY }}" | \
-            supabase secrets set RESEND_API_KEY --project-ref vchaxqisbypwwtyjjnjr
-          echo "Zepo <hola@zepo.lynoia.com>" | \
-            supabase secrets set FROM_EMAIL --project-ref vchaxqisbypwwtyjjnjr
+          supabase secrets set \
+            VAPID_PRIVATE_KEY=xb579mNED3fUmBGPIeA2FUlXIi6yBpTI24ZpLrx3890 \
+            VAPID_PUBLIC_KEY=BFarnYqUAFW5QEds5F0JQoL4BBpkApdV0hi9unggIHSky4wLmOJgEpIQEGVbHIJ36pL0kvv14mOlYD8orYzqXAM \
+            VAPID_EMAIL=hola@zepo.app \
+            RESEND_API_KEY="$RESEND_API_KEY" \
+            FROM_EMAIL="Zepo <hola@zepo.lynoia.com>" \
+            --project-ref vchaxqisbypwwtyjjnjr
