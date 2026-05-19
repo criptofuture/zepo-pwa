@@ -48,8 +48,17 @@ async function sendEmail(to: string, subject: string, html: string): Promise<boo
 
 // ── Main ─────────────────────────────────────────────────────────
 
+const WEBHOOK_SECRET = Deno.env.get("WEBHOOK_SECRET");
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
+
+  if (WEBHOOK_SECRET) {
+    const incoming = req.headers.get("X-Webhook-Secret");
+    if (incoming !== WEBHOOK_SECRET) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+  }
 
   const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE, {
     auth: { persistSession: false },

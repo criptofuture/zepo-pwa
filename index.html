@@ -6043,7 +6043,7 @@ function zepoApp() {
       return this._rawUserPlan;
     },
     set userPlan(v) { this._rawUserPlan = v; },
-    devUnlockAll: true,  // QA — apagar antes de commit final
+    devUnlockAll: false,
     annualBilling: false,
     userCurrency: 'USD',
     planExpiresAt: null,
@@ -7655,8 +7655,15 @@ function zepoApp() {
         this.form.is_income = !!it.is_income;
       }
       if (!this.form.amount) return this.showToast('Ingresa un monto');
+      const _amt = parseFloat(this.form.amount);
+      if (isNaN(_amt) || _amt <= 0) return this.showToast('El monto debe ser un número mayor a 0');
       if (!this.form.category) return this.showToast('Selecciona una categoría');
       if (this.form.is_split && this.splitSum !== 100) return this.showToast('Los porcentajes deben sumar 100%');
+      if (this.form.description && this.form.description.length > 500)
+        return this.showToast('La descripción no puede tener más de 500 caracteres');
+      if (this.form.is_split && this.form.split_people)
+        for (const p of this.form.split_people)
+          if (p.name && p.name.length > 50) return this.showToast('El nombre de cada persona no puede tener más de 50 caracteres');
       if (!this.form.date) this.form.date = localDate();
       if (this.userPlan === 'free' && !this.editingExpense && this.monthExpenses.length >= 10) {
         this.showToast('Límite de 10 gastos/mes alcanzado');
