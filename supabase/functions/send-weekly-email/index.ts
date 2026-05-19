@@ -71,9 +71,9 @@ serve(async (req) => {
   // Filtrar usuarios cuyo día de la semana (en su TZ) coincide con hoy
   const targetUsers: string[] = [];
   for (const s of settings) {
-    const tzOffset = (s.timezone_offset as number) ?? -5;
+    const tzOffset = Number(s.timezone_offset) || -5;
     const localDow = ((todayDow + Math.floor((nowUtc.getUTCHours() + tzOffset) / 24)) % 7 + 7) % 7;
-    if (localDow === (s.weekly_day as number)) {
+    if (localDow === Number(s.weekly_day)) {
       targetUsers.push(s.user_id as string);
     }
   }
