@@ -66,6 +66,8 @@ jobs:
           supabase functions deploy send-weekly-email \
             --project-ref vchaxqisbypwwtyjjnjr \
             --no-verify-jwt
+          supabase functions deploy find-user \
+            --project-ref vchaxqisbypwwtyjjnjr
 
       - name: Set Edge Function secrets
         env:

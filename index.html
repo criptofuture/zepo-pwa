@@ -208,11 +208,11 @@
       overflow-y: auto;
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
-      padding-bottom: calc(100px + var(--safe-bottom));
+      padding-bottom: calc(76px + var(--safe-bottom));
     }
     .screen-header {
-      padding: 16px 20px;
-      padding-top: calc(var(--safe-top) + 20px);
+      padding: 16px 16px;
+      padding-top: calc(var(--safe-top) + 12px);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -224,13 +224,13 @@
       position: fixed;
       bottom: 0; left: 0; right: 0;
       max-width: 430px; margin: 0 auto;
-      height: calc(84px + var(--safe-bottom));
+      height: calc(60px + var(--safe-bottom));
       background: var(--surface);
       border-top: 1px solid var(--border);
       display: flex;
       justify-content: space-around;
       align-items: flex-start;
-      padding-top: 10px;
+      padding-top: 8px;
       padding-bottom: var(--safe-bottom);
       z-index: 50;
     }
@@ -240,6 +240,7 @@
       align-items: center;
       gap: 3px;
       padding: 4px 12px;
+      touch-action: manipulation;
       font-size: 9px;
       font-weight: 600;
       color: var(--muted);
@@ -312,10 +313,11 @@
 
     /* ═══ FAB ═══ */
     .fab {
-      position: absolute;
-      bottom: calc(38px + var(--safe-bottom));
+      position: fixed;
+      bottom: calc(14px + var(--safe-bottom));
       left: 50%;
       transform: translateX(-50%);
+      touch-action: manipulation;
       width: 64px; height: 64px;
       border-radius: 32px;
       background: var(--gradient);
@@ -334,8 +336,8 @@
 
     /* ═══ PAGE HEADER ═══ */
     .page-header {
-      padding: 14px 20px 8px;
-      padding-top: calc(var(--safe-top) + 24px);
+      padding: 14px 16px 8px;
+      padding-top: calc(var(--safe-top) + 16px);
       display: flex;
       align-items: center;
       gap: 12px;
@@ -415,7 +417,7 @@
     /* ═══ EMPTY STATE ═══ */
     .empty-state {
       display: flex; flex-direction: column; align-items: center;
-      text-align: center; padding: 60px 28px;
+      text-align: center; padding: 40px 24px;
     }
     .empty-icon {
       width: 112px; height: 112px; border-radius: 28px;
@@ -508,8 +510,8 @@
 
     /* ═══ HERO CARD ═══ */
     .hero-card {
-      margin: 0 20px 20px;
-      padding: 20px 22px 18px;
+      margin: 0 16px 12px;
+      padding: 16px 18px 14px;
       background: var(--surface);
       border-radius: 20px;
       position: relative;
@@ -570,15 +572,15 @@
     /* ═══ STAT CARDS ROW ═══ */
     .stat-row {
       display: flex; gap: 8px;
-      padding: 0 20px;
-      margin-bottom: 24px;
+      padding: 0 16px;
+      margin-bottom: 14px;
     }
     .stat-card {
       flex: 1 1 0; min-width: 0;
       background: var(--surface);
       border-radius: 14px;
       border: 1px solid var(--border);
-      padding: 14px;
+      padding: 10px 12px;
       position: relative;
     }
     .stat-card.locked { opacity: 0.55; }
@@ -589,16 +591,16 @@
       font-size: 10px; color: var(--muted); text-transform: uppercase;
       letter-spacing: 1px; font-weight: 600; margin-bottom: 6px;
     }
-    .stat-card-value { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; margin-top: 0; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .stat-card-sub { font-size: 11px; color: var(--muted); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stat-card-value { font-size: 15px; font-weight: 700; letter-spacing: -0.5px; margin-top: 0; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stat-card-sub { font-size: 10px; color: var(--muted); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* ═══ SECTION ═══ */
     .section-head {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 20px;
-      margin-top: 22px;
+      padding: 0 16px;
+      margin-top: 16px;
       margin-bottom: 8px;
     }
     .section-title { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
@@ -609,7 +611,7 @@
 
     /* ═══ EXPENSE ROW ═══ */
     .expense-list {
-      margin: 0 20px;
+      margin: 0 16px;
       background: var(--surface);
       border-radius: 14px;
       border: 1px solid var(--border);
@@ -6426,8 +6428,14 @@ function zepoApp() {
     },
 
     async init() {
-      const fixHeight = () => document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+      let baseHeight = window.innerHeight;
+      const fixHeight = () => {
+        const h = window.innerHeight;
+        if (Math.abs(h - baseHeight) > 100) baseHeight = h;
+        document.documentElement.style.setProperty('--app-height', baseHeight + 'px');
+      };
       fixHeight();
+      window.addEventListener('resize', fixHeight);
       window.addEventListener('online', () => this.offline = false);
       window.addEventListener('offline', () => this.offline = true);
       window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); this.installPrompt = e; });
@@ -7548,40 +7556,43 @@ function zepoApp() {
         return;
       }
       this.saving = true;
-      try {
-        const totalAmount = parseFloat(this.form.amount);
-        // Map multi-person split (split_people) → legacy split_persona/split_pct for backwards compat
-        let isSplit = false, pct = 0, persona = '';
-        if (this.form.is_split && this.form.split_people && this.form.split_people.length >= 2) {
-          const tuPerson = this.form.split_people.find(p => p.you);
-          const others = this.form.split_people.filter(p => !p.you);
-          if (tuPerson && others.length > 0 && this.splitSum > 0) {
-            isSplit = true;
-            pct = parseFloat(tuPerson.pct) || 50;
-            persona = others.map(p => p.name || 'Sin nombre').filter(Boolean).join(', ') || 'Sin nombre';
-            this.form.split_persona = persona;
-            this.form.split_pct = pct;
-          }
+      const totalAmount = parseFloat(this.form.amount);
+      let isSplit = false, pct = 0, persona = '';
+      if (this.form.is_split && this.form.split_people && this.form.split_people.length >= 2) {
+        const tuPerson = this.form.split_people.find(p => p.you);
+        const others = this.form.split_people.filter(p => !p.you);
+        if (tuPerson && others.length > 0 && this.splitSum > 0) {
+          isSplit = true;
+          pct = parseFloat(tuPerson.pct) || 50;
+          persona = others.map(p => p.name || 'Sin nombre').filter(Boolean).join(', ') || 'Sin nombre';
+          this.form.split_persona = persona;
+          this.form.split_pct = pct;
         }
-        const miParte = isSplit ? Math.round(totalAmount * pct / 100 * 100) / 100 : totalAmount;
-        const pendiente = isSplit ? Math.round((totalAmount - miParte) * 100) / 100 : 0;
+      }
+      const miParte = isSplit ? Math.round(totalAmount * pct / 100 * 100) / 100 : totalAmount;
+      const pendiente = isSplit ? Math.round((totalAmount - miParte) * 100) / 100 : 0;
 
-        const payload = {
-          user_id: this.user.id,
-          amount: miParte,
-          category: this.form.category,
-          description: this.form.description,
-          date: this.form.date,
-          is_income: this.form.is_income,
-          is_split: isSplit,
-          split_total: isSplit ? totalAmount : null,
-          split_pct: isSplit ? pct : null,
-          split_persona: isSplit ? persona : null,
-          split_pending: isSplit ? pendiente : null,
-          split_status: isSplit ? 'pendiente' : null
-        };
+      const payload = {
+        user_id: this.user.id,
+        amount: miParte,
+        category: this.form.category,
+        description: this.form.description,
+        date: this.form.date,
+        is_income: this.form.is_income,
+        is_split: isSplit,
+        split_total: isSplit ? totalAmount : null,
+        split_pct: isSplit ? pct : null,
+        split_persona: isSplit ? persona : null,
+        split_pending: isSplit ? pendiente : null,
+        split_status: isSplit ? 'pendiente' : null
+      };
 
-        if (this.editingExpense) {
+      if (this.editingExpense) {
+        try {
+          Object.assign(this.expenses.find(e => e.id === this.editingExpense.id) || {}, payload);
+          this.sheetOpen = false;
+          this.showToast('Gasto actualizado');
+          this.saving = false;
           try {
             await withTimeout(
               sb.from('expenses').update(payload).eq('id', this.editingExpense.id).then(r => { if (r.error) throw r.error; return r; }),
@@ -7595,13 +7606,25 @@ function zepoApp() {
             const path = await this.uploadReceipt(this.editingExpense.id);
             if (path) await sbRestUpdate('expenses', 'id', this.editingExpense.id, { receipt_image_path: path });
           }
-          this.showToast('Gasto actualizado');
-        } else {
+          await this.loadExpenses();
+        } catch (e) {
+          this.showToast('Error al actualizar: ' + e.message);
+          await this.loadExpenses();
+        }
+      } else {
+        const tempId = '_tmp_' + crypto.randomUUID();
+        const tempRecord = { ...payload, id: tempId, created_at: new Date().toISOString() };
+        this.expenses = [tempRecord, ...this.expenses];
+        this.showToast(isSplit ? 'Split guardado' : 'Gasto agregado');
+        this.sheetOpen = false;
+        this.saving = false;
+
+        try {
           let inserted;
           try {
             const r = await withTimeout(
               sb.from('expenses').insert(payload).select('id').single().then(r => { if (r.error) throw r.error; return r; }),
-              2500, 'insert'
+              5000, 'insert'
             );
             inserted = r.data;
           } catch (e) {
@@ -7613,36 +7636,35 @@ function zepoApp() {
             const path = await this.uploadReceipt(inserted.id);
             if (path) await sbRestUpdate('expenses', 'id', inserted.id, { receipt_image_path: path });
           }
-          this.showToast(isSplit ? '💸 Split guardado' : 'Gasto agregado');
-        }
-
-        this.sheetOpen = false;
-        await this.loadExpenses();
-        if (isSplit) {
-          await this.loadSplits();
-          const names = persona.split(',').map(s => s.trim()).filter(Boolean);
-          for (const name of names) {
-            const friend = this.friends.find(f => f.display_name.toLowerCase() === name.toLowerCase());
-            if (friend) {
-              const n = names.length;
-              const othersPct = (100 - pct) / n;
-              const perPersonAmt = Math.round(totalAmount * othersPct / 100 * 100) / 100;
-              await sb.from('payment_requests').insert({
-                from_user_id: this.user.id,
-                to_user_id: friend.user_id,
-                amount: perPersonAmt,
-                description: this.form.description.trim() || 'Gasto compartido',
-                category: this.form.category,
-                expense_date: this.form.date || localDate(),
-                status: 'pending',
-              });
+          if (isSplit) {
+            const splitOps = [];
+            const names = persona.split(',').map(s => s.trim()).filter(Boolean);
+            for (const name of names) {
+              const friend = this.friends.find(f => f.display_name.toLowerCase() === name.toLowerCase());
+              if (friend) {
+                const n = names.length;
+                const othersPct = (100 - pct) / n;
+                const perPersonAmt = Math.round(totalAmount * othersPct / 100 * 100) / 100;
+                splitOps.push(withTimeout(sb.from('payment_requests').insert({
+                  from_user_id: this.user.id,
+                  to_user_id: friend.user_id,
+                  amount: perPersonAmt,
+                  description: this.form.description.trim() || 'Gasto compartido',
+                  category: this.form.category,
+                  expense_date: this.form.date || localDate(),
+                  status: 'pending',
+                }), 3000, 'pr-insert'));
+              }
             }
+            await Promise.all(splitOps);
+            this.loadSplits();
           }
+          await this.loadExpenses();
+        } catch (e) {
+          this.expenses = this.expenses.filter(x => x.id !== tempId);
+          this.showToast('Error al guardar: ' + e.message);
         }
-      } catch (e) {
-        this.showToast('Error: ' + e.message);
       }
-      this.saving = false;
     },
 
     async saveMultiItems() {
@@ -7654,46 +7676,49 @@ function zepoApp() {
         return;
       }
       this.saving = true;
+      const date = this.form.date || localDate();
+      const batchId = crypto.randomUUID();
+      const validItems = this.parsedItems.filter(it => it.amount > 0 && it.category);
+      const firstCat = validItems.length > 0 ? (CAT_MAP[validItems[0].category]?.label || validItems[0].category) : '';
+      const batchLabel = firstCat + ' — ' + new Date(date + 'T12:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
+      const rows = validItems
+        .map(it => ({
+          user_id: this.user.id,
+          amount: it.amount,
+          category: it.category,
+          description: it.description,
+          date,
+          is_income: !!it.is_income,
+          is_split: false,
+          batch_id: validItems.length > 1 ? batchId : null,
+          batch_label: validItems.length > 1 ? batchLabel : null,
+        }));
+      if (rows.length === 0) {
+        this.showToast('No hay items válidos');
+        this.saving = false;
+        return;
+      }
+      const tempRows = rows.map(r => ({ ...r, id: '_tmp_' + crypto.randomUUID(), created_at: new Date().toISOString() }));
+      this.expenses = [...tempRows, ...this.expenses];
+      this.showToast(rows.length === 1 ? 'Registro guardado' : (rows.length + ' registros guardados'));
+      this.parsedItems = [];
+      this.sheetOpen = false;
+      this.saving = false;
       try {
-        const date = this.form.date || localDate();
-        const batchId = crypto.randomUUID();
-        const validItems = this.parsedItems.filter(it => it.amount > 0 && it.category);
-        const firstCat = validItems.length > 0 ? (CAT_MAP[validItems[0].category]?.label || validItems[0].category) : '';
-        const batchLabel = firstCat + ' — ' + new Date(date + 'T12:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
-        const rows = validItems
-          .map(it => ({
-            user_id: this.user.id,
-            amount: it.amount,
-            category: it.category,
-            description: it.description,
-            date,
-            is_income: !!it.is_income,
-            is_split: false,
-            batch_id: validItems.length > 1 ? batchId : null,
-            batch_label: validItems.length > 1 ? batchLabel : null,
-          }));
-        if (rows.length === 0) {
-          this.showToast('No hay items válidos');
-          this.saving = false;
-          return;
-        }
         try {
           await withTimeout(
             sb.from('expenses').insert(rows).then(r => { if (r.error) throw r.error; return r; }),
-            3000, 'multi-insert'
+            5000, 'multi-insert'
           );
         } catch (e) {
           console.warn('[saveMultiItems] sb insert failed, fallback REST:', e.message);
           await sbRestInsert('expenses', rows);
         }
-        this.showToast(rows.length === 1 ? 'Registro guardado' : (rows.length + ' registros guardados'));
-        this.parsedItems = [];
-        this.sheetOpen = false;
         await this.loadExpenses();
       } catch (e) {
-        this.showToast('Error: ' + e.message);
+        this.expenses = this.expenses.filter(x => !String(x.id).startsWith('_tmp_'));
+        this.showToast('Error al guardar: ' + e.message);
       }
-      this.saving = false;
     },
 
     async deleteExpense() {

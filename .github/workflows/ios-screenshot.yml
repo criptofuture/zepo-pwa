@@ -1,0 +1,54 @@
+name: iOS Screenshot QA
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  ios-qa:
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Boot iOS Simulator
+        run: |
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c "
+          import json,sys
+          devs = json.load(sys.stdin)['devices']
+          for runtime, devices in devs.items():
+            if 'iOS' in runtime:
+              for d in devices:
+                if 'iPhone 15 Pro' in d['name']:
+                  print(d['udid']); sys.exit(0)
+          sys.exit(1)
+          ")
+          xcrun simctl boot "$DEVICE"
+          echo "DEVICE_UDID=$DEVICE" >> "$GITHUB_ENV"
+
+      - name: Set status bar
+        run: xcrun simctl status_bar "$DEVICE_UDID" override --time "9:41" --batteryLevel 100 --cellularBars 4
+
+      - name: Start local server
+        run: |
+          python3 -m http.server 8080 &
+          sleep 2
+
+      - name: Open PWA in Safari
+        run: xcrun simctl openurl "$DEVICE_UDID" "http://localhost:8080/index.html"
+
+      - name: Wait for load
+        run: sleep 8
+
+      - name: Take screenshots
+        run: |
+          xcrun simctl io "$DEVICE_UDID" screenshot ios-home.png
+          echo "Screenshot saved: ios-home.png"
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-screenshots
+          path: "*.png"
+          retention-days: 14

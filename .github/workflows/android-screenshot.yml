@@ -1,0 +1,44 @@
+name: Android Screenshot QA
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  android-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start local server
+        run: |
+          python3 -m http.server 8080 &
+          sleep 2
+
+      - name: Run emulator and capture screenshot
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          force-avd-creation: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: |
+            adb wait-for-device
+            adb shell settings put global window_animation_scale 0
+            adb shell settings put global transition_animation_scale 0
+            adb shell settings put global animator_duration_scale 0
+            adb shell am start -a android.intent.action.VIEW -d "http://10.0.2.2:8080/index.html" com.android.chrome
+            sleep 12
+            adb exec-out screencap -p > android-home.png
+            echo "Screenshot saved: android-home.png"
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-screenshots
+          path: "*.png"
+          retention-days: 14
