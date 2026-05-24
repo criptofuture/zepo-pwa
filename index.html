@@ -6437,6 +6437,10 @@ function zepoApp() {
         if (!['settings','changepass','plans','checkout','pay-processing','pay-success','pay-failed','forgotpw'].includes(val)) this.prevTab = val;
       });
 
+      const splashFailsafe = setTimeout(() => {
+        if (!this.appReady) { console.warn('[init] failsafe: forcing appReady after 8s'); this.appReady = true; }
+      }, 8000);
+
       try {
         let session = null;
         try {
@@ -6466,11 +6470,11 @@ function zepoApp() {
         console.error('[init] Error during startup, continuing:', e);
       }
 
-      // Limpia tokens de OAuth en el hash para que la URL quede limpia
       if (window.location.hash && window.location.hash.includes('access_token=')) {
         history.replaceState(null, '', window.location.pathname + window.location.search);
       }
 
+      clearTimeout(splashFailsafe);
       this.appReady = true;
 
       // DEV: ?screen=<tab> permite navegar directo a cualquier pantalla
@@ -6522,7 +6526,6 @@ function zepoApp() {
       const meta = this.user.user_metadata || {};
       const payload = {
         id: uid,
-        telegram_chat_id: -Math.floor(Date.now() / 1000),
         name: meta.full_name || meta.name || (this.user.email || '').split('@')[0],
         email: this.user.email,
         plan: 'free',
@@ -6585,7 +6588,6 @@ function zepoApp() {
             try {
               await withTimeout(sb.from('users').upsert({
                 id: data.user.id,
-                telegram_chat_id: -Math.floor(Date.now() / 1000),
                 name: this.authName || this.authEmail.split('@')[0],
                 email: this.authEmail,
                 plan: 'free',
@@ -6600,7 +6602,6 @@ function zepoApp() {
               try {
                 await sbRestInsert('users', {
                   id: data.user.id,
-                  telegram_chat_id: -Math.floor(Date.now() / 1000),
                   name: this.authName || this.authEmail.split('@')[0],
                   email: this.authEmail,
                   plan: 'free',
@@ -8678,11 +8679,13 @@ function zepoApp() {
 
     async loadUserPlan() {
       if (!this.user) return;
-      const { data } = await sb.from('users').select('plan, plan_expires_at').eq('id', this.user.id).maybeSingle();
-      if (data) {
-        this.userPlan = data.plan || 'free';
-        this.planExpiresAt = data.plan_expires_at;
-      }
+      try {
+        const { data } = await withTimeout(sb.from('users').select('plan, plan_expires_at').eq('id', this.user.id).maybeSingle(), 3000, 'loadUserPlan');
+        if (data) {
+          this.userPlan = data.plan || 'free';
+          this.planExpiresAt = data.plan_expires_at;
+        }
+      } catch (e) { console.warn('[loadUserPlan] timeout/error:', e.message); }
     },
 
     get planOptions() {
@@ -9035,6 +9038,10 @@ function zepoApp() {
 
     async loadFriends() {
       if (!this.user) return;
+      try { await withTimeout(this._loadFriendsInner(), 5000, 'loadFriends'); }
+      catch (e) { console.warn('[loadFriends] timeout/error:', e.message); }
+    },
+    async _loadFriendsInner() {
       const uid = this.user.id;
       const { data: conns } = await sb.from('user_connections')
         .select('id, requester_id, addressee_id, status')
@@ -9045,7 +9052,6 @@ function zepoApp() {
       const received = conns.filter(c => c.status === 'pending' && c.addressee_id === uid);
       const sent     = conns.filter(c => c.status === 'pending' && c.requester_id === uid);
 
-      // Resolve display names from user_settings
       const allIds = [...new Set([
         ...accepted.map(c => c.requester_id === uid ? c.addressee_id : c.requester_id),
         ...received.map(c => c.requester_id),
@@ -9133,6 +9139,10 @@ function zepoApp() {
 
     async loadPaymentRequests() {
       if (!this.user) return;
+      try { await withTimeout(this._loadPaymentRequestsInner(), 5000, 'loadPaymentRequests'); }
+      catch (e) { console.warn('[loadPaymentRequests] timeout/error:', e.message); }
+    },
+    async _loadPaymentRequestsInner() {
       const uid = this.user.id;
       const { data: received } = await sb.from('payment_requests')
         .select('id,from_user_id,amount,description,category,expense_date,status,created_at')
