@@ -669,7 +669,7 @@
       z-index: 101;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      padding: 8px 0 0;
+      padding: 8px 0 calc(16px + var(--safe-bottom));
       animation: sheetSlideUp 0.22s cubic-bezier(0.22, 0.61, 0.36, 1);
     }
     @keyframes sheetSlideUp {
@@ -2949,78 +2949,42 @@
           </div>
         </div>
 
-        <!-- View mode toggle -->
-        <div style="display:flex;gap:4px;padding:0 20px 10px;">
-          <button @click="homeViewMode = 'expense'" style="flex:1;padding:7px 0;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;border:none;" :style="{ background: homeViewMode === 'expense' ? 'rgba(0,240,255,0.10)' : 'var(--surface)', color: homeViewMode === 'expense' ? 'var(--cyan)' : 'var(--muted)', border: homeViewMode === 'expense' ? '1px solid var(--cyan)' : '1px solid var(--border)' }">Gastos</button>
-          <button @click="homeViewMode = 'income'" style="flex:1;padding:7px 0;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;border:none;" :style="{ background: homeViewMode === 'income' ? 'rgba(0,229,160,0.10)' : 'var(--surface)', color: homeViewMode === 'income' ? 'var(--success)' : 'var(--muted)', border: homeViewMode === 'income' ? '1px solid var(--success)' : '1px solid var(--border)' }">Ingresos</button>
-          <button @click="homeViewMode = 'balance'" style="flex:1;padding:7px 0;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;border:none;" :style="{ background: homeViewMode === 'balance' ? 'rgba(112,0,255,0.10)' : 'var(--surface)', color: homeViewMode === 'balance' ? 'var(--purple)' : 'var(--muted)', border: homeViewMode === 'balance' ? '1px solid var(--purple)' : '1px solid var(--border)' }">Balance</button>
-        </div>
-
-        <!-- Hero Card -->
+        <!-- Hero Card — Balance -->
         <div class="hero-card gradient-border glow">
           <div class="hero-top-row">
-            <div class="hero-label" x-text="homeViewMode === 'income' ? 'INGRESADO EN ' + currentMonthName.toUpperCase() : homeViewMode === 'balance' ? 'BALANCE EN ' + currentMonthName.toUpperCase() : 'GASTADO EN ' + currentMonthName.toUpperCase()"></div>
-            <div x-show="homeViewMode === 'expense'" class="hero-delta" :class="monthDelta >= 0 ? 'up' : 'down'">
+            <div class="hero-label" x-text="'BALANCE EN ' + currentMonthName.toUpperCase()"></div>
+            <div class="hero-delta" :class="monthDelta >= 0 ? 'up' : 'down'">
               <span x-text="monthDelta >= 0 ? '↗' : '↘'" style="font-size:13px;"></span>
               <span x-text="(monthDelta >= 0 ? '+$' : '-$') + fmtMoney(Math.abs(monthDelta)) + ' vs mes anterior'"></span>
             </div>
           </div>
           <div class="hero-amount-row">
-            <span class="hero-currency" :style="homeViewMode === 'balance' && monthBalance < 0 ? 'color:var(--danger)' : ''">$</span>
-            <span class="hero-amount" :class="homeViewMode === 'balance' ? (monthBalance >= 0 ? '' : '') : ''" :style="homeViewMode === 'balance' ? (monthBalance >= 0 ? 'color:var(--success)' : 'color:var(--danger)') : 'background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;'" x-text="homeViewMode === 'income' ? fmtMoney(monthIncome) : homeViewMode === 'balance' ? (monthBalance < 0 ? '-' : '') + fmtMoney(Math.abs(monthBalance)) : fmtMoney(monthTotal)"></span>
+            <span class="hero-currency" :style="monthBalance < 0 ? 'color:var(--danger)' : ''">$</span>
+            <span class="hero-amount" :style="monthBalance >= 0 ? 'color:var(--success)' : 'color:var(--danger)'" x-text="(monthBalance < 0 ? '-' : '') + fmtMoney(Math.abs(monthBalance))"></span>
           </div>
-          <div x-show="homeViewMode === 'expense'">
-            <div class="hero-progress">
-              <div class="hero-progress-fill" :style="'width:' + spentPct + '%'"></div>
-              <div class="hero-progress-marker" :style="'left:' + monthPct + '%'"></div>
-            </div>
-            <div class="hero-progress-labels">
-              <span x-text="spentPct + '% gastado'"></span>
-              <span x-text="monthPct + '% del mes transcurrido'"></span>
-            </div>
-          </div>
-          <div x-show="homeViewMode === 'income'" style="margin-top:6px;">
-            <div style="font-size:12px;color:var(--muted);" x-text="monthExpenses.length + ' gastos · $' + fmtMoney(monthTotal) + ' gastado'"></div>
-          </div>
-          <div x-show="homeViewMode === 'balance'" style="margin-top:6px;display:flex;gap:16px;">
-            <div style="font-size:12px;"><span style="color:var(--success);">+$<span x-text="fmtMoney(monthIncome)"></span></span> <span style="color:var(--dim);">ingreso</span></div>
-            <div style="font-size:12px;"><span style="color:var(--danger);">-$<span x-text="fmtMoney(monthTotal)"></span></span> <span style="color:var(--dim);">gasto</span></div>
-          </div>
-        </div>
-
-        <!-- Balance pill (siempre visible) -->
-        <div x-show="homeViewMode !== 'balance'" style="display:flex;align-items:center;justify-content:space-between;margin:0 20px 10px;padding:8px 14px;border-radius:10px;background:var(--surface);border:1px solid var(--border);">
-          <span style="font-size:12px;color:var(--muted);font-weight:600;">Balance del mes</span>
-          <span style="font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;" :style="monthBalance >= 0 ? 'color:var(--success)' : 'color:var(--danger)'" x-text="(monthBalance >= 0 ? '+$' : '-$') + fmtMoney(Math.abs(monthBalance))"></span>
         </div>
 
         <!-- Stat cards -->
-        <div class="stat-row" x-show="homeViewMode === 'expense'">
+        <div class="stat-row">
+          <div class="stat-card">
+            <div class="stat-card-label">INGRESOS</div>
+            <div class="stat-card-value mono" style="color:var(--success);" x-text="'+$' + fmtMoney(monthIncome)"></div>
+            <div class="stat-card-sub" x-text="expenses.filter(e => e.is_income && e.date.startsWith(currentYear + '-' + String(currentMonth+1).padStart(2,'0'))).length + ' este mes'"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">GASTOS</div>
+            <div class="stat-card-value mono gradient-text" x-text="'-$' + fmtMoney(monthTotal)"></div>
+            <div class="stat-card-sub" x-text="monthExpenses.length + ' este mes'"></div>
+          </div>
           <div class="stat-card">
             <div class="stat-card-label">ESTA SEMANA</div>
             <div class="stat-card-value mono" x-text="'$' + fmtMoney(weekTotal)"></div>
             <div class="stat-card-sub" x-text="weekExpenseCount + (weekExpenseCount === 1 ? ' gasto' : ' gastos')"></div>
           </div>
-          <div class="stat-card">
-            <div class="stat-card-label">CATEGORIA TOP</div>
-            <div class="stat-card-value" x-text="topCategoryEmoji ? topCategoryEmoji + ' ' + topCategory : '—'"></div>
-            <div class="stat-card-sub" x-text="topCategory ? '$' + fmtMoney(topCategoryAmount) + ' · ' + topCategoryPct + '%' : ''"></div>
-          </div>
-          <div class="stat-card" :class="{ locked: userPlan === 'free' }">
-            <div class="stat-card-label">PRESUPUESTO</div>
-            <div class="stat-card-value" :style="userPlan === 'free' ? 'color:var(--muted)' : (budgetTotalPct > 80 ? 'color:var(--warning)' : '')" x-text="userPlan === 'free' ? '—' : budgetTotalPct + '%'"></div>
-            <div class="stat-card-sub" x-text="userPlan === 'free' ? 'Pro' : '$' + fmtMoney(monthTotal) + ' / $' + fmtMoney(budgetTotalAmount)"></div>
-            <template x-if="userPlan === 'free'">
-              <svg class="lock-icon" width="13" height="13" viewBox="0 0 14 14" fill="none">
-                <rect x="2.5" y="6" width="9" height="6.5" rx="1.5" stroke="var(--cyan)" stroke-width="1.4"/>
-                <path d="M4.5 6V4.5a2.5 2.5 0 015 0V6" stroke="var(--cyan)" stroke-width="1.4"/>
-              </svg>
-            </template>
-          </div>
         </div>
 
-        <!-- Budget alerts (solo en modo gastos) -->
-        <template x-if="homeViewMode === 'expense'"><div>
+        <!-- Budget alerts -->
+        <template x-if="true"><div>
         <template x-for="alert in budgetAlerts" :key="alert.cat">
           <div class="budget-alert" :class="{ danger: alert.pct >= 100 }" @click="tab = 'budgets'" style="cursor:pointer;margin:0 20px 8px;">
             <span x-text="alert.pct >= 100 ? '🚨' : '⚠️'"></span>
@@ -3032,7 +2996,7 @@
 
         <!-- Recent expenses -->
         <div class="section-head">
-          <span class="section-title" x-text="homeViewMode === 'income' ? 'Ingresos recientes' : homeViewMode === 'balance' ? 'Reciente' : 'Gastos recientes'"></span>
+          <span class="section-title">Reciente</span>
           <button class="section-action" @click="tab = 'history'; histAll = true; loadHistory()">Ver todo <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
         </div>
         <div class="expense-list">
@@ -3120,7 +3084,7 @@
           <div class="date-group">
             <div class="date-label">
               <span x-text="group.label"></span>
-              <span class="mono" style="color:var(--muted);font-size:11px;" x-text="'$' + fmtMoney(group.total)"></span>
+              <span class="mono" style="font-size:11px;" :style="group.total >= 0 ? 'color:var(--success)' : 'color:var(--muted)'" x-text="(group.total >= 0 ? '+$' : '-$') + fmtMoney(Math.abs(group.total))"></span>
             </div>
             <div class="list-block">
               <template x-for="exp in group.items" :key="exp.id">
@@ -3142,7 +3106,7 @@
 
         <div class="history-footer" x-show="historyExpenses.length > 0">
           <span x-text="historyExpenses.length + (historyExpenses.length === 1 ? ' transacción' : ' transacciones')"></span>
-          <span class="mono" style="font-size:16px;font-weight:700;" :style="histType === 'income' ? 'color:var(--success)' : ''" :class="histType !== 'income' ? 'gradient-text' : ''" x-text="(histType === 'income' ? '+' : '') + '$' + fmtMoney(historyTotal)"></span>
+          <span class="mono" style="font-size:16px;font-weight:700;" :style="histType === 'income' ? 'color:var(--success)' : histType === 'all' ? (historyTotal >= 0 ? 'color:var(--success)' : 'color:var(--danger)') : ''" :class="histType === 'expense' ? 'gradient-text' : ''" x-text="(histType === 'income' ? '+$' : histType === 'all' ? (historyTotal >= 0 ? '+$' : '-$') : '$') + fmtMoney(Math.abs(historyTotal))"></span>
         </div>
         <div x-show="historyExpenses.length === 0" class="empty-state" style="padding:40px 24px;">
           <div class="empty-icon" style="width:84px;height:84px;border-radius:22px;background:radial-gradient(circle at 30% 30%, rgba(0,240,255,0.15), rgba(112,0,255,0.10) 60%, transparent 80%);border:1px solid rgba(0,240,255,0.25);">
@@ -4731,7 +4695,10 @@
                     <div style="padding:12px;border-radius:14px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;gap:10px;">
                       <div style="position:relative;width:38px;height:38px;flex-shrink:0;">
                         <div style="width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;pointer-events:none;" :style="{ background: it.color + '20', border: '1px solid ' + it.color + '40' }" x-text="it.emoji"></div>
-                        <select :value="it.category" @change="updateParsedItemCat(idx, $event.target.value)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-family:inherit;">
+                        <div style="position:absolute;bottom:-2px;right:-2px;width:16px;height:16px;border-radius:8px;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;pointer-events:none;">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.5" width="9" height="9"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </div>
+                        <select :value="it.category" @change="updateParsedItemCat(idx, $event.target.value)" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-family:inherit;font-size:16px;">
                           <template x-for="c in (it.is_income ? incomeCategories : categories)" :key="c.key">
                             <option :value="c.key" x-text="c.emoji + '  ' + c.label"></option>
                           </template>
@@ -6185,10 +6152,32 @@ function zepoApp() {
       window.addEventListener('online', () => this.offline = false);
       window.addEventListener('offline', () => this.offline = true);
       window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); this.installPrompt = e; });
+
+      history.replaceState({ zepo: true }, '');
+      window.addEventListener('popstate', () => {
+        if (this.catManagerOpen) { this.catManagerOpen = false; this.cancelEditCategory(); }
+        else if (this.budgetSheetOpen) { this.budgetSheetOpen = false; }
+        else if (this.exportSheetOpen) { this.exportSheetOpen = false; }
+        else if (this.deboDetailOpen) { this.deboDetailOpen = false; }
+        else if (this.sendPrOpen) { this.sendPrOpen = false; }
+        else if (this.catDrillOpen) { this.catDrillOpen = false; }
+        else if (this.cobroDetailOpen) { this.cobroDetailOpen = false; }
+        else if (this.bugReportOpen) { this.bugReportOpen = false; }
+        else if (this.sheetOpen) { this.sheetOpen = false; }
+        else if (this.tab !== 'home') { this.tab = this.prevTab || 'home'; }
+        else { history.back(); return; }
+        history.pushState({ zepo: true }, '');
+      });
+
       this.loadCustomCategories();
 
       this.$watch('tab', (val, old) => {
         if (!['settings','changepass','plans','checkout','pay-processing','pay-success','pay-failed','forgotpw'].includes(val)) this.prevTab = val;
+      });
+
+      const pushBack = () => history.pushState({ zepo: true }, '');
+      ['sheetOpen','catManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen'].forEach(k => {
+        this.$watch(k, v => { if (v) pushBack(); });
       });
 
       try {
@@ -6569,14 +6558,15 @@ function zepoApp() {
         } else label = new Date(d + 'T12:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
         if (!groups[label]) { groups[label] = { label, items: [], total: 0 }; order.push(label); }
         groups[label].items.push(exp);
-        if (!exp.is_income) groups[label].total += exp.amount;
+        groups[label].total += exp.is_income ? exp.amount : -exp.amount;
       });
       return order.map(l => groups[l]);
     },
 
     get historyTotal() {
       if (this.histType === 'income') return this.historyExpenses.reduce((s, e) => s + e.amount, 0);
-      return this.historyExpenses.filter(e => !e.is_income).reduce((s, e) => s + e.amount, 0);
+      if (this.histType === 'expense') return this.historyExpenses.reduce((s, e) => s + e.amount, 0);
+      return this.historyExpenses.reduce((s, e) => s + (e.is_income ? e.amount : -e.amount), 0);
     },
 
     get historyMonthLabel() {
@@ -6716,8 +6706,6 @@ function zepoApp() {
     },
 
     get recentExpenses() {
-      if (this.homeViewMode === 'income') return this.expenses.filter(e => e.is_income).slice(0, 8);
-      if (this.homeViewMode === 'expense') return this.expenses.filter(e => !e.is_income).slice(0, 8);
       return this.expenses.slice(0, 8);
     },
 
