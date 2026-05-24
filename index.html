@@ -8593,7 +8593,7 @@ function zepoApp() {
       const uncategorized = items.filter(it => otherCats.includes(it.category));
       if (uncategorized.length === 0) return;
       try {
-        const token = (await window.__supabase.auth.getSession())?.data?.session?.access_token;
+        const token = (await sb.auth.getSession())?.data?.session?.access_token;
         if (!token) return;
         const resp = await fetch(SUPABASE_URL + '/functions/v1/categorize-ai', {
           method: 'POST',
