@@ -1,6 +1,8 @@
-const CACHE_NAME = 'zepo-v35';
+const CACHE_NAME = 'zepo-v24';
 const ASSETS = [
-  './manifest.json',
+  '/pwa/',
+  '/pwa/index.html',
+  '/pwa/manifest.json',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap'
 ];
@@ -23,71 +25,49 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
   if (url.origin === 'https://vchaxqisbypwwtyjjnjr.supabase.co') return;
-
-  // HTML (documento principal): network-only, sin caché, para evitar versiones viejas
-  const isDoc = e.request.mode === 'navigate'
-    || url.pathname.endsWith('/')
-    || url.pathname.endsWith('.html');
-  if (isDoc) {
-    e.respondWith(
-      fetch(e.request, { cache: 'no-store' }).catch(() => caches.match(e.request))
-    );
-    return;
-  }
-
-  // Resto (CSS/JS/fuentes): cache-first con refresh en background
+  if (url.hostname.endsWith('.google.com') || url.hostname.endsWith('.googleapis.com')) return;
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      const networkFetch = fetch(e.request).then(resp => {
-        if (resp && resp.ok) {
-          const clone = resp.clone();
-          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
-        }
-        return resp;
-      }).catch(() => cached);
-      return cached || networkFetch;
-    })
+    caches.match(e.request).then(cached => cached || fetch(e.request).then(resp => {
+      const clone = resp.clone();
+      caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+      return resp;
+    }))
   );
 });
 
-// ── Push Notifications ────────────────────────────────────────────
-
 self.addEventListener('push', e => {
-  let data = { title: 'Zepo 💸', body: '¿Registraste todos tus gastos de hoy?', url: '/' };
-  try {
-    const parsed = e.data?.json();
-    if (parsed) data = { ...data, ...parsed };
-  } catch {}
-
+  let data = {
+    title: 'Zepo',
+    body: '¿Registraste todos tus gastos de hoy?',
+    icon: '/pwa/icons/icon-192.png',
+    badge: '/pwa/icons/favicon-32.png',
+    url: '/pwa/',
+  };
+  if (e.data) {
+    try { Object.assign(data, e.data.json()); } catch {}
+  }
   e.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: '/icons/icon-192.png',
-      badge: '/icons/favicon-32.png',
-      tag: 'zepo-reminder',          // reemplaza notificación anterior si no fue vista
-      renotify: false,
-      data: { url: data.url || '/' },
-      actions: [
-        { action: 'open',    title: 'Abrir Zepo' },
-        { action: 'dismiss', title: 'Descartar' },
-      ],
+      icon: data.icon,
+      badge: data.badge,
+      data: { url: data.url },
+      vibrate: [200, 100, 200],
+      tag: data.tag || 'zepo-push',
+      renotify: true,
     })
   );
 });
 
 self.addEventListener('notificationclick', e => {
   e.notification.close();
-  if (e.action === 'dismiss') return;
-
-  const targetUrl = (e.notification.data?.url) || '/';
+  const url = e.notification.data?.url || '/pwa/';
   e.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
-      // Si la app ya está abierta, enfocarla
-      for (const c of clients) {
-        if (c.url.includes('zepo.lynoia.com') && 'focus' in c) return c.focus();
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const c of list) {
+        if (c.url.includes('/pwa/') && 'focus' in c) return c.focus();
       }
-      // Si no, abrir nueva ventana
-      if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
+      return clients.openWindow(url);
     })
   );
 });
