@@ -3084,7 +3084,7 @@
           <div class="date-group">
             <div class="date-label">
               <span x-text="group.label"></span>
-              <span class="mono" style="font-size:11px;" :style="group.total >= 0 ? 'color:var(--success)' : 'color:var(--muted)'" x-text="(group.total >= 0 ? '+$' : '-$') + fmtMoney(Math.abs(group.total))"></span>
+              <span class="mono" style="font-size:11px;" :style="histType === 'all' ? (group.total >= 0 ? 'color:var(--success)' : 'color:var(--muted)') : (histType === 'income' ? 'color:var(--success)' : 'color:var(--muted)')" x-text="(histType === 'all' ? (group.total >= 0 ? '+$' : '-$') : (histType === 'income' ? '+$' : '$')) + fmtMoney(Math.abs(group.total))"></span>
             </div>
             <div class="list-block">
               <template x-for="exp in group.items" :key="exp.id">
@@ -3603,6 +3603,13 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
             </button>
           </div>
+        </div>
+
+        <!-- View mode toggle: Gastos / Ingresos / Balance -->
+        <div style="display:flex;gap:4px;padding:0 20px 8px;">
+          <button @click="dashViewMode = 'expense'" style="flex:1;padding:7px 0;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;border:none;" :style="{ background: dashViewMode === 'expense' ? 'rgba(0,240,255,0.10)' : 'var(--surface)', color: dashViewMode === 'expense' ? 'var(--cyan)' : 'var(--muted)', border: dashViewMode === 'expense' ? '1px solid var(--cyan)' : '1px solid var(--border)' }">Gastos</button>
+          <button @click="dashViewMode = 'income'" style="flex:1;padding:7px 0;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;border:none;" :style="{ background: dashViewMode === 'income' ? 'rgba(0,229,160,0.10)' : 'var(--surface)', color: dashViewMode === 'income' ? 'var(--success)' : 'var(--muted)', border: dashViewMode === 'income' ? '1px solid var(--success)' : '1px solid var(--border)' }">Ingresos</button>
+          <button @click="dashViewMode = 'balance'" style="flex:1;padding:7px 0;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;border:none;" :style="{ background: dashViewMode === 'balance' ? 'rgba(112,0,255,0.10)' : 'var(--surface)', color: dashViewMode === 'balance' ? 'var(--purple)' : 'var(--muted)', border: dashViewMode === 'balance' ? '1px solid var(--purple)' : '1px solid var(--border)' }">Balance</button>
         </div>
 
         <!-- Period selector -->
@@ -4638,7 +4645,7 @@
                 </div>
 
                 <div class="cd-describe-card">
-                  <textarea x-model="form.description" maxlength="500" rows="3" @keydown.enter.prevent="analyzeTextInput()" :placeholder="form.is_income ? 'sueldo octubre 1200 · freelance diseño 350' : 'almuerzo 15 dividido con juan · taxi 8.50 · café 3.20'"></textarea>
+                  <textarea x-model="form.description" maxlength="500" rows="3" @keydown.enter.prevent="analyzeTextInput()" :placeholder="form.is_income ? 'sueldo octubre 1200 · freelance diseño 350' : 'almuerzo 15 · taxi 8.50 · café 3.20'"></textarea>
                   <div class="cd-describe-footer">
                     <div style="display:flex;gap:6px;align-items:center;">
                       <!-- Mic (voz) -->
@@ -5091,6 +5098,9 @@
             <div style="text-align:right;flex-shrink:0;">
               <div class="mono" style="font-size:18px;font-weight:800;letter-spacing:-0.5px;" x-text="'$' + fmtMoney(catDrillTotal)"></div>
               <div class="mono" style="font-size:11px;color:var(--muted);" x-text="catDrillPct + '% del total'"></div>
+              <template x-if="budgetForm[catDrillKey] > 0">
+                <div class="mono" style="font-size:11px;margin-top:2px;" :style="Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) >= 100 ? 'color:var(--danger)' : Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) >= 80 ? 'color:var(--warning)' : 'color:var(--success)'" x-text="Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) + '% del presupuesto'"></div>
+              </template>
             </div>
           </div>
           <div style="flex:1;overflow-y:auto;padding:8px 16px 100px;">
@@ -6002,6 +6012,7 @@ function zepoApp() {
     weeklyTime: '09:00',
     budgetAlertThresholds: [50, 75, 90],
     dashPeriod: 'mes',
+    dashViewMode: 'expense',
     histMonth: new Date().getMonth(),
     histYear: new Date().getFullYear(),
     histAll: false,
@@ -6558,7 +6569,8 @@ function zepoApp() {
         } else label = new Date(d + 'T12:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
         if (!groups[label]) { groups[label] = { label, items: [], total: 0 }; order.push(label); }
         groups[label].items.push(exp);
-        groups[label].total += exp.is_income ? exp.amount : -exp.amount;
+        if (this.histType === 'all') groups[label].total += exp.is_income ? exp.amount : -exp.amount;
+        else groups[label].total += exp.amount;
       });
       return order.map(l => groups[l]);
     },
@@ -8245,7 +8257,7 @@ function zepoApp() {
       const amount = numMatch ? parseFloat(numMatch[1].replace(',', '.')) : 0;
       const description = text.replace(/(\d+[\.,]?\d*)/, '').trim() || text;
       const expCats = {
-        food: ['comida','almuerzo','desayuno','cena','restaurante','pollo','arroz','menú','menu del dia','hamburguesa','hamburg','pizza','sushi','panaderia','panadería','asado','fritada','encebollado','ceviche','chifa','empanada','hot dog','sandwich','wrap','ensalada','snack','helado','postre','dulce'],
+        food: ['comida','almuerzo','desayuno','cena','restaurante','pollo','arroz','menú','menu del dia','hamburguesa','hamburg','pizza','sushi','panaderia','panadería','asado','fritada','encebollado','ceviche','chifa','empanada','hot dog','sandwich','wrap','ensalada','snack','helado','postre','dulce','sopa','caldo','merienda','tienda','pan ','panes','leche','huevo','queso','fruta','jugo','batido','agua ','gaseosa','cola','yogurt','yogur','cereal','galleta','chocolate','torta','pastel','mandarina','manzana','platano','plátano','papas','papa ','carne','res','cerdo','pescado','atún','atun','camarón','camaron','salchicha','jamon','jamón','lomo','chuleta','filete','seco de','guatita','hornado','mote','humita','bolón','bolon','tigrillo','tamal','patacón','patacon','corviche','taco','burrito','alitas','wonton','ramen','lasaña','lasagna','pasta','spagueti','spaghetti','parrillada','menestra','fideo','comida rapida'],
         transport: ['bus','transporte','gasolina','combustible','pasaje','metro','taxi','uber','cabify','indriver','didi','bici','bicicleta','cicla','moto','parqueo','parking','peaje','llanta','mecanico','mecánico','aceite motor','lavada auto','lavado auto','taller'],
         coffee: ['cafe','café','capuchino','cappuccino','latte','espresso','mokaccino','americano','frappé','frappe','starbucks','sweet & coffee','juan valdez'],
         health: ['medicina','farmacia','doctor','hospital','salud','pastilla','consulta','dentista','odontologo','odontólogo','lentes','optica','óptica','laboratorio','examen medico','psicolog','terapia','vitamina','suplemento'],
