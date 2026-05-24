@@ -2984,7 +2984,6 @@
         </div>
 
         <!-- Budget alerts -->
-        <template x-if="true"><div>
         <template x-for="alert in budgetAlerts" :key="alert.cat">
           <div class="budget-alert" :class="{ danger: alert.pct >= 100 }" @click="tab = 'budgets'" style="cursor:pointer;margin:0 20px 8px;">
             <span x-text="alert.pct >= 100 ? '🚨' : '⚠️'"></span>
@@ -2992,7 +2991,6 @@
             <span style="margin-left:auto;font-size:11px;color:var(--cyan);">Ver →</span>
           </div>
         </template>
-        </div></template>
 
         <!-- Recent expenses -->
         <div class="section-head">
@@ -3619,6 +3617,12 @@
           <button class="dash-period-btn" :class="{ active: dashPeriod === 'año' }" @click="dashPeriod = 'año'">Año</button>
         </div>
 
+        <!-- Dashboard summary -->
+        <div style="text-align:center;padding:8px 20px 16px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:1.2px;color:var(--dim);text-transform:uppercase;" x-text="(dashViewMode === 'income' ? 'INGRESO' : dashViewMode === 'balance' ? 'BALANCE' : 'GASTO') + ' · ' + periodLabel"></div>
+          <div class="mono" style="font-size:32px;font-weight:800;letter-spacing:-1px;margin-top:4px;" :style="dashViewMode === 'balance' ? (dashPeriodData >= 0 ? 'color:var(--success)' : 'color:var(--danger)') : dashViewMode === 'income' ? 'color:var(--success)' : ''" x-text="(dashViewMode === 'balance' && dashPeriodData < 0 ? '-' : '') + '$' + fmtMoney(Math.abs(dashPeriodData))"></div>
+        </div>
+
         <!-- Period bar chart (cambia según dashPeriod) -->
         <div class="dash-card" x-show="dashPeriod === 'semana'">
           <div class="dash-card-title" x-text="periodChartTitle"></div>
@@ -3634,7 +3638,7 @@
         </div>
 
         <div class="dash-card" x-show="dashPeriod === 'año'">
-          <div class="dash-card-title">Gasto anual</div>
+          <div class="dash-card-title" x-text="dashViewMode === 'income' ? 'Ingreso anual' : dashViewMode === 'balance' ? 'Balance anual' : 'Gasto anual'"></div>
           <div class="dash-card-subtitle" x-text="periodChartSubtitle"></div>
           <div style="display:grid;grid-template-columns:28px repeat(12,1fr);gap:3px;margin-top:10px;">
             <template x-for="(c, ci) in yearlyChart.flat" :key="'yf-'+ci">
@@ -3652,7 +3656,7 @@
 
         <!-- Calendar heatmap (solo mes) -->
         <div class="dash-card" x-show="dashPeriod === 'mes'">
-          <div class="dash-card-title">Calendario del mes</div>
+          <div class="dash-card-title" x-text="dashViewMode === 'income' ? 'Ingresos del mes' : dashViewMode === 'balance' ? 'Balance del mes' : 'Calendario del mes'"></div>
           <div class="dash-card-subtitle">Heatmap diario · compara días de la semana</div>
           <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px;">
             <template x-for="d in ['L','M','M','J','V','S','D']" :key="'h-' + d + Math.random()">
@@ -5097,9 +5101,11 @@
             </div>
             <div style="text-align:right;flex-shrink:0;">
               <div class="mono" style="font-size:18px;font-weight:800;letter-spacing:-0.5px;" x-text="'$' + fmtMoney(catDrillTotal)"></div>
-              <div class="mono" style="font-size:11px;color:var(--muted);" x-text="catDrillPct + '% del total'"></div>
               <template x-if="budgetForm[catDrillKey] > 0">
-                <div class="mono" style="font-size:11px;margin-top:2px;" :style="Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) >= 100 ? 'color:var(--danger)' : Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) >= 80 ? 'color:var(--warning)' : 'color:var(--success)'" x-text="Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) + '% del presupuesto'"></div>
+                <div class="mono" style="font-size:11px;margin-top:2px;" :style="Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) >= 100 ? 'color:var(--danger)' : Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) >= 80 ? 'color:var(--warning)' : 'color:var(--success)'" x-text="Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) + '% del presupuesto ($' + fmtMoney(budgetForm[catDrillKey]) + ')'"></div>
+              </template>
+              <template x-if="!budgetForm[catDrillKey] || budgetForm[catDrillKey] <= 0">
+                <div class="mono" style="font-size:11px;color:var(--muted);" x-text="catDrillPct + '% del gasto total'"></div>
               </template>
             </div>
           </div>
@@ -6175,6 +6181,8 @@ function zepoApp() {
         else if (this.cobroDetailOpen) { this.cobroDetailOpen = false; }
         else if (this.bugReportOpen) { this.bugReportOpen = false; }
         else if (this.sheetOpen) { this.sheetOpen = false; }
+        else if (['changepass','plans','checkout','pay-processing','pay-success','pay-failed','forgotpw'].includes(this.tab)) { this.tab = 'settings'; }
+        else if (this.tab === 'history') { this.tab = 'home'; }
         else if (this.tab !== 'home') { this.tab = this.prevTab || 'home'; }
         else { history.back(); return; }
         history.pushState({ zepo: true }, '');
@@ -6182,11 +6190,13 @@ function zepoApp() {
 
       this.loadCustomCategories();
 
+      const pushBack = () => history.pushState({ zepo: true }, '');
+
       this.$watch('tab', (val, old) => {
         if (!['settings','changepass','plans','checkout','pay-processing','pay-success','pay-failed','forgotpw'].includes(val)) this.prevTab = val;
+        if (val !== old) pushBack();
       });
 
-      const pushBack = () => history.pushState({ zepo: true }, '');
       ['sheetOpen','catManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen'].forEach(k => {
         this.$watch(k, v => { if (v) pushBack(); });
       });
@@ -8675,28 +8685,44 @@ function zepoApp() {
     },
 
     get periodChartTitle() {
-      if (this.dashPeriod === 'semana') return 'Gasto semanal';
-      if (this.dashPeriod === 'año') return 'Gasto anual';
-      return 'Gasto mensual';
+      const mode = this.dashViewMode;
+      const label = mode === 'income' ? 'Ingreso' : mode === 'balance' ? 'Balance' : 'Gasto';
+      if (this.dashPeriod === 'semana') return label + ' semanal';
+      if (this.dashPeriod === 'año') return label + ' anual';
+      return label + ' mensual';
+    },
+
+    get dashPeriodData() {
+      const mode = this.dashViewMode;
+      if (mode === 'expense') return this.periodTotal;
+      if (mode === 'income') return this.periodIncome;
+      return this.periodIncome - this.periodTotal;
     },
 
     get periodChartSubtitle() {
-      if (this.dashPeriod === 'semana') return 'Promedio · $' + this.fmtMoney(this.weekTotal / 7) + '/día';
+      const total = this.dashPeriodData;
+      if (this.dashPeriod === 'semana') return 'Promedio · $' + this.fmtMoney(Math.abs(total) / 7) + '/día';
       if (this.dashPeriod === 'año') {
         const ms = (new Date() - new Date(new Date().getFullYear(), 0, 1));
         const days = Math.max(1, Math.ceil(ms / 86400000));
-        return 'Promedio · $' + this.fmtMoney(this.periodTotal / days) + '/día';
+        return 'Promedio · $' + this.fmtMoney(Math.abs(total) / days) + '/día';
       }
-      return 'Promedio · $' + this.fmtMoney(this.monthTotal / Math.max(1, new Date().getDate())) + '/día';
+      return 'Promedio · $' + this.fmtMoney(Math.abs(total) / Math.max(1, new Date().getDate())) + '/día';
     },
 
     get categoryBreakdown() {
+      const mode = this.dashViewMode;
+      const src = mode === 'income'
+        ? this.expenses.filter(e => e.is_income && e.date >= this.periodStart)
+        : mode === 'balance'
+          ? this.expenses.filter(e => e.date >= this.periodStart)
+          : this.expenses.filter(e => !e.is_income && e.date >= this.periodStart);
       const totals = {};
-      this.monthExpenses.forEach(e => {
+      src.forEach(e => {
         if (!totals[e.category]) totals[e.category] = 0;
         totals[e.category] += e.amount;
       });
-      const total = this.monthTotal || 1;
+      const total = src.reduce((s, e) => s + e.amount, 0) || 1;
       return Object.entries(totals)
         .sort((a, b) => b[1] - a[1])
         .map(([key, val]) => ({
