@@ -208,7 +208,7 @@
       overflow-y: auto;
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
-      padding-bottom: calc(76px + var(--safe-bottom));
+      padding-bottom: calc(66px + var(--safe-bottom));
     }
     .screen-header {
       padding: 16px 16px;
@@ -224,13 +224,13 @@
       position: fixed;
       bottom: 0; left: 0; right: 0;
       max-width: 430px; margin: 0 auto;
-      height: calc(60px + var(--safe-bottom));
+      height: calc(50px + var(--safe-bottom));
       background: var(--surface);
       border-top: 1px solid var(--border);
       display: flex;
       justify-content: space-around;
       align-items: flex-start;
-      padding-top: 8px;
+      padding-top: 6px;
       padding-bottom: var(--safe-bottom);
       z-index: 50;
     }
@@ -257,7 +257,7 @@
       background: var(--surface2);
       display: flex; align-items: center; justify-content: center;
     }
-    .tab-item svg { width: 22px; height: 22px; }
+    .tab-item svg { width: 20px; height: 20px; }
     .tab-item.active svg { stroke-width: 2.4; }
 
     /* ═══ AMIGOS ═══ */
@@ -314,11 +314,11 @@
     /* ═══ FAB ═══ */
     .fab {
       position: fixed;
-      bottom: calc(14px + var(--safe-bottom));
+      bottom: calc(10px + var(--safe-bottom));
       left: 50%;
       transform: translateX(-50%);
       touch-action: manipulation;
-      width: 64px; height: 64px;
+      width: 56px; height: 56px;
       border-radius: 32px;
       background: var(--gradient);
       display: flex; align-items: center; justify-content: center;
@@ -327,7 +327,7 @@
       transition: transform 0.2s, box-shadow 0.2s;
     }
     .fab:active { transform: translateX(-50%) scale(0.92); }
-    .fab svg { width: 28px; height: 28px; stroke: #0A0A0F; stroke-width: 2.6; }
+    .fab svg { width: 26px; height: 26px; stroke: #0A0A0F; stroke-width: 2.6; }
     .fab.pulse { animation: fabPulse 2s ease-in-out infinite; }
     @keyframes fabPulse {
       0%, 100% { box-shadow: 0 0 0 4px #0A0A0F, 0 8px 32px rgba(0,240,255,0.4), 0 0 48px rgba(112,0,255,0.3); }
