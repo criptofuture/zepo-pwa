@@ -7309,18 +7309,39 @@ function zepoApp() {
 
         let inserted;
         if (this.editingExpense) {
-          try {
-            await withTimeout(
-              sb.from('expenses').update(payload).eq('id', this.editingExpense.id).then(r => { if (r.error) throw r.error; return r; }),
-              8000, 'update'
-            );
-          } catch (e) {
-            console.warn('[saveExpense] sb update failed, fallback REST:', e.message);
-            await sbRestUpdate('expenses', 'id', this.editingExpense.id, payload);
+          const editId = this.editingExpense.id;
+          const isTemp = String(editId).startsWith('temp_') || String(editId).startsWith('_tmp_');
+          if (isTemp) {
+            try {
+              const r = await withTimeout(
+                sb.from('expenses').insert(payload).select('id').single().then(r => { if (r.error) throw r.error; return r; }),
+                5000, 'temp-edit-insert'
+              );
+              if (r.data) {
+                const idx = this.expenses.findIndex(e => e.id === editId);
+                if (idx >= 0) this.expenses[idx] = { ...this.expenses[idx], ...payload, id: r.data.id };
+              }
+            } catch (e) {
+              console.warn('[saveExpense] temp edit insert failed, fallback REST:', e.message);
+              await sbRestInsert('expenses', payload);
+            }
+          } else {
+            try {
+              await withTimeout(
+                sb.from('expenses').update(payload).eq('id', editId).then(r => { if (r.error) throw r.error; return r; }),
+                8000, 'update'
+              );
+            } catch (e) {
+              console.warn('[saveExpense] sb update failed, fallback REST:', e.message);
+              await sbRestUpdate('expenses', 'id', editId, payload);
+            }
           }
           if (this.receiptFile) {
-            const path = await this.uploadReceipt(this.editingExpense.id);
-            if (path) await sbRestUpdate('expenses', 'id', this.editingExpense.id, { receipt_image_path: path });
+            const realId = isTemp ? (this.expenses.find(e => e.description === payload.description && e.date === payload.date)?.id || editId) : editId;
+            if (!String(realId).startsWith('temp_') && !String(realId).startsWith('_tmp_')) {
+              const path = await this.uploadReceipt(realId);
+              if (path) await sbRestUpdate('expenses', 'id', realId, { receipt_image_path: path });
+            }
           }
           this.showToast('Gasto actualizado');
         } else {
@@ -7444,25 +7465,25 @@ function zepoApp() {
       if (!this.editingExpense) return;
       if (!confirm('¿Eliminar este gasto? Esta acción no se puede deshacer.')) return;
       const id = this.editingExpense.id;
-      try {
+      const isTemp = String(id).startsWith('temp_') || String(id).startsWith('_tmp_');
+      this.expenses = this.expenses.filter(e => e.id !== id);
+      try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
+      this.sheetOpen = false;
+      this.editingExpense = null;
+      this.showToast('Gasto eliminado');
+      if (!isTemp) {
         try {
-          await withTimeout(sb.from('expenses').delete().eq('id', id).then(r => { if (r.error) throw r.error; return r; }), 2500, 'deleteExpense');
+          try {
+            await withTimeout(sb.from('expenses').delete().eq('id', id).then(r => { if (r.error) throw r.error; return r; }), 2500, 'deleteExpense');
+          } catch (e) {
+            console.warn('[deleteExpense] fallback REST:', e.message);
+            await sbRestDelete('expenses', { id });
+          }
+          Promise.all([this.loadExpenses(), this.loadSplits()])
+            .catch(e => console.warn('[deleteExpense] bg reload:', e.message));
         } catch (e) {
-          console.warn('[deleteExpense] fallback REST:', e.message);
-          await sbRestDelete('expenses', { id });
+          console.error('deleteExpense error:', e);
         }
-        // Optimistic: remove from local array immediately
-        this.expenses = this.expenses.filter(e => e.id !== id);
-        try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
-        this.sheetOpen = false;
-        this.editingExpense = null;
-        this.showToast('Gasto eliminado');
-        // Reload in background, in parallel
-        Promise.all([this.loadExpenses(), this.loadSplits()])
-          .catch(e => console.warn('[deleteExpense] bg reload:', e.message));
-      } catch (e) {
-        console.error('deleteExpense error:', e);
-        this.showToast('Error: ' + e.message);
       }
     },
 
