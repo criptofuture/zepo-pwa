@@ -5339,9 +5339,10 @@
             <div style="text-align:right;flex-shrink:0;">
               <div class="mono" style="font-size:16px;font-weight:700;letter-spacing:-0.3px;" x-text="'$' + fmtMoney(catDrillTotal)"></div>
               <div style="font-size:12px;color:var(--muted);margin-top:3px;">
-                <span x-text="catDrillPct + '% del total'"></span>
+                <span x-text="catDrillPct + '% del gasto total'"></span>
                 <template x-if="budgetForm[catDrillKey] > 0">
-                  <span style="margin-left:4px;" :style="Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) >= 100 ? 'color:var(--danger)' : Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) >= 80 ? 'color:var(--warning)' : 'color:var(--success)'" x-text="'· ' + Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) + '% del presupuesto'"></span>
+                  <span style="margin-left:5px;opacity:.5;">·</span>
+                  <span style="margin-left:5px;" :style="Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) >= 100 ? 'color:var(--danger)' : Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) >= 80 ? 'color:var(--warning)' : 'color:var(--success)'" x-text="Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) + '% de su presupuesto'"></span>
                 </template>
               </div>
             </div>
