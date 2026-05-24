@@ -96,7 +96,6 @@
 
     /* ═══ APP SHELL ═══ */
     #app {
-      height: 100vh;
       height: 100dvh;
       display: flex;
       flex-direction: column;
@@ -104,9 +103,6 @@
       margin: 0 auto;
       position: relative;
       overflow: hidden;
-    }
-    @supports (height: 100dvh) {
-      #app { height: var(--app-height, 100dvh); }
     }
 
     /* ═══ AUTH SCREENS ═══ */
@@ -208,11 +204,11 @@
       overflow-y: auto;
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
-      padding-bottom: calc(66px + var(--safe-bottom));
+      padding-bottom: calc(100px + var(--safe-bottom));
     }
     .screen-header {
-      padding: 16px 16px;
-      padding-top: calc(var(--safe-top) + 12px);
+      padding: 16px 20px;
+      padding-top: calc(var(--safe-top) + 16px);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -221,16 +217,15 @@
 
     /* ═══ TAB BAR ═══ */
     .tab-bar {
-      position: fixed;
+      position: absolute;
       bottom: 0; left: 0; right: 0;
-      max-width: 430px; margin: 0 auto;
-      height: calc(50px + var(--safe-bottom));
+      height: calc(84px + var(--safe-bottom));
       background: var(--surface);
       border-top: 1px solid var(--border);
       display: flex;
       justify-content: space-around;
       align-items: flex-start;
-      padding-top: 6px;
+      padding-top: 10px;
       padding-bottom: var(--safe-bottom);
       z-index: 50;
     }
@@ -240,7 +235,6 @@
       align-items: center;
       gap: 3px;
       padding: 4px 12px;
-      touch-action: manipulation;
       font-size: 9px;
       font-weight: 600;
       color: var(--muted);
@@ -257,7 +251,7 @@
       background: var(--surface2);
       display: flex; align-items: center; justify-content: center;
     }
-    .tab-item svg { width: 20px; height: 20px; }
+    .tab-item svg { width: 22px; height: 22px; }
     .tab-item.active svg { stroke-width: 2.4; }
 
     /* ═══ AMIGOS ═══ */
@@ -313,12 +307,11 @@
 
     /* ═══ FAB ═══ */
     .fab {
-      position: fixed;
-      bottom: calc(10px + var(--safe-bottom));
+      position: absolute;
+      bottom: calc(38px + var(--safe-bottom));
       left: 50%;
       transform: translateX(-50%);
-      touch-action: manipulation;
-      width: 56px; height: 56px;
+      width: 64px; height: 64px;
       border-radius: 32px;
       background: var(--gradient);
       display: flex; align-items: center; justify-content: center;
@@ -327,7 +320,7 @@
       transition: transform 0.2s, box-shadow 0.2s;
     }
     .fab:active { transform: translateX(-50%) scale(0.92); }
-    .fab svg { width: 26px; height: 26px; stroke: #0A0A0F; stroke-width: 2.6; }
+    .fab svg { width: 28px; height: 28px; stroke: #0A0A0F; stroke-width: 2.6; }
     .fab.pulse { animation: fabPulse 2s ease-in-out infinite; }
     @keyframes fabPulse {
       0%, 100% { box-shadow: 0 0 0 4px #0A0A0F, 0 8px 32px rgba(0,240,255,0.4), 0 0 48px rgba(112,0,255,0.3); }
@@ -336,8 +329,8 @@
 
     /* ═══ PAGE HEADER ═══ */
     .page-header {
-      padding: 14px 16px 8px;
-      padding-top: calc(var(--safe-top) + 16px);
+      padding: 14px 20px 8px;
+      padding-top: calc(var(--safe-top) + 14px);
       display: flex;
       align-items: center;
       gap: 12px;
@@ -417,7 +410,7 @@
     /* ═══ EMPTY STATE ═══ */
     .empty-state {
       display: flex; flex-direction: column; align-items: center;
-      text-align: center; padding: 40px 24px;
+      text-align: center; padding: 60px 28px;
     }
     .empty-icon {
       width: 112px; height: 112px; border-radius: 28px;
@@ -510,8 +503,8 @@
 
     /* ═══ HERO CARD ═══ */
     .hero-card {
-      margin: 0 16px 12px;
-      padding: 16px 18px 14px;
+      margin: 0 20px 20px;
+      padding: 20px 22px 18px;
       background: var(--surface);
       border-radius: 20px;
       position: relative;
@@ -572,35 +565,35 @@
     /* ═══ STAT CARDS ROW ═══ */
     .stat-row {
       display: flex; gap: 8px;
-      padding: 0 16px;
-      margin-bottom: 14px;
+      padding: 0 20px;
+      margin-bottom: 24px;
     }
     .stat-card {
       flex: 1 1 0; min-width: 0;
       background: var(--surface);
       border-radius: 14px;
       border: 1px solid var(--border);
-      padding: 10px 12px;
+      padding: 14px;
       position: relative;
     }
     .stat-card.locked { opacity: 0.55; }
     .stat-card .lock-icon {
-      position: absolute; bottom: 10px; right: 10px;
+      position: absolute; top: 12px; right: 12px;
     }
     .stat-card-label {
       font-size: 10px; color: var(--muted); text-transform: uppercase;
       letter-spacing: 1px; font-weight: 600; margin-bottom: 6px;
     }
-    .stat-card-value { font-size: 15px; font-weight: 700; letter-spacing: -0.5px; margin-top: 0; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .stat-card-sub { font-size: 10px; color: var(--muted); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stat-card-value { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; margin-top: 0; font-variant-numeric: tabular-nums; }
+    .stat-card-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
     /* ═══ SECTION ═══ */
     .section-head {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 16px;
-      margin-top: 16px;
+      padding: 0 20px;
+      margin-top: 22px;
       margin-bottom: 8px;
     }
     .section-title { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
@@ -611,7 +604,7 @@
 
     /* ═══ EXPENSE ROW ═══ */
     .expense-list {
-      margin: 0 16px;
+      margin: 0 20px;
       background: var(--surface);
       border-radius: 14px;
       border: 1px solid var(--border);
@@ -622,8 +615,16 @@
       align-items: center;
       gap: 12px;
       padding: 10px 0;
+      cursor: pointer;
     }
+    .expense-row:active { opacity: 0.7; }
     .expense-row + .expense-row { border-top: 1px solid var(--border); }
+    .expense-row-edit {
+      flex-shrink: 0;
+      width: 16px; height: 16px;
+      color: var(--muted);
+      opacity: 0.5;
+    }
     .expense-icon {
       width: 40px; height: 40px;
       border-radius: 12px;
@@ -646,89 +647,6 @@
       font-variant-numeric: tabular-nums;
     }
     .expense-amount.income { color: var(--success); }
-
-    /* ═══ BATCH GROUPING ═══ */
-    .batch-row {
-      display: flex; align-items: center; gap: 12px;
-      padding: 10px 0; cursor: pointer;
-    }
-    .batch-row + .expense-row,
-    .expense-row + .batch-row,
-    .batch-row + .batch-row { border-top: 1px solid var(--border); }
-    .batch-icon {
-      width: 40px; height: 40px; border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px; flex-shrink: 0;
-      background: linear-gradient(135deg, rgba(0,240,255,0.10), rgba(112,0,255,0.10));
-      border: 1px solid rgba(0,240,255,0.18);
-    }
-    .batch-info { flex: 1; min-width: 0; }
-    .batch-label {
-      font-size: 14px; font-weight: 600; letter-spacing: -0.2px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .batch-meta {
-      font-size: 11px; color: var(--muted); margin-top: 2px;
-      display: flex; align-items: center; gap: 5px;
-    }
-    .batch-right {
-      display: flex; align-items: center; gap: 8px; flex-shrink: 0;
-    }
-    .batch-count {
-      font-size: 10px; font-weight: 700; padding: 2px 7px;
-      border-radius: 9999px; letter-spacing: 0.3px;
-      background: rgba(0,240,255,0.12); color: var(--cyan);
-    }
-    .batch-chevron {
-      transition: transform 0.2s ease;
-      color: var(--dim);
-    }
-    .batch-chevron.open { transform: rotate(90deg); }
-    .batch-subitems {
-      padding-left: 16px;
-      border-left: 2px solid var(--border);
-      margin-left: 20px;
-    }
-    .batch-subitems .expense-row { padding: 8px 0; }
-    .batch-subitems .expense-row:first-child { border-top: none; }
-
-    /* ═══ FRIEND DRILL-DOWN ═══ */
-    .friend-drill-overlay {
-      position: fixed; inset: 0; z-index: 200;
-      background: var(--bg); max-width: 430px; margin: 0 auto;
-      display: flex; flex-direction: column; overflow: hidden;
-    }
-    .friend-drill-header {
-      padding: 16px 20px 12px; padding-top: calc(var(--safe-top) + 16px);
-      display: flex; align-items: center; gap: 14px;
-      border-bottom: 1px solid var(--border); flex-shrink: 0;
-    }
-    .friend-drill-balance {
-      margin: 16px 20px; padding: 20px;
-      border-radius: 16px; text-align: center;
-    }
-    .friend-drill-balance.positive {
-      background: linear-gradient(135deg, rgba(0,229,160,0.08), rgba(0,240,255,0.06));
-      border: 1px solid rgba(0,229,160,0.25);
-    }
-    .friend-drill-balance.negative {
-      background: linear-gradient(135deg, rgba(255,184,0,0.08), rgba(255,107,107,0.06));
-      border: 1px solid rgba(255,184,0,0.25);
-    }
-    .friend-drill-balance.even {
-      background: var(--surface);
-      border: 1px solid var(--border);
-    }
-    .friend-drill-txlist {
-      flex: 1; overflow-y: auto; padding: 0 16px 100px;
-    }
-    .friend-drill-tx {
-      display: flex; align-items: center; gap: 12px;
-      padding: 13px 10px; border-bottom: 1px solid var(--border);
-    }
-    .friend-drill-actions {
-      display: flex; gap: 10px; margin-top: 14px; justify-content: center;
-    }
 
     /* ═══ INPUT SHEET (Bottom Sheet) ═══ */
     .sheet-backdrop {
@@ -784,7 +702,6 @@
     .approve-header {
       display: flex; align-items: center; gap: 12px;
       padding: 14px 20px 12px;
-      padding-top: calc(var(--safe-top) + 14px);
       position: sticky; top: 0; background: var(--bg); z-index: 10;
     }
     .approve-back {
@@ -1447,6 +1364,15 @@
     }
     .cobrar-chip:hover { background: rgba(0,229,160,0.18); }
     .cobrar-chip:active { transform: scale(0.96); }
+    /* Home sunset banner */
+    .home-sunset-banner {
+      margin: 0 20px 14px; padding: 10px 14px; border-radius: 12px;
+      background: var(--warning); color: #0A0A0F;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: transform 120ms ease-out;
+    }
+    .home-sunset-banner:active { transform: scale(0.98); }
     /* Blocked old expenses tease (Free) */
     .home-blocked-tease {
       margin: 14px 20px 0; padding: 14px; border-radius: 14px;
@@ -2971,20 +2897,79 @@
           </div>
         </div>
 
+        <!-- Sunset banner para Free: chip normal hasta 7 días, urgente (rojo) cuando ≤ 7 -->
+        <div x-show="userPlan === 'free' && daysUntilSunset > 7" @click="tab = 'plans'" class="home-sunset-banner">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2.4" width="14" height="14"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>Plan Free vence el 31 dic · <span x-text="daysUntilSunset"></span> días</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:2px;font-weight:700;">
+            Mejorar
+            <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2.6" width="12" height="12"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </div>
+        </div>
+
+        <!-- Urgent red banner: ≤ 7 days before sunset -->
+        <div x-show="userPlan === 'free' && daysUntilSunset > 0 && daysUntilSunset <= 7" style="padding:14px 16px;margin:0 20px 16px;border-radius:14px;background:linear-gradient(135deg, rgba(255,107,107,0.18), rgba(255,107,107,0.08));border:1px solid var(--danger);">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" width="16" height="16"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div style="font-size:13px;font-weight:700;color:var(--danger);letter-spacing:0.3px;">
+              <span x-text="daysUntilSunset"></span> días para mejorar tu plan
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.45;margin-bottom:10px;">El plan Free termina pronto. Al expirar, no podrás registrar nuevos gastos hasta mejorar.</div>
+          <button @click="tab = 'plans'" style="width:100%;height:38px;border-radius:9px;background:var(--danger);border:none;color:#fff;font-weight:700;font-size:12px;font-family:inherit;cursor:pointer;">Mejorar plan ahora</button>
+        </div>
+
+        <!-- BLOCKED screen overlay: free plan + past expiration -->
+        <div x-show="userPlan === 'free' && daysUntilSunset <= 0" style="position:fixed;inset:0;max-width:430px;margin:0 auto;z-index:200;background:radial-gradient(circle at 50% 30%, rgba(255,107,107,0.12) 0%, transparent 60%), var(--bg);overflow-y:auto;">
+          <div style="padding:60px 28px 28px;min-height:100%;display:flex;flex-direction:column;align-items:center;text-align:center;">
+            <div style="width:100px;height:100px;border-radius:28px;background:linear-gradient(135deg, rgba(255,107,107,0.15), rgba(255,184,0,0.15));border:1px solid var(--warning);display:flex;align-items:center;justify-content:center;margin-bottom:28px;box-shadow:0 0 48px rgba(255,107,107,0.25);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="1.8" width="42" height="42"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            </div>
+            <div style="font-size:28px;font-weight:700;letter-spacing:-0.8px;line-height:1.15;margin-bottom:12px;">El plan Free terminó</div>
+            <div style="font-size:15px;color:var(--muted);line-height:1.5;margin-bottom:24px;max-width:320px;">Tus <span style="color:var(--text);font-weight:700;" x-text="expenses.length"></span> gastos siguen ahí. Cuando mejores a Pro o Elite, los recuperas todos al instante. Nada se borra.</div>
+            <div style="width:100%;padding:18px;background:var(--surface);border-radius:16px;border:1px solid var(--border);margin-bottom:22px;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                <div style="width:28px;height:28px;border-radius:8px;background:rgba(0,229,160,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="3" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div style="font-size:13px;font-weight:700;text-align:left;">Tus datos están a salvo</div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;">
+                <span>Gastos guardados</span><span style="color:var(--text);font-weight:700;font-variant-numeric:tabular-nums;" x-text="expenses.length"></span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);">
+                <span>Total registrado</span><span style="color:var(--text);font-weight:700;" x-text="'$' + fmtMoney(expenses.reduce((s, e) => s + e.amount, 0))"></span>
+              </div>
+            </div>
+            <button @click="tab = 'plans'" style="width:100%;height:52px;border-radius:26px;background:var(--gradient);border:none;color:#0A0A0F;font-weight:700;font-size:16px;font-family:inherit;cursor:pointer;box-shadow:0 4px 24px rgba(0,240,255,0.2);">Mejorar a Pro · $5/mes</button>
+            <button @click="exportSheetOpen = true" style="margin-top:10px;width:100%;height:50px;border-radius:25px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:14px;font-family:inherit;cursor:pointer;">Exportar mis datos</button>
+            <div style="margin-top:20px;font-size:11px;color:var(--dim);line-height:1.5;">Hasta el 31 dic 2026 · Plan Free expirado</div>
+          </div>
+        </div>
+
+        <!-- View mode toggle -->
+        <div style="display:flex;gap:4px;padding:0 20px 10px;">
+          <button @click="homeViewMode = 'expense'" style="flex:1;padding:7px 0;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;border:none;" :style="{ background: homeViewMode === 'expense' ? 'rgba(0,240,255,0.10)' : 'var(--surface)', color: homeViewMode === 'expense' ? 'var(--cyan)' : 'var(--muted)', border: homeViewMode === 'expense' ? '1px solid var(--cyan)' : '1px solid var(--border)' }">Gastos</button>
+          <button @click="homeViewMode = 'income'" style="flex:1;padding:7px 0;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;border:none;" :style="{ background: homeViewMode === 'income' ? 'rgba(0,229,160,0.10)' : 'var(--surface)', color: homeViewMode === 'income' ? 'var(--success)' : 'var(--muted)', border: homeViewMode === 'income' ? '1px solid var(--success)' : '1px solid var(--border)' }">Ingresos</button>
+          <button @click="homeViewMode = 'balance'" style="flex:1;padding:7px 0;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;border:none;" :style="{ background: homeViewMode === 'balance' ? 'rgba(112,0,255,0.10)' : 'var(--surface)', color: homeViewMode === 'balance' ? 'var(--purple)' : 'var(--muted)', border: homeViewMode === 'balance' ? '1px solid var(--purple)' : '1px solid var(--border)' }">Balance</button>
+        </div>
+
         <!-- Hero Card -->
         <div class="hero-card gradient-border glow">
           <div class="hero-top-row">
-            <div class="hero-label" x-text="'GASTADO EN ' + currentMonthName.toUpperCase()"></div>
-            <div class="hero-delta" :class="monthDelta >= 0 ? 'up' : 'down'">
+            <div class="hero-label" x-text="homeViewMode === 'income' ? 'INGRESADO EN ' + currentMonthName.toUpperCase() : homeViewMode === 'balance' ? 'BALANCE EN ' + currentMonthName.toUpperCase() : 'GASTADO EN ' + currentMonthName.toUpperCase()"></div>
+            <div x-show="homeViewMode === 'expense'" class="hero-delta" :class="monthDelta >= 0 ? 'up' : 'down'">
               <span x-text="monthDelta >= 0 ? '↗' : '↘'" style="font-size:13px;"></span>
               <span x-text="(monthDelta >= 0 ? '+$' : '-$') + fmtMoney(Math.abs(monthDelta)) + ' vs mes anterior'"></span>
             </div>
           </div>
           <div class="hero-amount-row">
-            <span class="hero-currency">$</span>
-            <span class="hero-amount gradient-text" x-text="fmtMoney(monthTotal)"></span>
+            <span class="hero-currency" :style="homeViewMode === 'balance' && monthBalance < 0 ? 'color:var(--danger)' : ''">$</span>
+            <span class="hero-amount" :class="homeViewMode === 'balance' ? (monthBalance >= 0 ? '' : '') : ''" :style="homeViewMode === 'balance' ? (monthBalance >= 0 ? 'color:var(--success)' : 'color:var(--danger)') : 'background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;'" x-text="homeViewMode === 'income' ? fmtMoney(monthIncome) : homeViewMode === 'balance' ? (monthBalance < 0 ? '-' : '') + fmtMoney(Math.abs(monthBalance)) : fmtMoney(monthTotal)"></span>
           </div>
-          <div>
+          <div x-show="homeViewMode === 'expense'">
             <div class="hero-progress">
               <div class="hero-progress-fill" :style="'width:' + spentPct + '%'"></div>
               <div class="hero-progress-marker" :style="'left:' + monthPct + '%'"></div>
@@ -2994,10 +2979,23 @@
               <span x-text="monthPct + '% del mes transcurrido'"></span>
             </div>
           </div>
+          <div x-show="homeViewMode === 'income'" style="margin-top:6px;">
+            <div style="font-size:12px;color:var(--muted);" x-text="monthExpenses.length + ' gastos · $' + fmtMoney(monthTotal) + ' gastado'"></div>
+          </div>
+          <div x-show="homeViewMode === 'balance'" style="margin-top:6px;display:flex;gap:16px;">
+            <div style="font-size:12px;"><span style="color:var(--success);">+$<span x-text="fmtMoney(monthIncome)"></span></span> <span style="color:var(--dim);">ingreso</span></div>
+            <div style="font-size:12px;"><span style="color:var(--danger);">-$<span x-text="fmtMoney(monthTotal)"></span></span> <span style="color:var(--dim);">gasto</span></div>
+          </div>
+        </div>
+
+        <!-- Balance pill (siempre visible) -->
+        <div x-show="homeViewMode !== 'balance'" style="display:flex;align-items:center;justify-content:space-between;margin:0 20px 10px;padding:8px 14px;border-radius:10px;background:var(--surface);border:1px solid var(--border);">
+          <span style="font-size:12px;color:var(--muted);font-weight:600;">Balance del mes</span>
+          <span style="font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;" :style="monthBalance >= 0 ? 'color:var(--success)' : 'color:var(--danger)'" x-text="(monthBalance >= 0 ? '+$' : '-$') + fmtMoney(Math.abs(monthBalance))"></span>
         </div>
 
         <!-- Stat cards -->
-        <div class="stat-row">
+        <div class="stat-row" x-show="homeViewMode === 'expense'">
           <div class="stat-card">
             <div class="stat-card-label">ESTA SEMANA</div>
             <div class="stat-card-value mono" x-text="'$' + fmtMoney(weekTotal)"></div>
@@ -3021,7 +3019,8 @@
           </div>
         </div>
 
-        <!-- Budget alerts (compact, links to Presupuestos tab) -->
+        <!-- Budget alerts (solo en modo gastos) -->
+        <template x-if="homeViewMode === 'expense'"><div>
         <template x-for="alert in budgetAlerts" :key="alert.cat">
           <div class="budget-alert" :class="{ danger: alert.pct >= 100 }" @click="tab = 'budgets'" style="cursor:pointer;margin:0 20px 8px;">
             <span x-text="alert.pct >= 100 ? '🚨' : '⚠️'"></span>
@@ -3029,60 +3028,26 @@
             <span style="margin-left:auto;font-size:11px;color:var(--cyan);">Ver →</span>
           </div>
         </template>
+        </div></template>
 
         <!-- Recent expenses -->
         <div class="section-head">
-          <span class="section-title">Reciente</span>
+          <span class="section-title" x-text="homeViewMode === 'income' ? 'Ingresos recientes' : homeViewMode === 'balance' ? 'Reciente' : 'Gastos recientes'"></span>
           <button class="section-action" @click="tab = 'history'; histAll = true; loadHistory()">Ver todo <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
         </div>
         <div class="expense-list">
-          <template x-for="entry in recentExpensesGrouped" :key="entry._isBatch ? entry.batch_id : entry.id">
-            <div>
-              <!-- Batch row -->
-              <template x-if="entry._isBatch">
-                <div>
-                  <div class="batch-row" @click="toggleBatch(entry.batch_id)">
-                    <div class="batch-icon">📦</div>
-                    <div class="batch-info">
-                      <div class="batch-label" x-text="entry.batch_label"></div>
-                      <div class="batch-meta" x-text="formatDate(entry.date) + ' · ' + entry.items.length + ' items'"></div>
-                    </div>
-                    <div class="batch-right">
-                      <span class="batch-count" x-text="'×' + entry.items.length"></span>
-                      <div class="expense-amount" x-text="'-$' + fmtMoney(entry.total)"></div>
-                      <svg class="batch-chevron" :class="{ open: isBatchExpanded(entry.batch_id) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
-                    </div>
-                  </div>
-                  <div class="batch-subitems" x-show="isBatchExpanded(entry.batch_id)" x-transition.duration.200ms>
-                    <template x-for="exp in entry.items" :key="exp.id">
-                      <div class="expense-row" @click="openEdit(exp)">
-                        <div class="expense-icon" :style="'background:' + getCatColor(exp.category) + '15;border:1px solid ' + getCatColor(exp.category) + '30'">
-                          <span x-text="getCatEmoji(exp.category)"></span>
-                        </div>
-                        <div class="expense-info">
-                          <div class="expense-desc" x-text="exp.description || getCatLabel(exp.category)"></div>
-                          <div class="expense-meta" x-text="getCatLabel(exp.category)"></div>
-                        </div>
-                        <div class="expense-amount" :class="{ income: exp.is_income }" x-text="(exp.is_income ? '+' : '-') + '$' + fmtMoney(exp.amount)"></div>
-                      </div>
-                    </template>
-                  </div>
-                </div>
-              </template>
-              <!-- Single expense row -->
-              <template x-if="!entry._isBatch">
-                <div class="expense-row" @click="openEdit(entry)">
-                  <div class="expense-icon" :style="'background:' + getCatColor(entry.category) + '15;border:1px solid ' + getCatColor(entry.category) + '30'">
-                    <span x-text="getCatEmoji(entry.category)"></span>
-                  </div>
-                  <div class="expense-info">
-                    <div class="expense-desc" x-text="entry.description || getCatLabel(entry.category)"></div>
-                    <div class="expense-meta" x-text="formatDate(entry.date)"></div>
-                  </div>
-                  <svg x-show="entry.receipt_image_path" class="receipt-indicator" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                  <div class="expense-amount" :class="{ income: entry.is_income }" x-text="(entry.is_income ? '+' : '-') + '$' + fmtMoney(entry.amount)"></div>
-                </div>
-              </template>
+          <template x-for="exp in recentExpenses" :key="exp.id">
+            <div class="expense-row" @click="openEdit(exp)">
+              <div class="expense-icon" :style="'background:' + getCatColor(exp.category) + '15;border:1px solid ' + getCatColor(exp.category) + '30'">
+                <span x-text="getCatEmoji(exp.category)"></span>
+              </div>
+              <div class="expense-info">
+                <div class="expense-desc" x-text="exp.description || getCatLabel(exp.category)"></div>
+                <div class="expense-meta" x-text="formatDate(exp.date)"></div>
+              </div>
+              <svg x-show="exp.receipt_image_path" class="receipt-indicator" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              <div class="expense-amount" :class="{ income: exp.is_income }" x-text="(exp.is_income ? '+' : '-') + '$' + fmtMoney(exp.amount)"></div>
+              <svg class="expense-row-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </div>
           </template>
           <template x-if="recentExpenses.length === 0">
@@ -3118,6 +3083,13 @@
           </div>
         </div>
 
+        <!-- Type toggle: Todos / Gastos / Ingresos -->
+        <div style="display:flex;gap:4px;padding:0 20px 8px;">
+          <button @click="histType = 'all'; filterCat = 'all'" style="flex:1;padding:7px 0;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;border:none;" :style="{ background: histType === 'all' ? 'rgba(0,240,255,0.10)' : 'var(--surface)', color: histType === 'all' ? 'var(--cyan)' : 'var(--muted)', border: histType === 'all' ? '1px solid var(--cyan)' : '1px solid var(--border)' }">Todos</button>
+          <button @click="histType = 'expense'; filterCat = 'all'" style="flex:1;padding:7px 0;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;border:none;" :style="{ background: histType === 'expense' ? 'rgba(255,107,107,0.10)' : 'var(--surface)', color: histType === 'expense' ? 'var(--danger)' : 'var(--muted)', border: histType === 'expense' ? '1px solid var(--danger)' : '1px solid var(--border)' }">Gastos</button>
+          <button @click="histType = 'income'; filterCat = 'all'" style="flex:1;padding:7px 0;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;border:none;" :style="{ background: histType === 'income' ? 'rgba(0,229,160,0.10)' : 'var(--surface)', color: histType === 'income' ? 'var(--success)' : 'var(--muted)', border: histType === 'income' ? '1px solid var(--success)' : '1px solid var(--border)' }">Ingresos</button>
+        </div>
+
         <!-- Mode toggle: Mes / Todo -->
         <div style="display:flex;gap:6px;padding:0 20px 10px;">
           <button @click="histAll = false; loadHistory()" :style="{ flex: 1, padding: '8px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: 700, border: '1px solid ' + (!histAll ? 'var(--cyan)' : 'var(--border)'), background: !histAll ? 'rgba(0,240,255,0.10)' : 'var(--surface)', color: !histAll ? 'var(--cyan)' : 'var(--muted)' }">Por mes</button>
@@ -3138,7 +3110,7 @@
         <!-- Category filter chips -->
         <div class="filter-chips">
           <button class="chip" :class="{ active: filterCat === 'all' }" @click="filterCat = 'all'">Todos</button>
-          <template x-for="cat in categories" :key="cat.key">
+          <template x-for="cat in (histType === 'income' ? incomeCategories : categories)" :key="cat.key">
             <button class="chip" :class="{ active: filterCat === cat.key }" @click="filterCat = cat.key" x-text="cat.emoji + ' ' + cat.label"></button>
           </template>
         </div>
@@ -3151,50 +3123,17 @@
               <span class="mono" style="color:var(--muted);font-size:11px;" x-text="'$' + fmtMoney(group.total)"></span>
             </div>
             <div class="list-block">
-              <template x-for="entry in group.groupedItems" :key="entry._isBatch ? entry.batch_id : entry.id">
-                <div>
-                  <template x-if="entry._isBatch">
-                    <div>
-                      <div class="batch-row" @click="toggleBatch(entry.batch_id)">
-                        <div class="batch-icon">📦</div>
-                        <div class="batch-info">
-                          <div class="batch-label" x-text="entry.batch_label"></div>
-                          <div class="batch-meta" x-text="entry.items.length + ' items'"></div>
-                        </div>
-                        <div class="batch-right">
-                          <span class="batch-count" x-text="'×' + entry.items.length"></span>
-                          <div class="expense-amount" x-text="'-$' + fmtMoney(entry.total)"></div>
-                          <svg class="batch-chevron" :class="{ open: isBatchExpanded(entry.batch_id) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
-                        </div>
-                      </div>
-                      <div class="batch-subitems" x-show="isBatchExpanded(entry.batch_id)" x-transition.duration.200ms>
-                        <template x-for="exp in entry.items" :key="exp.id">
-                          <div class="expense-row" @click="openEdit(exp)">
-                            <div class="expense-icon" :style="'background:' + getCatColor(exp.category) + '15;border:1px solid ' + getCatColor(exp.category) + '30'">
-                              <span x-text="getCatEmoji(exp.category)"></span>
-                            </div>
-                            <div class="expense-info">
-                              <div class="expense-desc" x-text="exp.description || getCatLabel(exp.category)"></div>
-                              <div class="expense-meta" x-text="formatTime(exp.created_at)"></div>
-                            </div>
-                            <div class="expense-amount" :class="{ income: exp.is_income }" x-text="(exp.is_income ? '+' : '-') + '$' + fmtMoney(exp.amount)"></div>
-                          </div>
-                        </template>
-                      </div>
-                    </div>
-                  </template>
-                  <template x-if="!entry._isBatch">
-                    <div class="expense-row" @click="openEdit(entry)">
-                      <div class="expense-icon" :style="'background:' + getCatColor(entry.category) + '15;border:1px solid ' + getCatColor(entry.category) + '30'">
-                        <span x-text="getCatEmoji(entry.category)"></span>
-                      </div>
-                      <div class="expense-info">
-                        <div class="expense-desc" x-text="entry.description || getCatLabel(entry.category)"></div>
-                        <div class="expense-meta" x-text="formatTime(entry.created_at)"></div>
-                      </div>
-                      <div class="expense-amount" :class="{ income: entry.is_income }" x-text="(entry.is_income ? '+' : '-') + '$' + fmtMoney(entry.amount)"></div>
-                    </div>
-                  </template>
+              <template x-for="exp in group.items" :key="exp.id">
+                <div class="expense-row" @click="openEdit(exp)">
+                  <div class="expense-icon" :style="'background:' + getCatColor(exp.category) + '15;border:1px solid ' + getCatColor(exp.category) + '30'">
+                    <span x-text="getCatEmoji(exp.category)"></span>
+                  </div>
+                  <div class="expense-info">
+                    <div class="expense-desc" x-text="exp.description || getCatLabel(exp.category)"></div>
+                    <div class="expense-meta" x-text="formatTime(exp.created_at)"></div>
+                  </div>
+                  <div class="expense-amount" :class="{ income: exp.is_income }" x-text="(exp.is_income ? '+' : '-') + '$' + fmtMoney(exp.amount)"></div>
+                  <svg class="expense-row-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 </div>
               </template>
             </div>
@@ -3203,7 +3142,7 @@
 
         <div class="history-footer" x-show="historyExpenses.length > 0">
           <span x-text="historyExpenses.length + (historyExpenses.length === 1 ? ' transacción' : ' transacciones')"></span>
-          <span class="gradient-text mono" style="font-size:16px;font-weight:700;" x-text="'$' + fmtMoney(historyTotal)"></span>
+          <span class="mono" style="font-size:16px;font-weight:700;" :style="histType === 'income' ? 'color:var(--success)' : ''" :class="histType !== 'income' ? 'gradient-text' : ''" x-text="(histType === 'income' ? '+' : '') + '$' + fmtMoney(historyTotal)"></span>
         </div>
         <div x-show="historyExpenses.length === 0" class="empty-state" style="padding:40px 24px;">
           <div class="empty-icon" style="width:84px;height:84px;border-radius:22px;background:radial-gradient(circle at 30% 30%, rgba(0,240,255,0.15), rgba(112,0,255,0.10) 60%, transparent 80%);border:1px solid rgba(0,240,255,0.25);">
@@ -3321,56 +3260,23 @@
               <div x-show="filteredPendingCobros.length > 0" style="margin-top:22px;">
                 <div style="font-size:11px;color:var(--muted);letter-spacing:1.4px;font-weight:700;margin-bottom:8px;padding-left:4px;">PENDIENTES · <span x-text="filteredPendingCobros.length"></span></div>
                 <div style="background:var(--surface);border-radius:14px;border:1px solid var(--border);overflow:hidden;">
-                  <template x-for="(entry, ei) in pendingCobrosGrouped" :key="entry._isBatch ? entry.batch_id : (entry.id + '_' + entry._person)">
-                    <div>
-                      <!-- Batch cobro row -->
-                      <template x-if="entry._isBatch">
-                        <div>
-                          <div class="batch-row" @click="toggleBatch(entry.batch_id)" style="padding:12px 14px;">
-                            <div class="batch-icon">📦</div>
-                            <div class="batch-info">
-                              <div class="batch-label" x-text="entry.batch_label"></div>
-                              <div class="batch-meta" x-text="entry.items.length + ' cobros · ' + relativeTime(entry.date)"></div>
-                            </div>
-                            <div class="batch-right">
-                              <span class="batch-count" x-text="'×' + entry.items.length"></span>
-                              <div style="font-size:16px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;" x-text="'$' + entry.total.toFixed(2)"></div>
-                              <svg class="batch-chevron" :class="{ open: isBatchExpanded(entry.batch_id) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
-                            </div>
-                          </div>
-                          <div class="batch-subitems" x-show="isBatchExpanded(entry.batch_id)" x-transition.duration.200ms>
-                            <template x-for="c in entry.items" :key="c.id + '_' + c._person">
-                              <div @click="openCobroDetail(c)" style="padding:10px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;border-bottom:1px solid var(--border);">
-                                <div style="width:32px;height:32px;border-radius:16px;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#0A0A0F;flex-shrink:0;" x-text="(c._person || '?').charAt(0).toUpperCase()"></div>
-                                <div style="flex:1;min-width:0;">
-                                  <div style="font-size:13px;font-weight:600;color:var(--text);" x-text="c._person"></div>
-                                  <div style="font-size:11px;color:var(--muted);margin-top:1px;" x-text="c.description || getCatLabel(c.category)"></div>
-                                </div>
-                                <div style="font-size:14px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;" x-text="'$' + c._amount.toFixed(2)"></div>
-                              </div>
-                            </template>
-                          </div>
+                  <template x-for="(c, ci) in filteredPendingCobros" :key="ci">
+                    <div @click="openCobroDetail(c)" :style="'padding:12px 14px;display:flex;align-items:center;gap:12px;position:relative;cursor:pointer;' + (ci < filteredPendingCobros.length - 1 ? 'border-bottom:1px solid var(--border)' : '')">
+                      <div :style="'position:absolute;right:0;top:0;bottom:0;width:6px;background:linear-gradient(90deg, transparent, rgba(0,229,160,0.2));' + (ci === filteredPendingCobros.length - 1 ? 'border-top-right-radius:13px;border-bottom-right-radius:13px' : '')"></div>
+                      <div style="width:38px;height:38px;border-radius:19px;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#0A0A0F;flex-shrink:0;" x-text="(c._person || '?').charAt(0).toUpperCase()"></div>
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-size:14px;font-weight:600;color:var(--text);">
+                          <span x-text="c._person"></span>
+                          <template x-if="isAutoCobro(c)">
+                            <span style="margin-left:6px;font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(112,0,255,0.18);color:#B794F6;font-weight:700;letter-spacing:0.4px;vertical-align:1px;">AUTO</span>
+                          </template>
                         </div>
-                      </template>
-                      <!-- Single cobro row -->
-                      <template x-if="!entry._isBatch">
-                        <div @click="openCobroDetail(entry)" style="padding:12px 14px;display:flex;align-items:center;gap:12px;position:relative;cursor:pointer;border-bottom:1px solid var(--border);">
-                          <div style="width:38px;height:38px;border-radius:19px;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#0A0A0F;flex-shrink:0;" x-text="(entry._person || '?').charAt(0).toUpperCase()"></div>
-                          <div style="flex:1;min-width:0;">
-                            <div style="font-size:14px;font-weight:600;color:var(--text);">
-                              <span x-text="entry._person"></span>
-                              <template x-if="isAutoCobro(entry)">
-                                <span style="margin-left:6px;font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(112,0,255,0.18);color:#B794F6;font-weight:700;letter-spacing:0.4px;vertical-align:1px;">AUTO</span>
-                              </template>
-                            </div>
-                            <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="(entry.description || getCatLabel(entry.category)) + ' · ' + relativeTime(entry.date)"></div>
-                          </div>
-                          <div style="text-align:right;flex-shrink:0;">
-                            <div style="font-size:16px;font-weight:700;letter-spacing:-0.3px;color:var(--text);font-variant-numeric:tabular-nums;" x-text="'$' + entry._amount.toFixed(2)"></div>
-                            <div style="margin-top:4px;display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(255,184,0,0.15);color:var(--warning);letter-spacing:0.4px;">PENDIENTE</div>
-                          </div>
-                        </div>
-                      </template>
+                        <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="(c.description || getCatLabel(c.category)) + ' · ' + relativeTime(c.date)"></div>
+                      </div>
+                      <div style="text-align:right;flex-shrink:0;">
+                        <div style="font-size:16px;font-weight:700;letter-spacing:-0.3px;color:var(--text);font-variant-numeric:tabular-nums;" x-text="'$' + c._amount.toFixed(2)"></div>
+                        <div style="margin-top:4px;display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(255,184,0,0.15);color:var(--warning);letter-spacing:0.4px;">PENDIENTE</div>
+                      </div>
                     </div>
                   </template>
                 </div>
@@ -3428,121 +3334,63 @@
                   SOLICITUDES · <span x-text="deboSolicitudes.length"></span>
                 </div>
                 <div style="background:var(--surface);border-radius:14px;border:1px solid rgba(0,240,255,0.2);overflow:hidden;">
-                  <template x-for="(entry, ei) in deboSolicitudesGrouped" :key="entry._isBatch ? entry.batch_id : entry.id">
-                    <div>
-                      <template x-if="entry._isBatch">
-                        <div>
-                          <div class="batch-row" @click="toggleBatch(entry.batch_id)" style="padding:12px 14px;">
-                            <div class="batch-icon">📦</div>
-                            <div class="batch-info">
-                              <div class="batch-label" x-text="entry.batch_label"></div>
-                              <div class="batch-meta" x-text="entry.items.length + ' solicitudes'"></div>
-                            </div>
-                            <div class="batch-right">
-                              <div class="mono" style="font-size:16px;font-weight:700;color:var(--text);" x-text="'$' + entry.total.toFixed(2)"></div>
-                              <span class="batch-count" x-text="'×' + entry.items.length"></span>
-                              <svg class="batch-chevron" :class="{open: isBatchExpanded(entry.batch_id)}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
-                            </div>
-                          </div>
-                          <div class="batch-subitems" x-show="isBatchExpanded(entry.batch_id)" x-transition>
-                            <template x-for="sub in entry.items" :key="sub.id">
-                              <div @click="activeDebo = sub; activeDeboType = 'solicitud'; deboDetailOpen = true" style="padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;">
-                                <div style="display:flex;align-items:center;gap:12px;">
-                                  <div style="width:32px;height:32px;border-radius:16px;background:linear-gradient(135deg,rgba(0,240,255,0.15),rgba(112,0,255,0.1));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--cyan);flex-shrink:0;" x-text="(sub.from_name || '?').charAt(0).toUpperCase()"></div>
-                                  <div style="flex:1;min-width:0;">
-                                    <div style="font-size:13px;font-weight:600;color:var(--text);" x-text="sub.from_name || 'Contacto'"></div>
-                                  </div>
-                                  <div class="mono" style="font-size:14px;font-weight:700;color:var(--text);" x-text="'$' + Number(sub.amount).toFixed(2)"></div>
-                                </div>
-                              </div>
-                            </template>
-                          </div>
+                  <template x-for="pr in deboSolicitudes" :key="pr.id">
+                    <div @click="activeDebo = pr; activeDeboType = 'solicitud'; deboDetailOpen = true" style="padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;">
+                      <div style="display:flex;align-items:center;gap:12px;">
+                        <div style="width:38px;height:38px;border-radius:19px;background:linear-gradient(135deg,rgba(0,240,255,0.15),rgba(112,0,255,0.1));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--cyan);flex-shrink:0;" x-text="(pr.from_name || '?').charAt(0).toUpperCase()"></div>
+                        <div style="flex:1;min-width:0;">
+                          <div style="font-size:14px;font-weight:600;color:var(--text);" x-text="pr.from_name || 'Contacto'"></div>
+                          <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="(pr.description || 'Gasto compartido') + ' · ' + (pr.expense_date || '')"></div>
                         </div>
-                      </template>
-                      <template x-if="!entry._isBatch">
-                        <div @click="activeDebo = entry; activeDeboType = 'solicitud'; deboDetailOpen = true" style="padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;">
-                          <div style="display:flex;align-items:center;gap:12px;">
-                            <div style="width:38px;height:38px;border-radius:19px;background:linear-gradient(135deg,rgba(0,240,255,0.15),rgba(112,0,255,0.1));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--cyan);flex-shrink:0;" x-text="(entry.from_name || '?').charAt(0).toUpperCase()"></div>
-                            <div style="flex:1;min-width:0;">
-                              <div style="font-size:14px;font-weight:600;color:var(--text);" x-text="entry.from_name || 'Contacto'"></div>
-                              <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="(entry.description || 'Gasto compartido') + ' · ' + (entry.expense_date || '')"></div>
-                            </div>
-                            <div style="display:flex;align-items:center;gap:8px;">
-                              <div class="mono" style="font-size:16px;font-weight:700;color:var(--text);" x-text="'$' + Number(entry.amount).toFixed(2)"></div>
-                              <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
-                            </div>
-                          </div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                          <div class="mono" style="font-size:16px;font-weight:700;color:var(--text);" x-text="'$' + Number(pr.amount).toFixed(2)"></div>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
                         </div>
-                      </template>
+                      </div>
                     </div>
                   </template>
                 </div>
               </div>
 
-              <!-- 2. Deudas confirmadas (accepted + income splits) -->
+              <!-- 2. Deudas confirmadas (accepted) -->
               <div x-show="deboDeudas.length > 0 || incomeSplitDebts.length > 0" style="margin-bottom:18px;">
                 <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--warning);text-transform:uppercase;margin-bottom:8px;padding-left:4px;">
                   DEUDAS · <span x-text="deboDeudas.length + incomeSplitDebts.length"></span>
                 </div>
                 <div style="background:var(--surface);border-radius:14px;border:1px solid rgba(255,184,0,0.2);overflow:hidden;">
-                  <template x-for="(entry, ei) in deboDeudasGrouped" :key="entry._isBatch ? entry.batch_id : (entry.id + '_' + (entry._person || ''))">
-                    <div>
-                      <template x-if="entry._isBatch">
-                        <div>
-                          <div class="batch-row" @click="toggleBatch(entry.batch_id)" style="padding:12px 14px;">
-                            <div class="batch-icon">📦</div>
-                            <div class="batch-info">
-                              <div class="batch-label" x-text="entry.batch_label"></div>
-                              <div class="batch-meta" x-text="entry.items.length + ' deudas'"></div>
-                            </div>
-                            <div class="batch-right">
-                              <div class="mono" style="font-size:16px;font-weight:700;color:var(--warning);" x-text="'$' + entry.total.toFixed(2)"></div>
-                              <span class="batch-count" x-text="'×' + entry.items.length"></span>
-                              <svg class="batch-chevron" :class="{open: isBatchExpanded(entry.batch_id)}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
-                            </div>
-                          </div>
-                          <div class="batch-subitems" x-show="isBatchExpanded(entry.batch_id)" x-transition>
-                            <template x-for="sub in entry.items" :key="sub.id + '_' + (sub._person || '')">
-                              <div @click="activeDebo = sub; activeDeboType = sub._type === 'income-split' ? 'income-split' : 'deuda'; deboDetailOpen = true" style="padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;">
-                                <div style="display:flex;align-items:center;gap:12px;">
-                                  <div style="width:32px;height:32px;border-radius:16px;background:linear-gradient(135deg,rgba(255,184,0,0.15),rgba(255,107,107,0.1));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--warning);flex-shrink:0;" x-text="(sub.from_name || sub._person || '?').charAt(0).toUpperCase()"></div>
-                                  <div style="flex:1;min-width:0;">
-                                    <div style="font-size:13px;font-weight:600;color:var(--text);" x-text="sub.from_name || sub._person || 'Contacto'"></div>
-                                  </div>
-                                  <div class="mono" style="font-size:14px;font-weight:700;color:var(--warning);" x-text="'$' + (sub._amount || Number(sub.amount)).toFixed(2)"></div>
-                                </div>
-                              </div>
-                            </template>
-                          </div>
+                  <template x-for="pr in deboDeudas" :key="pr.id">
+                    <div @click="activeDebo = pr; activeDeboType = 'deuda'; deboDetailOpen = true" style="padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;">
+                      <div style="display:flex;align-items:center;gap:12px;">
+                        <div style="width:38px;height:38px;border-radius:19px;background:linear-gradient(135deg,rgba(255,184,0,0.15),rgba(255,107,107,0.1));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--warning);flex-shrink:0;" x-text="(pr.from_name || '?').charAt(0).toUpperCase()"></div>
+                        <div style="flex:1;min-width:0;">
+                          <div style="font-size:14px;font-weight:600;color:var(--text);" x-text="pr.from_name || 'Contacto'"></div>
+                          <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="(pr.description || 'Gasto compartido') + ' · ' + (pr.expense_date || '')"></div>
                         </div>
-                      </template>
-                      <template x-if="!entry._isBatch">
-                        <div @click="activeDebo = entry; activeDeboType = entry._type === 'income-split' ? 'income-split' : 'deuda'; deboDetailOpen = true" style="padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;">
-                          <div style="display:flex;align-items:center;gap:12px;">
-                            <template x-if="entry._type === 'income-split'">
-                              <div style="width:38px;height:38px;border-radius:19px;background:linear-gradient(135deg,rgba(0,229,160,0.15),rgba(0,240,255,0.08));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="1.8" width="18" height="18"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                              </div>
-                            </template>
-                            <template x-if="entry._type !== 'income-split'">
-                              <div style="width:38px;height:38px;border-radius:19px;background:linear-gradient(135deg,rgba(255,184,0,0.15),rgba(255,107,107,0.1));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--warning);flex-shrink:0;" x-text="(entry.from_name || '?').charAt(0).toUpperCase()"></div>
-                            </template>
-                            <div style="flex:1;min-width:0;">
-                              <div style="font-size:14px;font-weight:600;color:var(--text);" x-text="entry.from_name || entry._person || 'Contacto'"></div>
-                              <div style="font-size:11px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="(entry.description || 'Gasto compartido') + ' · ' + (entry.expense_date || relativeTime(entry.date) || '')"></div>
-                            </div>
-                            <div style="display:flex;align-items:center;gap:8px;">
-                              <div style="text-align:right;flex-shrink:0;">
-                                <div class="mono" style="font-size:16px;font-weight:700;color:var(--warning);" x-text="'$' + (entry._amount || Number(entry.amount)).toFixed(2)"></div>
-                                <template x-if="entry._type === 'income-split'">
-                                  <div style="font-size:10px;color:var(--muted);margin-top:2px;">tu parte</div>
-                                </template>
-                              </div>
-                              <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
-                            </div>
-                          </div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                          <div class="mono" style="font-size:16px;font-weight:700;color:var(--warning);" x-text="'$' + Number(pr.amount).toFixed(2)"></div>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
                         </div>
-                      </template>
+                      </div>
+                    </div>
+                  </template>
+                  <template x-for="d in incomeSplitDebts" :key="d.id + '_' + d._person">
+                    <div @click="activeDebo = d; activeDeboType = 'income-split'; deboDetailOpen = true" style="padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;">
+                      <div style="display:flex;align-items:center;gap:12px;">
+                        <div style="width:38px;height:38px;border-radius:19px;background:linear-gradient(135deg,rgba(0,229,160,0.15),rgba(0,240,255,0.08));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="1.8" width="18" height="18"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                          <div style="font-size:14px;font-weight:600;color:var(--text);" x-text="d._person"></div>
+                          <div style="font-size:11px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="(d.description || 'Ingreso compartido') + ' · ' + relativeTime(d.date)"></div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                          <div style="text-align:right;flex-shrink:0;">
+                            <div class="mono" style="font-size:16px;font-weight:700;color:var(--warning);" x-text="'$' + d._amount.toFixed(2)"></div>
+                            <div style="font-size:10px;color:var(--muted);margin-top:2px;">tu parte</div>
+                          </div>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
+                        </div>
+                      </div>
                     </div>
                   </template>
                 </div>
@@ -3554,53 +3402,20 @@
                   ESPERANDO CONFIRMACION · <span x-text="deboPaidWaiting.length"></span>
                 </div>
                 <div style="background:var(--surface);border-radius:14px;border:1px solid rgba(0,229,160,0.2);overflow:hidden;opacity:0.8;">
-                  <template x-for="(entry, ei) in deboPaidWaitingGrouped" :key="entry._isBatch ? entry.batch_id : entry.id">
-                    <div>
-                      <template x-if="entry._isBatch">
-                        <div>
-                          <div class="batch-row" @click="toggleBatch(entry.batch_id)" style="padding:12px 14px;">
-                            <div class="batch-icon" style="opacity:0.7;">📦</div>
-                            <div class="batch-info">
-                              <div class="batch-label" style="color:var(--muted);" x-text="entry.batch_label"></div>
-                              <div class="batch-meta" x-text="entry.items.length + ' pagados'"></div>
-                            </div>
-                            <div class="batch-right">
-                              <div class="mono" style="font-size:16px;font-weight:700;color:var(--muted);text-decoration:line-through;" x-text="'$' + entry.total.toFixed(2)"></div>
-                              <span class="batch-count" x-text="'×' + entry.items.length"></span>
-                              <svg class="batch-chevron" :class="{open: isBatchExpanded(entry.batch_id)}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
-                            </div>
-                          </div>
-                          <div class="batch-subitems" x-show="isBatchExpanded(entry.batch_id)" x-transition>
-                            <template x-for="sub in entry.items" :key="sub.id">
-                              <div @click="activeDebo = sub; activeDeboType = 'paid'; deboDetailOpen = true" style="padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;">
-                                <div style="display:flex;align-items:center;gap:12px;">
-                                  <div style="width:32px;height:32px;border-radius:16px;background:rgba(0,229,160,0.1);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--success);flex-shrink:0;" x-text="(sub.from_name || '?').charAt(0).toUpperCase()"></div>
-                                  <div style="flex:1;min-width:0;">
-                                    <div style="font-size:13px;font-weight:600;color:var(--muted);" x-text="sub.from_name || 'Contacto'"></div>
-                                  </div>
-                                  <div class="mono" style="font-size:14px;font-weight:700;color:var(--muted);text-decoration:line-through;" x-text="'$' + Number(sub.amount).toFixed(2)"></div>
-                                </div>
-                              </div>
-                            </template>
-                          </div>
+                  <template x-for="pr in deboPaidWaiting" :key="pr.id">
+                    <div @click="activeDebo = pr; activeDeboType = 'paid'; deboDetailOpen = true" style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;">
+                      <div style="width:38px;height:38px;border-radius:19px;background:rgba(0,229,160,0.1);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--success);flex-shrink:0;" x-text="(pr.from_name || '?').charAt(0).toUpperCase()"></div>
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-size:14px;font-weight:600;color:var(--muted);" x-text="pr.from_name || 'Contacto'"></div>
+                        <div style="font-size:11px;color:var(--dim);margin-top:2px;" x-text="(pr.description || 'Gasto compartido') + ' · ' + (pr.expense_date || '')"></div>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:8px;">
+                        <div style="text-align:right;flex-shrink:0;">
+                          <div class="mono" style="font-size:16px;font-weight:700;color:var(--muted);text-decoration:line-through;" x-text="'$' + Number(pr.amount).toFixed(2)"></div>
+                          <div style="font-size:10px;color:var(--success);font-weight:600;margin-top:2px;">PAGADO</div>
                         </div>
-                      </template>
-                      <template x-if="!entry._isBatch">
-                        <div @click="activeDebo = entry; activeDeboType = 'paid'; deboDetailOpen = true" style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;">
-                          <div style="width:38px;height:38px;border-radius:19px;background:rgba(0,229,160,0.1);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--success);flex-shrink:0;" x-text="(entry.from_name || '?').charAt(0).toUpperCase()"></div>
-                          <div style="flex:1;min-width:0;">
-                            <div style="font-size:14px;font-weight:600;color:var(--muted);" x-text="entry.from_name || 'Contacto'"></div>
-                            <div style="font-size:11px;color:var(--dim);margin-top:2px;" x-text="(entry.description || 'Gasto compartido') + ' · ' + (entry.expense_date || '')"></div>
-                          </div>
-                          <div style="display:flex;align-items:center;gap:8px;">
-                            <div style="text-align:right;flex-shrink:0;">
-                              <div class="mono" style="font-size:16px;font-weight:700;color:var(--muted);text-decoration:line-through;" x-text="'$' + Number(entry.amount).toFixed(2)"></div>
-                              <div style="font-size:10px;color:var(--success);font-weight:600;margin-top:2px;">PAGADO</div>
-                            </div>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
-                          </div>
-                        </div>
-                      </template>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
+                      </div>
                     </div>
                   </template>
                 </div>
@@ -3635,7 +3450,7 @@
               </div>
             </template>
             <template x-for="f in friends" :key="f.user_id">
-              <div class="friend-row" @click="openFriendDrill(f)" style="cursor:pointer;">
+              <div class="friend-row">
                 <div class="friend-avatar" :style="`background:${f.avatar_color}`" x-text="f.display_name.charAt(0).toUpperCase()"></div>
                 <div class="friend-info">
                   <div class="friend-name" x-text="f.display_name"></div>
@@ -3645,11 +3460,11 @@
                   </div>
                 </div>
                 <div style="display:flex;gap:8px;align-items:center;">
-                  <button x-show="f.balance !== 0" @click.stop="settleWithFriend(f.user_id, f.display_name, f.balance)"
+                  <button x-show="f.balance !== 0" @click="settleWithFriend(f.user_id, f.display_name, f.balance)"
                     style="padding:6px 12px;border-radius:8px;background:rgba(0,240,255,0.08);border:1px solid rgba(0,240,255,0.2);color:var(--cyan);font-size:12px;font-weight:700;">
                     Saldar
                   </button>
-                  <button @click.stop="sendPrTo=f; prForm={amount:'',description:'',category:'food',date:localDate()}; sendPrOpen=true"
+                  <button @click="sendPrTo=f; prForm={amount:'',description:'',category:'food',date:localDate()}; sendPrOpen=true"
                     style="width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                   </button>
@@ -4859,7 +4674,7 @@
                 </div>
 
                 <div class="cd-describe-card">
-                  <textarea x-model="form.description" maxlength="500" rows="3" :placeholder="form.is_income ? 'sueldo octubre 1200 · freelance diseño 350' : 'almuerzo 15 dividido con juan · taxi 8.50 · café 3.20'"></textarea>
+                  <textarea x-model="form.description" maxlength="500" rows="3" @keydown.enter.prevent="analyzeTextInput()" :placeholder="form.is_income ? 'sueldo octubre 1200 · freelance diseño 350' : 'almuerzo 15 dividido con juan · taxi 8.50 · café 3.20'"></textarea>
                   <div class="cd-describe-footer">
                     <div style="display:flex;gap:6px;align-items:center;">
                       <!-- Mic (voz) -->
@@ -4926,7 +4741,7 @@
                         <input type="text" x-model="it.description" style="background:transparent;border:none;outline:none;color:var(--text);font-size:13px;font-weight:600;font-family:inherit;width:100%;padding:0;" placeholder="descripción">
                         <div style="font-size:10px;color:var(--muted);letter-spacing:0.4px;margin-top:2px;" x-text="it.label.toUpperCase()"></div>
                       </div>
-                      <input type="number" step="0.01" min="0" x-model.number="it.amount" inputmode="decimal" style="width:80px;text-align:right;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;background:transparent;border:none;outline:none;color:var(--text);font-family:inherit;">
+                      <input type="text" inputmode="decimal" :value="it.amount" @input="it.amount = parseFloat($el.value.replace(',', '.')) || 0; form.amount = parsedItems.reduce((s, p) => s + p.amount, 0).toFixed(2)" style="width:80px;text-align:right;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;background:transparent;border:none;outline:none;color:var(--text);font-family:inherit;">
                       <button type="button" @click="removeParsedItem(idx)" style="width:28px;height:28px;border-radius:14px;background:transparent;border:none;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Quitar">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                       </button>
@@ -4958,7 +4773,7 @@
                           <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;" x-text="form.description"></div>
                         </div>
                       </div>
-                      <input type="number" step="0.01" min="0" x-model="form.amount" inputmode="decimal" class="gradient-text" style="font-size:22px;font-weight:800;letter-spacing:-0.8px;font-variant-numeric:tabular-nums;background:transparent;border:none;outline:none;text-align:right;width:110px;font-family:inherit;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">
+                      <input type="text" inputmode="decimal" x-model="form.amount" @input="form.amount = $el.value.replace(',', '.')" @keydown.enter.prevent="$el.blur()" class="gradient-text" style="font-size:22px;font-weight:800;letter-spacing:-0.8px;font-variant-numeric:tabular-nums;background:transparent;border:none;outline:none;text-align:right;width:110px;font-family:inherit;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">
                     </div>
                     <div style="font-size:11px;color:var(--dim);display:flex;align-items:center;gap:4px;">
                       <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="10" height="10"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -5084,7 +4899,7 @@
                     <div class="amount-row">
                       <span class="amount-dollar">$</span>
                       <div class="amount-value">
-                        <input type="number" step="0.01" min="0" placeholder="0.00" x-model="form.amount" inputmode="decimal">
+                        <input type="text" inputmode="decimal" placeholder="0.00" x-model="form.amount" @input="form.amount = $el.value.replace(',', '.')" @keydown.enter.prevent="$el.blur()">
                       </div>
                     </div>
                     <div class="amount-hint">USD · toca para editar</div>
@@ -5296,7 +5111,7 @@
       <!-- ══ CATEGORY DRILL-DOWN OVERLAY ══ -->
       <template x-if="catDrillOpen">
         <div style="position:fixed;inset:0;z-index:200;background:var(--bg);max-width:430px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;">
-          <div style="padding:16px 20px 12px;padding-top:calc(var(--safe-top) + 16px);display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border);flex-shrink:0;">
+          <div style="padding:16px 20px 12px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border);flex-shrink:0;">
             <button @click="catDrillOpen = false" style="width:36px;height:36px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
@@ -5329,86 +5144,17 @@
         </div>
       </template>
 
-      <!-- ══ FRIEND DRILL-DOWN OVERLAY ══ -->
-      <template x-if="friendDrill">
-        <div class="friend-drill-overlay" x-transition>
-          <div class="friend-drill-header">
-            <button @click="closeFriendDrill()" style="width:36px;height:36px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18"><polyline points="15 18 9 12 15 6"/></svg>
-            </button>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px;">
-                <div style="width:32px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#0A0A0F;" :style="'background:' + (friendDrill.avatar_color || 'var(--cyan)')" x-text="friendDrill.display_name.charAt(0).toUpperCase()"></div>
-                <span x-text="friendDrill.display_name"></span>
-              </div>
-            </div>
-          </div>
-
-          <div class="friend-drill-balance"
-            :class="friendDrill.balance > 0 ? 'positive' : friendDrill.balance < 0 ? 'negative' : 'even'">
-            <div style="font-size:11px;color:var(--muted);letter-spacing:1px;font-weight:600;text-transform:uppercase;"
-              x-text="friendDrill.balance > 0 ? 'Te debe' : friendDrill.balance < 0 ? 'Le debes' : 'A mano'"></div>
-            <div style="margin-top:6px;display:flex;align-items:baseline;gap:4px;justify-content:center;">
-              <span style="font-size:18px;color:var(--muted);font-weight:600;">$</span>
-              <span style="font-size:38px;font-weight:800;letter-spacing:-2px;line-height:1;font-variant-numeric:tabular-nums;"
-                :style="'color:' + (friendDrill.balance > 0 ? 'var(--success)' : friendDrill.balance < 0 ? 'var(--warning)' : 'var(--text)')"
-                x-text="Math.abs(friendDrill.balance).toFixed(2)"></span>
-            </div>
-            <div class="friend-drill-actions">
-              <button x-show="friendDrill.balance !== 0"
-                @click="settleWithFriend(friendDrill.user_id, friendDrill.display_name, friendDrill.balance)"
-                style="padding:10px 20px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:13px;font-weight:700;">
-                Saldar cuentas
-              </button>
-              <button @click="sendPrTo=friendDrill; prForm={amount:'',description:'',category:'food',date:localDate()}; sendPrOpen=true; closeFriendDrill()"
-                style="padding:10px 20px;border-radius:10px;background:var(--gradient);border:none;color:#0A0A0F;font-size:13px;font-weight:700;">
-                Cobrar
-              </button>
-            </div>
-          </div>
-
-          <div style="padding:0 20px 8px;">
-            <div style="font-size:11px;color:var(--muted);letter-spacing:1.4px;font-weight:700;">HISTORIAL</div>
-          </div>
-          <div class="friend-drill-txlist">
-            <template x-if="friendDrillTxs.length === 0">
-              <div style="padding:40px 20px;text-align:center;color:var(--dim);font-size:13px;">Sin transacciones con esta persona</div>
-            </template>
-            <template x-for="tx in friendDrillTxs" :key="tx.id">
-              <div class="friend-drill-tx">
-                <div style="flex-shrink:0;width:36px;text-align:center;">
-                  <div style="font-size:18px;" x-text="tx._direction === 'sent' ? '↗️' : '↙️'"></div>
-                </div>
-                <div style="flex:1;min-width:0;">
-                  <div style="font-size:14px;font-weight:500;" x-text="tx.description || 'Gasto compartido'"></div>
-                  <div style="font-size:11px;color:var(--muted);margin-top:2px;">
-                    <span x-text="tx._label"></span> ·
-                    <span x-text="tx.expense_date || ''"></span>
-                  </div>
-                </div>
-                <div style="text-align:right;flex-shrink:0;">
-                  <div class="mono" style="font-size:15px;font-weight:700;"
-                    :style="'color:' + (tx._direction === 'sent' ? 'var(--success)' : 'var(--warning)')"
-                    x-text="'$' + Number(tx.amount).toFixed(2)"></div>
-                  <div style="font-size:10px;font-weight:600;margin-top:2px;"
-                    :style="'color:' + (tx.status === 'settled' ? 'var(--dim)' : tx.status === 'paid' ? 'var(--success)' : tx.status === 'accepted' ? 'var(--warning)' : 'var(--cyan)')"
-                    x-text="tx.status === 'settled' ? 'SALDADO' : tx.status === 'paid' ? 'PAGADO' : tx.status === 'accepted' ? 'ACEPTADO' : 'PENDIENTE'"></div>
-                </div>
-              </div>
-            </template>
-          </div>
-        </div>
-      </template>
-
       <!-- ══ CATEGORY MANAGER SHEET ══ -->
       <template x-if="catManagerOpen">
         <div style="position:fixed;inset:0;z-index:200;">
           <div class="sheet-backdrop" style="z-index:200;" @click="catManagerOpen = false"></div>
-          <div class="sheet" style="max-height:82%;position:fixed;left:0;right:0;bottom:0;max-width:430px;margin:0 auto;background:var(--bg);border-top-left-radius:24px;border-top-right-radius:24px;padding:14px 0 0;z-index:201;overflow-y:auto;border-top:1px solid var(--border);">
+          <div class="sheet" style="max-height:calc(100% - var(--safe-top) - 20px);position:fixed;left:0;right:0;bottom:0;max-width:430px;margin:0 auto;background:var(--bg);border-top-left-radius:24px;border-top-right-radius:24px;padding:14px 0 0;z-index:201;overflow-y:auto;border-top:1px solid var(--border);">
             <div class="sheet-grabber"></div>
-            <div style="padding:6px 22px 24px;">
+            <div style="padding:6px 20px 24px;">
               <div class="sheet-title">Gestionar categorías</div>
-              <div :style="{ display: 'flex', background: 'var(--surface)', padding: '4px', borderRadius: '12px', marginBottom: '14px', border: '1px solid var(--border)' }">
+
+              <!-- Toggle Gastos / Ingresos -->
+              <div style="display:flex;background:var(--surface);padding:4px;border-radius:12px;margin-bottom:16px;border:1px solid var(--border);">
                 <div @click="catManagerMode = 'expense'" style="flex:1;height:36px;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.18s;letter-spacing:-0.2px;" :style="{ background: catManagerMode === 'expense' ? 'var(--bg)' : 'transparent', color: catManagerMode === 'expense' ? 'var(--text)' : 'var(--muted)', boxShadow: catManagerMode === 'expense' ? '0 1px 3px rgba(0,0,0,0.18)' : 'none' }">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><polyline points="17 18 23 18 23 12"/><path d="M23 18l-9.5-9.5-5 5L1 6"/></svg>
                   Gastos
@@ -5419,63 +5165,69 @@
                 </div>
               </div>
 
-              <div class="cd-section-label">NUEVA CATEGORÍA</div>
-              <div style="display:flex;gap:8px;margin-bottom:10px;align-items:stretch;">
-                <div style="position:relative;width:52px;height:48px;flex-shrink:0;">
-                  <div style="width:100%;height:100%;border-radius:12px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;pointer-events:none;" x-text="newCatEmoji || '✨'"></div>
-                  <input type="text" x-model="newCatEmoji" maxlength="2" style="position:absolute;inset:0;width:100%;height:100%;background:transparent;border:none;text-align:center;font-size:22px;color:transparent;caret-color:var(--cyan);font-family:inherit;outline:none;">
-                </div>
-                <input type="text" x-model="newCatLabel" @input="onNewCatLabelChange()" maxlength="24" placeholder="Nombre (ej: Mascotas, Gym)" style="flex:1;height:48px;border-radius:12px;background:var(--surface);border:1px solid var(--border);padding:0 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none;">
-              </div>
-              <div style="font-size:10px;color:var(--dim);margin-bottom:10px;letter-spacing:0.3px;line-height:1.4;">Por defecto usa ✨. Toca el ícono para escribir tu emoji.</div>
-              <button @click="addCategory()" :disabled="!newCatLabel || !newCatLabel.trim()" :style="{ opacity: (!newCatLabel || !newCatLabel.trim()) ? '0.5' : '1', cursor: (!newCatLabel || !newCatLabel.trim()) ? 'not-allowed' : 'pointer', display: 'flex', width: '100%', height: '46px', borderRadius: '23px', background: 'var(--gradient)', color: '#0A0A0F', fontWeight: '800', fontSize: '14px', fontFamily: 'inherit', border: 'none', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '18px' }">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2.6" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Agregar categoría
-              </button>
-
-              <div class="cd-section-label">EXISTENTES</div>
-              <div style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;">
+              <!-- Categorías existentes (primero, para que sean visibles al abrir) -->
+              <div class="cd-section-label" style="margin-bottom:8px;">CATEGORÍAS</div>
+              <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px;">
                 <template x-for="c in (catManagerMode === 'income' ? incomeCategories : categories)" :key="c.key">
-                  <div :style="{ background: editingCatKey === c.key ? 'rgba(0,240,255,0.05)' : 'var(--surface)', border: editingCatKey === c.key ? '1px solid var(--cyan)' : '1px solid var(--border)', borderRadius: '10px', overflow: 'hidden', flexShrink: '0' }">
+                  <div style="border-radius:var(--radius-sm);overflow:hidden;flex-shrink:0;" :style="{ background: editingCatKey === c.key ? 'var(--surface2)' : 'var(--surface)', border: editingCatKey === c.key ? '1px solid rgba(0,240,255,0.3)' : '1px solid var(--border)' }">
                     <!-- Read row -->
-                    <div :style="{ display: editingCatKey === c.key ? 'none' : 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px' }">
-                      <div :style="'width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;background:' + c.color + '20;border:1px solid ' + c.color + '40'">
+                    <div x-show="editingCatKey !== c.key" style="display:flex;align-items:center;gap:10px;padding:10px 12px;">
+                      <div style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;" :style="'background:' + c.color + '18;border:1px solid ' + c.color + '35'">
                         <span x-text="c.emoji"></span>
                       </div>
-                      <div style="flex:1;font-size:13px;font-weight:600;color:var(--text);" x-text="c.label"></div>
-                      <div style="display:flex;gap:4px;align-items:center;">
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="c.label"></div>
                         <template x-if="!c.key.startsWith('custom_')">
-                          <span style="font-size:9px;color:#B794F6;letter-spacing:0.5px;font-weight:700;padding:3px 6px;border-radius:5px;background:rgba(112,0,255,0.12);border:1px solid rgba(112,0,255,0.3);">SUGERIDA</span>
+                          <div style="font-size:9px;color:var(--purple);letter-spacing:0.4px;font-weight:700;margin-top:1px;">SUGERIDA</div>
                         </template>
-                        <button @click="startEditCategory(c); _editEmojiTouched = true" style="width:30px;height:30px;border-radius:8px;background:transparent;border:1px solid var(--border);cursor:pointer;color:var(--cyan);display:flex;align-items:center;justify-content:center;" title="Editar">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </div>
+                      <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">
+                        <button @click="startEditCategory(c); _editEmojiTouched = true" style="width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;color:var(--muted);display:flex;align-items:center;justify-content:center;" title="Editar">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </button>
                         <template x-if="c.key.startsWith('custom_')">
-                          <button @click="removeCategory(c.key)" style="width:30px;height:30px;border-radius:8px;background:transparent;border:1px solid var(--border);cursor:pointer;color:var(--danger);display:flex;align-items:center;justify-content:center;" title="Eliminar">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                          <button @click="removeCategory(c.key)" style="width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;color:var(--danger);display:flex;align-items:center;justify-content:center;" title="Eliminar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                           </button>
                         </template>
                       </div>
                     </div>
                     <!-- Edit row -->
-                    <div :style="{ display: editingCatKey === c.key ? 'block' : 'none', padding: '12px' }">
+                    <div x-show="editingCatKey === c.key" style="padding:12px;">
                       <div style="display:flex;gap:8px;margin-bottom:10px;align-items:stretch;">
                         <div style="position:relative;width:46px;height:42px;flex-shrink:0;">
                           <div style="width:100%;height:100%;border-radius:10px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;pointer-events:none;" x-text="editingCatEmoji || '✨'"></div>
-                          <input type="text" x-model="editingCatEmoji" @input="_editEmojiTouched = true" maxlength="2" style="position:absolute;inset:0;width:100%;height:100%;background:transparent;border:none;text-align:center;font-size:20px;color:transparent;caret-color:var(--cyan);font-family:inherit;outline:none;">
+                          <input type="text" x-model="editingCatEmoji" @input="cleanEmojiInput('editingCatEmoji'); _editEmojiTouched = true" @focus="$nextTick(() => $el.scrollIntoView({ behavior: 'smooth', block: 'center' }))" maxlength="4" style="position:absolute;inset:0;width:100%;height:100%;background:transparent;border:none;text-align:center;font-size:20px;color:transparent;caret-color:var(--cyan);font-family:inherit;outline:none;">
                         </div>
                         <input type="text" x-model="editingCatLabel" @input="onEditLabelChange()" maxlength="24" style="flex:1;height:42px;border-radius:10px;background:var(--bg);border:1px solid var(--border);padding:0 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;">
                       </div>
                       <div style="display:flex;gap:6px;">
-                        <button @click="saveEditCategory()" style="flex:1;height:38px;border-radius:10px;background:var(--gradient);color:#0A0A0F;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;border:none;">Guardar</button>
-                        <button @click="cancelEditCategory()" style="flex:1;height:38px;border-radius:10px;background:transparent;color:var(--muted);font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;border:1px solid var(--border);">Cancelar</button>
+                        <button @click="saveEditCategory()" style="flex:1;height:36px;border-radius:10px;background:var(--gradient);color:#0A0A0F;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;border:none;">Guardar</button>
+                        <button @click="cancelEditCategory()" style="flex:1;height:36px;border-radius:10px;background:transparent;color:var(--muted);font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;border:1px solid var(--border);">Cancelar</button>
                       </div>
                     </div>
                   </div>
                 </template>
               </div>
 
-              <button @click="catManagerOpen = false; cancelEditCategory()" style="margin-top:18px;width:100%;height:46px;border-radius:23px;background:transparent;border:none;color:var(--muted);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">Cerrar</button>
+              <!-- Agregar nueva categoría -->
+              <div style="padding:14px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);margin-bottom:16px;">
+                <div style="font-size:11px;color:var(--muted);letter-spacing:1px;font-weight:700;margin-bottom:10px;">NUEVA CATEGORÍA</div>
+                <div style="display:flex;gap:8px;margin-bottom:8px;align-items:stretch;">
+                  <div style="position:relative;width:48px;height:44px;flex-shrink:0;">
+                    <div style="width:100%;height:100%;border-radius:10px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;pointer-events:none;" x-text="newCatEmoji || '✨'"></div>
+                    <input type="text" x-model="newCatEmoji" @input="cleanEmojiInput('newCatEmoji')" @focus="$nextTick(() => $el.scrollIntoView({ behavior: 'smooth', block: 'center' }))" maxlength="4" style="position:absolute;inset:0;width:100%;height:100%;background:transparent;border:none;text-align:center;font-size:20px;color:transparent;caret-color:var(--cyan);font-family:inherit;outline:none;">
+                  </div>
+                  <input type="text" x-model="newCatLabel" @input="onNewCatLabelChange()" maxlength="24" placeholder="Nombre (ej: Mascotas)" style="flex:1;height:44px;border-radius:10px;background:var(--bg);border:1px solid var(--border);padding:0 14px;font-size:13px;color:var(--text);font-family:inherit;outline:none;">
+                </div>
+                <div style="font-size:10px;color:var(--dim);margin-bottom:10px;line-height:1.4;">Toca el ícono para cambiar el emoji.</div>
+                <button @click="addCategory()" :disabled="!newCatLabel || !newCatLabel.trim()" style="width:100%;height:40px;border-radius:20px;background:var(--gradient);color:#0A0A0F;font-weight:700;font-size:13px;font-family:inherit;border:none;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;" :style="{ opacity: (!newCatLabel || !newCatLabel.trim()) ? '0.4' : '1' }">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2.6" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Agregar
+                </button>
+              </div>
+
+              <button @click="catManagerOpen = false; cancelEditCategory()" style="width:100%;height:42px;border-radius:21px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">Cerrar</button>
             </div>
           </div>
         </div>
@@ -6153,6 +5905,9 @@ const CATEGORIES = [
   { key: 'pets', emoji: '🐾', label: 'Mascotas', color: '#FFB800' },
   { key: 'savings', emoji: '🐷', label: 'Ahorro', color: '#00E5A0' },
   { key: 'invest_out', emoji: '📈', label: 'Inversión', color: '#7000FF' },
+  { key: 'gym', emoji: '💪', label: 'Gym', color: '#FF6B6B' },
+  { key: 'education', emoji: '📚', label: 'Educación', color: '#00F0FF' },
+  { key: 'travel', emoji: '✈️', label: 'Viaje', color: '#B794F6' },
   { key: 'other', emoji: '✨', label: 'Otro', color: '#8888AA' },
 ];
 const INCOME_CATEGORIES = [
@@ -6272,9 +6027,6 @@ function zepoApp() {
     cobrosSearch: '',
     catDrillOpen: false,
     catDrillKey: null,
-    expandedBatches: [],
-    friendDrill: null,
-    friendDrillTxs: [],
     notifDaily: true,
     notifBudget: true,
     notifWeekly: false,
@@ -6286,6 +6038,8 @@ function zepoApp() {
     histMonth: new Date().getMonth(),
     histYear: new Date().getFullYear(),
     histAll: false,
+    histType: 'all',
+    homeViewMode: 'expense',
     form: { amount: '', description: '', category: '', date: '', is_income: false, is_split: false, split_persona: '', split_pct: '', split_people: [] },
     pendingSplits: [],
     paidSplits: [],
@@ -6428,14 +6182,6 @@ function zepoApp() {
     },
 
     async init() {
-      let baseHeight = window.innerHeight;
-      const fixHeight = () => {
-        const h = window.innerHeight;
-        if (Math.abs(h - baseHeight) > 100) baseHeight = h;
-        document.documentElement.style.setProperty('--app-height', baseHeight + 'px');
-      };
-      fixHeight();
-      window.addEventListener('resize', fixHeight);
       window.addEventListener('online', () => this.offline = false);
       window.addEventListener('offline', () => this.offline = true);
       window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); this.installPrompt = e; });
@@ -6444,10 +6190,6 @@ function zepoApp() {
       this.$watch('tab', (val, old) => {
         if (!['settings','changepass','plans','checkout','pay-processing','pay-success','pay-failed','forgotpw'].includes(val)) this.prevTab = val;
       });
-
-      const splashFailsafe = setTimeout(() => {
-        if (!this.appReady) { console.warn('[init] failsafe: forcing appReady after 8s'); this.appReady = true; }
-      }, 8000);
 
       try {
         let session = null;
@@ -6478,11 +6220,11 @@ function zepoApp() {
         console.error('[init] Error during startup, continuing:', e);
       }
 
+      // Limpia tokens de OAuth en el hash para que la URL quede limpia
       if (window.location.hash && window.location.hash.includes('access_token=')) {
         history.replaceState(null, '', window.location.pathname + window.location.search);
       }
 
-      clearTimeout(splashFailsafe);
       this.appReady = true;
 
       // DEV: ?screen=<tab> permite navegar directo a cualquier pantalla
@@ -6804,8 +6546,11 @@ function zepoApp() {
     historyData: [],
 
     get historyExpenses() {
-      if (this.filterCat === 'all') return this.historyData;
-      return this.historyData.filter(e => e.category === this.filterCat);
+      let data = this.historyData;
+      if (this.histType === 'expense') data = data.filter(e => !e.is_income);
+      else if (this.histType === 'income') data = data.filter(e => e.is_income);
+      if (this.filterCat !== 'all') data = data.filter(e => e.category === this.filterCat);
+      return data;
     },
 
     get filteredHistoryGroups() {
@@ -6824,16 +6569,13 @@ function zepoApp() {
         } else label = new Date(d + 'T12:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
         if (!groups[label]) { groups[label] = { label, items: [], total: 0 }; order.push(label); }
         groups[label].items.push(exp);
-        if (!exp.is_income) groups[label].total += Number(exp.amount);
+        if (!exp.is_income) groups[label].total += exp.amount;
       });
-      return order.map(l => {
-        const g = groups[l];
-        g.groupedItems = this.groupByBatch(g.items);
-        return g;
-      });
+      return order.map(l => groups[l]);
     },
 
     get historyTotal() {
+      if (this.histType === 'income') return this.historyExpenses.reduce((s, e) => s + e.amount, 0);
       return this.historyExpenses.filter(e => !e.is_income).reduce((s, e) => s + e.amount, 0);
     },
 
@@ -6891,6 +6633,12 @@ function zepoApp() {
 
     get currentMonthName() { return MONTH_NAMES[new Date().getMonth()]; },
 
+    get daysUntilSunset() {
+      const sunset = new Date('2026-12-31');
+      const today = new Date();
+      const diff = Math.ceil((sunset - today) / 86400000);
+      return Math.max(0, diff);
+    },
 
     get monthDelta() {
       const now = new Date();
@@ -6967,59 +6715,11 @@ function zepoApp() {
       return Math.min(100, Math.round((this.monthTotal / this.budgetTotalAmount) * 100));
     },
 
-    get recentExpenses() { return this.expenses.slice(0, 8); },
-
-    // ── Batch Grouping ──
-    groupByBatch(items) {
-      const batches = {};
-      const result = [];
-      items.forEach(exp => {
-        if (exp.batch_id) {
-          if (!batches[exp.batch_id]) {
-            batches[exp.batch_id] = { _isBatch: true, batch_id: exp.batch_id, batch_label: exp.batch_label || 'Registro múltiple', items: [], total: 0, date: exp.date, created_at: exp.created_at };
-            result.push(batches[exp.batch_id]);
-          }
-          batches[exp.batch_id].items.push(exp);
-          if (!exp.is_income) batches[exp.batch_id].total += Number(exp.amount);
-        } else {
-          result.push(exp);
-        }
-      });
-      return result;
+    get recentExpenses() {
+      if (this.homeViewMode === 'income') return this.expenses.filter(e => e.is_income).slice(0, 8);
+      if (this.homeViewMode === 'expense') return this.expenses.filter(e => !e.is_income).slice(0, 8);
+      return this.expenses.slice(0, 8);
     },
-
-    get recentExpensesGrouped() {
-      const grouped = this.groupByBatch(this.expenses);
-      return grouped.slice(0, 8);
-    },
-
-    toggleBatch(batchId) {
-      const i = this.expandedBatches.indexOf(batchId);
-      if (i === -1) this.expandedBatches.push(batchId);
-      else this.expandedBatches.splice(i, 1);
-    },
-    isBatchExpanded(batchId) {
-      return this.expandedBatches.includes(batchId);
-    },
-
-    // ── Friend Drill-down ──
-    async openFriendDrill(friend) {
-      this.friendDrill = friend;
-      this.friendDrillTxs = [];
-      if (!this.user) return;
-      const uid = this.user.id;
-      const fid = friend.user_id;
-      const { data } = await sb.from('payment_requests')
-        .select('id,from_user_id,to_user_id,amount,description,category,expense_date,status,created_at')
-        .or(`and(from_user_id.eq.${uid},to_user_id.eq.${fid}),and(from_user_id.eq.${fid},to_user_id.eq.${uid})`)
-        .order('created_at', { ascending: false });
-      this.friendDrillTxs = (data || []).map(tx => ({
-        ...tx,
-        _direction: tx.from_user_id === uid ? 'sent' : 'received',
-        _label: tx.from_user_id === uid ? 'Le cobraste' : 'Te cobró',
-      }));
-    },
-    closeFriendDrill() { this.friendDrill = null; this.friendDrillTxs = []; },
 
     // ── Voice Input ──
     toggleVoice() {
@@ -7053,15 +6753,18 @@ function zepoApp() {
       if (numMatch) this.form.amount = numMatch[1].replace(',', '.');
       this.form.description = text;
       const catMap = {
-        food: ['comida','almuerzo','desayuno','cena','restaurante','pollo','arroz','menu'],
-        transport: ['bus','transporte','gasolina','combustible','pasaje'],
-        taxi: ['taxi','uber','cabify','indriver'],
-        coffee: ['cafe','cappuccino','latte'],
-        health: ['medicina','farmacia','doctor','hospital','salud','pastilla'],
-        market: ['mercado','supermercado','megamaxi','supermaxi','tienda','compras del'],
-        shop: ['ropa','zapato','amazon','compra','regalo'],
-        rent: ['arriendo','alquiler','luz','agua','internet','servicios'],
-        fun: ['cine','netflix','juego','spotify','entretenimiento','fiesta'],
+        food: ['comida','almuerzo','desayuno','cena','restaurante','pollo','arroz','hamburguesa','pizza','sushi','encebollado','ceviche','chifa','empanada','helado','fritada','asado'],
+        transport: ['bus','transporte','gasolina','combustible','pasaje','bici','bicicleta','cicla','moto','parqueo','parking','peaje','metro','taxi','uber','cabify','indriver','didi','llanta','mecanico','mecánico'],
+        coffee: ['cafe','café','cappuccino','latte','espresso','capuchino','starbucks'],
+        health: ['medicina','farmacia','doctor','hospital','salud','pastilla','consulta','dentista','terapia','vitamina'],
+        market: ['mercado','supermercado','megamaxi','supermaxi','santa maria','mi comisariato','coral','despensa','feria libre'],
+        shop: ['ropa','zapato','amazon','regalo','shein','temu','mall','celular','laptop','audifonos'],
+        rent: ['arriendo','alquiler','luz','agua','internet','servicios','renta','telefono','teléfono','gas','electricidad','seguro','impuesto'],
+        fun: ['cine','netflix','juego','spotify','entretenimiento','fiesta','bar','trago','cerveza','discoteca','karaoke','concierto'],
+        pets: ['perro','gato','mascota','veterinario','croquetas'],
+        gym: ['gym','gimnasio','crossfit','yoga','pilates','proteina','proteína'],
+        education: ['curso','clase','universidad','libro','escuela','matricula','matrícula'],
+        travel: ['vuelo','avion','avión','hotel','airbnb','viaje','aeropuerto'],
       };
       for (const [key, words] of Object.entries(catMap)) {
         if (words.some(w => lower.includes(w))) { this.form.category = key; break; }
@@ -7401,8 +7104,13 @@ function zepoApp() {
       this.showToast('Categoría actualizada');
     },
 
-    onEditLabelChange() {
-      // No auto-cambiar emoji al renombrar; el usuario edita el emoji aparte si quiere.
+    onEditLabelChange() {},
+
+    cleanEmojiInput(field) {
+      const val = this[field] || '';
+      if (!val) { this[field] = ''; return; }
+      const segments = [...new Intl.Segmenter('es', { granularity: 'grapheme' }).segment(val)];
+      this[field] = segments.length ? segments[segments.length - 1].segment : '';
     },
 
     removeCategory(key) {
@@ -7556,43 +7264,41 @@ function zepoApp() {
         return;
       }
       this.saving = true;
-      const totalAmount = parseFloat(this.form.amount);
-      let isSplit = false, pct = 0, persona = '';
-      if (this.form.is_split && this.form.split_people && this.form.split_people.length >= 2) {
-        const tuPerson = this.form.split_people.find(p => p.you);
-        const others = this.form.split_people.filter(p => !p.you);
-        if (tuPerson && others.length > 0 && this.splitSum > 0) {
-          isSplit = true;
-          pct = parseFloat(tuPerson.pct) || 50;
-          persona = others.map(p => p.name || 'Sin nombre').filter(Boolean).join(', ') || 'Sin nombre';
-          this.form.split_persona = persona;
-          this.form.split_pct = pct;
+      try {
+        const totalAmount = parseFloat(this.form.amount);
+        // Map multi-person split (split_people) → legacy split_persona/split_pct for backwards compat
+        let isSplit = false, pct = 0, persona = '';
+        if (this.form.is_split && this.form.split_people && this.form.split_people.length >= 2) {
+          const tuPerson = this.form.split_people.find(p => p.you);
+          const others = this.form.split_people.filter(p => !p.you);
+          if (tuPerson && others.length > 0 && this.splitSum > 0) {
+            isSplit = true;
+            pct = parseFloat(tuPerson.pct) || 50;
+            persona = others.map(p => p.name || 'Sin nombre').filter(Boolean).join(', ') || 'Sin nombre';
+            this.form.split_persona = persona;
+            this.form.split_pct = pct;
+          }
         }
-      }
-      const miParte = isSplit ? Math.round(totalAmount * pct / 100 * 100) / 100 : totalAmount;
-      const pendiente = isSplit ? Math.round((totalAmount - miParte) * 100) / 100 : 0;
+        const miParte = isSplit ? Math.round(totalAmount * pct / 100 * 100) / 100 : totalAmount;
+        const pendiente = isSplit ? Math.round((totalAmount - miParte) * 100) / 100 : 0;
 
-      const payload = {
-        user_id: this.user.id,
-        amount: miParte,
-        category: this.form.category,
-        description: this.form.description,
-        date: this.form.date,
-        is_income: this.form.is_income,
-        is_split: isSplit,
-        split_total: isSplit ? totalAmount : null,
-        split_pct: isSplit ? pct : null,
-        split_persona: isSplit ? persona : null,
-        split_pending: isSplit ? pendiente : null,
-        split_status: isSplit ? 'pendiente' : null
-      };
+        const payload = {
+          user_id: this.user.id,
+          amount: miParte,
+          category: this.form.category,
+          description: this.form.description,
+          date: this.form.date,
+          is_income: this.form.is_income,
+          is_split: isSplit,
+          split_total: isSplit ? totalAmount : null,
+          split_pct: isSplit ? pct : null,
+          split_persona: isSplit ? persona : null,
+          split_pending: isSplit ? pendiente : null,
+          split_status: isSplit ? 'pendiente' : null
+        };
 
-      if (this.editingExpense) {
-        try {
-          Object.assign(this.expenses.find(e => e.id === this.editingExpense.id) || {}, payload);
-          this.sheetOpen = false;
-          this.showToast('Gasto actualizado');
-          this.saving = false;
+        let inserted;
+        if (this.editingExpense) {
           try {
             await withTimeout(
               sb.from('expenses').update(payload).eq('id', this.editingExpense.id).then(r => { if (r.error) throw r.error; return r; }),
@@ -7606,25 +7312,12 @@ function zepoApp() {
             const path = await this.uploadReceipt(this.editingExpense.id);
             if (path) await sbRestUpdate('expenses', 'id', this.editingExpense.id, { receipt_image_path: path });
           }
-          await this.loadExpenses();
-        } catch (e) {
-          this.showToast('Error al actualizar: ' + e.message);
-          await this.loadExpenses();
-        }
-      } else {
-        const tempId = '_tmp_' + crypto.randomUUID();
-        const tempRecord = { ...payload, id: tempId, created_at: new Date().toISOString() };
-        this.expenses = [tempRecord, ...this.expenses];
-        this.showToast(isSplit ? 'Split guardado' : 'Gasto agregado');
-        this.sheetOpen = false;
-        this.saving = false;
-
-        try {
-          let inserted;
+          this.showToast('Gasto actualizado');
+        } else {
           try {
             const r = await withTimeout(
               sb.from('expenses').insert(payload).select('id').single().then(r => { if (r.error) throw r.error; return r; }),
-              5000, 'insert'
+              2500, 'insert'
             );
             inserted = r.data;
           } catch (e) {
@@ -7632,39 +7325,58 @@ function zepoApp() {
             const rows = await sbRestInsert('expenses', payload);
             inserted = rows && rows[0];
           }
+          this.showToast(isSplit ? '💸 Split guardado' : 'Gasto agregado');
+          // Receipt upload goes to background (after sheet closes)
           if (this.receiptFile && inserted) {
-            const path = await this.uploadReceipt(inserted.id);
-            if (path) await sbRestUpdate('expenses', 'id', inserted.id, { receipt_image_path: path });
+            const file = this.receiptFile;
+            this.removeReceipt();
+            const ext = file.name.split('.').pop() || 'jpg';
+            const rPath = `${this.user.id}/${inserted.id}.${ext}`;
+            sb.storage.from('receipts').upload(rPath, file, { upsert: true })
+              .then(({ error }) => { if (!error) sbRestUpdate('expenses', 'id', inserted.id, { receipt_image_path: rPath }); })
+              .catch(e => console.warn('[receipt bg]', e.message));
           }
-          if (isSplit) {
-            const splitOps = [];
-            const names = persona.split(',').map(s => s.trim()).filter(Boolean);
-            for (const name of names) {
-              const friend = this.friends.find(f => f.display_name.toLowerCase() === name.toLowerCase());
-              if (friend) {
-                const n = names.length;
-                const othersPct = (100 - pct) / n;
-                const perPersonAmt = Math.round(totalAmount * othersPct / 100 * 100) / 100;
-                splitOps.push(withTimeout(sb.from('payment_requests').insert({
-                  from_user_id: this.user.id,
-                  to_user_id: friend.user_id,
-                  amount: perPersonAmt,
-                  description: this.form.description.trim() || 'Gasto compartido',
-                  category: this.form.category,
-                  expense_date: this.form.date || localDate(),
-                  status: 'pending',
-                }), 3000, 'pr-insert'));
-              }
-            }
-            await Promise.all(splitOps);
-            this.loadSplits();
-          }
-          await this.loadExpenses();
-        } catch (e) {
-          this.expenses = this.expenses.filter(x => x.id !== tempId);
-          this.showToast('Error al guardar: ' + e.message);
         }
+
+        this.sheetOpen = false;
+
+        // Optimistic UI: add to local array immediately so user sees it instantly
+        if (!this.editingExpense && inserted) {
+          const optimistic = { ...payload, id: inserted.id, created_at: new Date().toISOString() };
+          this.expenses.unshift(optimistic);
+          try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
+        }
+
+        // Background reload + splits in parallel (don't block UI)
+        const bgTasks = [this.loadExpenses()];
+        if (isSplit) {
+          bgTasks.push(this.loadSplits());
+          const names = persona.split(',').map(s => s.trim()).filter(Boolean);
+          const prInserts = [];
+          for (const name of names) {
+            const friend = this.friends.find(f => f.display_name.toLowerCase() === name.toLowerCase());
+            if (friend) {
+              const n = names.length;
+              const othersPct = (100 - pct) / n;
+              const perPersonAmt = Math.round(totalAmount * othersPct / 100 * 100) / 100;
+              prInserts.push(sb.from('payment_requests').insert({
+                from_user_id: this.user.id,
+                to_user_id: friend.user_id,
+                amount: perPersonAmt,
+                description: this.form.description.trim() || 'Gasto compartido',
+                category: this.form.category,
+                expense_date: this.form.date || localDate(),
+                status: 'pending',
+              }));
+            }
+          }
+          if (prInserts.length) bgTasks.push(Promise.all(prInserts));
+        }
+        Promise.all(bgTasks).catch(e => console.warn('[saveExpense] bg reload:', e.message));
+      } catch (e) {
+        this.showToast('Error: ' + e.message);
       }
+      this.saving = false;
     },
 
     async saveMultiItems() {
@@ -7676,49 +7388,46 @@ function zepoApp() {
         return;
       }
       this.saving = true;
-      const date = this.form.date || localDate();
-      const batchId = crypto.randomUUID();
-      const validItems = this.parsedItems.filter(it => it.amount > 0 && it.category);
-      const firstCat = validItems.length > 0 ? (CAT_MAP[validItems[0].category]?.label || validItems[0].category) : '';
-      const batchLabel = firstCat + ' — ' + new Date(date + 'T12:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
-      const rows = validItems
-        .map(it => ({
-          user_id: this.user.id,
-          amount: it.amount,
-          category: it.category,
-          description: it.description,
-          date,
-          is_income: !!it.is_income,
-          is_split: false,
-          batch_id: validItems.length > 1 ? batchId : null,
-          batch_label: validItems.length > 1 ? batchLabel : null,
-        }));
-      if (rows.length === 0) {
-        this.showToast('No hay items válidos');
-        this.saving = false;
-        return;
-      }
-      const tempRows = rows.map(r => ({ ...r, id: '_tmp_' + crypto.randomUUID(), created_at: new Date().toISOString() }));
-      this.expenses = [...tempRows, ...this.expenses];
-      this.showToast(rows.length === 1 ? 'Registro guardado' : (rows.length + ' registros guardados'));
-      this.parsedItems = [];
-      this.sheetOpen = false;
-      this.saving = false;
       try {
+        const date = this.form.date || localDate();
+        const rows = this.parsedItems
+          .filter(it => it.amount > 0 && it.category)
+          .map(it => ({
+            user_id: this.user.id,
+            amount: it.amount,
+            category: it.category,
+            description: it.description,
+            date,
+            is_income: !!it.is_income,
+            is_split: false,
+          }));
+        if (rows.length === 0) {
+          this.showToast('No hay items válidos');
+          this.saving = false;
+          return;
+        }
         try {
           await withTimeout(
             sb.from('expenses').insert(rows).then(r => { if (r.error) throw r.error; return r; }),
-            5000, 'multi-insert'
+            3000, 'multi-insert'
           );
         } catch (e) {
           console.warn('[saveMultiItems] sb insert failed, fallback REST:', e.message);
           await sbRestInsert('expenses', rows);
         }
-        await this.loadExpenses();
+        this.showToast(rows.length === 1 ? 'Registro guardado' : (rows.length + ' registros guardados'));
+        this.parsedItems = [];
+        this.sheetOpen = false;
+        // Optimistic: add items to local array immediately
+        const now = new Date().toISOString();
+        rows.forEach((r, i) => this.expenses.unshift({ ...r, id: 'temp_' + Date.now() + '_' + i, created_at: now }));
+        try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
+        // Reload in background to get real IDs
+        this.loadExpenses().catch(e => console.warn('[saveMultiItems] bg reload:', e.message));
       } catch (e) {
-        this.expenses = this.expenses.filter(x => !String(x.id).startsWith('_tmp_'));
-        this.showToast('Error al guardar: ' + e.message);
+        this.showToast('Error: ' + e.message);
       }
+      this.saving = false;
     },
 
     async deleteExpense() {
@@ -7732,11 +7441,15 @@ function zepoApp() {
           console.warn('[deleteExpense] fallback REST:', e.message);
           await sbRestDelete('expenses', { id });
         }
+        // Optimistic: remove from local array immediately
+        this.expenses = this.expenses.filter(e => e.id !== id);
+        try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
         this.sheetOpen = false;
         this.editingExpense = null;
         this.showToast('Gasto eliminado');
-        await this.loadExpenses();
-        await this.loadSplits();
+        // Reload in background, in parallel
+        Promise.all([this.loadExpenses(), this.loadSplits()])
+          .catch(e => console.warn('[deleteExpense] bg reload:', e.message));
       } catch (e) {
         console.error('deleteExpense error:', e);
         this.showToast('Error: ' + e.message);
@@ -7745,26 +7458,31 @@ function zepoApp() {
 
     async loadSplits() {
       const baseRest = SUPABASE_URL + '/rest/v1/expenses?user_id=eq.' + encodeURIComponent(this.user.id) + '&is_split=eq.true';
-      try {
-        const r = await withTimeout(
-          sb.from('expenses').select('*').eq('user_id', this.user.id).eq('is_split', true).eq('split_status', 'pendiente').order('date', { ascending: false }),
-          2500, 'loadSplits-pending'
-        );
-        this.pendingSplits = r.data || [];
-      } catch (e) {
-        const res = await fetch(baseRest + '&split_status=eq.pendiente&order=date.desc', { headers: sbAuthHeaders() });
-        this.pendingSplits = res.ok ? await res.json() : [];
-      }
-      try {
-        const r = await withTimeout(
-          sb.from('expenses').select('*').eq('user_id', this.user.id).eq('is_split', true).eq('split_status', 'cobrado').order('date', { ascending: false }).limit(20),
-          2500, 'loadSplits-paid'
-        );
-        this.paidSplits = r.data || [];
-      } catch (e) {
-        const res = await fetch(baseRest + '&split_status=eq.cobrado&order=date.desc&limit=20', { headers: sbAuthHeaders() });
-        this.paidSplits = res.ok ? await res.json() : [];
-      }
+      const loadPending = async () => {
+        try {
+          const r = await withTimeout(
+            sb.from('expenses').select('*').eq('user_id', this.user.id).eq('is_split', true).eq('split_status', 'pendiente').order('date', { ascending: false }),
+            2500, 'loadSplits-pending'
+          );
+          this.pendingSplits = r.data || [];
+        } catch (e) {
+          const res = await fetch(baseRest + '&split_status=eq.pendiente&order=date.desc', { headers: sbAuthHeaders() });
+          this.pendingSplits = res.ok ? await res.json() : [];
+        }
+      };
+      const loadPaid = async () => {
+        try {
+          const r = await withTimeout(
+            sb.from('expenses').select('*').eq('user_id', this.user.id).eq('is_split', true).eq('split_status', 'cobrado').order('date', { ascending: false }).limit(20),
+            2500, 'loadSplits-paid'
+          );
+          this.paidSplits = r.data || [];
+        } catch (e) {
+          const res = await fetch(baseRest + '&split_status=eq.cobrado&order=date.desc&limit=20', { headers: sbAuthHeaders() });
+          this.paidSplits = res.ok ? await res.json() : [];
+        }
+      };
+      await Promise.all([loadPending(), loadPaid()]);
     },
 
     relativeTime(dateStr) {
@@ -7804,25 +7522,6 @@ function zepoApp() {
         });
       });
       return rows;
-    },
-
-    get pendingCobrosGrouped() {
-      const items = this.filteredPendingCobros;
-      const batches = {};
-      const result = [];
-      items.forEach(c => {
-        if (c.batch_id) {
-          if (!batches[c.batch_id]) {
-            batches[c.batch_id] = { _isBatch: true, batch_id: c.batch_id, batch_label: c.batch_label || 'Registro múltiple', items: [], total: 0, date: c.date };
-            result.push(batches[c.batch_id]);
-          }
-          batches[c.batch_id].items.push(c);
-          batches[c.batch_id].total += c._amount || 0;
-        } else {
-          result.push(c);
-        }
-      });
-      return result;
     },
 
     get filteredPaidCobros() {
@@ -7867,40 +7566,6 @@ function zepoApp() {
     get totalDeboAmount() {
       return this.deboDeudas.reduce((s, d) => s + Number(d.amount || 0), 0)
            + this.incomeSplitDebts.reduce((s, d) => s + (d._amount || 0), 0);
-    },
-    get deboSolicitudesGrouped() {
-      return this.groupDeboByExpense(this.deboSolicitudes);
-    },
-    get deboDeudasGrouped() {
-      return this.groupDeboByExpense(this.deboDeudas, this.incomeSplitDebts);
-    },
-    get deboPaidWaitingGrouped() {
-      return this.groupDeboByExpense(this.deboPaidWaiting);
-    },
-    groupDeboByExpense(payReqItems, incomeSplitItems) {
-      const groups = {};
-      const result = [];
-      payReqItems.forEach(pr => {
-        const key = pr.expense_id || pr.id;
-        if (!groups[key]) {
-          groups[key] = { _isBatch: true, batch_id: key, batch_label: pr.description || 'Gasto compartido', items: [], total: 0, date: pr.expense_date || pr.created_at };
-          result.push(groups[key]);
-        }
-        groups[key].items.push({ ...pr, _type: 'payreq' });
-        groups[key].total += Number(pr.amount || 0);
-      });
-      if (incomeSplitItems) {
-        incomeSplitItems.forEach(d => {
-          const key = d.batch_id || d.id;
-          if (!groups[key]) {
-            groups[key] = { _isBatch: true, batch_id: key, batch_label: d.description || 'Ingreso compartido', items: [], total: 0, date: d.date || d.created_at };
-            result.push(groups[key]);
-          }
-          groups[key].items.push({ ...d, _type: 'income-split' });
-          groups[key].total += (d._amount || 0);
-        });
-      }
-      return result.map(g => g.items.length === 1 ? { ...g.items[0], _isBatch: false } : g);
     },
     get meDebenPaidClaims() {
       return this.payReqsSent.filter(p => p.status === 'paid');
@@ -8199,8 +7864,6 @@ function zepoApp() {
         this.saveCustomCategories();
 
         // Construir payload
-        const importBatchId = crypto.randomUUID();
-        const importBatchLabel = 'CSV — ' + localDate();
         const rows = this.importRows.map(r => ({
           user_id: this.user.id,
           amount: r.amount,
@@ -8209,8 +7872,6 @@ function zepoApp() {
           date: r.date,
           is_income: r.is_income,
           is_split: false,
-          batch_id: this.importRows.length > 1 ? importBatchId : null,
-          batch_label: this.importRows.length > 1 ? importBatchLabel : null,
         })).filter(r => r.amount > 0 && r.date);
 
         // Insertar en lotes de 50
@@ -8580,10 +8241,9 @@ function zepoApp() {
     },
 
     splitItems(text) {
-      // Split por: coma, punto-y-coma, " y ", " e ", " · ", punto seguido de espacio, salto de linea
-      // Punto solo no separa porque puede ser decimal (4.50). Solo "punto + espacio" o final.
+      // Coma solo separa si va seguida de espacio (para no romper decimales como 3,50)
       let segments = text
-        .split(/\s*(?:,|;|·|\.\s+| y | e |\n)\s*/i)
+        .split(/\s*(?:,\s+|;\s*|·|\.\s+| y | e |\n)\s*/i)
         .map(s => s.trim().replace(/^[\.\s]+|[\.\s]+$/g, ''))
         .filter(Boolean);
       // Solo multi-item si hay 2+ segmentos Y cada uno tiene un numero
@@ -8597,22 +8257,25 @@ function zepoApp() {
       const amount = numMatch ? parseFloat(numMatch[1].replace(',', '.')) : 0;
       const description = text.replace(/(\d+[\.,]?\d*)/, '').trim() || text;
       const expCats = {
-        food: ['comida','almuerzo','desayuno','cena','restaurante','pollo','arroz','menu','hamburg','pizza','sushi','pan'],
-        transport: ['bus','transporte','gasolina','combustible','pasaje','metro','taxi','uber','cabify','indriver','didi'],
-        coffee: ['cafe','café','capuchino','cappuccino','latte','espresso'],
-        health: ['medicina','farmacia','doctor','hospital','salud','pastilla','consulta'],
-        market: ['mercado','supermercado','megamaxi','supermaxi','tienda','compras del','santa maria','mi comisariato'],
-        shop: ['ropa','zapato','amazon','compra','regalo','tienda'],
-        rent: ['arriendo','alquiler','luz','agua','internet','servicios','renta'],
-        fun: ['cine','netflix','juego','spotify','entretenimiento','fiesta','bar','trago','cerveza'],
-        pets: ['perro','gato','mascota','veterinario','vet ','croquetas','pets','alimento perro','alimento gato'],
-        savings: ['ahorro','ahorré','ahorre','meta','alcancia','alcancía'],
+        food: ['comida','almuerzo','desayuno','cena','restaurante','pollo','arroz','menú','menu del dia','hamburguesa','hamburg','pizza','sushi','panaderia','panadería','asado','fritada','encebollado','ceviche','chifa','empanada','hot dog','sandwich','wrap','ensalada','snack','helado','postre','dulce'],
+        transport: ['bus','transporte','gasolina','combustible','pasaje','metro','taxi','uber','cabify','indriver','didi','bici','bicicleta','cicla','moto','parqueo','parking','peaje','llanta','mecanico','mecánico','aceite motor','lavada auto','lavado auto','taller'],
+        coffee: ['cafe','café','capuchino','cappuccino','latte','espresso','mokaccino','americano','frappé','frappe','starbucks','sweet & coffee','juan valdez'],
+        health: ['medicina','farmacia','doctor','hospital','salud','pastilla','consulta','dentista','odontologo','odontólogo','lentes','optica','óptica','laboratorio','examen medico','psicolog','terapia','vitamina','suplemento'],
+        market: ['mercado','supermercado','megamaxi','supermaxi','santa maria','mi comisariato','coral','tia ','aki ','compras del super','compras del mercado','despensa','abastos','feria libre'],
+        shop: ['ropa','zapato','amazon','regalo','shein','temu','mall','centro comercial','electronico','electrónico','celular','laptop','audifonos','audífonos','reloj','joyeria','joyería','mueble','decoracion','decoración','ferreteria','ferretería','herramienta'],
+        rent: ['arriendo','alquiler','luz','agua','internet','servicios','renta','telefono','teléfono','plan celular','gas','electricidad','condominio','administracion','administración','seguro','impuesto','sri'],
+        fun: ['cine','netflix','juego','spotify','entretenimiento','fiesta','bar','trago','cerveza','discoteca','karaoke','youtube','disney','hbo','amazon prime','ps5','xbox','steam','videojuego','concierto','evento','boleto','entrada'],
+        pets: ['perro','gato','mascota','veterinario','vet ','croquetas','pets','alimento perro','alimento gato','antipulgas','vacuna mascota'],
+        savings: ['ahorro','ahorré','ahorre','alcancia','alcancía'],
         invest_out: ['inversion','inversión','invertí','inverti','acciones','crypto','bitcoin','etf','fondo'],
+        gym: ['gym','gimnasio','crossfit','yoga','pilates','entrenador','proteina','proteína','suplemento gym'],
+        education: ['curso','clase','universidad','colegio','libro','cuaderno','escuela','matricula','matrícula','pension','pensión','tutoria','tutoría','udemy','platzi','coursera'],
+        travel: ['vuelo','avion','avión','hotel','hostal','airbnb','booking','maleta','viaje','pasaporte','visa ','equipaje','aeropuerto'],
       };
       const incCats = {
         salary: ['sueldo','salario','nomina','nómina','quincena'],
+        business: ['negocio','cobré','cobre','cobro'],
         freelance: ['freelance','proyecto','cliente','factura'],
-        business: ['negocio','cobré','cobre'],
         sale: ['venta','vendí','vendi'],
         gift: ['regalo','aguinaldo','bono'],
         refund: ['reembolso','devolucion','devolución'],
@@ -8620,15 +8283,14 @@ function zepoApp() {
         investment: ['dividendo','interes','interés','inversion','inversión'],
       };
       let category = '';
-      const is_income = forceIsIncome !== undefined ? forceIsIncome : /(ingreso|cobr|recibi|me pag|deposit|transfer|sueldo|salario|venta|vendi)/i.test(text);
+      const is_income = forceIsIncome !== undefined ? forceIsIncome : /(ingreso|cobr|recibi|me pag|deposit|transfer|sueldo|salario|venta|vendi|freelance|reembolso|devolucion|devolución|dividendo|aguinaldo)/i.test(text);
       const map = is_income ? incCats : expCats;
       for (const [key, words] of Object.entries(map)) {
         if (words.some(w => lower.includes(w))) { category = key; break; }
       }
-      // Fallback: use builtin first category of correct type
+      // Fallback: use 'other' category when no keyword matches
       if (!category) {
-        const builtin = is_income ? this.incomeCategories[0] : this.categories[0];
-        category = builtin?.key || (is_income ? 'salary' : 'food');
+        category = is_income ? 'other_income' : 'other';
       }
       const cat = CAT_MAP[category] || {};
       return {
@@ -8704,13 +8366,11 @@ function zepoApp() {
 
     async loadUserPlan() {
       if (!this.user) return;
-      try {
-        const { data } = await withTimeout(sb.from('users').select('plan, plan_expires_at').eq('id', this.user.id).maybeSingle(), 3000, 'loadUserPlan');
-        if (data) {
-          this.userPlan = data.plan || 'free';
-          this.planExpiresAt = data.plan_expires_at;
-        }
-      } catch (e) { console.warn('[loadUserPlan] timeout/error:', e.message); }
+      const { data } = await sb.from('users').select('plan, plan_expires_at').eq('id', this.user.id).maybeSingle();
+      if (data) {
+        this.userPlan = data.plan || 'free';
+        this.planExpiresAt = data.plan_expires_at;
+      }
     },
 
     get planOptions() {
@@ -9063,10 +8723,6 @@ function zepoApp() {
 
     async loadFriends() {
       if (!this.user) return;
-      try { await withTimeout(this._loadFriendsInner(), 5000, 'loadFriends'); }
-      catch (e) { console.warn('[loadFriends] timeout/error:', e.message); }
-    },
-    async _loadFriendsInner() {
       const uid = this.user.id;
       const { data: conns } = await sb.from('user_connections')
         .select('id, requester_id, addressee_id, status')
@@ -9077,6 +8733,7 @@ function zepoApp() {
       const received = conns.filter(c => c.status === 'pending' && c.addressee_id === uid);
       const sent     = conns.filter(c => c.status === 'pending' && c.requester_id === uid);
 
+      // Resolve display names from user_settings
       const allIds = [...new Set([
         ...accepted.map(c => c.requester_id === uid ? c.addressee_id : c.requester_id),
         ...received.map(c => c.requester_id),
@@ -9164,10 +8821,6 @@ function zepoApp() {
 
     async loadPaymentRequests() {
       if (!this.user) return;
-      try { await withTimeout(this._loadPaymentRequestsInner(), 5000, 'loadPaymentRequests'); }
-      catch (e) { console.warn('[loadPaymentRequests] timeout/error:', e.message); }
-    },
-    async _loadPaymentRequestsInner() {
       const uid = this.user.id;
       const { data: received } = await sb.from('payment_requests')
         .select('id,from_user_id,amount,description,category,expense_date,status,created_at')
