@@ -68,6 +68,8 @@ jobs:
             --no-verify-jwt
           supabase functions deploy find-user \
             --project-ref vchaxqisbypwwtyjjnjr
+          supabase functions deploy parse-bank-statement \
+            --project-ref vchaxqisbypwwtyjjnjr
 
       - name: Set Edge Function secrets
         env:
