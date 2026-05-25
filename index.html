@@ -7580,27 +7580,49 @@ function zepoApp() {
       this.importedExpenses = [];
       this.catDropdownOpen = false;
       this.removeReceipt();
-      this.parsedItems = batch.items.map(exp => ({
+
+      // Detect if ALL batch items share same split state
+      const items = batch.items;
+      const allSplit = items.length > 0 && items.every(e => e.is_split);
+      const sameSplitPersona = allSplit && items.every(e => e.split_persona === items[0].split_persona);
+      const sameSplitPct = allSplit && items.every(e => String(e.split_pct) === String(items[0].split_pct));
+      const batchIsSplit = allSplit && sameSplitPersona && sameSplitPct;
+
+      // Build split_people if batch has uniform split
+      let splitPeople = [];
+      if (batchIsSplit && items[0].split_pct != null) {
+        const others = (items[0].split_persona || '').split(',').map(s => s.trim()).filter(Boolean);
+        const tuPct = parseFloat(items[0].split_pct) || 50;
+        const othersTotalPct = Math.max(0, 100 - tuPct);
+        const eachOtherPct = others.length > 0 ? othersTotalPct / others.length : othersTotalPct;
+        splitPeople = [
+          { name: 'Tú', pct: tuPct, you: true, color: this.splitColorPalette[0] },
+          ...others.map((name, i) => ({ name, pct: eachOtherPct, color: this.splitColorPalette[(i + 1) % this.splitColorPalette.length] })),
+        ];
+        if (splitPeople.length < 2) splitPeople.push({ name: '', pct: othersTotalPct, color: this.splitColorPalette[1] });
+      }
+
+      this.parsedItems = items.map(exp => ({
         _existingId: exp.id,
         description: exp.description || '',
-        amount: exp.amount,
+        amount: batchIsSplit ? (exp.split_total || exp.amount) : exp.amount,
         category: exp.category,
         is_income: !!exp.is_income,
         emoji: this.getCatEmoji(exp.category),
         label: this.getCatLabel(exp.category),
         color: this.getCatColor(exp.category),
       }));
-      const first = batch.items[0];
+      const first = items[0];
       this.form = {
-        amount: batch.items.reduce((s, e) => s + e.amount, 0).toFixed(2),
+        amount: this.parsedItems.reduce((s, e) => s + e.amount, 0).toFixed(2),
         description: '',
         category: first?.category || '',
         date: first?.date || localDate(),
         is_income: first?.is_income || false,
-        is_split: false,
-        split_persona: '',
-        split_pct: '',
-        split_people: [],
+        is_split: batchIsSplit,
+        split_persona: batchIsSplit ? (first.split_persona || '') : '',
+        split_pct: batchIsSplit ? (first.split_pct || '') : '',
+        split_people: splitPeople,
       };
       this.sheetOpen = true;
     },
@@ -7843,6 +7865,19 @@ function zepoApp() {
         if (validItems.length === 0) { this.showToast('No hay items válidos'); this.saving = false; return; }
         const firstCat = CAT_MAP[validItems[0].category]?.label || validItems[0].category;
         const batchLabel = firstCat + ' — ' + new Date(date + 'T12:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
+
+        // Compute split data (same logic as saveExpense)
+        let isSplit = false, pct = 0, persona = '';
+        if (this.form.is_split && this.form.split_people && this.form.split_people.length >= 2) {
+          const tuPerson = this.form.split_people.find(p => p.you);
+          const others = this.form.split_people.filter(p => !p.you);
+          if (tuPerson && others.length > 0 && this.splitSum > 0) {
+            isSplit = true;
+            pct = parseFloat(tuPerson.pct) || 50;
+            persona = others.map(p => p.name || 'Sin nombre').filter(Boolean).join(', ') || 'Sin nombre';
+          }
+        }
+
         // Delete old batch items from DB
         const oldIds = this.expenses.filter(e => e.batch_id === batchId).map(e => e.id).filter(id => !String(id).startsWith('temp_'));
         if (oldIds.length > 0) {
@@ -7853,18 +7888,28 @@ function zepoApp() {
             for (const id of oldIds) { await sbRestDelete('expenses', { id }); }
           }
         }
-        // Insert updated items with same batch_id
-        const rows = validItems.map(it => ({
-          user_id: this.user.id,
-          amount: it.amount,
-          category: it.category,
-          description: it.description,
-          date,
-          is_income: !!it.is_income,
-          is_split: false,
-          batch_id: validItems.length > 1 ? batchId : null,
-          batch_label: validItems.length > 1 ? batchLabel : null,
-        }));
+        // Build rows with split data per item
+        const rows = validItems.map(it => {
+          const totalAmt = it.amount; // amount shown = split_total when split
+          const miParte = isSplit ? Math.round(totalAmt * pct / 100 * 100) / 100 : totalAmt;
+          const pendiente = isSplit ? Math.round((totalAmt - miParte) * 100) / 100 : 0;
+          return {
+            user_id: this.user.id,
+            amount: miParte,
+            category: it.category,
+            description: it.description,
+            date,
+            is_income: !!it.is_income,
+            is_split: isSplit,
+            split_total: isSplit ? totalAmt : null,
+            split_pct: isSplit ? pct : null,
+            split_persona: isSplit ? persona : null,
+            split_pending: isSplit ? pendiente : null,
+            split_status: isSplit ? 'pendiente' : null,
+            batch_id: validItems.length > 1 ? batchId : null,
+            batch_label: validItems.length > 1 ? batchLabel : null,
+          };
+        });
         try {
           await withTimeout(sb.from('expenses').insert(rows).then(r => { if (r.error) throw r.error; return r; }), 3000, 'batchEdit-insert');
         } catch (e) {
@@ -7879,8 +7924,36 @@ function zepoApp() {
         this.parsedItems = [];
         this.editingBatch = null;
         this.sheetOpen = false;
-        this.showToast(rows.length + ' registros actualizados');
-        this.loadExpenses().catch(e => console.warn('[saveBatchEdit] bg:', e.message));
+        this.showToast(isSplit ? '💸 Split guardado (' + rows.length + ' items)' : rows.length + ' registros actualizados');
+
+        // Background reload expenses + splits + create payment_requests
+        const bgTasks = [this.loadExpenses(), this.loadSplits()];
+        if (isSplit) {
+          const names = persona.split(',').map(s => s.trim()).filter(Boolean);
+          const prInserts = [];
+          for (const name of names) {
+            const friend = this.friends.find(f => f.display_name.toLowerCase() === name.toLowerCase());
+            if (friend) {
+              const n = names.length;
+              const othersPct = (100 - pct) / n;
+              // Sum total pending for ALL items in batch for this person
+              const totalBatchAmt = validItems.reduce((s, it) => s + it.amount, 0);
+              const perPersonAmt = Math.round(totalBatchAmt * othersPct / 100 * 100) / 100;
+              prInserts.push(sb.from('payment_requests').insert({
+                from_user_id: this.user.id,
+                to_user_id: friend.user_id,
+                amount: perPersonAmt,
+                description: validItems.map(it => it.description).filter(Boolean).join(', ') || 'Gasto compartido',
+                category: validItems[0].category,
+                expense_date: date,
+                status: 'pending',
+              }));
+            }
+          }
+          if (prInserts.length) bgTasks.push(Promise.all(prInserts));
+          bgTasks.push(this.loadPaymentRequests());
+        }
+        Promise.all(bgTasks).catch(e => console.warn('[saveBatchEdit] bg:', e.message));
       } catch (e) {
         this.showToast('Error: ' + e.message);
       }
