@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zepo-v44';
+const CACHE_NAME = 'zepo-v45';
 const ASSETS = [
   '/pwa/',
   '/pwa/index.html',
