@@ -3049,10 +3049,10 @@
                     <div class="batch-icon">📦</div>
                     <div class="batch-info">
                       <div class="batch-label" x-text="entry.batch_label"></div>
-                      <div class="batch-meta" x-text="formatDate(entry.date) + ' · ' + entry.items.length + ' items'"></div>
+                      <div class="batch-meta" x-text="formatDate(entry.date) + ' · ' + entry.items.length + ' items · $' + fmtMoney(entry.total)"></div>
                     </div>
                     <div class="batch-right">
-                      <span class="batch-count" x-text="'×' + entry.items.length"></span>
+                      <svg @click.stop="openEditBatch(entry)" class="expense-row-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       <svg class="batch-chevron" :class="{ open: isBatchExpanded(entry.batch_id) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
                     </div>
                   </div>
@@ -3169,10 +3169,10 @@
                         <div class="batch-icon">📦</div>
                         <div class="batch-info">
                           <div class="batch-label" x-text="entry.batch_label"></div>
-                          <div class="batch-meta" x-text="formatTime(entry.created_at) + ' · ' + entry.items.length + ' items'"></div>
+                          <div class="batch-meta" x-text="formatTime(entry.created_at) + ' · ' + entry.items.length + ' items · $' + fmtMoney(entry.total)"></div>
                         </div>
                         <div class="batch-right">
-                          <span class="batch-count" x-text="'×' + entry.items.length"></span>
+                          <svg @click.stop="openEditBatch(entry)" class="expense-row-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                           <svg class="batch-chevron" :class="{ open: isBatchExpanded(entry.batch_id) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
                         </div>
                       </div>
@@ -4842,7 +4842,7 @@
               <button class="approve-back" @click="sheetOpen = false" title="Volver">
                 <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
               </button>
-              <div class="approve-title" x-text="editingExpense ? 'Editar gasto' : 'Añadir registro'"></div>
+              <div class="approve-title" x-text="editingBatch ? 'Editar grupo' : (editingExpense ? 'Editar gasto' : 'Añadir registro')"></div>
               <button class="approve-close" @click="sheetOpen = false" title="Cancelar">
                 <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
@@ -4853,7 +4853,7 @@
 
               <!-- ═════════ CREATE MODE: nuevo orden ═════════ -->
               <!-- TIPO segmented pill (estilo Mensual/Anual) -->
-              <div :style="{ display: 'flex', background: 'var(--surface)', padding: '4px', borderRadius: '12px', marginBottom: '10px', border: '1px solid var(--border)' }">
+              <div x-show="!editingBatch" :style="{ display: 'flex', background: 'var(--surface)', padding: '4px', borderRadius: '12px', marginBottom: '10px', border: '1px solid var(--border)' }">
                 <div @click="if (form.is_income) { form.is_income = false; form.category = ''; parsedItems = []; analyzed = false; }" style="flex:1;height:36px;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.18s;letter-spacing:-0.2px;" :style="{ background: !form.is_income ? 'var(--bg)' : 'transparent', color: !form.is_income ? 'var(--text)' : 'var(--muted)', boxShadow: !form.is_income ? '0 1px 3px rgba(0,0,0,0.18)' : 'none' }">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><polyline points="17 18 23 18 23 12"/><path d="M23 18l-9.5-9.5-5 5L1 6"/></svg>
                   Gasto
@@ -4874,7 +4874,7 @@
               </div>
 
               <!-- DESCRIBE CARD con iconos inline (mic + foto + archivo) -->
-              <div x-show="!editingExpense && !receiptPreview && !importedFile" style="margin-bottom:12px;">
+              <div x-show="!editingExpense && !editingBatch && !receiptPreview && !importedFile" style="margin-bottom:12px;">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
                   <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   <div style="font-size:14px;font-weight:700;letter-spacing:-0.2px;">Describe el registro</div>
@@ -5245,7 +5245,7 @@
                   <template x-if="!saving">
                     <span style="display:flex;align-items:center;gap:8px;">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><polyline points="20 6 9 17 4 12"/></svg>
-                      <span x-text="editingExpense ? 'Guardar cambios' : (parsedItems.length >= 2 ? 'Guardar ' + parsedItems.length + ' registros' : (parsedItems.length === 1 && !form.is_split ? 'Guardar registro' : 'Aprobar'))"></span>
+                      <span x-text="editingBatch ? ('Guardar ' + parsedItems.length + ' registros') : (editingExpense ? 'Guardar cambios' : (parsedItems.length >= 2 ? 'Guardar ' + parsedItems.length + ' registros' : (parsedItems.length === 1 && !form.is_split ? 'Guardar registro' : 'Aprobar')))"></span>
                     </span>
                   </template>
                   <span x-show="saving">Guardando...</span>
@@ -5254,6 +5254,9 @@
                 <!-- Delete (edit mode only) -->
                 <button class="delete-btn" x-show="editingExpense" @click="deleteExpense" style="margin-top:8px;">
                   Eliminar gasto
+                </button>
+                <button class="delete-btn" x-show="editingBatch" @click="deleteBatch" style="margin-top:8px;">
+                  Eliminar grupo completo
                 </button>
               </div>
 
@@ -6247,6 +6250,7 @@ function zepoApp() {
     toast: '',
     sheetOpen: false,
     editingExpense: null,
+    editingBatch: null,
     saving: false,
     authMode: 'login',
     authEmail: '',
@@ -7095,73 +7099,19 @@ function zepoApp() {
       this.receiptPreview = null;
     },
 
-    async handleFileImport(event) {
+    handleFileImport(event) {
       const file = event.target.files?.[0];
       if (!file) return;
-      const ext = (file.name.split('.').pop() || '').toLowerCase();
+      const ext = (file.name.split('.').pop() || '').toUpperCase().slice(0, 4);
       const sizeKb = Math.round(file.size / 1024);
-
-      if (ext === 'pdf') {
-        if (sizeKb > 5120) { this.showToast('PDF muy grande (máx 5 MB)'); return; }
-        this.analyzing = true;
-        this.analyzed = false;
-        this.parsedItems = [];
-        this.importedFile = null;
-        try {
-          const text = await this._extractPdfText(file);
-          if (!text || text.length < 20) { this.showToast('No se pudo extraer texto del PDF'); this.analyzing = false; return; }
-          const session = await sb.auth.getSession();
-          const token = session?.data?.session?.access_token;
-          if (!token) { this.showToast('Sesión expirada'); this.analyzing = false; return; }
-          const res = await withTimeout(fetch(SUPABASE_URL + '/functions/v1/parse-bank-statement', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-            body: JSON.stringify({ text }),
-          }), 30000, 'parse-pdf');
-          const data = await res.json();
-          if (data.error) throw new Error(data.error);
-          if (!data.transactions || data.transactions.length === 0) { this.showToast('No se detectaron transacciones'); this.analyzing = false; return; }
-          this.parsedItems = data.transactions.map(t => ({
-            amount: t.amount,
-            category: t.category,
-            description: t.description,
-            date: t.date,
-            is_income: t.is_income,
-          }));
-          this.form.amount = this.parsedItems.reduce((s, p) => s + p.amount, 0).toFixed(2);
-          this.form.date = this.parsedItems[0]?.date || localDate();
-          this.analyzed = true;
-          this.showToast(data.count + ' transacciones detectadas');
-        } catch (e) {
-          console.error('[handleFileImport] PDF error:', e);
-          this.showToast('Error al procesar PDF: ' + (e.message || e));
-        }
-        this.analyzing = false;
-      } else if (['csv', 'xlsx', 'xls', 'xml'].includes(ext)) {
-        const sizeStr = sizeKb >= 1024 ? (sizeKb / 1024).toFixed(1) + ' MB' : sizeKb + ' KB';
-        this.importedFile = { name: file.name, ext: ext.toUpperCase(), meta: sizeStr, raw: file };
-        this.importedExpenses = [];
-      } else {
-        this.showToast('Formato no soportado. Usa PDF, CSV o XLSX.');
-      }
-    },
-
-    async _extractPdfText(file) {
-      if (!window.pdfjsLib) {
-        const pdfjs = await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs');
-        window.pdfjsLib = pdfjs;
-        pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
-      }
-      const buf = await file.arrayBuffer();
-      const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
-      const pages = [];
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        const text = content.items.map(item => item.str).join(' ');
-        pages.push(text);
-      }
-      return pages.join('\n--- PAGE BREAK ---\n');
+      const sizeStr = sizeKb >= 1024 ? (sizeKb / 1024).toFixed(1) + ' MB' : sizeKb + ' KB';
+      this.importedFile = {
+        name: file.name,
+        ext: ext || 'FILE',
+        meta: sizeStr,
+        raw: file,
+      };
+      this.importedExpenses = [];
     },
 
     splitColorPalette: ['#00F0FF', '#7000FF', '#FFB800', '#FF6B6B', '#00E5A0', '#7FB8FF', '#FF8AC4', '#B794F6'],
@@ -7543,6 +7493,7 @@ function zepoApp() {
 
     openNew() {
       this.editingExpense = null;
+      this.editingBatch = null;
       this.inputMode = 'texto';
       this.saving = false;
       this.analyzing = false;
@@ -7598,7 +7549,75 @@ function zepoApp() {
       this.sheetOpen = true;
     },
 
+    openEditBatch(batch) {
+      this.editingExpense = null;
+      this.editingBatch = batch.batch_id;
+      this.saving = false;
+      this.analyzing = false;
+      this.analyzed = true;
+      this.voiceTranscript = '';
+      this.importedFile = null;
+      this.importedExpenses = [];
+      this.catDropdownOpen = false;
+      this.removeReceipt();
+      this.parsedItems = batch.items.map(exp => ({
+        _existingId: exp.id,
+        description: exp.description || '',
+        amount: exp.amount,
+        category: exp.category,
+        is_income: !!exp.is_income,
+        emoji: this.getCatEmoji(exp.category),
+        label: this.getCatLabel(exp.category),
+        color: this.getCatColor(exp.category),
+      }));
+      const first = batch.items[0];
+      this.form = {
+        amount: batch.items.reduce((s, e) => s + e.amount, 0).toFixed(2),
+        description: '',
+        category: first?.category || '',
+        date: first?.date || localDate(),
+        is_income: first?.is_income || false,
+        is_split: false,
+        split_persona: '',
+        split_pct: '',
+        split_people: [],
+      };
+      this.sheetOpen = true;
+    },
+
+    async deleteBatch() {
+      if (!this.editingBatch) return;
+      const batchItems = this.expenses.filter(e => e.batch_id === this.editingBatch);
+      if (!batchItems.length) return;
+      if (!confirm('¿Eliminar los ' + batchItems.length + ' registros de este grupo? No se puede deshacer.')) return;
+      try {
+        const ids = batchItems.map(e => e.id).filter(id => !String(id).startsWith('temp_'));
+        if (ids.length > 0) {
+          try {
+            await withTimeout(sb.from('expenses').delete().in('id', ids).then(r => { if (r.error) throw r.error; return r; }), 4000, 'deleteBatch');
+          } catch (e) {
+            console.warn('[deleteBatch] fallback REST:', e.message);
+            for (const id of ids) { await sbRestDelete('expenses', { id }); }
+          }
+        }
+        this.expenses = this.expenses.filter(e => e.batch_id !== this.editingBatch);
+        try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
+        this.sheetOpen = false;
+        this.editingBatch = null;
+        this.parsedItems = [];
+        this.showToast(batchItems.length + ' registros eliminados');
+        Promise.all([this.loadExpenses(), this.loadSplits()]).catch(e => console.warn('[deleteBatch] bg:', e.message));
+      } catch (e) {
+        console.error('deleteBatch error:', e);
+        this.showToast('Error: ' + e.message);
+      }
+    },
+
     async saveExpense() {
+      // Batch edit mode: delete old items, re-insert updated ones
+      if (this.editingBatch && this.parsedItems && this.parsedItems.length >= 1) {
+        return this.saveBatchEdit();
+      }
       // Multi-item save: 2+ entradas → saveMultiItems siempre. 1 entrada sin split también va por aquí (lista uniforme).
       if (!this.editingExpense && this.parsedItems && this.parsedItems.length >= 2) {
         return this.saveMultiItems();
@@ -7789,6 +7808,59 @@ function zepoApp() {
         try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
         // Reload in background to get real IDs
         this.loadExpenses().catch(e => console.warn('[saveMultiItems] bg reload:', e.message));
+      } catch (e) {
+        this.showToast('Error: ' + e.message);
+      }
+      this.saving = false;
+    },
+
+    async saveBatchEdit() {
+      this.saving = true;
+      try {
+        const batchId = this.editingBatch;
+        const date = this.form.date || localDate();
+        const validItems = this.parsedItems.filter(it => it.amount > 0 && it.category);
+        if (validItems.length === 0) { this.showToast('No hay items válidos'); this.saving = false; return; }
+        const firstCat = CAT_MAP[validItems[0].category]?.label || validItems[0].category;
+        const batchLabel = firstCat + ' — ' + new Date(date + 'T12:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
+        // Delete old batch items from DB
+        const oldIds = this.expenses.filter(e => e.batch_id === batchId).map(e => e.id).filter(id => !String(id).startsWith('temp_'));
+        if (oldIds.length > 0) {
+          try {
+            await withTimeout(sb.from('expenses').delete().in('id', oldIds).then(r => { if (r.error) throw r.error; return r; }), 4000, 'batchEdit-delete');
+          } catch (e) {
+            console.warn('[saveBatchEdit] delete fallback:', e.message);
+            for (const id of oldIds) { await sbRestDelete('expenses', { id }); }
+          }
+        }
+        // Insert updated items with same batch_id
+        const rows = validItems.map(it => ({
+          user_id: this.user.id,
+          amount: it.amount,
+          category: it.category,
+          description: it.description,
+          date,
+          is_income: !!it.is_income,
+          is_split: false,
+          batch_id: validItems.length > 1 ? batchId : null,
+          batch_label: validItems.length > 1 ? batchLabel : null,
+        }));
+        try {
+          await withTimeout(sb.from('expenses').insert(rows).then(r => { if (r.error) throw r.error; return r; }), 3000, 'batchEdit-insert');
+        } catch (e) {
+          console.warn('[saveBatchEdit] insert fallback:', e.message);
+          await sbRestInsert('expenses', rows);
+        }
+        // Optimistic update
+        this.expenses = this.expenses.filter(e => e.batch_id !== batchId);
+        const now = new Date().toISOString();
+        rows.forEach((r, i) => this.expenses.unshift({ ...r, id: 'temp_batch_' + Date.now() + '_' + i, created_at: now }));
+        try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
+        this.parsedItems = [];
+        this.editingBatch = null;
+        this.sheetOpen = false;
+        this.showToast(rows.length + ' registros actualizados');
+        this.loadExpenses().catch(e => console.warn('[saveBatchEdit] bg:', e.message));
       } catch (e) {
         this.showToast('Error: ' + e.message);
       }
