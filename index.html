@@ -643,16 +643,17 @@
       display: flex; align-items: center; gap: 5px;
     }
     .batch-right {
-      display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+      display: flex; align-items: center; gap: 6px; flex-shrink: 0;
     }
-    .batch-count {
-      font-size: 10px; font-weight: 700; padding: 2px 7px;
-      border-radius: 9999px; letter-spacing: 0.3px;
-      background: rgba(0,240,255,0.12); color: var(--cyan);
+    .batch-amount {
+      font-size: 15px; font-weight: 700; letter-spacing: -0.3px;
+      text-align: right; white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+      position: relative;
     }
     .batch-chevron {
       transition: transform 0.2s ease;
-      color: var(--dim);
+      color: var(--cyan); opacity: 0.6;
     }
     .batch-chevron.open { transform: rotate(90deg); }
     .batch-subitems {
@@ -967,23 +968,24 @@
 
     /* ─── CD: Category grid (single source of truth, no duplicates) ─── */
     .cd-cat-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+      display: flex; flex-wrap: wrap; gap: 8px;
     }
     .cd-cat-tile {
-      display: flex; flex-direction: column; align-items: center; gap: 6px;
-      padding: 10px 6px; border-radius: 12px;
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 12px; border-radius: 10px;
       background: var(--surface); border: 1px solid var(--border);
       cursor: pointer; transition: transform 0.1s, border-color 0.2s, background 0.2s;
       font-family: inherit;
     }
     .cd-cat-tile:active { transform: scale(0.96); }
     .cd-cat-tile-icon {
-      width: 32px; height: 32px; border-radius: 9px;
-      display: flex; align-items: center; justify-content: center; font-size: 15px;
+      width: 24px; height: 24px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center; font-size: 13px;
+      flex-shrink: 0;
     }
     .cd-cat-tile-label {
-      font-size: 10px; color: var(--text); font-weight: 600; text-align: center;
-      line-height: 1.2; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      font-size: 12px; color: var(--text); font-weight: 600;
+      white-space: nowrap;
     }
     .cd-cat-tile-active .cd-cat-tile-label { color: var(--text); }
 
@@ -3049,12 +3051,15 @@
                     <div class="batch-icon">📦</div>
                     <div class="batch-info">
                       <div class="batch-label" x-text="entry.batch_label"></div>
-                      <div class="batch-meta" x-text="formatDate(entry.date) + ' · ' + entry.items.length + ' items · $' + fmtMoney(entry.total)"></div>
+                      <div class="batch-meta" x-text="formatDate(entry.date) + ' · ' + entry.items.length + ' items'"></div>
                     </div>
                     <div class="batch-right">
+                      <div class="batch-amount" x-text="'-$' + fmtMoney(entry.total)"></div>
                       <svg @click.stop="openEditBatch(entry)" class="expense-row-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                      <svg class="batch-chevron" :class="{ open: isBatchExpanded(entry.batch_id) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
                     </div>
+                  </div>
+                  <div style="display:flex;justify-content:flex-end;margin-top:-6px;margin-bottom:2px;padding-right:2px;">
+                    <svg @click="toggleBatch(entry.batch_id)" class="batch-chevron" :class="{ open: isBatchExpanded(entry.batch_id) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16" style="cursor:pointer;padding:4px;"><polyline points="6 9 12 15 18 9"/></svg>
                   </div>
                   <div class="batch-subitems" x-show="isBatchExpanded(entry.batch_id)" x-transition.duration.200ms>
                     <template x-for="exp in entry.items" :key="exp.id">
@@ -3067,6 +3072,7 @@
                           <div class="expense-meta" x-text="formatDate(exp.date)"></div>
                         </div>
                         <div class="expense-amount" :class="{ income: exp.is_income }" x-text="(exp.is_income ? '+' : '-') + '$' + fmtMoney(exp.amount)"></div>
+                        <svg class="expense-row-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       </div>
                     </template>
                   </div>
@@ -3169,12 +3175,15 @@
                         <div class="batch-icon">📦</div>
                         <div class="batch-info">
                           <div class="batch-label" x-text="entry.batch_label"></div>
-                          <div class="batch-meta" x-text="formatTime(entry.created_at) + ' · ' + entry.items.length + ' items · $' + fmtMoney(entry.total)"></div>
+                          <div class="batch-meta" x-text="formatTime(entry.created_at) + ' · ' + entry.items.length + ' items'"></div>
                         </div>
                         <div class="batch-right">
+                          <div class="batch-amount" x-text="'-$' + fmtMoney(entry.total)"></div>
                           <svg @click.stop="openEditBatch(entry)" class="expense-row-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                          <svg class="batch-chevron" :class="{ open: isBatchExpanded(entry.batch_id) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
                         </div>
+                      </div>
+                      <div style="display:flex;justify-content:flex-end;margin-top:-6px;margin-bottom:2px;padding-right:2px;">
+                        <svg @click="toggleBatch(entry.batch_id)" class="batch-chevron" :class="{ open: isBatchExpanded(entry.batch_id) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16" style="cursor:pointer;padding:4px;"><polyline points="6 9 12 15 18 9"/></svg>
                       </div>
                       <div class="batch-subitems" x-show="isBatchExpanded(entry.batch_id)" x-transition.duration.200ms>
                         <template x-for="exp in entry.items" :key="exp.id">
