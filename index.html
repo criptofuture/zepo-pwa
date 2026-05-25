@@ -5211,7 +5211,7 @@
               </div>
 
               <!-- SPLIT SECTION — CD: multi-person with proportion bar -->
-              <div style="border-radius:14px;overflow:hidden;margin-bottom:12px;" :style="form.is_split ? { background: 'rgba(0,240,255,0.03)', border: '1px solid var(--cyan)' } : { background: 'var(--surface)', border: '1px solid var(--border)' }">
+              <div style="border-radius:14px;margin-bottom:12px;" :style="form.is_split ? { background: 'rgba(0,240,255,0.03)', border: '1px solid var(--cyan)', overflow: splitPickerIdx >= 0 ? 'visible' : 'hidden' } : { background: 'var(--surface)', border: '1px solid var(--border)', overflow: 'hidden' }">
                 <div @click="toggleSplit()" style="padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;">
                   <div style="width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;" :style="{ background: form.is_split ? 'rgba(0,240,255,0.12)' : 'var(--bg)' }">
                     <svg viewBox="0 0 24 24" fill="none" :stroke="form.is_split ? 'var(--cyan)' : 'var(--muted)'" stroke-width="2" width="15" height="15"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
