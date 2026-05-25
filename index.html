@@ -204,7 +204,7 @@
       overflow-y: auto;
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
-      padding-bottom: calc(80px + var(--safe-bottom));
+      padding-bottom: calc(100px + var(--safe-bottom));
     }
     .screen-header {
       padding: 16px 20px;
@@ -219,13 +219,13 @@
     .tab-bar {
       position: absolute;
       bottom: 0; left: 0; right: 0;
-      height: calc(52px + var(--safe-bottom));
+      height: calc(84px + var(--safe-bottom));
       background: var(--surface);
       border-top: 1px solid var(--border);
       display: flex;
       justify-content: space-around;
       align-items: flex-start;
-      padding-top: 6px;
+      padding-top: 10px;
       padding-bottom: var(--safe-bottom);
       z-index: 50;
     }
@@ -308,7 +308,7 @@
     /* ═══ FAB ═══ */
     .fab {
       position: absolute;
-      bottom: calc(24px + var(--safe-bottom));
+      bottom: calc(38px + var(--safe-bottom));
       left: 50%;
       transform: translateX(-50%);
       width: 64px; height: 64px;
@@ -752,7 +752,7 @@
     }
     .approve-header {
       display: flex; align-items: center; gap: 12px;
-      padding: calc(var(--safe-top) + 14px) 20px 12px;
+      padding: 14px 20px 12px;
       position: sticky; top: 0; background: var(--bg); z-index: 10;
     }
     .approve-back {
@@ -4873,7 +4873,7 @@
 
               <!-- ═════════ CREATE MODE: nuevo orden ═════════ -->
               <!-- TIPO segmented pill (estilo Mensual/Anual) -->
-              <div x-show="!editingBatch" style="display:flex;background:var(--surface);padding:4px;border-radius:12px;margin-bottom:10px;border:1px solid var(--border);">
+              <div x-show="!editingBatch" :style="{ display: 'flex', background: 'var(--surface)', padding: '4px', borderRadius: '12px', marginBottom: '10px', border: '1px solid var(--border)' }">
                 <div @click="if (form.is_income) { form.is_income = false; form.category = ''; parsedItems = []; analyzed = false; }" style="flex:1;height:36px;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.18s;letter-spacing:-0.2px;" :style="{ background: !form.is_income ? 'var(--bg)' : 'transparent', color: !form.is_income ? 'var(--text)' : 'var(--muted)', boxShadow: !form.is_income ? '0 1px 3px rgba(0,0,0,0.18)' : 'none' }">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><polyline points="17 18 23 18 23 12"/><path d="M23 18l-9.5-9.5-5 5L1 6"/></svg>
                   Gasto
@@ -4953,37 +4953,6 @@
                   <span><span x-text="parsedItems.length"></span> <span x-text="parsedItems.length === 1 ? 'ELEMENTO DETECTADO' : 'ELEMENTOS DETECTADOS'"></span></span>
                   <span x-show="parsedItems.length >= 2" style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:0.4px;">SE GUARDARÁN POR SEPARADO</span>
                 </div>
-
-                <!-- Review warning banner (PDF imports with many items) -->
-                <div x-show="parsedItems.length >= 5" style="margin-bottom:10px;padding:10px 12px;border-radius:10px;background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);display:flex;align-items:flex-start;gap:8px;">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#FFB800" stroke-width="2" width="16" height="16" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                  <div style="font-size:11px;color:var(--text);line-height:1.4;"><strong>Revisa antes de guardar.</strong> La IA puede clasificar incorrectamente o confundir saldos con transacciones. Elimina lo que no corresponda.</div>
-                </div>
-
-                <!-- Hidden bank fees toggle -->
-                <div x-show="hiddenBankFees.length > 0" style="margin-bottom:10px;">
-                  <button type="button" @click="showHiddenFees = !showHiddenFees" style="width:100%;padding:8px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:8px;font-family:inherit;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    <span style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.3px;flex:1;text-align:left;" x-text="(showHiddenFees ? 'Ocultar' : 'Mostrar') + ' ' + hiddenBankFees.length + ' cargos bancarios (ISD, comisiones...)'"></span>
-                    <span style="font-size:11px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;" x-text="'$' + hiddenBankFees.reduce((s,f) => s + f.amount, 0).toFixed(2)"></span>
-                    <svg :style="showHiddenFees && 'transform:rotate(180deg)'" style="transition:transform 0.2s;" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
-                  </button>
-                  <div x-show="showHiddenFees" x-transition style="margin-top:6px;display:flex;flex-direction:column;gap:4px;">
-                    <template x-for="(fee, fi) in hiddenBankFees" :key="'fee_'+fi">
-                      <div style="padding:8px 12px;border-radius:10px;background:var(--surface);border:1px dashed var(--border);display:flex;align-items:center;gap:8px;opacity:0.6;">
-                        <span style="font-size:14px;">🏦</span>
-                        <div style="flex:1;min-width:0;">
-                          <div style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="fee.description"></div>
-                          <div style="font-size:9px;color:var(--muted);" x-text="fee.date"></div>
-                        </div>
-                        <span style="font-size:12px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;" x-text="'$' + fee.amount.toFixed(2)"></span>
-                        <button type="button" @click="parsedItems.push(hiddenBankFees.splice(fi, 1)[0]); form.amount = parsedItems.reduce((s,p) => s + p.amount, 0).toFixed(2)" style="font-size:9px;font-weight:700;color:var(--cyan);background:none;border:none;cursor:pointer;padding:2px 6px;font-family:inherit;">RESTAURAR</button>
-                      </div>
-                    </template>
-                  </div>
-                </div>
-
-                <!-- Items list with date + category subtitle -->
                 <div style="display:flex;flex-direction:column;gap:8px;">
                   <template x-for="(it, idx) in parsedItems" :key="idx">
                     <div style="border-radius:14px;background:var(--surface);border:1px solid var(--border);overflow:hidden;">
@@ -4996,10 +4965,7 @@
                         </div>
                         <div style="flex:1;min-width:0;">
                           <input type="text" x-model="it.description" style="background:transparent;border:none;outline:none;color:var(--text);font-size:13px;font-weight:600;font-family:inherit;width:100%;padding:0;" placeholder="descripción">
-                          <div style="font-size:10px;color:var(--muted);letter-spacing:0.4px;margin-top:2px;">
-                            <span x-text="it.label.toUpperCase()"></span>
-                            <span x-show="it.date" x-text="' · ' + (it.date || '')" style="opacity:0.7;"></span>
-                          </div>
+                          <div style="font-size:10px;color:var(--muted);letter-spacing:0.4px;margin-top:2px;" x-text="it.label.toUpperCase()"></div>
                         </div>
                         <input type="text" inputmode="decimal" :value="it.amount" @input="it.amount = parseFloat($el.value.replace(',', '.')) || 0; form.amount = parsedItems.reduce((s, p) => s + p.amount, 0).toFixed(2)" style="width:80px;text-align:right;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;background:transparent;border:none;outline:none;color:var(--text);font-family:inherit;">
                         <button type="button" @click="removeParsedItem(idx)" style="width:28px;height:28px;border-radius:14px;background:transparent;border:none;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Quitar">
@@ -5017,44 +4983,10 @@
                     </div>
                   </template>
                 </div>
-
-                <!-- Summary footer: total + category breakdown -->
-                <div style="margin-top:10px;padding:10px 14px;border-radius:10px;background:linear-gradient(135deg, rgba(0,240,255,0.06), rgba(112,0,255,0.06));border:1px solid rgba(0,240,255,0.2);">
-                  <div style="display:flex;align-items:center;justify-content:space-between;">
-                    <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--muted);">TOTAL</span>
-                    <span class="gradient-text" style="font-size:18px;font-weight:800;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;" x-text="'$' + parsedItems.reduce((s,p) => s + (parseFloat(p.amount)||0), 0).toFixed(2)"></span>
-                  </div>
-                  <div x-show="parsedItems.length > 5" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,240,255,0.15);display:flex;flex-wrap:wrap;gap:6px;">
-                    <template x-for="cs in parsedCategorySummary" :key="cs.key">
-                      <div style="display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;background:var(--surface);border:1px solid var(--border);">
-                        <span style="font-size:11px;" x-text="cs.emoji"></span>
-                        <span style="font-size:10px;font-weight:600;color:var(--muted);" x-text="cs.count"></span>
-                        <span style="font-size:10px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;" x-text="'$' + cs.total.toFixed(2)"></span>
-                      </div>
-                    </template>
-                  </div>
+                <div style="margin-top:10px;padding:10px 14px;border-radius:10px;background:linear-gradient(135deg, rgba(0,240,255,0.06), rgba(112,0,255,0.06));border:1px solid rgba(0,240,255,0.2);display:flex;align-items:center;justify-content:space-between;">
+                  <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--muted);">TOTAL</span>
+                  <span class="gradient-text" style="font-size:18px;font-weight:800;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;" x-text="'$' + parsedItems.reduce((s,p) => s + (parseFloat(p.amount)||0), 0).toFixed(2)"></span>
                 </div>
-
-                <!-- Reconciliation cross-check (bank vs parser) -->
-                <template x-if="reconciliationStatus">
-                  <div style="margin-top:8px;padding:10px 14px;border-radius:10px;border:1px solid;" :style="{ background: reconciliationStatus.allOk ? 'rgba(0,229,160,0.06)' : 'rgba(255,107,107,0.06)', borderColor: reconciliationStatus.allOk ? 'rgba(0,229,160,0.25)' : 'rgba(255,107,107,0.25)' }">
-                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-                      <svg x-show="reconciliationStatus.allOk" viewBox="0 0 24 24" fill="none" stroke="#00E5A0" stroke-width="2.5" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
-                      <svg x-show="!reconciliationStatus.allOk" viewBox="0 0 24 24" fill="none" stroke="#FF6B6B" stroke-width="2.5" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                      <span style="font-size:11px;font-weight:700;letter-spacing:0.5px;" :style="{ color: reconciliationStatus.allOk ? '#00E5A0' : '#FF6B6B' }" x-text="reconciliationStatus.allOk ? 'CONCILIACIÓN OK' : 'DIFERENCIAS DETECTADAS'"></span>
-                    </div>
-                    <template x-for="c in reconciliationStatus.checks" :key="c.label">
-                      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);margin-bottom:3px;">
-                        <span x-text="c.ok ? '✓' : '✗'" :style="{ color: c.ok ? '#00E5A0' : '#FF6B6B' }" style="font-weight:700;"></span>
-                        <span x-text="c.label" style="font-weight:600;width:55px;"></span>
-                        <span style="font-variant-numeric:tabular-nums;">Parser: $<span x-text="c.parser.toFixed(2)"></span> (<span x-text="c.count"></span>)</span>
-                        <span style="color:var(--border);">vs</span>
-                        <span style="font-variant-numeric:tabular-nums;">Banco: $<span x-text="c.bank.toFixed(2)"></span> (<span x-text="c.bankCount || '?'"></span>)</span>
-                      </div>
-                    </template>
-                    <div x-show="!reconciliationStatus.allOk" style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.3;">Revisa los montos. La IA puede confundir la columna saldo con crédito/débito.</div>
-                  </div>
-                </template>
               </div>
 
               <!-- DETECTADO preview card (despues de analizar texto) — solo si NO hay parsedItems en lista -->
@@ -5281,7 +5213,17 @@
                       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                         <div style="width:10px;height:10px;border-radius:2px;flex-shrink:0;" :style="'background:' + p.color"></div>
                         <div style="flex:1;height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;padding:0 10px;min-width:0;">
-                          <input x-model="p.name" :placeholder="p.you ? 'Tú' : 'Nombre'" :readonly="p.you === true" :list="p.you === true ? null : 'persona-list'" class="cd-split-name-input" :class="{ 'cd-split-name-you': p.you === true }">
+                          <template x-if="p.you">
+                            <input :value="'Tú'" readonly class="cd-split-name-input cd-split-name-you">
+                          </template>
+                          <template x-if="!p.you">
+                            <select x-model="p.name" class="cd-split-name-input" style="cursor:pointer;">
+                              <option value="" disabled>Elegir amigo</option>
+                              <template x-for="f in friends.filter(fr => !form.split_people.some(sp => sp.name === fr.display_name && sp !== p))" :key="f.user_id">
+                                <option :value="f.display_name" x-text="f.display_name"></option>
+                              </template>
+                            </select>
+                          </template>
                           <template x-if="p.you">
                             <span style="font-size:10px;color:var(--cyan);font-weight:700;margin-left:6px;flex-shrink:0;">· TÚ</span>
                           </template>
@@ -5302,9 +5244,9 @@
 
                     <!-- Actions -->
                     <div style="display:flex;gap:6px;margin-top:12px;">
-                      <button @click="addSplitPerson()" style="flex:1;height:38px;border-radius:10px;background:var(--surface);border:1px dashed var(--cyan);color:var(--cyan);font-weight:600;font-size:12px;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;">
+                      <button @click="addSplitPerson()" :disabled="friends.filter(f => !form.split_people.some(sp => sp.name === f.display_name)).length === 0" style="flex:1;height:38px;border-radius:10px;background:var(--surface);border:1px dashed var(--cyan);color:var(--cyan);font-weight:600;font-size:12px;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;opacity:1;" :style="friends.filter(f => !form.split_people.some(sp => sp.name === f.display_name)).length === 0 ? 'opacity:0.4;cursor:not-allowed' : ''">
                         <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4" width="12" height="12"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        Agregar persona
+                        Agregar amigo
                       </button>
                       <button @click="splitEqual()" style="flex:1;height:38px;border-radius:10px;background:rgba(112,0,255,0.08);border:1px solid rgba(112,0,255,0.3);color:#B794F6;font-weight:600;font-size:12px;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="#B794F6" stroke-width="2" width="12" height="12"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
@@ -5318,11 +5260,7 @@
                       <span x-text="form.is_income ? 'Solo tu parte cuenta como ingreso propio.' : 'Al aprobar, se crearán cobros pendientes en Cobros.'"></span>
                     </div>
 
-                    <datalist id="persona-list">
-                      <template x-for="p in knownPersonas" :key="p">
-                        <option :value="p"></option>
-                      </template>
-                    </datalist>
+                    <!-- Friends-only: no datalist needed, uses <select> from this.friends -->
                   </div>
                 </template>
               </div>
@@ -6387,10 +6325,6 @@ function zepoApp() {
     editingCatLabel: '',
     editingCatEmoji: '',
     parsedItems: [],
-    hiddenBankFees: [],
-    showHiddenFees: false,
-    parsedItemsCollapsed: {},
-    bankReconciliation: null,
     editingParsedCatIdx: -1,
     expandedBatches: [],
     faqOpen: null,
@@ -7191,136 +7125,19 @@ function zepoApp() {
       this.receiptPreview = null;
     },
 
-    // ── Noise patterns: bank fees that are NOT user transactions ──
-    BANK_FEE_PATTERNS: /\b(ISD|IVASD|IMPUESTO ISD|IVA COBRADO|RETENCION|RET\.?\s*FTE|COMISION|REG EN CTA|IMPUESTO SALIDA|IMP\.\s*SALIDA|RET\.\s*IVA|SOL\.\s*DIVISA|COSTO TRANSAC|NOTA DE DEBITO POR IMPUESTO|NOTA DEBITO POR IMP|S\.?\s*O\.?\s*L\.?\s*DIVISA)\b/i,
-
-    async handleFileImport(event) {
+    handleFileImport(event) {
       const file = event.target.files?.[0];
       if (!file) return;
-      const ext = (file.name.split('.').pop() || '').toLowerCase();
+      const ext = (file.name.split('.').pop() || '').toUpperCase().slice(0, 4);
       const sizeKb = Math.round(file.size / 1024);
       const sizeStr = sizeKb >= 1024 ? (sizeKb / 1024).toFixed(1) + ' MB' : sizeKb + ' KB';
-
-      if (ext === 'pdf') {
-        if (sizeKb > 5120) { this.showToast('PDF muy grande (máx 5 MB)'); return; }
-        this.analyzing = true;
-        this.analyzed = false;
-        this.parsedItems = [];
-        this.hiddenBankFees = [];
-        this.showHiddenFees = false;
-        this.parsedItemsCollapsed = {};
-        this.importedFile = null;
-        try {
-          const text = await this._extractPdfText(file);
-          if (!text || text.length < 20) { this.showToast('No se pudo extraer texto del PDF'); this.analyzing = false; return; }
-          const session = await sb.auth.getSession();
-          const token = session?.data?.session?.access_token;
-          if (!token) { this.showToast('Sesión expirada'); this.analyzing = false; return; }
-          const res = await withTimeout(fetch(SUPABASE_URL + '/functions/v1/parse-bank-statement', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-            body: JSON.stringify({ text }),
-          }), 60000, 'parse-pdf');
-          if (!res.ok) throw new Error('Error del servidor: ' + res.status);
-          const data = await res.json();
-          if (data.error) throw new Error(data.error);
-          if (!data.transactions || data.transactions.length === 0) { this.showToast('No se detectaron transacciones'); this.analyzing = false; return; }
-          const allItems = data.transactions.map(t => ({
-            amount: t.amount,
-            category: t.category,
-            description: t.description,
-            date: t.date,
-            is_income: t.is_income,
-            emoji: this.getCatEmoji(t.category),
-            label: this.getCatLabel(t.category),
-            color: this.getCatColor(t.category),
-          }));
-          // Post-process: bank fees (ISD, RETENCION, COMISION, etc.) are ALWAYS debits.
-          // If Gemini marks them as credits, it misread the saldo column — flip to debit.
-          allItems.forEach(it => {
-            if (it.is_income && this.BANK_FEE_PATTERNS.test(it.description)) {
-              it.is_income = false;
-              it.category = 'other';
-              it.emoji = this.getCatEmoji('other');
-              it.label = this.getCatLabel('other');
-              it.color = this.getCatColor('other');
-            }
-          });
-          // Noise filter: ONLY on debits (fee-pattern credits already flipped above)
-          this.hiddenBankFees = allItems.filter(it => !it.is_income && this.BANK_FEE_PATTERNS.test(it.description));
-          this.parsedItems = allItems.filter(it => it.is_income || !this.BANK_FEE_PATTERNS.test(it.description));
-          // Extract bank reconciliation totals for cross-validation
-          this.bankReconciliation = this._extractReconciliation(text);
-          this.form.amount = this.parsedItems.reduce((s, p) => s + p.amount, 0).toFixed(2);
-          this.form.date = this.parsedItems[0]?.date || localDate();
-          this.analyzed = true;
-          const hidden = this.hiddenBankFees.length;
-          this.showToast(this.parsedItems.length + ' transacciones' + (hidden ? ' · ' + hidden + ' cargos bancarios ocultos' : ''));
-        } catch (e) {
-          console.error('[handleFileImport] PDF error:', e);
-          this.showToast('Error al procesar PDF: ' + (e.message || e));
-        }
-        this.analyzing = false;
-      } else if (['csv', 'xlsx', 'xls', 'xml'].includes(ext)) {
-        this.importedFile = {
-          name: file.name,
-          ext: ext.toUpperCase(),
-          meta: sizeStr,
-          raw: file,
-        };
-        this.importedExpenses = [];
-      } else {
-        this.showToast('Formato no soportado. Usa PDF, CSV o XLSX.');
-      }
-    },
-
-    async _extractPdfText(file) {
-      if (!window.pdfjsLib) {
-        const pdfjs = await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs');
-        window.pdfjsLib = pdfjs;
-        pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
-      }
-      const buf = await file.arrayBuffer();
-      const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
-      const pages = [];
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        const text = content.items.map(item => item.str).join(' ');
-        pages.push(text);
-      }
-      return pages.join('\n').replace(/  +/g, ' ').split('\n').filter(l => l.trim()).join('\n');
-    },
-
-    _extractReconciliation(text) {
-      // Parse Banco Pichincha reconciliation section from raw PDF text
-      const recon = {};
-      const lines = text.split('\n');
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        const chunk = lines.slice(i, i + 3).join(' ');
-        if (/SALDO\s+ANTERIOR/i.test(line)) {
-          const nums = [...chunk.matchAll(/([\d,]+\.\d{2})/g)].map(m => parseFloat(m[1].replace(/,/g, '')));
-          if (nums.length) recon.saldoAnterior = nums[0];
-        }
-        if (/DEP[OÓ]SITO\w*\s*[\/\\]\s*CR[EÉ]DITO/i.test(line)) {
-          const cm = chunk.match(/\((\d+)\)/);
-          if (cm) recon.creditCount = parseInt(cm[1]);
-          const nums = [...chunk.matchAll(/([\d,]+\.\d{2})/g)].map(m => parseFloat(m[1].replace(/,/g, '')));
-          if (nums.length) recon.creditTotal = nums[nums.length - 1];
-        }
-        if (/CHEQUES?\s*[\/\\]\s*D[EÉ]BITO/i.test(line)) {
-          const cm = chunk.match(/\((\d+)\)/);
-          if (cm) recon.debitCount = parseInt(cm[1]);
-          const nums = [...chunk.matchAll(/([\d,]+\.\d{2})/g)].map(m => parseFloat(m[1].replace(/,/g, '')));
-          if (nums.length) recon.debitTotal = nums[nums.length - 1];
-        }
-        if (/SALDO\s+ACTUAL/i.test(line)) {
-          const nums = [...chunk.matchAll(/([\d,]+\.\d{2})/g)].map(m => parseFloat(m[1].replace(/,/g, '')));
-          if (nums.length) recon.saldoActual = nums[0];
-        }
-      }
-      return Object.keys(recon).length >= 2 ? recon : null;
+      this.importedFile = {
+        name: file.name,
+        ext: ext || 'FILE',
+        meta: sizeStr,
+        raw: file,
+      };
+      this.importedExpenses = [];
     },
 
     splitColorPalette: ['#00F0FF', '#7000FF', '#FFB800', '#FF6B6B', '#00E5A0', '#7FB8FF', '#FF8AC4', '#B794F6'],
@@ -7335,20 +7152,32 @@ function zepoApp() {
       }
       this.form.is_split = !this.form.is_split;
       if (this.form.is_split && (!this.form.split_people || this.form.split_people.length === 0)) {
+        if (!this.friends || this.friends.length === 0) {
+          this.showToast('Agrega amigos primero en Cuentas → Amigos');
+          this.form.is_split = false;
+          return;
+        }
+        const firstFriend = this.friends[0]?.display_name || '';
         this.form.split_people = [
           { name: 'Tú', pct: 50, you: true, color: this.splitColorPalette[0] },
-          { name: '', pct: 50, color: this.splitColorPalette[1] },
+          { name: firstFriend, pct: 50, color: this.splitColorPalette[1] },
         ];
       }
     },
 
     addSplitPerson() {
+      const usedNames = this.form.split_people.filter(p => !p.you).map(p => p.name);
+      const available = (this.friends || []).filter(f => !usedNames.includes(f.display_name));
+      if (available.length === 0) {
+        this.showToast('No hay más amigos disponibles');
+        return;
+      }
       const used = this.form.split_people.map(p => p.color);
       const nextColor = this.splitColorPalette.find(c => !used.includes(c)) || '#888';
       const n = this.form.split_people.length;
       const equal = Math.floor(100 / (n + 1));
       this.form.split_people.forEach(p => p.pct = equal);
-      this.form.split_people.push({ name: '', pct: 100 - equal * n, color: nextColor });
+      this.form.split_people.push({ name: available[0].display_name, pct: 100 - equal * n, color: nextColor });
     },
 
     removeSplitPerson(idx) {
@@ -7378,47 +7207,6 @@ function zepoApp() {
     get splitSum() {
       if (!this.form.split_people || !this.form.split_people.length) return 0;
       return this.form.split_people.reduce((s, p) => s + (parseFloat(p.pct) || 0), 0);
-    },
-
-    get parsedDateGroups() {
-      const map = {};
-      for (const it of this.parsedItems) {
-        const d = it.date || 'sin-fecha';
-        if (!map[d]) map[d] = { date: d, items: [] };
-        map[d].items.push(it);
-      }
-      return Object.values(map).sort((a, b) => a.date.localeCompare(b.date));
-    },
-
-    get parsedCategorySummary() {
-      const map = {};
-      for (const it of this.parsedItems) {
-        if (!map[it.category]) map[it.category] = { key: it.category, emoji: it.emoji, count: 0, total: 0 };
-        map[it.category].count++;
-        map[it.category].total += it.amount;
-      }
-      return Object.values(map).sort((a, b) => b.total - a.total);
-    },
-
-    get reconciliationStatus() {
-      if (!this.bankReconciliation || this.parsedItems.length === 0) return null;
-      const r = this.bankReconciliation;
-      const all = [...this.parsedItems, ...this.hiddenBankFees];
-      const debits = all.filter(it => !it.is_income);
-      const credits = all.filter(it => it.is_income);
-      const debitSum = Math.round(debits.reduce((s, it) => s + it.amount, 0) * 100) / 100;
-      const creditSum = Math.round(credits.reduce((s, it) => s + it.amount, 0) * 100) / 100;
-      const checks = [];
-      if (r.debitTotal != null) {
-        const diff = Math.abs(debitSum - r.debitTotal);
-        checks.push({ label: 'Débitos', parser: debitSum, bank: r.debitTotal, count: debits.length, bankCount: r.debitCount, diff, ok: diff < 1 });
-      }
-      if (r.creditTotal != null) {
-        const diff = Math.abs(creditSum - r.creditTotal);
-        checks.push({ label: 'Créditos', parser: creditSum, bank: r.creditTotal, count: credits.length, bankCount: r.creditCount, diff, ok: diff < 1 });
-      }
-      const allOk = checks.length > 0 && checks.every(c => c.ok);
-      return { checks, allOk };
     },
 
     async uploadReceipt(expenseId) {
@@ -7753,10 +7541,6 @@ function zepoApp() {
       this.importedExpenses = [];
       this.catDropdownOpen = false;
       this.parsedItems = [];
-      this.hiddenBankFees = [];
-      this.showHiddenFees = false;
-      this.parsedItemsCollapsed = {};
-      this.bankReconciliation = null;
       this.form = {
         amount: '',
         description: '',
@@ -8055,7 +7839,7 @@ function zepoApp() {
             amount: it.amount,
             category: it.category,
             description: it.description,
-            date: it.date || date,
+            date,
             is_income: !!it.is_income,
             is_split: false,
             batch_id: validItems.length > 1 ? batchId : null,
@@ -8069,7 +7853,7 @@ function zepoApp() {
         try {
           await withTimeout(
             sb.from('expenses').insert(rows).then(r => { if (r.error) throw r.error; return r; }),
-            5000, 'multi-insert'
+            3000, 'multi-insert'
           );
         } catch (e) {
           console.warn('[saveMultiItems] sb insert failed, fallback REST:', e.message);
