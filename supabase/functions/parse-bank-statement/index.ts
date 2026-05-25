@@ -32,6 +32,9 @@ REGLAS:
 6. Si hay un saldo, NO lo incluyas como transaccion.
 7. Si hay totales/resumen al final, NO los incluyas.
 8. Si una linea NO es claramente una transaccion (es un encabezado, pie de pagina, informacion de cuenta), IGNORALA.
+9. FORMATO COLUMNAS (bancos ecuatorianos como Pichincha): FECHA | OFICINA | DESCRIPCION | N.DOC | DEBITO | CREDITO | SALDO. La columna SALDO es el balance acumulado, NO es un monto de transaccion — nunca lo incluyas.
+10. NO confundas la columna SALDO con CREDITO. Si ves un numero despues de un debito, probablemente es el saldo restante, no un credito.
+11. Impuestos (ISD, IVASD), retenciones (RETENCION IVASD, RET FTE), comisiones (COMISION), IVA COBRADO, y registros en cuenta (REG EN CTA) son SIEMPRE debitos, nunca creditos.
 
 CATEGORIAS para gastos (debit): food, transport, market, health, rent, fun, shop, coffee, pets, savings, invest_out, gym, education, travel, other
 CATEGORIAS para ingresos (credit): salary, freelance, business, investment, gift, refund, rental, sale, other_income

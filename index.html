@@ -5034,6 +5034,27 @@
                     </template>
                   </div>
                 </div>
+
+                <!-- Reconciliation cross-check (bank vs parser) -->
+                <template x-if="reconciliationStatus">
+                  <div style="margin-top:8px;padding:10px 14px;border-radius:10px;border:1px solid;" :style="{ background: reconciliationStatus.allOk ? 'rgba(0,229,160,0.06)' : 'rgba(255,107,107,0.06)', borderColor: reconciliationStatus.allOk ? 'rgba(0,229,160,0.25)' : 'rgba(255,107,107,0.25)' }">
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                      <svg x-show="reconciliationStatus.allOk" viewBox="0 0 24 24" fill="none" stroke="#00E5A0" stroke-width="2.5" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
+                      <svg x-show="!reconciliationStatus.allOk" viewBox="0 0 24 24" fill="none" stroke="#FF6B6B" stroke-width="2.5" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                      <span style="font-size:11px;font-weight:700;letter-spacing:0.5px;" :style="{ color: reconciliationStatus.allOk ? '#00E5A0' : '#FF6B6B' }" x-text="reconciliationStatus.allOk ? 'CONCILIACIÓN OK' : 'DIFERENCIAS DETECTADAS'"></span>
+                    </div>
+                    <template x-for="c in reconciliationStatus.checks" :key="c.label">
+                      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);margin-bottom:3px;">
+                        <span x-text="c.ok ? '✓' : '✗'" :style="{ color: c.ok ? '#00E5A0' : '#FF6B6B' }" style="font-weight:700;"></span>
+                        <span x-text="c.label" style="font-weight:600;width:55px;"></span>
+                        <span style="font-variant-numeric:tabular-nums;">Parser: $<span x-text="c.parser.toFixed(2)"></span> (<span x-text="c.count"></span>)</span>
+                        <span style="color:var(--border);">vs</span>
+                        <span style="font-variant-numeric:tabular-nums;">Banco: $<span x-text="c.bank.toFixed(2)"></span> (<span x-text="c.bankCount || '?'"></span>)</span>
+                      </div>
+                    </template>
+                    <div x-show="!reconciliationStatus.allOk" style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.3;">Revisa los montos. La IA puede confundir la columna saldo con crédito/débito.</div>
+                  </div>
+                </template>
               </div>
 
               <!-- DETECTADO preview card (despues de analizar texto) — solo si NO hay parsedItems en lista -->
@@ -6369,6 +6390,7 @@ function zepoApp() {
     hiddenBankFees: [],
     showHiddenFees: false,
     parsedItemsCollapsed: {},
+    bankReconciliation: null,
     editingParsedCatIdx: -1,
     expandedBatches: [],
     faqOpen: null,
@@ -7213,8 +7235,22 @@ function zepoApp() {
             label: this.getCatLabel(t.category),
             color: this.getCatColor(t.category),
           }));
-          this.hiddenBankFees = allItems.filter(it => this.BANK_FEE_PATTERNS.test(it.description));
-          this.parsedItems = allItems.filter(it => !this.BANK_FEE_PATTERNS.test(it.description));
+          // Post-process: bank fees (ISD, RETENCION, COMISION, etc.) are ALWAYS debits.
+          // If Gemini marks them as credits, it misread the saldo column — flip to debit.
+          allItems.forEach(it => {
+            if (it.is_income && this.BANK_FEE_PATTERNS.test(it.description)) {
+              it.is_income = false;
+              it.category = 'other';
+              it.emoji = this.getCatEmoji('other');
+              it.label = this.getCatLabel('other');
+              it.color = this.getCatColor('other');
+            }
+          });
+          // Noise filter: ONLY on debits (fee-pattern credits already flipped above)
+          this.hiddenBankFees = allItems.filter(it => !it.is_income && this.BANK_FEE_PATTERNS.test(it.description));
+          this.parsedItems = allItems.filter(it => it.is_income || !this.BANK_FEE_PATTERNS.test(it.description));
+          // Extract bank reconciliation totals for cross-validation
+          this.bankReconciliation = this._extractReconciliation(text);
           this.form.amount = this.parsedItems.reduce((s, p) => s + p.amount, 0).toFixed(2);
           this.form.date = this.parsedItems[0]?.date || localDate();
           this.analyzed = true;
@@ -7254,6 +7290,37 @@ function zepoApp() {
         pages.push(text);
       }
       return pages.join('\n').replace(/  +/g, ' ').split('\n').filter(l => l.trim()).join('\n');
+    },
+
+    _extractReconciliation(text) {
+      // Parse Banco Pichincha reconciliation section from raw PDF text
+      const recon = {};
+      const lines = text.split('\n');
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const chunk = lines.slice(i, i + 3).join(' ');
+        if (/SALDO\s+ANTERIOR/i.test(line)) {
+          const nums = [...chunk.matchAll(/([\d,]+\.\d{2})/g)].map(m => parseFloat(m[1].replace(/,/g, '')));
+          if (nums.length) recon.saldoAnterior = nums[0];
+        }
+        if (/DEP[OÓ]SITO\w*\s*[\/\\]\s*CR[EÉ]DITO/i.test(line)) {
+          const cm = chunk.match(/\((\d+)\)/);
+          if (cm) recon.creditCount = parseInt(cm[1]);
+          const nums = [...chunk.matchAll(/([\d,]+\.\d{2})/g)].map(m => parseFloat(m[1].replace(/,/g, '')));
+          if (nums.length) recon.creditTotal = nums[nums.length - 1];
+        }
+        if (/CHEQUES?\s*[\/\\]\s*D[EÉ]BITO/i.test(line)) {
+          const cm = chunk.match(/\((\d+)\)/);
+          if (cm) recon.debitCount = parseInt(cm[1]);
+          const nums = [...chunk.matchAll(/([\d,]+\.\d{2})/g)].map(m => parseFloat(m[1].replace(/,/g, '')));
+          if (nums.length) recon.debitTotal = nums[nums.length - 1];
+        }
+        if (/SALDO\s+ACTUAL/i.test(line)) {
+          const nums = [...chunk.matchAll(/([\d,]+\.\d{2})/g)].map(m => parseFloat(m[1].replace(/,/g, '')));
+          if (nums.length) recon.saldoActual = nums[0];
+        }
+      }
+      return Object.keys(recon).length >= 2 ? recon : null;
     },
 
     splitColorPalette: ['#00F0FF', '#7000FF', '#FFB800', '#FF6B6B', '#00E5A0', '#7FB8FF', '#FF8AC4', '#B794F6'],
@@ -7331,6 +7398,27 @@ function zepoApp() {
         map[it.category].total += it.amount;
       }
       return Object.values(map).sort((a, b) => b.total - a.total);
+    },
+
+    get reconciliationStatus() {
+      if (!this.bankReconciliation || this.parsedItems.length === 0) return null;
+      const r = this.bankReconciliation;
+      const all = [...this.parsedItems, ...this.hiddenBankFees];
+      const debits = all.filter(it => !it.is_income);
+      const credits = all.filter(it => it.is_income);
+      const debitSum = Math.round(debits.reduce((s, it) => s + it.amount, 0) * 100) / 100;
+      const creditSum = Math.round(credits.reduce((s, it) => s + it.amount, 0) * 100) / 100;
+      const checks = [];
+      if (r.debitTotal != null) {
+        const diff = Math.abs(debitSum - r.debitTotal);
+        checks.push({ label: 'Débitos', parser: debitSum, bank: r.debitTotal, count: debits.length, bankCount: r.debitCount, diff, ok: diff < 1 });
+      }
+      if (r.creditTotal != null) {
+        const diff = Math.abs(creditSum - r.creditTotal);
+        checks.push({ label: 'Créditos', parser: creditSum, bank: r.creditTotal, count: credits.length, bankCount: r.creditCount, diff, ok: diff < 1 });
+      }
+      const allOk = checks.length > 0 && checks.every(c => c.ok);
+      return { checks, allOk };
     },
 
     async uploadReceipt(expenseId) {
@@ -7668,6 +7756,7 @@ function zepoApp() {
       this.hiddenBankFees = [];
       this.showHiddenFees = false;
       this.parsedItemsCollapsed = {};
+      this.bankReconciliation = null;
       this.form = {
         amount: '',
         description: '',
