@@ -204,7 +204,7 @@
       overflow-y: auto;
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
-      padding-bottom: calc(100px + var(--safe-bottom));
+      padding-bottom: calc(80px + var(--safe-bottom));
     }
     .screen-header {
       padding: 16px 20px;
@@ -219,13 +219,13 @@
     .tab-bar {
       position: absolute;
       bottom: 0; left: 0; right: 0;
-      height: calc(84px + var(--safe-bottom));
+      height: calc(52px + var(--safe-bottom));
       background: var(--surface);
       border-top: 1px solid var(--border);
       display: flex;
       justify-content: space-around;
       align-items: flex-start;
-      padding-top: 10px;
+      padding-top: 6px;
       padding-bottom: var(--safe-bottom);
       z-index: 50;
     }
@@ -308,7 +308,7 @@
     /* ═══ FAB ═══ */
     .fab {
       position: absolute;
-      bottom: calc(38px + var(--safe-bottom));
+      bottom: calc(24px + var(--safe-bottom));
       left: 50%;
       transform: translateX(-50%);
       width: 64px; height: 64px;
@@ -752,7 +752,7 @@
     }
     .approve-header {
       display: flex; align-items: center; gap: 12px;
-      padding: 14px 20px 12px;
+      padding: calc(var(--safe-top) + 14px) 20px 12px;
       position: sticky; top: 0; background: var(--bg); z-index: 10;
     }
     .approve-back {
@@ -4873,7 +4873,7 @@
 
               <!-- ═════════ CREATE MODE: nuevo orden ═════════ -->
               <!-- TIPO segmented pill (estilo Mensual/Anual) -->
-              <div x-show="!editingBatch" :style="{ display: 'flex', background: 'var(--surface)', padding: '4px', borderRadius: '12px', marginBottom: '10px', border: '1px solid var(--border)' }">
+              <div x-show="!editingBatch" style="display:flex;background:var(--surface);padding:4px;border-radius:12px;margin-bottom:10px;border:1px solid var(--border);">
                 <div @click="if (form.is_income) { form.is_income = false; form.category = ''; parsedItems = []; analyzed = false; }" style="flex:1;height:36px;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.18s;letter-spacing:-0.2px;" :style="{ background: !form.is_income ? 'var(--bg)' : 'transparent', color: !form.is_income ? 'var(--text)' : 'var(--muted)', boxShadow: !form.is_income ? '0 1px 3px rgba(0,0,0,0.18)' : 'none' }">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><polyline points="17 18 23 18 23 12"/><path d="M23 18l-9.5-9.5-5 5L1 6"/></svg>
                   Gasto
