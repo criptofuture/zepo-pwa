@@ -1131,6 +1131,35 @@
     }
     .cd-split-name-input::placeholder { color: var(--dim); }
     .cd-split-name-you { font-weight: 600; cursor: default; }
+    .cd-split-picker {
+      position: absolute; top: 44px; left: -2px; right: -2px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden; z-index: 90;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      max-height: 200px; overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .cd-split-picker-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .cd-split-picker-item:active { background: rgba(0,240,255,0.08); }
+    .cd-split-picker-avatar {
+      width: 26px; height: 26px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: #000;
+      flex-shrink: 0;
+    }
+    .cd-split-picker-name { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; min-width: 0; }
+    .cd-split-picker-freq { font-size: 10px; color: var(--dim); flex-shrink: 0; }
+    .cd-split-picker-add {
+      color: var(--cyan); font-weight: 600;
+      border-top: 1px solid var(--border);
+    }
+    .cd-split-picker-empty {
+      padding: 14px 12px; font-size: 12px; color: var(--dim); text-align: center;
+    }
     .cd-split-pct-input {
       width: 64px; height: 40px; border-radius: 10px;
       background: var(--surface); border: 1px solid var(--border);
@@ -5212,21 +5241,57 @@
                     <template x-for="(p, pi) in form.split_people" :key="pi">
                       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                         <div style="width:10px;height:10px;border-radius:2px;flex-shrink:0;" :style="'background:' + p.color"></div>
-                        <div style="flex:1;height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;padding:0 10px;min-width:0;">
-                          <template x-if="p.you">
-                            <input :value="'Tú'" readonly class="cd-split-name-input cd-split-name-you">
-                          </template>
-                          <template x-if="!p.you">
-                            <select x-model="p.name" class="cd-split-name-input" style="cursor:pointer;">
-                              <option value="" disabled>Elegir amigo</option>
-                              <template x-for="f in friends.filter(fr => !form.split_people.some(sp => sp.name === fr.display_name && sp !== p))" :key="f.user_id">
-                                <option :value="f.display_name" x-text="f.display_name"></option>
-                              </template>
-                            </select>
-                          </template>
-                          <template x-if="p.you">
-                            <span style="font-size:10px;color:var(--cyan);font-weight:700;margin-left:6px;flex-shrink:0;">· TÚ</span>
-                          </template>
+                        <div style="flex:1;position:relative;min-width:0;">
+                          <div style="height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;padding:0 10px;" :style="splitPickerIdx === pi ? 'border-color:var(--cyan)' : ''">
+                            <template x-if="p.you">
+                              <input value="Tú" readonly class="cd-split-name-input cd-split-name-you">
+                            </template>
+                            <template x-if="!p.you">
+                              <input
+                                :value="splitPickerIdx === pi ? splitPickerQuery : p.name"
+                                @focus="openSplitPicker(pi)"
+                                @input="splitPickerQuery = $el.value"
+                                @keydown.escape="closeSplitPicker()"
+                                @blur="setTimeout(() => closeSplitPicker(), 180)"
+                                :placeholder="p.name ? p.name : 'Buscar o agregar...'"
+                                class="cd-split-name-input"
+                                autocomplete="off"
+                              >
+                            </template>
+                            <template x-if="p.you">
+                              <span style="font-size:10px;color:var(--cyan);font-weight:700;margin-left:6px;flex-shrink:0;">· TÚ</span>
+                            </template>
+                            <template x-if="!p.you && p.name && splitPickerIdx !== pi">
+                              <svg @click="openSplitPicker(pi)" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="12" height="12" style="flex-shrink:0;cursor:pointer;margin-left:4px;"><polyline points="6 9 12 15 18 9"/></svg>
+                            </template>
+                          </div>
+                          <!-- Picker dropdown -->
+                          <div x-show="splitPickerIdx === pi" x-cloak class="cd-split-picker" @mousedown.prevent>
+                            <template x-if="splitPickerOptions.length === 0">
+                              <div class="cd-split-picker-empty">Escribe un nombre para agregar</div>
+                            </template>
+                            <template x-for="opt in splitPickerOptions" :key="opt.name + opt.type">
+                              <div
+                                class="cd-split-picker-item"
+                                :class="{ 'cd-split-picker-add': opt.type === 'new' }"
+                                @mousedown.prevent="selectSplitPerson(pi, opt)"
+                              >
+                                <template x-if="opt.type === 'new'">
+                                  <div class="cd-split-picker-avatar" style="background:var(--cyan);font-size:14px;">+</div>
+                                </template>
+                                <template x-if="opt.type !== 'new'">
+                                  <div class="cd-split-picker-avatar" :style="'background:' + opt.color" x-text="opt.name.charAt(0).toUpperCase()"></div>
+                                </template>
+                                <span class="cd-split-picker-name" x-text="opt.type === 'new' ? 'Agregar \"' + opt.name + '\"' : opt.name"></span>
+                                <template x-if="opt.type === 'friend'">
+                                  <span class="cd-split-picker-freq" style="color:var(--cyan);">amigo</span>
+                                </template>
+                                <template x-if="opt.freq > 0 && opt.type !== 'new'">
+                                  <span class="cd-split-picker-freq" x-text="opt.freq + '×'"></span>
+                                </template>
+                              </div>
+                            </template>
+                          </div>
                         </div>
                         <input type="number" min="0" max="100" x-model.number="p.pct" @input="onSplitPctChange()" class="cd-split-pct-input">
                         <div style="width:70px;height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--cyan);font-variant-numeric:tabular-nums;" x-text="'$' + (parseFloat(form.amount || 0) * (p.pct || 0) / 100).toFixed(2)"></div>
@@ -5244,9 +5309,9 @@
 
                     <!-- Actions -->
                     <div style="display:flex;gap:6px;margin-top:12px;">
-                      <button @click="addSplitPerson()" :disabled="friends.filter(f => !form.split_people.some(sp => sp.name === f.display_name)).length === 0" style="flex:1;height:38px;border-radius:10px;background:var(--surface);border:1px dashed var(--cyan);color:var(--cyan);font-weight:600;font-size:12px;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;opacity:1;" :style="friends.filter(f => !form.split_people.some(sp => sp.name === f.display_name)).length === 0 ? 'opacity:0.4;cursor:not-allowed' : ''">
+                      <button @click="addSplitPerson()" style="flex:1;height:38px;border-radius:10px;background:var(--surface);border:1px dashed var(--cyan);color:var(--cyan);font-weight:600;font-size:12px;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4" width="12" height="12"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        Agregar amigo
+                        Agregar persona
                       </button>
                       <button @click="splitEqual()" style="flex:1;height:38px;border-radius:10px;background:rgba(112,0,255,0.08);border:1px solid rgba(112,0,255,0.3);color:#B794F6;font-weight:600;font-size:12px;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="#B794F6" stroke-width="2" width="12" height="12"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
@@ -6309,6 +6374,8 @@ function zepoApp() {
     histType: 'all',
     homeViewMode: 'expense',
     form: { amount: '', description: '', category: '', date: '', is_income: false, is_split: false, split_persona: '', split_pct: '', split_people: [] },
+    splitPickerIdx: -1,
+    splitPickerQuery: '',
     pendingSplits: [],
     paidSplits: [],
     cobroDetailOpen: false,
@@ -7152,32 +7219,24 @@ function zepoApp() {
       }
       this.form.is_split = !this.form.is_split;
       if (this.form.is_split && (!this.form.split_people || this.form.split_people.length === 0)) {
-        if (!this.friends || this.friends.length === 0) {
-          this.showToast('Agrega amigos primero en Cuentas → Amigos');
-          this.form.is_split = false;
-          return;
-        }
-        const firstFriend = this.friends[0]?.display_name || '';
         this.form.split_people = [
           { name: 'Tú', pct: 50, you: true, color: this.splitColorPalette[0] },
-          { name: firstFriend, pct: 50, color: this.splitColorPalette[1] },
+          { name: '', pct: 50, color: this.splitColorPalette[1] },
         ];
+        // Auto-open picker on the empty second person
+        this.$nextTick(() => { this.splitPickerIdx = 1; this.splitPickerQuery = ''; });
       }
     },
 
     addSplitPerson() {
-      const usedNames = this.form.split_people.filter(p => !p.you).map(p => p.name);
-      const available = (this.friends || []).filter(f => !usedNames.includes(f.display_name));
-      if (available.length === 0) {
-        this.showToast('No hay más amigos disponibles');
-        return;
-      }
       const used = this.form.split_people.map(p => p.color);
       const nextColor = this.splitColorPalette.find(c => !used.includes(c)) || '#888';
       const n = this.form.split_people.length;
       const equal = Math.floor(100 / (n + 1));
       this.form.split_people.forEach(p => p.pct = equal);
-      this.form.split_people.push({ name: available[0].display_name, pct: 100 - equal * n, color: nextColor });
+      this.form.split_people.push({ name: '', pct: 100 - equal * n, color: nextColor });
+      // Auto-open picker on new row
+      this.$nextTick(() => { this.splitPickerIdx = n; this.splitPickerQuery = ''; });
     },
 
     removeSplitPerson(idx) {
@@ -7202,6 +7261,24 @@ function zepoApp() {
         const v = parseFloat(p.pct);
         p.pct = isNaN(v) ? 0 : Math.max(0, Math.min(100, v));
       });
+    },
+
+    openSplitPicker(pi) {
+      if (this.form.split_people[pi]?.you) return;
+      this.splitPickerIdx = pi;
+      this.splitPickerQuery = this.form.split_people[pi]?.name || '';
+    },
+
+    closeSplitPicker() {
+      // If picker closes without selecting and name is empty, keep it
+      this.splitPickerIdx = -1;
+      this.splitPickerQuery = '';
+    },
+
+    selectSplitPerson(pi, opt) {
+      this.form.split_people[pi].name = opt.name;
+      this.splitPickerIdx = -1;
+      this.splitPickerQuery = '';
     },
 
     get splitSum() {
@@ -8168,6 +8245,56 @@ function zepoApp() {
       this.pendingSplits.forEach(e => addAll(e.split_persona));
       (this.paidSplits || []).forEach(e => addAll(e.split_persona));
       return [...names].sort();
+    },
+
+    get personaFrequency() {
+      const freq = {};
+      const count = (raw) => {
+        if (!raw) return;
+        String(raw).split(',').map(s => s.trim()).filter(Boolean).forEach(n => {
+          if (n.toLowerCase() !== 'sin nombre') freq[n] = (freq[n] || 0) + 1;
+        });
+      };
+      this.expenses.forEach(e => count(e.split_persona));
+      this.pendingSplits.forEach(e => count(e.split_persona));
+      (this.paidSplits || []).forEach(e => count(e.split_persona));
+      return freq;
+    },
+
+    get splitPickerOptions() {
+      const query = (this.splitPickerQuery || '').toLowerCase().trim();
+      const pi = this.splitPickerIdx;
+      const usedNames = this.form.split_people
+        .filter((p, i) => !p.you && i !== pi)
+        .map(p => (p.name || '').toLowerCase());
+      const freq = this.personaFrequency;
+      const friendNames = new Set((this.friends || []).map(f => f.display_name.toLowerCase()));
+
+      // Friends not already used
+      const friendOpts = (this.friends || [])
+        .filter(f => !usedNames.includes(f.display_name.toLowerCase()))
+        .map(f => ({ name: f.display_name, type: 'friend', freq: freq[f.display_name] || 0, color: f.avatar_color || '#00F0FF' }));
+
+      // Known personas from history, not friends, not used
+      const knownOpts = Object.keys(freq)
+        .filter(n => !usedNames.includes(n.toLowerCase()) && !friendNames.has(n.toLowerCase()))
+        .map(n => ({ name: n, type: 'known', freq: freq[n], color: '#888' }));
+
+      let all = [...friendOpts, ...knownOpts];
+
+      // Filter by query
+      if (query) all = all.filter(o => o.name.toLowerCase().includes(query));
+
+      // Sort by frequency desc
+      all.sort((a, b) => b.freq - a.freq);
+
+      // If query doesn't match anyone exactly, add "new" option
+      if (query.length >= 2 && !all.some(o => o.name.toLowerCase() === query)) {
+        const cap = query.charAt(0).toUpperCase() + query.slice(1);
+        all.push({ name: cap, type: 'new', freq: 0, color: '#00E5A0' });
+      }
+
+      return all;
     },
 
     get splitsByPersona() {
