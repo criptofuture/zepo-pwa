@@ -4954,7 +4954,10 @@
                         </div>
                         <div style="flex:1;min-width:0;">
                           <input type="text" x-model="it.description" style="background:transparent;border:none;outline:none;color:var(--text);font-size:13px;font-weight:600;font-family:inherit;width:100%;padding:0;" placeholder="descripción">
-                          <div style="font-size:10px;color:var(--muted);letter-spacing:0.4px;margin-top:2px;" x-text="it.label.toUpperCase()"></div>
+                          <div style="font-size:10px;color:var(--muted);letter-spacing:0.4px;margin-top:2px;">
+                            <span x-text="it.label.toUpperCase()"></span>
+                            <span x-show="it.date" x-text="' · ' + (it.date || '')" style="opacity:0.7;"></span>
+                          </div>
                         </div>
                         <input type="text" inputmode="decimal" :value="it.amount" @input="it.amount = parseFloat($el.value.replace(',', '.')) || 0; form.amount = parsedItems.reduce((s, p) => s + p.amount, 0).toFixed(2)" style="width:80px;text-align:right;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;background:transparent;border:none;outline:none;color:var(--text);font-family:inherit;">
                         <button type="button" @click="removeParsedItem(idx)" style="width:28px;height:28px;border-radius:14px;background:transparent;border:none;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Quitar">
@@ -7108,19 +7111,83 @@ function zepoApp() {
       this.receiptPreview = null;
     },
 
-    handleFileImport(event) {
+    async handleFileImport(event) {
       const file = event.target.files?.[0];
       if (!file) return;
-      const ext = (file.name.split('.').pop() || '').toUpperCase().slice(0, 4);
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
       const sizeKb = Math.round(file.size / 1024);
-      const sizeStr = sizeKb >= 1024 ? (sizeKb / 1024).toFixed(1) + ' MB' : sizeKb + ' KB';
-      this.importedFile = {
-        name: file.name,
-        ext: ext || 'FILE',
-        meta: sizeStr,
-        raw: file,
-      };
-      this.importedExpenses = [];
+
+      if (ext === 'pdf') {
+        if (sizeKb > 5120) { this.showToast('PDF muy grande (máx 5 MB)'); return; }
+        this.analyzing = true;
+        this.analyzed = false;
+        this.parsedItems = [];
+        this.importedFile = null;
+        try {
+          const text = await this._extractPdfText(file);
+          if (!text || text.length < 20) { this.showToast('No se pudo extraer texto del PDF'); this.analyzing = false; return; }
+          const session = await sb.auth.getSession();
+          const token = session?.data?.session?.access_token;
+          if (!token) { this.showToast('Sesión expirada'); this.analyzing = false; return; }
+          const res = await withTimeout(fetch(SUPABASE_URL + '/functions/v1/parse-bank-statement', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ text }),
+          }), 60000, 'parse-pdf');
+          if (!res.ok) throw new Error('Error del servidor: ' + res.status);
+          const data = await res.json();
+          if (data.error) throw new Error(data.error);
+          if (!data.transactions || data.transactions.length === 0) { this.showToast('No se detectaron transacciones'); this.analyzing = false; return; }
+          this.parsedItems = data.transactions.map(t => ({
+            amount: t.amount,
+            category: t.category,
+            description: t.description,
+            date: t.date,
+            is_income: t.is_income,
+            emoji: this.getCatEmoji(t.category),
+            label: this.getCatLabel(t.category),
+            color: this.getCatColor(t.category),
+          }));
+          this.form.amount = this.parsedItems.reduce((s, p) => s + p.amount, 0).toFixed(2);
+          this.form.date = this.parsedItems[0]?.date || localDate();
+          this.analyzed = true;
+          this.showToast(data.transactions.length + ' transacciones detectadas');
+        } catch (e) {
+          console.error('[handleFileImport] PDF error:', e);
+          this.showToast('Error al procesar PDF: ' + (e.message || e));
+        }
+        this.analyzing = false;
+      } else if (['csv', 'xlsx', 'xls', 'xml'].includes(ext)) {
+        const sizeStr = sizeKb >= 1024 ? (sizeKb / 1024).toFixed(1) + ' MB' : sizeKb + ' KB';
+        this.importedFile = {
+          name: file.name,
+          ext: ext.toUpperCase(),
+          meta: sizeStr,
+          raw: file,
+        };
+        this.importedExpenses = [];
+      } else {
+        this.showToast('Formato no soportado. Usa PDF, CSV o XLSX.');
+      }
+    },
+
+    async _extractPdfText(file) {
+      if (!window.pdfjsLib) {
+        const pdfjs = await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs');
+        window.pdfjsLib = pdfjs;
+        pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
+      }
+      const buf = await file.arrayBuffer();
+      const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+      const pages = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const text = content.items.map(item => item.str).join(' ');
+        pages.push(text);
+      }
+      // Clean: collapse multiple spaces, remove blank lines
+      return pages.join('\n').replace(/  +/g, ' ').split('\n').filter(l => l.trim()).join('\n');
     },
 
     splitColorPalette: ['#00F0FF', '#7000FF', '#FFB800', '#FF6B6B', '#00E5A0', '#7FB8FF', '#FF8AC4', '#B794F6'],
@@ -7788,7 +7855,7 @@ function zepoApp() {
             amount: it.amount,
             category: it.category,
             description: it.description,
-            date,
+            date: it.date || date,
             is_income: !!it.is_income,
             is_split: false,
             batch_id: validItems.length > 1 ? batchId : null,

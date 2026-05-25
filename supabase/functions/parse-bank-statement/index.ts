@@ -111,7 +111,8 @@ serve(async (req) => {
           temperature: 0,
           responseMimeType: "application/json",
           responseSchema: SCHEMA,
-          maxOutputTokens: 8192,
+          maxOutputTokens: 65536,
+          thinkingConfig: { thinkingBudget: 0 },
         },
       }),
     });
