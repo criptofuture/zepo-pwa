@@ -651,11 +651,18 @@
       font-variant-numeric: tabular-nums;
       position: relative;
     }
+    .batch-chevron-badge {
+      position: absolute; bottom: -4px; right: -4px;
+      width: 16px; height: 16px; border-radius: 8px;
+      background: var(--surface2); border: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
     .batch-chevron {
       transition: transform 0.2s ease;
-      color: var(--cyan); opacity: 0.6;
+      color: var(--cyan);
     }
-    .batch-chevron.open { transform: rotate(90deg); }
+    .batch-chevron.open { transform: rotate(180deg); }
     .batch-subitems {
       padding-left: 16px;
       border-left: 2px solid var(--border);
@@ -3054,12 +3061,14 @@
                       <div class="batch-meta" x-text="formatDate(entry.date) + ' · ' + entry.items.length + ' items'"></div>
                     </div>
                     <div class="batch-right">
-                      <div class="batch-amount" x-text="'-$' + fmtMoney(entry.total)"></div>
+                      <div style="position:relative;">
+                        <div class="batch-amount" x-text="'-$' + fmtMoney(entry.total)"></div>
+                        <div class="batch-chevron-badge" @click.stop="toggleBatch(entry.batch_id)">
+                          <svg :class="{ open: isBatchExpanded(entry.batch_id) }" class="batch-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="10" height="10"><polyline points="6 9 12 15 18 9"/></svg>
+                        </div>
+                      </div>
                       <svg @click.stop="openEditBatch(entry)" class="expense-row-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </div>
-                  </div>
-                  <div style="display:flex;justify-content:flex-end;margin-top:-6px;margin-bottom:2px;padding-right:2px;">
-                    <svg @click="toggleBatch(entry.batch_id)" class="batch-chevron" :class="{ open: isBatchExpanded(entry.batch_id) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16" style="cursor:pointer;padding:4px;"><polyline points="6 9 12 15 18 9"/></svg>
                   </div>
                   <div class="batch-subitems" x-show="isBatchExpanded(entry.batch_id)" x-transition.duration.200ms>
                     <template x-for="exp in entry.items" :key="exp.id">
@@ -3178,12 +3187,14 @@
                           <div class="batch-meta" x-text="formatTime(entry.created_at) + ' · ' + entry.items.length + ' items'"></div>
                         </div>
                         <div class="batch-right">
-                          <div class="batch-amount" x-text="'-$' + fmtMoney(entry.total)"></div>
+                          <div style="position:relative;">
+                            <div class="batch-amount" x-text="'-$' + fmtMoney(entry.total)"></div>
+                            <div class="batch-chevron-badge" @click.stop="toggleBatch(entry.batch_id)">
+                              <svg :class="{ open: isBatchExpanded(entry.batch_id) }" class="batch-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="10" height="10"><polyline points="6 9 12 15 18 9"/></svg>
+                            </div>
+                          </div>
                           <svg @click.stop="openEditBatch(entry)" class="expense-row-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </div>
-                      </div>
-                      <div style="display:flex;justify-content:flex-end;margin-top:-6px;margin-bottom:2px;padding-right:2px;">
-                        <svg @click="toggleBatch(entry.batch_id)" class="batch-chevron" :class="{ open: isBatchExpanded(entry.batch_id) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16" style="cursor:pointer;padding:4px;"><polyline points="6 9 12 15 18 9"/></svg>
                       </div>
                       <div class="batch-subitems" x-show="isBatchExpanded(entry.batch_id)" x-transition.duration.200ms>
                         <template x-for="exp in entry.items" :key="exp.id">
@@ -4954,10 +4965,7 @@
                         </div>
                         <div style="flex:1;min-width:0;">
                           <input type="text" x-model="it.description" style="background:transparent;border:none;outline:none;color:var(--text);font-size:13px;font-weight:600;font-family:inherit;width:100%;padding:0;" placeholder="descripción">
-                          <div style="font-size:10px;color:var(--muted);letter-spacing:0.4px;margin-top:2px;">
-                            <span x-text="it.label.toUpperCase()"></span>
-                            <span x-show="it.date" x-text="' · ' + (it.date || '')" style="opacity:0.7;"></span>
-                          </div>
+                          <div style="font-size:10px;color:var(--muted);letter-spacing:0.4px;margin-top:2px;" x-text="it.label.toUpperCase()"></div>
                         </div>
                         <input type="text" inputmode="decimal" :value="it.amount" @input="it.amount = parseFloat($el.value.replace(',', '.')) || 0; form.amount = parsedItems.reduce((s, p) => s + p.amount, 0).toFixed(2)" style="width:80px;text-align:right;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;background:transparent;border:none;outline:none;color:var(--text);font-family:inherit;">
                         <button type="button" @click="removeParsedItem(idx)" style="width:28px;height:28px;border-radius:14px;background:transparent;border:none;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Quitar">
@@ -7111,83 +7119,19 @@ function zepoApp() {
       this.receiptPreview = null;
     },
 
-    async handleFileImport(event) {
+    handleFileImport(event) {
       const file = event.target.files?.[0];
       if (!file) return;
-      const ext = (file.name.split('.').pop() || '').toLowerCase();
+      const ext = (file.name.split('.').pop() || '').toUpperCase().slice(0, 4);
       const sizeKb = Math.round(file.size / 1024);
-
-      if (ext === 'pdf') {
-        if (sizeKb > 5120) { this.showToast('PDF muy grande (máx 5 MB)'); return; }
-        this.analyzing = true;
-        this.analyzed = false;
-        this.parsedItems = [];
-        this.importedFile = null;
-        try {
-          const text = await this._extractPdfText(file);
-          if (!text || text.length < 20) { this.showToast('No se pudo extraer texto del PDF'); this.analyzing = false; return; }
-          const session = await sb.auth.getSession();
-          const token = session?.data?.session?.access_token;
-          if (!token) { this.showToast('Sesión expirada'); this.analyzing = false; return; }
-          const res = await withTimeout(fetch(SUPABASE_URL + '/functions/v1/parse-bank-statement', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-            body: JSON.stringify({ text }),
-          }), 60000, 'parse-pdf');
-          if (!res.ok) throw new Error('Error del servidor: ' + res.status);
-          const data = await res.json();
-          if (data.error) throw new Error(data.error);
-          if (!data.transactions || data.transactions.length === 0) { this.showToast('No se detectaron transacciones'); this.analyzing = false; return; }
-          this.parsedItems = data.transactions.map(t => ({
-            amount: t.amount,
-            category: t.category,
-            description: t.description,
-            date: t.date,
-            is_income: t.is_income,
-            emoji: this.getCatEmoji(t.category),
-            label: this.getCatLabel(t.category),
-            color: this.getCatColor(t.category),
-          }));
-          this.form.amount = this.parsedItems.reduce((s, p) => s + p.amount, 0).toFixed(2);
-          this.form.date = this.parsedItems[0]?.date || localDate();
-          this.analyzed = true;
-          this.showToast(data.transactions.length + ' transacciones detectadas');
-        } catch (e) {
-          console.error('[handleFileImport] PDF error:', e);
-          this.showToast('Error al procesar PDF: ' + (e.message || e));
-        }
-        this.analyzing = false;
-      } else if (['csv', 'xlsx', 'xls', 'xml'].includes(ext)) {
-        const sizeStr = sizeKb >= 1024 ? (sizeKb / 1024).toFixed(1) + ' MB' : sizeKb + ' KB';
-        this.importedFile = {
-          name: file.name,
-          ext: ext.toUpperCase(),
-          meta: sizeStr,
-          raw: file,
-        };
-        this.importedExpenses = [];
-      } else {
-        this.showToast('Formato no soportado. Usa PDF, CSV o XLSX.');
-      }
-    },
-
-    async _extractPdfText(file) {
-      if (!window.pdfjsLib) {
-        const pdfjs = await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs');
-        window.pdfjsLib = pdfjs;
-        pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
-      }
-      const buf = await file.arrayBuffer();
-      const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
-      const pages = [];
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        const text = content.items.map(item => item.str).join(' ');
-        pages.push(text);
-      }
-      // Clean: collapse multiple spaces, remove blank lines
-      return pages.join('\n').replace(/  +/g, ' ').split('\n').filter(l => l.trim()).join('\n');
+      const sizeStr = sizeKb >= 1024 ? (sizeKb / 1024).toFixed(1) + ' MB' : sizeKb + ' KB';
+      this.importedFile = {
+        name: file.name,
+        ext: ext || 'FILE',
+        meta: sizeStr,
+        raw: file,
+      };
+      this.importedExpenses = [];
     },
 
     splitColorPalette: ['#00F0FF', '#7000FF', '#FFB800', '#FF6B6B', '#00E5A0', '#7FB8FF', '#FF8AC4', '#B794F6'],
@@ -7855,7 +7799,7 @@ function zepoApp() {
             amount: it.amount,
             category: it.category,
             description: it.description,
-            date: it.date || date,
+            date,
             is_income: !!it.is_income,
             is_split: false,
             batch_id: validItems.length > 1 ? batchId : null,
