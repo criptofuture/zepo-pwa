@@ -1,0 +1,77 @@
+name: Regression Guard
+
+on:
+  push:
+    branches: [master, main]
+    paths: ['index.html']
+  pull_request:
+    paths: ['index.html']
+
+jobs:
+  check-regression:
+    name: CSS Regression Watchlist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check critical CSS values
+        run: |
+          echo "=== REGRESSION WATCHLIST CHECK ==="
+          FAIL=0
+
+          # 1. Tab bar height must be calc(52px + var(--safe-bottom))
+          if grep -q 'height: calc(84px + var(--safe-bottom))' index.html; then
+            echo "❌ FAIL: tab-bar height is 84px (must be 52px)"
+            FAIL=1
+          else
+            echo "✅ tab-bar height OK"
+          fi
+
+          # 2. Main content padding-bottom must be calc(80px + var(--safe-bottom))
+          if grep -q 'padding-bottom: calc(100px + var(--safe-bottom))' index.html; then
+            echo "❌ FAIL: main-content padding-bottom is 100px (must be 80px)"
+            FAIL=1
+          else
+            echo "✅ main-content padding-bottom OK"
+          fi
+
+          # 3. FAB bottom must be calc(24px + var(--safe-bottom))
+          if grep -q 'bottom: calc(38px + var(--safe-bottom))' index.html; then
+            echo "❌ FAIL: FAB bottom is 38px (must be 24px)"
+            FAIL=1
+          else
+            echo "✅ FAB bottom OK"
+          fi
+
+          # 4. approve-header must have safe-top
+          if grep -q 'approve-header' index.html && grep -A2 'approve-header' index.html | grep -q 'padding: 14px 20px 12px;'; then
+            echo "❌ FAIL: approve-header missing safe-top padding"
+            FAIL=1
+          else
+            echo "✅ approve-header safe-top OK"
+          fi
+
+          # 5. Toggle must use static style, not :style
+          if grep -q 'x-show="!editingBatch" :style="' index.html; then
+            echo "❌ FAIL: toggle uses :style instead of static style (causes x-show display:block bug)"
+            FAIL=1
+          else
+            echo "✅ toggle static style OK"
+          fi
+
+          # 6. Tab bar padding-top must be 6px not 10px
+          if grep -A10 '\.tab-bar {' index.html | grep -q 'padding-top: 10px;'; then
+            echo "❌ FAIL: tab-bar padding-top is 10px (must be 6px)"
+            FAIL=1
+          else
+            echo "✅ tab-bar padding-top OK"
+          fi
+
+          echo ""
+          if [ $FAIL -eq 1 ]; then
+            echo "🚨 REGRESSION DETECTED — fix before deploying!"
+            echo "See: qa-master-checklist.md section 11"
+            exit 1
+          else
+            echo "✅ All regression checks passed"
+          fi
