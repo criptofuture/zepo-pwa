@@ -17,8 +17,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  regression-check:
+    name: Regression Guard (gate)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check critical CSS values
+        run: |
+          FAIL=0
+          grep -q 'height: calc(84px + var(--safe-bottom))' index.html && echo "❌ tab-bar 84px" && FAIL=1
+          grep -q 'padding-bottom: calc(100px + var(--safe-bottom))' index.html && echo "❌ content 100px" && FAIL=1
+          grep -q 'bottom: calc(38px + var(--safe-bottom))' index.html 2>/dev/null && echo "❌ FAB 38px" && FAIL=1
+          grep -A2 'approve-header' index.html | grep -q 'padding: 14px 20px 12px;' && echo "❌ approve-header no safe-top" && FAIL=1
+          grep -q 'x-show="!editingBatch" :style="' index.html && echo "❌ toggle :style" && FAIL=1
+          grep -A10 '\.tab-bar {' index.html | grep -q 'padding-top: 10px;' && echo "❌ tab padding 10px" && FAIL=1
+          [ $FAIL -eq 1 ] && echo "🚨 BLOCKED — regression detected" && exit 1
+          echo "✅ All checks passed"
+
+      - name: Check commit has verification tag
+        run: |
+          MSG=$(git log -1 --pretty=%B)
+          if echo "$MSG" | grep -qi "VERIFIED:"; then
+            echo "✅ Commit includes verification tag"
+          else
+            echo "⚠️ WARNING: commit missing VERIFIED: tag (visual check may not have been done)"
+            echo "Future versions will block deploys without this tag."
+          fi
+
   deploy-pwa:
     name: Deploy PWA → app.zepo.lynoia.com
+    needs: regression-check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
