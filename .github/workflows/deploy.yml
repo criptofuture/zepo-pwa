@@ -22,15 +22,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check critical CSS values
+      - name: Check critical CSS values (v46+ architecture)
         run: |
           FAIL=0
-          grep -q 'height: calc(84px + var(--safe-bottom))' index.html && echo "❌ tab-bar 84px" && FAIL=1
-          grep -q 'padding-bottom: calc(100px + var(--safe-bottom))' index.html && echo "❌ content 100px" && FAIL=1
-          grep -q 'bottom: calc(38px + var(--safe-bottom))' index.html 2>/dev/null && echo "❌ FAB 38px" && FAIL=1
-          grep -A2 'approve-header' index.html | grep -q 'padding: 14px 20px 12px;' && echo "❌ approve-header no safe-top" && FAIL=1
-          grep -q 'x-show="!editingBatch" :style="' index.html && echo "❌ toggle :style" && FAIL=1
-          grep -A10 '\.tab-bar {' index.html | grep -q 'padding-top: 10px;' && echo "❌ tab padding 10px" && FAIL=1
+          grep -A5 '\.tab-bar {' index.html | grep -q 'height: var(--tab-total)' || { echo "❌ tab-bar height must be var(--tab-total)"; FAIL=1; }
+          grep -A8 '\.main-content {' index.html | grep -q 'padding-bottom: var(--content-pad-bottom)' || { echo "❌ main-content must use var(--content-pad-bottom)"; FAIL=1; }
+          grep -A5 '\.fab {' index.html | grep -q 'bottom: var(--fab-bottom)' || { echo "❌ FAB must use var(--fab-bottom)"; FAIL=1; }
+          grep -A5 '\.approve-header {' index.html | grep -q 'var(--overlay-pad-top)' || { echo "❌ approve-header must use var(--overlay-pad-top)"; FAIL=1; }
+          grep -q 'x-show="!editingBatch" :style="' index.html && { echo "❌ toggle uses :style (breaks x-show flex)"; FAIL=1; }
+          grep -q 'var(--card)' index.html && { echo "❌ var(--card) found — does NOT exist"; FAIL=1; }
+          grep -A5 'split-picker-avatar' index.html | grep -q 'color: #000' && { echo "❌ avatar color:#000 invisible"; FAIL=1; }
           [ $FAIL -eq 1 ] && echo "🚨 BLOCKED — regression detected" && exit 1
           echo "✅ All checks passed"
 

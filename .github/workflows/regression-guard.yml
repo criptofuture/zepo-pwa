@@ -16,61 +16,77 @@ jobs:
 
       - name: Check critical CSS values
         run: |
-          echo "=== REGRESSION WATCHLIST CHECK ==="
+          echo "=== REGRESSION WATCHLIST CHECK (v46+ architecture) ==="
           FAIL=0
 
-          # 1. Tab bar height must be calc(52px + var(--safe-bottom))
-          if grep -q 'height: calc(84px + var(--safe-bottom))' index.html; then
-            echo "❌ FAIL: tab-bar height is 84px (must be 52px)"
-            FAIL=1
+          # 1. Tab bar height must use var(--tab-total)
+          if grep -A5 '\.tab-bar {' index.html | grep -q 'height: var(--tab-total)'; then
+            echo "✅ tab-bar height uses --tab-total"
           else
-            echo "✅ tab-bar height OK"
+            echo "❌ FAIL: tab-bar height must be var(--tab-total)"
+            FAIL=1
           fi
 
-          # 2. Main content padding-bottom must be calc(80px + var(--safe-bottom))
-          if grep -q 'padding-bottom: calc(100px + var(--safe-bottom))' index.html; then
-            echo "❌ FAIL: main-content padding-bottom is 100px (must be 80px)"
-            FAIL=1
+          # 2. Main content padding-bottom must use var(--content-pad-bottom)
+          if grep -A8 '\.main-content {' index.html | grep -q 'padding-bottom: var(--content-pad-bottom)'; then
+            echo "✅ main-content padding-bottom uses --content-pad-bottom"
           else
-            echo "✅ main-content padding-bottom OK"
+            echo "❌ FAIL: main-content padding-bottom must be var(--content-pad-bottom)"
+            FAIL=1
           fi
 
-          # 3. FAB bottom must be calc(24px + var(--safe-bottom))
-          if grep -q 'bottom: calc(38px + var(--safe-bottom))' index.html; then
-            echo "❌ FAIL: FAB bottom is 38px (must be 24px)"
-            FAIL=1
+          # 3. FAB bottom must use var(--fab-bottom)
+          if grep -A5 '\.fab {' index.html | grep -q 'bottom: var(--fab-bottom)'; then
+            echo "✅ FAB bottom uses --fab-bottom"
           else
-            echo "✅ FAB bottom OK"
+            echo "❌ FAIL: FAB bottom must be var(--fab-bottom)"
+            FAIL=1
           fi
 
-          # 4. approve-header must have safe-top
-          if grep -q 'approve-header' index.html && grep -A2 'approve-header' index.html | grep -q 'padding: 14px 20px 12px;'; then
-            echo "❌ FAIL: approve-header missing safe-top padding"
-            FAIL=1
+          # 4. approve-header must use var(--overlay-pad-top)
+          if grep -A5 '\.approve-header {' index.html | grep -q 'var(--overlay-pad-top)'; then
+            echo "✅ approve-header uses --overlay-pad-top"
           else
-            echo "✅ approve-header safe-top OK"
+            echo "❌ FAIL: approve-header must use var(--overlay-pad-top)"
+            FAIL=1
           fi
 
-          # 5. Toggle must use static style, not :style
+          # 5. Toggle must use static style, not :style binding
           if grep -q 'x-show="!editingBatch" :style="' index.html; then
-            echo "❌ FAIL: toggle uses :style instead of static style (causes x-show display:block bug)"
+            echo "❌ FAIL: toggle uses :style instead of static style (breaks x-show display:flex)"
             FAIL=1
           else
-            echo "✅ toggle static style OK"
+            echo "✅ toggle uses static style"
           fi
 
-          # 6. Tab bar padding-top must be 6px not 10px
-          if grep -A10 '\.tab-bar {' index.html | grep -q 'padding-top: 10px;'; then
-            echo "❌ FAIL: tab-bar padding-top is 10px (must be 6px)"
+          # 6. Split picker must use var(--surface), NEVER var(--card)
+          if grep -q 'var(--card)' index.html; then
+            echo "❌ FAIL: var(--card) found — this variable does NOT exist. Use var(--surface)"
             FAIL=1
           else
-            echo "✅ tab-bar padding-top OK"
+            echo "✅ no var(--card) references"
+          fi
+
+          # 7. Split picker avatar must use var(--bg), not #000
+          if grep -A5 'split-picker-avatar' index.html | grep -q 'color: #000'; then
+            echo "❌ FAIL: split-picker-avatar uses color:#000 (invisible on dark). Use var(--bg)"
+            FAIL=1
+          else
+            echo "✅ split-picker-avatar color OK"
+          fi
+
+          # 8. Layout tokens must exist in :root
+          if grep -q '\-\-tab-total:' index.html && grep -q '\-\-content-pad-bottom:' index.html && grep -q '\-\-fab-bottom:' index.html; then
+            echo "✅ layout tokens defined in :root"
+          else
+            echo "❌ FAIL: layout tokens (--tab-total, --content-pad-bottom, --fab-bottom) missing from :root"
+            FAIL=1
           fi
 
           echo ""
           if [ $FAIL -eq 1 ]; then
             echo "🚨 REGRESSION DETECTED — fix before deploying!"
-            echo "See: qa-master-checklist.md section 11"
+            echo "See: CLAUDE.md regression watchlist"
             exit 1
           else
             echo "✅ All regression checks passed"

@@ -45,15 +45,68 @@ Gates correctos:
 3. Incluir `VERIFIED: <descripcion>` en el commit message
 4. Si NO pudiste verificar: decir `VERIFIED: no pude verificar X, necesito screenshot de Alvaro`
 
-### Regression watchlist — valores correctos:
+### Regression watchlist — valores correctos (v46+):
 | CSS | Valor correcto |
 |-----|---------------|
-| `.tab-bar height` | `calc(52px + var(--safe-bottom))` |
-| `.main-content padding-bottom` | `calc(80px + var(--safe-bottom))` |
-| `.fab bottom` | `calc(24px + var(--safe-bottom))` |
-| `.approve-header padding` | `calc(var(--safe-top) + 14px) 20px 12px` |
-| Toggle gasto/ingreso | `style="display:flex;..."` (estatico, NO `:style`) |
-| `.tab-bar padding-top` | `6px` |
+| `.tab-bar height` | `var(--tab-total)` |
+| `.main-content padding-bottom` | `var(--content-pad-bottom)` |
+| `.fab bottom` | `var(--fab-bottom)` |
+| `.approve-header padding-top` | `var(--overlay-pad-top)` |
+| Toggle gasto/ingreso | `style="display:flex;..."` (estático, NO `:style`) |
+| `.tab-bar padding-top` | `10px` |
+| `.cd-split-picker background` | `var(--surface)` (NUNCA `var(--card)`) |
+| `.cd-split-picker-avatar color` | `var(--bg)` (NUNCA `#000`) |
+
+## Component Catalog (OBLIGATORIO leer antes de crear cualquier elemento UI)
+
+### Design Tokens (`:root`)
+| Token | Valor | Usar para |
+|-------|-------|-----------|
+| `--bg` | `#0A0A0F` | Fondo principal, texto sobre gradient |
+| `--surface` | `#13131A` | Cards, inputs, containers |
+| `--surface2` | `#191923` | Surface anidada |
+| `--border` | `#1E1E2E` | Bordes de cards |
+| `--border2` | `#2A2A3D` | Bordes secundarios |
+| `--cyan` | `#00F0FF` | Accent principal |
+| `--purple` | `#7000FF` | Accent secundario |
+| `--gradient` | `linear-gradient(135deg, #00F0FF, #7000FF)` | Botones CTA, badges, highlights |
+| `--text` | `#FFFFFF` | Texto principal |
+| `--muted` | `#8888AA` | Labels, hints |
+| `--dim` | `#5A5A75` | Placeholders |
+| `--success` | `#00E5A0` | Ingresos, positivos |
+| `--warning` | `#FFB800` | Alertas |
+| `--danger` | `#FF6B6B` | Errores, gastos altos |
+| `--radius` | `16px` | Cards estándar |
+| `--radius-sm` | `10px` | Chips, inputs |
+| `--radius-pill` | `50px` | Botones CTA |
+| `--tab-total` | `calc(84px + safe-bottom)` | Altura tab bar |
+| `--content-pad-bottom` | `calc(100px + safe-bottom)` | Padding inferior main-content |
+| `--fab-bottom` | `calc(38px + safe-bottom)` | Posicion FAB |
+| `--overlay-pad-top` | `calc(safe-top + 16px)` | Top de overlays |
+
+### Clases de botones
+| Clase | Uso | Forma |
+|-------|-----|-------|
+| `.save-btn` | CTA principal en sheets/modals | Full-width, 52px, pill, gradient, font-700 |
+| `.btn-primary` | CTA secundarios, inline actions | Auto-width, 48px, pill, gradient, font-700 |
+| `.pay-btn` | Solo para pagos | Full-width, 56px, pill, gradient + shadow |
+| `.btn-accept` | Aceptar (verde) | Inline, 10px radius, success bg |
+| `.btn-decline` | Rechazar (rojo) | Inline, 10px radius, danger bg |
+
+### Reglas de estilo para adiciones
+1. **NUNCA usar inline `style=""` para botones** — usar `.save-btn`, `.btn-primary` o `.pay-btn`
+2. **NUNCA inventar hex codes** — solo tokens CSS (`var(--surface)`, `var(--cyan)`, etc.)
+3. **NUNCA usar border-radius hardcoded** — solo `var(--radius)`, `var(--radius-sm)`, `var(--radius-pill)`
+4. **NUNCA `var(--card)`** — NO EXISTE. Usar `var(--surface)` o `var(--surface2)`
+5. **NUNCA `color: #000`** en texto — usar `var(--bg)` (se adapta a themes)
+6. **NUNCA `:style` binding en containers con `x-show`** — rompe `display:flex`. Usar `style=""` estático
+7. **Cards**: `background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius)`
+8. **Inputs**: usar clases `.field-box` + `.field-box-inner` existentes
+9. **Section labels**: usar clase `.cd-section-label`
+10. **Overlays**: usar clase `.safe-overlay` + `padding-top: var(--overlay-pad-top)`
+
+### Variables que NO existen (errores comunes)
+`--card`, `--bg-dark`, `--primary`, `--secondary`, `--accent` — NINGUNA existe. No inventar tokens.
 
 ## Anti-patterns que ya cometimos (no repetir)
 
