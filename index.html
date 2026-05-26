@@ -5190,6 +5190,22 @@
                       </button>
                     </div>
 
+                    <!-- Process button -->
+                    <button @click="processImportedFile()" x-show="parsedItems.length === 0" :disabled="importProcessing" style="width:100%;margin-top:12px;padding:14px;border-radius:12px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;border:none;background:linear-gradient(135deg, var(--cyan), var(--purple));color:#000;transition:opacity 0.2s;" :style="importProcessing && 'opacity:0.6;cursor:wait'">
+                      <template x-if="!importProcessing">
+                        <span style="display:flex;align-items:center;gap:8px;">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                          Procesar con IA
+                        </span>
+                      </template>
+                      <template x-if="importProcessing">
+                        <span style="display:flex;align-items:center;gap:8px;">
+                          <svg viewBox="0 0 24 24" width="16" height="16" style="animation:spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.5" fill="none" stroke-dasharray="60" stroke-linecap="round"/></svg>
+                          Analizando transacciones...
+                        </span>
+                      </template>
+                    </button>
+
                     <div x-show="importedFile && importedExpenses.length > 0" style="margin-top:14px;">
                       <div class="cd-section-label">GASTOS DETECTADOS · <span x-text="importedExpenses.length"></span></div>
                       <div style="background:var(--surface);border-radius:14px;border:1px solid var(--border);padding:4px 14px;">
@@ -6508,6 +6524,10 @@ function zepoApp() {
     voiceTranscript: '',
     importedFile: null,
     importedExpenses: [],
+    importProcessing: false,
+    hiddenBankFees: [],
+    showHiddenFees: false,
+    bankReconciliation: null,
     catDropdownOpen: false,
     // ── Importador CSV/XLSX ──────────────────────────────────────────────────
     importOpen: false,
@@ -7051,6 +7071,72 @@ function zepoApp() {
     get monthIncome() { return this.expenses.filter(e => e.is_income && e.date >= this.currentMonthStart).reduce((s, e) => s + e.amount, 0); },
     get monthBalance() { return this.monthIncome - this.monthTotal; },
 
+    BANK_FEE_PATTERNS: /\b(ISD|IVASD|IMPUESTO ISD|IVA COBRADO|RETENCION|RET\.?\s*FTE|COMISION|REG EN CTA|IMPUESTO SALIDA|IMP\.\s*SALIDA|RET\.\s*IVA|SOL\.\s*DIVISA|COSTO TRANSAC|NOTA DE DEBITO POR IMPUESTO|NOTA DEBITO POR IMP|S\.?\s*O\.?\s*L\.?\s*DIVISA)\b/i,
+
+    get parsedCategorySummary() {
+      const map = {};
+      for (const it of this.parsedItems) {
+        if (!map[it.category]) map[it.category] = { key: it.category, emoji: it.emoji, count: 0, total: 0 };
+        map[it.category].count++;
+        map[it.category].total += it.amount;
+      }
+      return Object.values(map).sort((a, b) => b.total - a.total);
+    },
+
+    get reconciliationStatus() {
+      if (!this.bankReconciliation) return null;
+      const r = this.bankReconciliation;
+      const items = this.parsedItems;
+      const fees = this.hiddenBankFees || [];
+      const all = [...items, ...fees];
+      const debits = all.filter(i => !i.is_income);
+      const credits = all.filter(i => i.is_income);
+      const checks = [];
+      if (r.totalDebits > 0) {
+        const parserDebits = debits.reduce((s, i) => s + i.amount, 0);
+        checks.push({ label: 'Débitos', parser: parserDebits, count: debits.length, bank: r.totalDebits, bankCount: r.debitCount, ok: Math.abs(parserDebits - r.totalDebits) < 1 });
+      }
+      if (r.totalCredits > 0) {
+        const parserCredits = credits.reduce((s, i) => s + i.amount, 0);
+        checks.push({ label: 'Créditos', parser: parserCredits, count: credits.length, bank: r.totalCredits, bankCount: r.creditCount, ok: Math.abs(parserCredits - r.totalCredits) < 1 });
+      }
+      return { allOk: checks.every(c => c.ok), checks };
+    },
+
+    _extractReconciliation(text) {
+      try {
+        const lines = text.split('\n');
+        let saldoAnterior = 0, totalCredits = 0, totalDebits = 0, saldoActual = 0;
+        let creditCount = 0, debitCount = 0;
+        const numRe = /[\d,]+\.\d{2}/;
+        for (let i = 0; i < lines.length; i++) {
+          const chunk = lines.slice(i, i + 3).join(' ').toUpperCase();
+          if (chunk.includes('SALDO ANTERIOR')) {
+            const m = chunk.match(numRe);
+            if (m) saldoAnterior = parseFloat(m[0].replace(/,/g, ''));
+          }
+          if ((chunk.includes('DEPOSITO') || chunk.includes('CREDITO')) && chunk.match(/\d+\s+(DEPOSITO|CREDITO)/i)) {
+            const cntMatch = chunk.match(/(\d+)\s+(DEPOSITO|CREDITO)/i);
+            if (cntMatch) creditCount = parseInt(cntMatch[1]);
+            const m = chunk.match(numRe);
+            if (m) totalCredits = parseFloat(m[0].replace(/,/g, ''));
+          }
+          if ((chunk.includes('CHEQUE') || chunk.includes('DEBITO')) && chunk.match(/\d+\s+(CHEQUE|DEBITO)/i)) {
+            const cntMatch = chunk.match(/(\d+)\s+(CHEQUE|DEBITO)/i);
+            if (cntMatch) debitCount = parseInt(cntMatch[1]);
+            const m = chunk.match(numRe);
+            if (m) totalDebits = parseFloat(m[0].replace(/,/g, ''));
+          }
+          if (chunk.includes('SALDO ACTUAL') || chunk.includes('SALDO DISPONIBLE')) {
+            const m = chunk.match(numRe);
+            if (m) saldoActual = parseFloat(m[0].replace(/,/g, ''));
+          }
+        }
+        if (totalDebits === 0 && totalCredits === 0) return null;
+        return { saldoAnterior, totalCredits, creditCount, totalDebits, debitCount, saldoActual };
+      } catch { return null; }
+    },
+
     get periodStart() {
       const now = new Date();
       if (this.dashPeriod === 'semana') {
@@ -7271,6 +7357,132 @@ function zepoApp() {
         raw: file,
       };
       this.importedExpenses = [];
+    },
+
+    async processImportedFile() {
+      if (!this.importedFile?.raw || this.importProcessing) return;
+      const file = this.importedFile.raw;
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
+
+      if (ext !== 'pdf') {
+        this.showToast('Por ahora solo se procesan archivos PDF');
+        return;
+      }
+
+      this.importProcessing = true;
+      try {
+        // Step 1: Load pdf.js dynamically
+        if (!window.pdfjsLib) {
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs';
+          script.type = 'module';
+          // Use dynamic import instead for ESM
+          const pdfjs = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
+          window.pdfjsLib = pdfjs;
+          pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+        }
+
+        // Step 2: Read file as ArrayBuffer
+        const arrayBuffer = await file.arrayBuffer();
+
+        // Step 3: Extract text from all pages
+        const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const pageText = content.items.map(item => item.str).join(' ');
+          fullText += pageText + '\n--- PAGE BREAK ---\n';
+        }
+
+        if (fullText.trim().length < 20) {
+          this.showToast('No se pudo extraer texto del PDF. Intenta con otro archivo.');
+          this.importProcessing = false;
+          return;
+        }
+
+        // Step 4: Call edge function
+        const session = await sb.auth.getSession();
+        const token = session?.data?.session?.access_token;
+        if (!token) {
+          this.showToast('Sesión expirada. Vuelve a iniciar sesión.');
+          this.importProcessing = false;
+          return;
+        }
+
+        const resp = await fetch('https://vchaxqisbypwwtyjjnjr.supabase.co/functions/v1/parse-bank-statement', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
+          },
+          body: JSON.stringify({ text: fullText }),
+        });
+
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          throw new Error(err.error || 'Error ' + resp.status);
+        }
+
+        const data = await resp.json();
+        const transactions = data.transactions || [];
+
+        if (transactions.length === 0) {
+          this.showToast('No se detectaron transacciones en el PDF');
+          this.importProcessing = false;
+          return;
+        }
+
+        // Step 5: Convert to parsedItems format
+        const cats = [...this.categories, ...this.incomeCategories];
+        const allItems = transactions.map(t => {
+          const cat = cats.find(c => c.key === t.category);
+          return {
+            description: t.description,
+            amount: t.amount,
+            category: t.category,
+            is_income: t.is_income,
+            date: t.date,
+            label: cat?.label || t.category,
+            emoji: cat?.emoji || (t.is_income ? '💰' : '📦'),
+            color: cat?.color || '#888',
+          };
+        });
+
+        // Step 6: Separate bank fees from regular transactions
+        const bankFeePattern = this.BANK_FEE_PATTERNS;
+
+        // Fix: flip known fee-pattern credits to debits (Gemini sometimes misreads saldo column as credit)
+        allItems.forEach(it => {
+          if (it.is_income && bankFeePattern.test(it.description)) {
+            it.is_income = false;
+            const expCat = this.categories.find(c => c.key === 'other') || this.categories[0];
+            it.category = 'other';
+            it.label = expCat?.label || 'Otro';
+            it.emoji = expCat?.emoji || '📦';
+            it.color = expCat?.color || '#888';
+          }
+        });
+
+        const noise = allItems.filter(it => !it.is_income && bankFeePattern.test(it.description));
+        const clean = allItems.filter(it => !noise.includes(it));
+
+        this.parsedItems = clean;
+        this.hiddenBankFees = noise;
+        this.showHiddenFees = false;
+        this.form.amount = clean.reduce((s, p) => s + p.amount, 0).toFixed(2);
+        this.form.is_income = false;
+
+        // Step 7: Extract reconciliation data
+        this.bankReconciliation = this._extractReconciliation(fullText);
+
+        this.showToast(clean.length + ' transacciones detectadas');
+      } catch (e) {
+        console.error('[processImportedFile]', e);
+        this.showToast('Error al procesar: ' + (e.message || 'intenta de nuevo'));
+      } finally {
+        this.importProcessing = false;
+      }
     },
 
     splitColorPalette: ['#00F0FF', '#7000FF', '#FFB800', '#FF6B6B', '#00E5A0', '#7FB8FF', '#FF8AC4', '#B794F6'],
@@ -7684,6 +7896,9 @@ function zepoApp() {
       this.importedExpenses = [];
       this.catDropdownOpen = false;
       this.parsedItems = [];
+      this.hiddenBankFees = [];
+      this.bankReconciliation = null;
+      this.importProcessing = false;
       this.form = {
         amount: '',
         description: '',
