@@ -204,7 +204,7 @@
       overflow-y: auto;
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
-      padding-bottom: calc(80px + var(--safe-bottom));
+      padding-bottom: calc(100px + var(--safe-bottom));
     }
     .screen-header {
       padding: 16px 20px;
@@ -219,13 +219,13 @@
     .tab-bar {
       position: absolute;
       bottom: 0; left: 0; right: 0;
-      height: calc(52px + var(--safe-bottom));
+      height: calc(84px + var(--safe-bottom));
       background: var(--surface);
       border-top: 1px solid var(--border);
       display: flex;
       justify-content: space-around;
       align-items: flex-start;
-      padding-top: 6px;
+      padding-top: 10px;
       padding-bottom: var(--safe-bottom);
       z-index: 50;
     }
@@ -308,7 +308,7 @@
     /* ═══ FAB ═══ */
     .fab {
       position: absolute;
-      bottom: calc(24px + var(--safe-bottom));
+      bottom: calc(38px + var(--safe-bottom));
       left: 50%;
       transform: translateX(-50%);
       width: 64px; height: 64px;
@@ -643,20 +643,18 @@
       display: flex; align-items: center; gap: 5px;
     }
     .batch-right {
-      display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+      display: flex; align-items: center; gap: 8px; flex-shrink: 0;
     }
     .batch-amount {
       font-size: 15px; font-weight: 700; letter-spacing: -0.3px;
       text-align: right; white-space: nowrap;
       font-variant-numeric: tabular-nums;
-      position: relative;
     }
     .batch-chevron-badge {
-      position: absolute; bottom: -4px; right: -4px;
-      width: 16px; height: 16px; border-radius: 8px;
+      width: 22px; height: 22px; border-radius: 6px;
       background: var(--surface2); border: 1px solid var(--border2);
       display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
+      cursor: pointer; flex-shrink: 0;
     }
     .batch-chevron {
       transition: transform 0.2s ease;
@@ -752,7 +750,7 @@
     }
     .approve-header {
       display: flex; align-items: center; gap: 12px;
-      padding: calc(var(--safe-top) + 14px) 20px 12px;
+      padding: 14px 20px 12px;
       position: sticky; top: 0; background: var(--bg); z-index: 10;
     }
     .approve-back {
@@ -3090,13 +3088,11 @@
                       <div class="batch-meta" x-text="formatDate(entry.date) + ' · ' + entry.items.length + ' items'"></div>
                     </div>
                     <div class="batch-right">
-                      <div style="position:relative;">
-                        <div class="batch-amount" x-text="'-$' + fmtMoney(entry.total)"></div>
-                        <div class="batch-chevron-badge" @click.stop="toggleBatch(entry.batch_id)">
-                          <svg :class="{ open: isBatchExpanded(entry.batch_id) }" class="batch-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="10" height="10"><polyline points="6 9 12 15 18 9"/></svg>
-                        </div>
-                      </div>
+                      <div class="batch-amount" x-text="'-$' + fmtMoney(entry.total)"></div>
                       <svg @click.stop="openEditBatch(entry)" class="expense-row-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      <div class="batch-chevron-badge" @click.stop="toggleBatch(entry.batch_id)">
+                        <svg :class="{ open: isBatchExpanded(entry.batch_id) }" class="batch-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="10" height="10"><polyline points="6 9 12 15 18 9"/></svg>
+                      </div>
                     </div>
                   </div>
                   <div class="batch-subitems" x-show="isBatchExpanded(entry.batch_id)" x-transition.duration.200ms>
@@ -3216,13 +3212,11 @@
                           <div class="batch-meta" x-text="formatTime(entry.created_at) + ' · ' + entry.items.length + ' items'"></div>
                         </div>
                         <div class="batch-right">
-                          <div style="position:relative;">
-                            <div class="batch-amount" x-text="'-$' + fmtMoney(entry.total)"></div>
-                            <div class="batch-chevron-badge" @click.stop="toggleBatch(entry.batch_id)">
-                              <svg :class="{ open: isBatchExpanded(entry.batch_id) }" class="batch-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="10" height="10"><polyline points="6 9 12 15 18 9"/></svg>
-                            </div>
-                          </div>
+                          <div class="batch-amount" x-text="'-$' + fmtMoney(entry.total)"></div>
                           <svg @click.stop="openEditBatch(entry)" class="expense-row-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                          <div class="batch-chevron-badge" @click.stop="toggleBatch(entry.batch_id)">
+                            <svg :class="{ open: isBatchExpanded(entry.batch_id) }" class="batch-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="10" height="10"><polyline points="6 9 12 15 18 9"/></svg>
+                          </div>
                         </div>
                       </div>
                       <div class="batch-subitems" x-show="isBatchExpanded(entry.batch_id)" x-transition.duration.200ms>
@@ -4902,7 +4896,7 @@
 
               <!-- ═════════ CREATE MODE: nuevo orden ═════════ -->
               <!-- TIPO segmented pill (estilo Mensual/Anual) -->
-              <div x-show="!editingBatch" style="display:flex;background:var(--surface);padding:4px;border-radius:12px;margin-bottom:10px;border:1px solid var(--border);">
+              <div x-show="!editingBatch" :style="{ display: 'flex', background: 'var(--surface)', padding: '4px', borderRadius: '12px', marginBottom: '10px', border: '1px solid var(--border)' }">
                 <div @click="if (form.is_income) { form.is_income = false; form.category = ''; parsedItems = []; analyzed = false; }" style="flex:1;height:36px;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.18s;letter-spacing:-0.2px;" :style="{ background: !form.is_income ? 'var(--bg)' : 'transparent', color: !form.is_income ? 'var(--text)' : 'var(--muted)', boxShadow: !form.is_income ? '0 1px 3px rgba(0,0,0,0.18)' : 'none' }">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><polyline points="17 18 23 18 23 12"/><path d="M23 18l-9.5-9.5-5 5L1 6"/></svg>
                   Gasto
@@ -4982,36 +4976,6 @@
                   <span><span x-text="parsedItems.length"></span> <span x-text="parsedItems.length === 1 ? 'ELEMENTO DETECTADO' : 'ELEMENTOS DETECTADOS'"></span></span>
                   <span x-show="parsedItems.length >= 2" style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:0.4px;">SE GUARDARÁN POR SEPARADO</span>
                 </div>
-
-                <!-- Review warning banner (PDF imports with many items) -->
-                <div x-show="parsedItems.length >= 5" style="margin-bottom:10px;padding:10px 12px;border-radius:10px;background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);display:flex;align-items:flex-start;gap:8px;">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#FFB800" stroke-width="2" width="16" height="16" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                  <div style="font-size:11px;color:var(--text);line-height:1.4;"><strong>Revisa antes de guardar.</strong> La IA puede clasificar incorrectamente o confundir saldos con transacciones. Elimina lo que no corresponda.</div>
-                </div>
-
-                <!-- Hidden bank fees toggle -->
-                <div x-show="hiddenBankFees.length > 0" style="margin-bottom:10px;">
-                  <button type="button" @click="showHiddenFees = !showHiddenFees" style="width:100%;padding:8px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:8px;font-family:inherit;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    <span style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.3px;flex:1;text-align:left;" x-text="(showHiddenFees ? 'Ocultar' : 'Mostrar') + ' ' + hiddenBankFees.length + ' cargos bancarios (ISD, comisiones...)'"></span>
-                    <span style="font-size:11px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;" x-text="'$' + hiddenBankFees.reduce((s,f) => s + f.amount, 0).toFixed(2)"></span>
-                    <svg :style="showHiddenFees && 'transform:rotate(180deg)'" style="transition:transform 0.2s;" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
-                  </button>
-                  <div x-show="showHiddenFees" x-transition style="margin-top:6px;display:flex;flex-direction:column;gap:4px;">
-                    <template x-for="(fee, fi) in hiddenBankFees" :key="'fee_'+fi">
-                      <div style="padding:8px 12px;border-radius:10px;background:var(--surface);border:1px dashed var(--border);display:flex;align-items:center;gap:8px;opacity:0.6;">
-                        <span style="font-size:14px;">🏦</span>
-                        <div style="flex:1;min-width:0;">
-                          <div style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="fee.description"></div>
-                          <div style="font-size:9px;color:var(--muted);" x-text="fee.date"></div>
-                        </div>
-                        <span style="font-size:12px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;" x-text="'$' + fee.amount.toFixed(2)"></span>
-                        <button type="button" @click="parsedItems.push(hiddenBankFees.splice(fi, 1)[0]); form.amount = parsedItems.reduce((s,p) => s + p.amount, 0).toFixed(2)" style="font-size:9px;font-weight:700;color:var(--cyan);background:none;border:none;cursor:pointer;padding:2px 6px;font-family:inherit;">RESTAURAR</button>
-                      </div>
-                    </template>
-                  </div>
-                </div>
-
                 <div style="display:flex;flex-direction:column;gap:8px;">
                   <template x-for="(it, idx) in parsedItems" :key="idx">
                     <div style="border-radius:14px;background:var(--surface);border:1px solid var(--border);overflow:hidden;">
@@ -5024,10 +4988,7 @@
                         </div>
                         <div style="flex:1;min-width:0;">
                           <input type="text" x-model="it.description" style="background:transparent;border:none;outline:none;color:var(--text);font-size:13px;font-weight:600;font-family:inherit;width:100%;padding:0;" placeholder="descripción">
-                          <div style="font-size:10px;color:var(--muted);letter-spacing:0.4px;margin-top:2px;">
-                            <span x-text="it.label.toUpperCase()"></span>
-                            <span x-show="it.date" x-text="' · ' + (it.date || '')" style="opacity:0.7;"></span>
-                          </div>
+                          <div style="font-size:10px;color:var(--muted);letter-spacing:0.4px;margin-top:2px;" x-text="it.label.toUpperCase()"></div>
                         </div>
                         <input type="text" inputmode="decimal" :value="it.amount" @input="it.amount = parseFloat($el.value.replace(',', '.')) || 0; form.amount = parsedItems.reduce((s, p) => s + p.amount, 0).toFixed(2)" style="width:80px;text-align:right;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;background:transparent;border:none;outline:none;color:var(--text);font-family:inherit;">
                         <button type="button" @click="removeParsedItem(idx)" style="width:28px;height:28px;border-radius:14px;background:transparent;border:none;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Quitar">
@@ -5045,43 +5006,10 @@
                     </div>
                   </template>
                 </div>
-                <!-- Summary footer: total + category breakdown -->
-                <div style="margin-top:10px;padding:10px 14px;border-radius:10px;background:linear-gradient(135deg, rgba(0,240,255,0.06), rgba(112,0,255,0.06));border:1px solid rgba(0,240,255,0.2);">
-                  <div style="display:flex;align-items:center;justify-content:space-between;">
-                    <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--muted);">TOTAL</span>
-                    <span class="gradient-text" style="font-size:18px;font-weight:800;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;" x-text="'$' + parsedItems.reduce((s,p) => s + (parseFloat(p.amount)||0), 0).toFixed(2)"></span>
-                  </div>
-                  <div x-show="parsedItems.length > 5" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,240,255,0.15);display:flex;flex-wrap:wrap;gap:6px;">
-                    <template x-for="cs in parsedCategorySummary" :key="cs.key">
-                      <div style="display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;background:var(--surface);border:1px solid var(--border);">
-                        <span style="font-size:11px;" x-text="cs.emoji"></span>
-                        <span style="font-size:10px;font-weight:600;color:var(--muted);" x-text="cs.count"></span>
-                        <span style="font-size:10px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;" x-text="'$' + cs.total.toFixed(2)"></span>
-                      </div>
-                    </template>
-                  </div>
+                <div style="margin-top:10px;padding:10px 14px;border-radius:10px;background:linear-gradient(135deg, rgba(0,240,255,0.06), rgba(112,0,255,0.06));border:1px solid rgba(0,240,255,0.2);display:flex;align-items:center;justify-content:space-between;">
+                  <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--muted);">TOTAL</span>
+                  <span class="gradient-text" style="font-size:18px;font-weight:800;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;" x-text="'$' + parsedItems.reduce((s,p) => s + (parseFloat(p.amount)||0), 0).toFixed(2)"></span>
                 </div>
-
-                <!-- Reconciliation cross-check (bank vs parser) -->
-                <template x-if="reconciliationStatus">
-                  <div style="margin-top:8px;padding:10px 14px;border-radius:10px;border:1px solid;" :style="{ background: reconciliationStatus.allOk ? 'rgba(0,229,160,0.06)' : 'rgba(255,107,107,0.06)', borderColor: reconciliationStatus.allOk ? 'rgba(0,229,160,0.25)' : 'rgba(255,107,107,0.25)' }">
-                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-                      <svg x-show="reconciliationStatus.allOk" viewBox="0 0 24 24" fill="none" stroke="#00E5A0" stroke-width="2.5" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
-                      <svg x-show="!reconciliationStatus.allOk" viewBox="0 0 24 24" fill="none" stroke="#FF6B6B" stroke-width="2.5" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                      <span style="font-size:11px;font-weight:700;letter-spacing:0.5px;" :style="{ color: reconciliationStatus.allOk ? '#00E5A0' : '#FF6B6B' }" x-text="reconciliationStatus.allOk ? 'CONCILIACIÓN OK' : 'DIFERENCIAS DETECTADAS'"></span>
-                    </div>
-                    <template x-for="c in reconciliationStatus.checks" :key="c.label">
-                      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);margin-bottom:3px;">
-                        <span x-text="c.ok ? '✓' : '✗'" :style="{ color: c.ok ? '#00E5A0' : '#FF6B6B' }" style="font-weight:700;"></span>
-                        <span x-text="c.label" style="font-weight:600;width:55px;"></span>
-                        <span style="font-variant-numeric:tabular-nums;">Parser: $<span x-text="c.parser.toFixed(2)"></span> (<span x-text="c.count"></span>)</span>
-                        <span style="color:var(--border);">vs</span>
-                        <span style="font-variant-numeric:tabular-nums;">Banco: $<span x-text="c.bank.toFixed(2)"></span> (<span x-text="c.bankCount || '?'"></span>)</span>
-                      </div>
-                    </template>
-                    <div x-show="!reconciliationStatus.allOk" style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.3;">Revisa los montos. La IA puede confundir la columna saldo con credito/debito.</div>
-                  </div>
-                </template>
               </div>
 
               <!-- DETECTADO preview card (despues de analizar texto) — solo si NO hay parsedItems en lista -->
@@ -5189,22 +5117,6 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                       </button>
                     </div>
-
-                    <!-- Process button -->
-                    <button @click="processImportedFile()" x-show="parsedItems.length === 0" :disabled="importProcessing" style="width:100%;margin-top:12px;padding:14px;border-radius:12px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;border:none;background:linear-gradient(135deg, var(--cyan), var(--purple));color:#000;transition:opacity 0.2s;" :style="importProcessing && 'opacity:0.6;cursor:wait'">
-                      <template x-if="!importProcessing">
-                        <span style="display:flex;align-items:center;gap:8px;">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-                          Procesar con IA
-                        </span>
-                      </template>
-                      <template x-if="importProcessing">
-                        <span style="display:flex;align-items:center;gap:8px;">
-                          <svg viewBox="0 0 24 24" width="16" height="16" style="animation:spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.5" fill="none" stroke-dasharray="60" stroke-linecap="round"/></svg>
-                          Analizando transacciones...
-                        </span>
-                      </template>
-                    </button>
 
                     <div x-show="importedFile && importedExpenses.length > 0" style="margin-top:14px;">
                       <div class="cd-section-label">GASTOS DETECTADOS · <span x-text="importedExpenses.length"></span></div>
@@ -5328,16 +5240,19 @@
                             <template x-if="p.you">
                               <input value="Tú" readonly class="cd-split-name-input cd-split-name-you">
                             </template>
-                            <template x-if="!p.you">
-                              <input
-                                :value="splitPickerIdx === pi ? splitPickerQuery : p.name"
-                                @focus="openSplitPicker(pi)"
-                                @input="splitPickerQuery = $el.value"
+                            <template x-if="!p.you && splitPickerIdx !== pi">
+                              <span @click="openSplitPicker(pi)" class="cd-split-name-input" style="cursor:pointer;display:block;" x-text="p.name || 'Buscar o agregar...'" :style="!p.name ? 'color:var(--dim)' : ''"></span>
+                            </template>
+                            <template x-if="!p.you && splitPickerIdx === pi">
+                              <input x-model="splitPickerQuery"
+                                x-init="$nextTick(() => $el.focus())"
                                 @keydown.escape="closeSplitPicker()"
-                                @blur="setTimeout(() => closeSplitPicker(), 180)"
-                                :placeholder="p.name ? p.name : 'Buscar o agregar...'"
+                                @blur="setTimeout(() => closeSplitPicker(), 200)"
+                                placeholder="Buscar o agregar..."
                                 class="cd-split-name-input"
                                 autocomplete="off"
+                                inputmode="text"
+                                enterkeyhint="done"
                               >
                             </template>
                             <template x-if="p.you">
@@ -6524,10 +6439,6 @@ function zepoApp() {
     voiceTranscript: '',
     importedFile: null,
     importedExpenses: [],
-    importProcessing: false,
-    hiddenBankFees: [],
-    showHiddenFees: false,
-    bankReconciliation: null,
     catDropdownOpen: false,
     // ── Importador CSV/XLSX ──────────────────────────────────────────────────
     importOpen: false,
@@ -7071,72 +6982,6 @@ function zepoApp() {
     get monthIncome() { return this.expenses.filter(e => e.is_income && e.date >= this.currentMonthStart).reduce((s, e) => s + e.amount, 0); },
     get monthBalance() { return this.monthIncome - this.monthTotal; },
 
-    BANK_FEE_PATTERNS: /\b(ISD|IVASD|IMPUESTO ISD|IVA COBRADO|RETENCION|RET\.?\s*FTE|COMISION|REG EN CTA|IMPUESTO SALIDA|IMP\.\s*SALIDA|RET\.\s*IVA|SOL\.\s*DIVISA|COSTO TRANSAC|NOTA DE DEBITO POR IMPUESTO|NOTA DEBITO POR IMP|S\.?\s*O\.?\s*L\.?\s*DIVISA)\b/i,
-
-    get parsedCategorySummary() {
-      const map = {};
-      for (const it of this.parsedItems) {
-        if (!map[it.category]) map[it.category] = { key: it.category, emoji: it.emoji, count: 0, total: 0 };
-        map[it.category].count++;
-        map[it.category].total += it.amount;
-      }
-      return Object.values(map).sort((a, b) => b.total - a.total);
-    },
-
-    get reconciliationStatus() {
-      if (!this.bankReconciliation) return null;
-      const r = this.bankReconciliation;
-      const items = this.parsedItems;
-      const fees = this.hiddenBankFees || [];
-      const all = [...items, ...fees];
-      const debits = all.filter(i => !i.is_income);
-      const credits = all.filter(i => i.is_income);
-      const checks = [];
-      if (r.totalDebits > 0) {
-        const parserDebits = debits.reduce((s, i) => s + i.amount, 0);
-        checks.push({ label: 'Débitos', parser: parserDebits, count: debits.length, bank: r.totalDebits, bankCount: r.debitCount, ok: Math.abs(parserDebits - r.totalDebits) < 1 });
-      }
-      if (r.totalCredits > 0) {
-        const parserCredits = credits.reduce((s, i) => s + i.amount, 0);
-        checks.push({ label: 'Créditos', parser: parserCredits, count: credits.length, bank: r.totalCredits, bankCount: r.creditCount, ok: Math.abs(parserCredits - r.totalCredits) < 1 });
-      }
-      return { allOk: checks.every(c => c.ok), checks };
-    },
-
-    _extractReconciliation(text) {
-      try {
-        const lines = text.split('\n');
-        let saldoAnterior = 0, totalCredits = 0, totalDebits = 0, saldoActual = 0;
-        let creditCount = 0, debitCount = 0;
-        const numRe = /[\d,]+\.\d{2}/;
-        for (let i = 0; i < lines.length; i++) {
-          const chunk = lines.slice(i, i + 3).join(' ').toUpperCase();
-          if (chunk.includes('SALDO ANTERIOR')) {
-            const m = chunk.match(numRe);
-            if (m) saldoAnterior = parseFloat(m[0].replace(/,/g, ''));
-          }
-          if ((chunk.includes('DEPOSITO') || chunk.includes('CREDITO')) && chunk.match(/\d+\s+(DEPOSITO|CREDITO)/i)) {
-            const cntMatch = chunk.match(/(\d+)\s+(DEPOSITO|CREDITO)/i);
-            if (cntMatch) creditCount = parseInt(cntMatch[1]);
-            const m = chunk.match(numRe);
-            if (m) totalCredits = parseFloat(m[0].replace(/,/g, ''));
-          }
-          if ((chunk.includes('CHEQUE') || chunk.includes('DEBITO')) && chunk.match(/\d+\s+(CHEQUE|DEBITO)/i)) {
-            const cntMatch = chunk.match(/(\d+)\s+(CHEQUE|DEBITO)/i);
-            if (cntMatch) debitCount = parseInt(cntMatch[1]);
-            const m = chunk.match(numRe);
-            if (m) totalDebits = parseFloat(m[0].replace(/,/g, ''));
-          }
-          if (chunk.includes('SALDO ACTUAL') || chunk.includes('SALDO DISPONIBLE')) {
-            const m = chunk.match(numRe);
-            if (m) saldoActual = parseFloat(m[0].replace(/,/g, ''));
-          }
-        }
-        if (totalDebits === 0 && totalCredits === 0) return null;
-        return { saldoAnterior, totalCredits, creditCount, totalDebits, debitCount, saldoActual };
-      } catch { return null; }
-    },
-
     get periodStart() {
       const now = new Date();
       if (this.dashPeriod === 'semana') {
@@ -7359,132 +7204,6 @@ function zepoApp() {
       this.importedExpenses = [];
     },
 
-    async processImportedFile() {
-      if (!this.importedFile?.raw || this.importProcessing) return;
-      const file = this.importedFile.raw;
-      const ext = (file.name.split('.').pop() || '').toLowerCase();
-
-      if (ext !== 'pdf') {
-        this.showToast('Por ahora solo se procesan archivos PDF');
-        return;
-      }
-
-      this.importProcessing = true;
-      try {
-        // Step 1: Load pdf.js dynamically
-        if (!window.pdfjsLib) {
-          const script = document.createElement('script');
-          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs';
-          script.type = 'module';
-          // Use dynamic import instead for ESM
-          const pdfjs = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
-          window.pdfjsLib = pdfjs;
-          pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
-        }
-
-        // Step 2: Read file as ArrayBuffer
-        const arrayBuffer = await file.arrayBuffer();
-
-        // Step 3: Extract text from all pages
-        const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        let fullText = '';
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const content = await page.getTextContent();
-          const pageText = content.items.map(item => item.str).join(' ');
-          fullText += pageText + '\n--- PAGE BREAK ---\n';
-        }
-
-        if (fullText.trim().length < 20) {
-          this.showToast('No se pudo extraer texto del PDF. Intenta con otro archivo.');
-          this.importProcessing = false;
-          return;
-        }
-
-        // Step 4: Call edge function
-        const session = await sb.auth.getSession();
-        const token = session?.data?.session?.access_token;
-        if (!token) {
-          this.showToast('Sesión expirada. Vuelve a iniciar sesión.');
-          this.importProcessing = false;
-          return;
-        }
-
-        const resp = await fetch('https://vchaxqisbypwwtyjjnjr.supabase.co/functions/v1/parse-bank-statement', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token,
-          },
-          body: JSON.stringify({ text: fullText }),
-        });
-
-        if (!resp.ok) {
-          const err = await resp.json().catch(() => ({}));
-          throw new Error(err.error || 'Error ' + resp.status);
-        }
-
-        const data = await resp.json();
-        const transactions = data.transactions || [];
-
-        if (transactions.length === 0) {
-          this.showToast('No se detectaron transacciones en el PDF');
-          this.importProcessing = false;
-          return;
-        }
-
-        // Step 5: Convert to parsedItems format
-        const cats = [...this.categories, ...this.incomeCategories];
-        const allItems = transactions.map(t => {
-          const cat = cats.find(c => c.key === t.category);
-          return {
-            description: t.description,
-            amount: t.amount,
-            category: t.category,
-            is_income: t.is_income,
-            date: t.date,
-            label: cat?.label || t.category,
-            emoji: cat?.emoji || (t.is_income ? '💰' : '📦'),
-            color: cat?.color || '#888',
-          };
-        });
-
-        // Step 6: Separate bank fees from regular transactions
-        const bankFeePattern = this.BANK_FEE_PATTERNS;
-
-        // Fix: flip known fee-pattern credits to debits (Gemini sometimes misreads saldo column as credit)
-        allItems.forEach(it => {
-          if (it.is_income && bankFeePattern.test(it.description)) {
-            it.is_income = false;
-            const expCat = this.categories.find(c => c.key === 'other') || this.categories[0];
-            it.category = 'other';
-            it.label = expCat?.label || 'Otro';
-            it.emoji = expCat?.emoji || '📦';
-            it.color = expCat?.color || '#888';
-          }
-        });
-
-        const noise = allItems.filter(it => !it.is_income && bankFeePattern.test(it.description));
-        const clean = allItems.filter(it => !noise.includes(it));
-
-        this.parsedItems = clean;
-        this.hiddenBankFees = noise;
-        this.showHiddenFees = false;
-        this.form.amount = clean.reduce((s, p) => s + p.amount, 0).toFixed(2);
-        this.form.is_income = false;
-
-        // Step 7: Extract reconciliation data
-        this.bankReconciliation = this._extractReconciliation(fullText);
-
-        this.showToast(clean.length + ' transacciones detectadas');
-      } catch (e) {
-        console.error('[processImportedFile]', e);
-        this.showToast('Error al procesar: ' + (e.message || 'intenta de nuevo'));
-      } finally {
-        this.importProcessing = false;
-      }
-    },
-
     splitColorPalette: ['#00F0FF', '#7000FF', '#FFB800', '#FF6B6B', '#00E5A0', '#7FB8FF', '#FF8AC4', '#B794F6'],
 
     toggleSplit() {
@@ -7548,7 +7267,12 @@ function zepoApp() {
     },
 
     closeSplitPicker() {
-      // If picker closes without selecting and name is empty, keep it
+      const pi = this.splitPickerIdx;
+      const query = (this.splitPickerQuery || '').trim();
+      // Auto-save typed name if >= 2 chars (covers blur without selecting from dropdown)
+      if (pi >= 0 && query.length >= 2 && this.form.split_people[pi] && !this.form.split_people[pi].you) {
+        this.form.split_people[pi].name = query.charAt(0).toUpperCase() + query.slice(1);
+      }
       this.splitPickerIdx = -1;
       this.splitPickerQuery = '';
     },
@@ -7896,9 +7620,6 @@ function zepoApp() {
       this.importedExpenses = [];
       this.catDropdownOpen = false;
       this.parsedItems = [];
-      this.hiddenBankFees = [];
-      this.bankReconciliation = null;
-      this.importProcessing = false;
       this.form = {
         amount: '',
         description: '',
@@ -8189,8 +7910,9 @@ function zepoApp() {
         const date = this.form.date || localDate();
         const batchId = crypto.randomUUID();
         const validItems = this.parsedItems.filter(it => it.amount > 0 && it.category);
-        const firstCat = validItems.length > 0 ? (CAT_MAP[validItems[0].category]?.label || validItems[0].category) : '';
-        const batchLabel = firstCat + ' — ' + new Date(date + 'T12:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
+        const uniqueCats = [...new Set(validItems.map(it => it.category))];
+        const labelText = uniqueCats.length > 1 ? 'Varios' : (CAT_MAP[uniqueCats[0]]?.label || uniqueCats[0] || 'Varios');
+        const batchLabel = labelText + ' — ' + new Date(date + 'T12:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
         const rows = validItems
           .map(it => ({
             user_id: this.user.id,
@@ -8239,8 +7961,9 @@ function zepoApp() {
         const date = this.form.date || localDate();
         const validItems = this.parsedItems.filter(it => it.amount > 0 && it.category);
         if (validItems.length === 0) { this.showToast('No hay items válidos'); this.saving = false; return; }
-        const firstCat = CAT_MAP[validItems[0].category]?.label || validItems[0].category;
-        const batchLabel = firstCat + ' — ' + new Date(date + 'T12:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
+        const uniqueCats = [...new Set(validItems.map(it => it.category))];
+        const labelText = uniqueCats.length > 1 ? 'Varios' : (CAT_MAP[uniqueCats[0]]?.label || uniqueCats[0] || 'Varios');
+        const batchLabel = labelText + ' — ' + new Date(date + 'T12:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
 
         // Compute split data (same logic as saveExpense)
         let isSplit = false, pct = 0, persona = '';
@@ -8570,7 +8293,7 @@ function zepoApp() {
       all.sort((a, b) => b.freq - a.freq);
 
       // If query doesn't match anyone exactly, add "new" option
-      if (query.length >= 2 && !all.some(o => o.name.toLowerCase() === query)) {
+      if (query.length >= 1 && !all.some(o => o.name.toLowerCase() === query)) {
         const cap = query.charAt(0).toUpperCase() + query.slice(1);
         all.push({ name: cap, type: 'new', freq: 0, color: '#00E5A0' });
       }
