@@ -1131,7 +1131,7 @@
     .cd-split-name-you { font-weight: 600; cursor: default; }
     .cd-split-picker {
       position: absolute; top: 44px; left: -2px; right: -2px;
-      background: var(--card); border: 1px solid var(--border);
+      background: var(--surface); border: 1px solid var(--border);
       border-radius: 12px; overflow: hidden; z-index: 90;
       box-shadow: 0 8px 24px rgba(0,0,0,0.5);
       max-height: 200px; overflow-y: auto;
@@ -1144,13 +1144,12 @@
     }
     .cd-split-picker-item:active { background: rgba(0,240,255,0.08); }
     .cd-split-picker-avatar {
-      width: 26px; height: 26px; border-radius: 50%;
+      width: 28px; height: 28px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 700; color: #000;
+      font-size: 12px; font-weight: 700; color: var(--bg);
       flex-shrink: 0;
     }
     .cd-split-picker-name { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; min-width: 0; }
-    .cd-split-picker-freq { font-size: 10px; color: var(--dim); flex-shrink: 0; }
     .cd-split-picker-add {
       color: var(--cyan); font-weight: 600;
       border-top: 1px solid var(--border);
@@ -5337,9 +5336,6 @@
                                 enterkeyhint="done"
                               >
                             </template>
-                            <template x-if="p.you">
-                              <span style="font-size:10px;color:var(--cyan);font-weight:700;margin-left:6px;flex-shrink:0;">· TÚ</span>
-                            </template>
                             <template x-if="!p.you && p.name && splitPickerIdx !== pi">
                               <svg @click="openSplitPicker(pi)" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="12" height="12" style="flex-shrink:0;cursor:pointer;margin-left:4px;"><polyline points="6 9 12 15 18 9"/></svg>
                             </template>
@@ -5363,10 +5359,7 @@
                                 </template>
                                 <span class="cd-split-picker-name" x-text="opt.type === 'new' ? 'Agregar \"' + opt.name + '\"' : opt.name"></span>
                                 <template x-if="opt.type === 'friend'">
-                                  <span class="cd-split-picker-freq" style="color:var(--cyan);">amigo</span>
-                                </template>
-                                <template x-if="opt.freq > 0 && opt.type !== 'new'">
-                                  <span class="cd-split-picker-freq" x-text="opt.freq + '×'"></span>
+                                  <span style="font-size:9px;color:var(--cyan);font-weight:600;padding:2px 6px;border-radius:4px;background:rgba(0,240,255,0.1);flex-shrink:0;">amigo</span>
                                 </template>
                               </div>
                             </template>
