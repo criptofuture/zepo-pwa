@@ -66,9 +66,25 @@
       --radius-pill: 50px;
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
+      /* ── Layout tokens (single source of truth for safe-area math) ── */
+      --tab-height: 84px;
+      --tab-total: calc(var(--tab-height) + var(--safe-bottom));
+      --content-pad-bottom: calc(var(--tab-height) + 16px + var(--safe-bottom));
+      --overlay-pad-top: calc(var(--safe-top) + 16px);
+      --fab-bottom: calc(38px + var(--safe-bottom));
     }
 
     /* ═══ UTILITY ═══ */
+    /* Safe-area overlay: fullscreen fixed, centered, respects notch */
+    .safe-overlay {
+      position: fixed; inset: 0;
+      max-width: 430px; margin: 0 auto;
+      padding-top: var(--safe-top);
+    }
+    /* Safe-area bottom sheet padding */
+    .safe-sheet-pad {
+      padding-bottom: calc(16px + var(--safe-bottom));
+    }
     .gradient-text {
       background: var(--gradient);
       -webkit-background-clip: text;
@@ -204,7 +220,7 @@
       overflow-y: auto;
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
-      padding-bottom: calc(80px + var(--safe-bottom));
+      padding-bottom: var(--content-pad-bottom);
     }
     .screen-header {
       padding: 16px 20px;
@@ -219,13 +235,13 @@
     .tab-bar {
       position: absolute;
       bottom: 0; left: 0; right: 0;
-      height: calc(52px + var(--safe-bottom));
+      height: var(--tab-total);
       background: var(--surface);
       border-top: 1px solid var(--border);
       display: flex;
       justify-content: space-around;
       align-items: flex-start;
-      padding-top: 6px;
+      padding-top: 10px;
       padding-bottom: var(--safe-bottom);
       z-index: 50;
     }
@@ -308,7 +324,7 @@
     /* ═══ FAB ═══ */
     .fab {
       position: absolute;
-      bottom: calc(24px + var(--safe-bottom));
+      bottom: var(--fab-bottom);
       left: 50%;
       transform: translateX(-50%);
       width: 64px; height: 64px;
@@ -747,10 +763,12 @@
       z-index: 101;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
+      padding-bottom: var(--safe-bottom);
     }
     .approve-header {
       display: flex; align-items: center; gap: 12px;
-      padding: calc(var(--safe-top) + 14px) 20px 12px;
+      padding: 14px 20px 12px;
+      padding-top: var(--overlay-pad-top);
       position: sticky; top: 0; background: var(--bg); z-index: 10;
     }
     .approve-back {
@@ -1131,7 +1149,7 @@
     .cd-split-name-you { font-weight: 600; cursor: default; }
     .cd-split-picker {
       position: absolute; top: 44px; left: -2px; right: -2px;
-      background: var(--surface); border: 1px solid var(--border);
+      background: var(--card); border: 1px solid var(--border);
       border-radius: 12px; overflow: hidden; z-index: 90;
       box-shadow: 0 8px 24px rgba(0,0,0,0.5);
       max-height: 200px; overflow-y: auto;
@@ -1144,12 +1162,13 @@
     }
     .cd-split-picker-item:active { background: rgba(0,240,255,0.08); }
     .cd-split-picker-avatar {
-      width: 28px; height: 28px; border-radius: 50%;
+      width: 26px; height: 26px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 700; color: var(--bg);
+      font-size: 11px; font-weight: 700; color: #000;
       flex-shrink: 0;
     }
     .cd-split-picker-name { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; min-width: 0; }
+    .cd-split-picker-freq { font-size: 10px; color: var(--dim); flex-shrink: 0; }
     .cd-split-picker-add {
       color: var(--cyan); font-weight: 600;
       border-top: 1px solid var(--border);
@@ -2609,7 +2628,7 @@
       </div>
 
       <!-- ══ ONBOARDING · WELCOME (1/3) ══ -->
-      <div class="main-content" x-show="tab === 'onb-welcome'" x-cloak style="padding:24px 24px 32px;display:flex;flex-direction:column;height:100%;">
+      <div class="main-content" x-show="tab === 'onb-welcome'" x-cloak style="padding:24px 24px calc(var(--safe-bottom) + 32px);padding-top:calc(var(--safe-top) + 24px);display:flex;flex-direction:column;flex:1;">
         <div class="onb-progress">
           <span class="onb-progress-seg active"></span>
           <span class="onb-progress-seg"></span>
@@ -2640,7 +2659,7 @@
       </div>
 
       <!-- ══ ONBOARDING · CURRENCY (2/3) ══ -->
-      <div class="main-content" x-show="tab === 'onb-currency'" x-cloak style="padding:24px 24px 32px;display:flex;flex-direction:column;height:100%;">
+      <div class="main-content" x-show="tab === 'onb-currency'" x-cloak style="padding:24px 24px calc(var(--safe-bottom) + 32px);padding-top:calc(var(--safe-top) + 24px);display:flex;flex-direction:column;flex:1;">
         <div class="onb-progress">
           <span class="onb-progress-seg active"></span>
           <span class="onb-progress-seg active"></span>
@@ -2679,7 +2698,7 @@
       </div>
 
       <!-- ══ ONBOARDING · PLAN PICKER (3/3) ══ -->
-      <div class="main-content" x-show="tab === 'onb-plan'" x-cloak style="padding:24px 20px 32px;display:flex;flex-direction:column;height:100%;">
+      <div class="main-content" x-show="tab === 'onb-plan'" x-cloak style="padding:24px 20px calc(var(--safe-bottom) + 32px);padding-top:calc(var(--safe-top) + 24px);display:flex;flex-direction:column;flex:1;">
         <div class="onb-progress">
           <span class="onb-progress-seg active"></span>
           <span class="onb-progress-seg active"></span>
@@ -2768,7 +2787,7 @@
       </div>
 
       <!-- ══ ONBOARDING · FIRST EXPENSE TUTORIAL ══ -->
-      <div class="main-content" x-show="tab === 'onb-first'" x-cloak style="padding:24px 24px 32px;display:flex;flex-direction:column;height:100%;">
+      <div class="main-content" x-show="tab === 'onb-first'" x-cloak style="padding:24px 24px calc(var(--safe-bottom) + 32px);padding-top:calc(var(--safe-top) + 24px);display:flex;flex-direction:column;flex:1;">
         <div style="margin-bottom:4px;font-size:13px;color:var(--muted);font-weight:500;">
           Último paso
         </div>
@@ -2824,7 +2843,7 @@
       </div>
 
       <!-- ══ ONBOARDING · BUDGET SETUP (extras) ══ -->
-      <div class="main-content" x-show="tab === 'onb-budget'" x-cloak style="padding:24px 24px 32px;display:flex;flex-direction:column;height:100%;">
+      <div class="main-content" x-show="tab === 'onb-budget'" x-cloak style="padding:24px 24px calc(var(--safe-bottom) + 32px);padding-top:calc(var(--safe-top) + 24px);display:flex;flex-direction:column;flex:1;">
         <button @click="tab = 'home'" style="display:flex;align-items:center;gap:6px;background:transparent;color:var(--muted);font-size:13px;font-weight:500;margin-bottom:18px;width:fit-content;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M15 18l-6-6 6-6"/></svg>
           Después
@@ -2885,7 +2904,7 @@
       </div>
 
       <!-- ══ ONBOARDING · METHOD PICK ══ -->
-      <div class="main-content" x-show="tab === 'onb-method'" x-cloak style="padding:24px 24px 32px;display:flex;flex-direction:column;height:100%;">
+      <div class="main-content" x-show="tab === 'onb-method'" x-cloak style="padding:24px 24px calc(var(--safe-bottom) + 32px);padding-top:calc(var(--safe-top) + 24px);display:flex;flex-direction:column;flex:1;">
         <button @click="finishOnboarding()" style="display:flex;align-items:center;gap:6px;background:transparent;color:var(--muted);font-size:13px;font-weight:500;margin-bottom:14px;width:fit-content;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M15 18l-6-6 6-6"/></svg>
           Después
@@ -3000,8 +3019,8 @@
         </div>
 
         <!-- BLOCKED screen overlay: free plan + past expiration -->
-        <div x-show="userPlan === 'free' && daysUntilSunset <= 0" style="position:fixed;inset:0;max-width:430px;margin:0 auto;z-index:200;background:radial-gradient(circle at 50% 30%, rgba(255,107,107,0.12) 0%, transparent 60%), var(--bg);overflow-y:auto;">
-          <div style="padding:60px 28px 28px;min-height:100%;display:flex;flex-direction:column;align-items:center;text-align:center;">
+        <div x-show="userPlan === 'free' && daysUntilSunset <= 0" class="safe-overlay" style="z-index:200;background:radial-gradient(circle at 50% 30%, rgba(255,107,107,0.12) 0%, transparent 60%), var(--bg);overflow-y:auto;">
+          <div style="padding:calc(var(--safe-top) + 32px) 28px calc(var(--safe-bottom) + 28px);min-height:100%;display:flex;flex-direction:column;align-items:center;text-align:center;">
             <div style="width:100px;height:100px;border-radius:28px;background:linear-gradient(135deg, rgba(255,107,107,0.15), rgba(255,184,0,0.15));border:1px solid var(--warning);display:flex;align-items:center;justify-content:center;margin-bottom:28px;box-shadow:0 0 48px rgba(255,107,107,0.25);">
               <svg viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="1.8" width="42" height="42"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
             </div>
@@ -4323,7 +4342,7 @@
       </div>
 
       <!-- ══ CHANGE PASSWORD ══ -->
-      <div class="main-content" x-show="tab === 'changepass'" x-cloak style="overflow-y:auto;padding-bottom:60px;">
+      <div class="main-content" x-show="tab === 'changepass'" x-cloak>
         <div class="page-header">
           <button @click="tab = 'settings'" style="width:36px;height:36px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <svg viewBox="0 0 24 24" fill="none" stroke="var(--text)" stroke-width="2" width="18" height="18"><path d="M15 18l-6-6 6-6"/></svg>
@@ -4832,7 +4851,7 @@
       </div>
 
       <!-- ══ GENERIC SAVING OVERLAY (estilo procesando pago) ══ -->
-      <div x-show="saving || savingBudget" x-cloak style="position:fixed;inset:0;max-width:430px;margin:0 auto;z-index:300;background:rgba(10,10,15,0.92);backdrop-filter:blur(8px);height:100vh;height:100dvh;">
+      <div x-show="saving || savingBudget" x-cloak class="safe-overlay" style="z-index:300;background:rgba(10,10,15,0.92);backdrop-filter:blur(8px);padding-top:0;">
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;">
           <div class="pay-spinner" style="margin-bottom:24px;">
             <div class="track"></div>
@@ -4895,7 +4914,7 @@
 
               <!-- ═════════ CREATE MODE: nuevo orden ═════════ -->
               <!-- TIPO segmented pill (estilo Mensual/Anual) -->
-              <div x-show="!editingBatch" style="display:flex;background:var(--surface);padding:4px;border-radius:12px;margin-bottom:10px;border:1px solid var(--border);">
+              <div x-show="!editingBatch" :style="{ display: 'flex', background: 'var(--surface)', padding: '4px', borderRadius: '12px', marginBottom: '10px', border: '1px solid var(--border)' }">
                 <div @click="if (form.is_income) { form.is_income = false; form.category = ''; parsedItems = []; analyzed = false; }" style="flex:1;height:36px;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.18s;letter-spacing:-0.2px;" :style="{ background: !form.is_income ? 'var(--bg)' : 'transparent', color: !form.is_income ? 'var(--text)' : 'var(--muted)', boxShadow: !form.is_income ? '0 1px 3px rgba(0,0,0,0.18)' : 'none' }">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><polyline points="17 18 23 18 23 12"/><path d="M23 18l-9.5-9.5-5 5L1 6"/></svg>
                   Gasto
@@ -4975,36 +4994,6 @@
                   <span><span x-text="parsedItems.length"></span> <span x-text="parsedItems.length === 1 ? 'ELEMENTO DETECTADO' : 'ELEMENTOS DETECTADOS'"></span></span>
                   <span x-show="parsedItems.length >= 2" style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:0.4px;">SE GUARDARÁN POR SEPARADO</span>
                 </div>
-
-                <!-- Review warning banner (PDF imports with many items) -->
-                <div x-show="parsedItems.length >= 5" style="margin-bottom:10px;padding:10px 12px;border-radius:10px;background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);display:flex;align-items:flex-start;gap:8px;">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#FFB800" stroke-width="2" width="16" height="16" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                  <div style="font-size:11px;color:var(--text);line-height:1.4;"><strong>Revisa antes de guardar.</strong> La IA puede clasificar incorrectamente o confundir saldos con transacciones. Elimina lo que no corresponda.</div>
-                </div>
-
-                <!-- Hidden bank fees toggle -->
-                <div x-show="hiddenBankFees.length > 0" style="margin-bottom:10px;">
-                  <button type="button" @click="showHiddenFees = !showHiddenFees" style="width:100%;padding:8px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:8px;font-family:inherit;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    <span style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.3px;flex:1;text-align:left;" x-text="(showHiddenFees ? 'Ocultar' : 'Mostrar') + ' ' + hiddenBankFees.length + ' cargos bancarios (ISD, comisiones...)'"></span>
-                    <span style="font-size:11px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;" x-text="'$' + hiddenBankFees.reduce((s,f) => s + f.amount, 0).toFixed(2)"></span>
-                    <svg :style="showHiddenFees && 'transform:rotate(180deg)'" style="transition:transform 0.2s;" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
-                  </button>
-                  <div x-show="showHiddenFees" x-transition style="margin-top:6px;display:flex;flex-direction:column;gap:4px;">
-                    <template x-for="(fee, fi) in hiddenBankFees" :key="'fee_'+fi">
-                      <div style="padding:8px 12px;border-radius:10px;background:var(--surface);border:1px dashed var(--border);display:flex;align-items:center;gap:8px;opacity:0.6;">
-                        <span style="font-size:14px;">🏦</span>
-                        <div style="flex:1;min-width:0;">
-                          <div style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="fee.description"></div>
-                          <div style="font-size:9px;color:var(--muted);" x-text="fee.date"></div>
-                        </div>
-                        <span style="font-size:12px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;" x-text="'$' + fee.amount.toFixed(2)"></span>
-                        <button type="button" @click="parsedItems.push(hiddenBankFees.splice(fi, 1)[0]); form.amount = parsedItems.reduce((s,p) => s + p.amount, 0).toFixed(2)" style="font-size:9px;font-weight:700;color:var(--cyan);background:none;border:none;cursor:pointer;padding:2px 6px;font-family:inherit;">RESTAURAR</button>
-                      </div>
-                    </template>
-                  </div>
-                </div>
-
                 <div style="display:flex;flex-direction:column;gap:8px;">
                   <template x-for="(it, idx) in parsedItems" :key="idx">
                     <div style="border-radius:14px;background:var(--surface);border:1px solid var(--border);overflow:hidden;">
@@ -5017,10 +5006,7 @@
                         </div>
                         <div style="flex:1;min-width:0;">
                           <input type="text" x-model="it.description" style="background:transparent;border:none;outline:none;color:var(--text);font-size:13px;font-weight:600;font-family:inherit;width:100%;padding:0;" placeholder="descripción">
-                          <div style="font-size:10px;color:var(--muted);letter-spacing:0.4px;margin-top:2px;">
-                            <span x-text="it.label.toUpperCase()"></span>
-                            <span x-show="it.date" x-text="' · ' + (it.date || '')" style="opacity:0.7;"></span>
-                          </div>
+                          <div style="font-size:10px;color:var(--muted);letter-spacing:0.4px;margin-top:2px;" x-text="it.label.toUpperCase()"></div>
                         </div>
                         <input type="text" inputmode="decimal" :value="it.amount" @input="it.amount = parseFloat($el.value.replace(',', '.')) || 0; form.amount = parsedItems.reduce((s, p) => s + p.amount, 0).toFixed(2)" style="width:80px;text-align:right;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;background:transparent;border:none;outline:none;color:var(--text);font-family:inherit;">
                         <button type="button" @click="removeParsedItem(idx)" style="width:28px;height:28px;border-radius:14px;background:transparent;border:none;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Quitar">
@@ -5038,43 +5024,10 @@
                     </div>
                   </template>
                 </div>
-                <!-- Summary footer: total + category breakdown -->
-                <div style="margin-top:10px;padding:10px 14px;border-radius:10px;background:linear-gradient(135deg, rgba(0,240,255,0.06), rgba(112,0,255,0.06));border:1px solid rgba(0,240,255,0.2);">
-                  <div style="display:flex;align-items:center;justify-content:space-between;">
-                    <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--muted);">TOTAL</span>
-                    <span class="gradient-text" style="font-size:18px;font-weight:800;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;" x-text="'$' + parsedItems.reduce((s,p) => s + (parseFloat(p.amount)||0), 0).toFixed(2)"></span>
-                  </div>
-                  <div x-show="parsedItems.length > 5" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,240,255,0.15);display:flex;flex-wrap:wrap;gap:6px;">
-                    <template x-for="cs in parsedCategorySummary" :key="cs.key">
-                      <div style="display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;background:var(--surface);border:1px solid var(--border);">
-                        <span style="font-size:11px;" x-text="cs.emoji"></span>
-                        <span style="font-size:10px;font-weight:600;color:var(--muted);" x-text="cs.count"></span>
-                        <span style="font-size:10px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;" x-text="'$' + cs.total.toFixed(2)"></span>
-                      </div>
-                    </template>
-                  </div>
+                <div style="margin-top:10px;padding:10px 14px;border-radius:10px;background:linear-gradient(135deg, rgba(0,240,255,0.06), rgba(112,0,255,0.06));border:1px solid rgba(0,240,255,0.2);display:flex;align-items:center;justify-content:space-between;">
+                  <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--muted);">TOTAL</span>
+                  <span class="gradient-text" style="font-size:18px;font-weight:800;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;" x-text="'$' + parsedItems.reduce((s,p) => s + (parseFloat(p.amount)||0), 0).toFixed(2)"></span>
                 </div>
-
-                <!-- Reconciliation cross-check (bank vs parser) -->
-                <template x-if="reconciliationStatus">
-                  <div style="margin-top:8px;padding:10px 14px;border-radius:10px;border:1px solid;" :style="{ background: reconciliationStatus.allOk ? 'rgba(0,229,160,0.06)' : 'rgba(255,107,107,0.06)', borderColor: reconciliationStatus.allOk ? 'rgba(0,229,160,0.25)' : 'rgba(255,107,107,0.25)' }">
-                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-                      <svg x-show="reconciliationStatus.allOk" viewBox="0 0 24 24" fill="none" stroke="#00E5A0" stroke-width="2.5" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
-                      <svg x-show="!reconciliationStatus.allOk" viewBox="0 0 24 24" fill="none" stroke="#FF6B6B" stroke-width="2.5" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                      <span style="font-size:11px;font-weight:700;letter-spacing:0.5px;" :style="{ color: reconciliationStatus.allOk ? '#00E5A0' : '#FF6B6B' }" x-text="reconciliationStatus.allOk ? 'CONCILIACIÓN OK' : 'DIFERENCIAS DETECTADAS'"></span>
-                    </div>
-                    <template x-for="c in reconciliationStatus.checks" :key="c.label">
-                      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);margin-bottom:3px;">
-                        <span x-text="c.ok ? '✓' : '✗'" :style="{ color: c.ok ? '#00E5A0' : '#FF6B6B' }" style="font-weight:700;"></span>
-                        <span x-text="c.label" style="font-weight:600;width:55px;"></span>
-                        <span style="font-variant-numeric:tabular-nums;">Parser: $<span x-text="c.parser.toFixed(2)"></span> (<span x-text="c.count"></span>)</span>
-                        <span style="color:var(--border);">vs</span>
-                        <span style="font-variant-numeric:tabular-nums;">Banco: $<span x-text="c.bank.toFixed(2)"></span> (<span x-text="c.bankCount || '?'"></span>)</span>
-                      </div>
-                    </template>
-                    <div x-show="!reconciliationStatus.allOk" style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.3;">Revisa los montos. La IA puede confundir la columna saldo con credito/debito.</div>
-                  </div>
-                </template>
               </div>
 
               <!-- DETECTADO preview card (despues de analizar texto) — solo si NO hay parsedItems en lista -->
@@ -5182,22 +5135,6 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                       </button>
                     </div>
-
-                    <!-- Process button -->
-                    <button @click="processImportedFile()" x-show="parsedItems.length === 0" :disabled="importProcessing" style="width:100%;margin-top:12px;padding:14px;border-radius:12px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;border:none;background:linear-gradient(135deg, var(--cyan), var(--purple));color:#000;transition:opacity 0.2s;" :style="importProcessing && 'opacity:0.6;cursor:wait'">
-                      <template x-if="!importProcessing">
-                        <span style="display:flex;align-items:center;gap:8px;">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-                          Procesar con IA
-                        </span>
-                      </template>
-                      <template x-if="importProcessing">
-                        <span style="display:flex;align-items:center;gap:8px;">
-                          <svg viewBox="0 0 24 24" width="16" height="16" style="animation:spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.5" fill="none" stroke-dasharray="60" stroke-linecap="round"/></svg>
-                          Analizando transacciones...
-                        </span>
-                      </template>
-                    </button>
 
                     <div x-show="importedFile && importedExpenses.length > 0" style="margin-top:14px;">
                       <div class="cd-section-label">GASTOS DETECTADOS · <span x-text="importedExpenses.length"></span></div>
@@ -5336,6 +5273,9 @@
                                 enterkeyhint="done"
                               >
                             </template>
+                            <template x-if="p.you">
+                              <span style="font-size:10px;color:var(--cyan);font-weight:700;margin-left:6px;flex-shrink:0;">· TÚ</span>
+                            </template>
                             <template x-if="!p.you && p.name && splitPickerIdx !== pi">
                               <svg @click="openSplitPicker(pi)" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="12" height="12" style="flex-shrink:0;cursor:pointer;margin-left:4px;"><polyline points="6 9 12 15 18 9"/></svg>
                             </template>
@@ -5359,7 +5299,10 @@
                                 </template>
                                 <span class="cd-split-picker-name" x-text="opt.type === 'new' ? 'Agregar \"' + opt.name + '\"' : opt.name"></span>
                                 <template x-if="opt.type === 'friend'">
-                                  <span style="font-size:9px;color:var(--cyan);font-weight:600;padding:2px 6px;border-radius:4px;background:rgba(0,240,255,0.1);flex-shrink:0;">amigo</span>
+                                  <span class="cd-split-picker-freq" style="color:var(--cyan);">amigo</span>
+                                </template>
+                                <template x-if="opt.freq > 0 && opt.type !== 'new'">
+                                  <span class="cd-split-picker-freq" x-text="opt.freq + '×'"></span>
                                 </template>
                               </div>
                             </template>
@@ -5491,8 +5434,8 @@
 
       <!-- ══ CATEGORY DRILL-DOWN OVERLAY ══ -->
       <template x-if="catDrillOpen">
-        <div style="position:fixed;inset:0;z-index:200;background:var(--bg);max-width:430px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;">
-          <div style="padding:16px 20px 12px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border);flex-shrink:0;">
+        <div class="safe-overlay" style="z-index:200;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;">
+          <div style="padding:16px 20px 12px;padding-top:var(--overlay-pad-top);display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border);flex-shrink:0;">
             <button @click="catDrillOpen = false" style="width:36px;height:36px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
@@ -5535,7 +5478,7 @@
       <template x-if="catManagerOpen">
         <div style="position:fixed;inset:0;z-index:200;">
           <div class="sheet-backdrop" style="z-index:200;" @click="catManagerOpen = false"></div>
-          <div class="sheet" style="max-height:calc(100% - var(--safe-top) - 20px);position:fixed;left:0;right:0;bottom:0;max-width:430px;margin:0 auto;background:var(--bg);border-top-left-radius:24px;border-top-right-radius:24px;padding:14px 0 0;z-index:201;overflow-y:auto;border-top:1px solid var(--border);">
+          <div class="sheet" style="max-height:calc(100% - var(--safe-top) - var(--safe-bottom) - 20px);position:fixed;left:0;right:0;bottom:0;max-width:430px;margin:0 auto;background:var(--bg);border-top-left-radius:24px;border-top-right-radius:24px;padding:14px 0 calc(16px + var(--safe-bottom));z-index:201;overflow-y:auto;border-top:1px solid var(--border);">
             <div class="sheet-grabber"></div>
             <div style="padding:6px 20px 24px;">
               <div class="sheet-title">Gestionar categorías</div>
@@ -6514,10 +6457,6 @@ function zepoApp() {
     voiceTranscript: '',
     importedFile: null,
     importedExpenses: [],
-    importProcessing: false,
-    hiddenBankFees: [],
-    showHiddenFees: false,
-    bankReconciliation: null,
     catDropdownOpen: false,
     // ── Importador CSV/XLSX ──────────────────────────────────────────────────
     importOpen: false,
@@ -7061,72 +7000,6 @@ function zepoApp() {
     get monthIncome() { return this.expenses.filter(e => e.is_income && e.date >= this.currentMonthStart).reduce((s, e) => s + e.amount, 0); },
     get monthBalance() { return this.monthIncome - this.monthTotal; },
 
-    BANK_FEE_PATTERNS: /\b(ISD|IVASD|IMPUESTO ISD|IVA COBRADO|RETENCION|RET\.?\s*FTE|COMISION|REG EN CTA|IMPUESTO SALIDA|IMP\.\s*SALIDA|RET\.\s*IVA|SOL\.\s*DIVISA|COSTO TRANSAC|NOTA DE DEBITO POR IMPUESTO|NOTA DEBITO POR IMP|S\.?\s*O\.?\s*L\.?\s*DIVISA)\b/i,
-
-    get parsedCategorySummary() {
-      const map = {};
-      for (const it of this.parsedItems) {
-        if (!map[it.category]) map[it.category] = { key: it.category, emoji: it.emoji, count: 0, total: 0 };
-        map[it.category].count++;
-        map[it.category].total += it.amount;
-      }
-      return Object.values(map).sort((a, b) => b.total - a.total);
-    },
-
-    get reconciliationStatus() {
-      if (!this.bankReconciliation) return null;
-      const r = this.bankReconciliation;
-      const items = this.parsedItems;
-      const fees = this.hiddenBankFees || [];
-      const all = [...items, ...fees];
-      const debits = all.filter(i => !i.is_income);
-      const credits = all.filter(i => i.is_income);
-      const checks = [];
-      if (r.totalDebits > 0) {
-        const parserDebits = debits.reduce((s, i) => s + i.amount, 0);
-        checks.push({ label: 'Débitos', parser: parserDebits, count: debits.length, bank: r.totalDebits, bankCount: r.debitCount, ok: Math.abs(parserDebits - r.totalDebits) < 1 });
-      }
-      if (r.totalCredits > 0) {
-        const parserCredits = credits.reduce((s, i) => s + i.amount, 0);
-        checks.push({ label: 'Créditos', parser: parserCredits, count: credits.length, bank: r.totalCredits, bankCount: r.creditCount, ok: Math.abs(parserCredits - r.totalCredits) < 1 });
-      }
-      return { allOk: checks.every(c => c.ok), checks };
-    },
-
-    _extractReconciliation(text) {
-      try {
-        const lines = text.split('\n');
-        let saldoAnterior = 0, totalCredits = 0, totalDebits = 0, saldoActual = 0;
-        let creditCount = 0, debitCount = 0;
-        const numRe = /[\d,]+\.\d{2}/;
-        for (let i = 0; i < lines.length; i++) {
-          const chunk = lines.slice(i, i + 3).join(' ').toUpperCase();
-          if (chunk.includes('SALDO ANTERIOR')) {
-            const m = chunk.match(numRe);
-            if (m) saldoAnterior = parseFloat(m[0].replace(/,/g, ''));
-          }
-          if ((chunk.includes('DEPOSITO') || chunk.includes('CREDITO')) && chunk.match(/\d+\s+(DEPOSITO|CREDITO)/i)) {
-            const cntMatch = chunk.match(/(\d+)\s+(DEPOSITO|CREDITO)/i);
-            if (cntMatch) creditCount = parseInt(cntMatch[1]);
-            const m = chunk.match(numRe);
-            if (m) totalCredits = parseFloat(m[0].replace(/,/g, ''));
-          }
-          if ((chunk.includes('CHEQUE') || chunk.includes('DEBITO')) && chunk.match(/\d+\s+(CHEQUE|DEBITO)/i)) {
-            const cntMatch = chunk.match(/(\d+)\s+(CHEQUE|DEBITO)/i);
-            if (cntMatch) debitCount = parseInt(cntMatch[1]);
-            const m = chunk.match(numRe);
-            if (m) totalDebits = parseFloat(m[0].replace(/,/g, ''));
-          }
-          if (chunk.includes('SALDO ACTUAL') || chunk.includes('SALDO DISPONIBLE')) {
-            const m = chunk.match(numRe);
-            if (m) saldoActual = parseFloat(m[0].replace(/,/g, ''));
-          }
-        }
-        if (totalDebits === 0 && totalCredits === 0) return null;
-        return { saldoAnterior, totalCredits, creditCount, totalDebits, debitCount, saldoActual };
-      } catch { return null; }
-    },
-
     get periodStart() {
       const now = new Date();
       if (this.dashPeriod === 'semana') {
@@ -7347,94 +7220,6 @@ function zepoApp() {
         raw: file,
       };
       this.importedExpenses = [];
-    },
-
-    async processImportedFile() {
-      if (!this.importedFile?.raw || this.importProcessing) return;
-      const file = this.importedFile.raw;
-      const ext = (file.name.split('.').pop() || '').toLowerCase();
-      if (ext !== 'pdf') {
-        this.showToast('Por ahora solo se procesan archivos PDF');
-        return;
-      }
-      this.importProcessing = true;
-      try {
-        if (!window.pdfjsLib) {
-          const pdfjs = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
-          window.pdfjsLib = pdfjs;
-          pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
-        }
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        let fullText = '';
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const content = await page.getTextContent();
-          const pageText = content.items.map(item => item.str).join(' ');
-          fullText += pageText + '\n--- PAGE BREAK ---\n';
-        }
-        if (fullText.trim().length < 20) {
-          this.showToast('No se pudo extraer texto del PDF. Intenta con otro archivo.');
-          this.importProcessing = false;
-          return;
-        }
-        const session = await sb.auth.getSession();
-        const token = session?.data?.session?.access_token;
-        if (!token) {
-          this.showToast('Sesión expirada. Vuelve a iniciar sesión.');
-          this.importProcessing = false;
-          return;
-        }
-        const resp = await fetch('https://vchaxqisbypwwtyjjnjr.supabase.co/functions/v1/parse-bank-statement', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ text: fullText }),
-        });
-        if (!resp.ok) {
-          const err = await resp.json().catch(() => ({}));
-          throw new Error(err.error || 'Error ' + resp.status);
-        }
-        const data = await resp.json();
-        const transactions = data.transactions || [];
-        if (transactions.length === 0) {
-          this.showToast('No se detectaron transacciones en el PDF');
-          this.importProcessing = false;
-          return;
-        }
-        const cats = [...this.categories, ...this.incomeCategories];
-        const allItems = transactions.map(t => {
-          const cat = cats.find(c => c.key === t.category);
-          return {
-            description: t.description, amount: t.amount, category: t.category,
-            is_income: t.is_income, date: t.date,
-            label: cat?.label || t.category, emoji: cat?.emoji || (t.is_income ? '💰' : '📦'),
-            color: cat?.color || '#888',
-          };
-        });
-        const bankFeePattern = this.BANK_FEE_PATTERNS;
-        allItems.forEach(it => {
-          if (it.is_income && bankFeePattern.test(it.description)) {
-            it.is_income = false;
-            const expCat = this.categories.find(c => c.key === 'other') || this.categories[0];
-            it.category = 'other'; it.label = expCat?.label || 'Otro';
-            it.emoji = expCat?.emoji || '📦'; it.color = expCat?.color || '#888';
-          }
-        });
-        const noise = allItems.filter(it => !it.is_income && bankFeePattern.test(it.description));
-        const clean = allItems.filter(it => !noise.includes(it));
-        this.parsedItems = clean;
-        this.hiddenBankFees = noise;
-        this.showHiddenFees = false;
-        this.form.amount = clean.reduce((s, p) => s + p.amount, 0).toFixed(2);
-        this.form.is_income = false;
-        this.bankReconciliation = this._extractReconciliation(fullText);
-        this.showToast(clean.length + ' transacciones detectadas');
-      } catch (e) {
-        console.error('[processImportedFile]', e);
-        this.showToast('Error al procesar: ' + (e.message || 'intenta de nuevo'));
-      } finally {
-        this.importProcessing = false;
-      }
     },
 
     splitColorPalette: ['#00F0FF', '#7000FF', '#FFB800', '#FF6B6B', '#00E5A0', '#7FB8FF', '#FF8AC4', '#B794F6'],
@@ -7853,9 +7638,6 @@ function zepoApp() {
       this.importedExpenses = [];
       this.catDropdownOpen = false;
       this.parsedItems = [];
-      this.hiddenBankFees = [];
-      this.bankReconciliation = null;
-      this.importProcessing = false;
       this.form = {
         amount: '',
         description: '',
@@ -10036,7 +9818,7 @@ if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && 
   const style = document.createElement('style');
   style.textContent = `
     #ztb-bar {
-      position: fixed; bottom: 80px; left: 16px; z-index: 99998;
+      position: fixed; bottom: calc(80px + var(--safe-bottom, 0px)); left: 16px; z-index: 99998;
       display: flex; gap: 8px; align-items: center;
     }
     .ztb-action {
@@ -10051,7 +9833,7 @@ if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && 
     .ztb-action.snap { border-color: #B794F6; color: #B794F6; box-shadow: 0 0 16px rgba(112,0,255,0.3); }
     .ztb-action.snap.copied { background: #B794F6; color: #0A0A0F; }
     #ztb-snap-toast {
-      position: fixed; bottom: 140px; left: 50%; transform: translateX(-50%); z-index: 99999;
+      position: fixed; bottom: calc(140px + var(--safe-bottom, 0px)); left: 50%; transform: translateX(-50%); z-index: 99999;
       background: #B794F6; color: #0A0A0F; font-size: 12px; font-weight: 700;
       padding: 10px 20px; border-radius: 12px; font-family: 'JetBrains Mono', monospace;
       box-shadow: 0 4px 24px rgba(112,0,255,0.4); display: none; white-space: nowrap;
@@ -10069,7 +9851,7 @@ if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && 
       white-space: nowrap; display: none; max-width: 260px; overflow: hidden; text-overflow: ellipsis;
     }
     #ztb-panel {
-      position: fixed; bottom: 130px; left: 16px; right: 16px; z-index: 99999;
+      position: fixed; bottom: calc(130px + var(--safe-bottom, 0px)); left: 16px; right: 16px; z-index: 99999;
       background: rgba(10,10,20,0.97); border: 1.5px solid #00F0FF;
       border-radius: 14px; padding: 16px; font-family: 'JetBrains Mono', monospace;
       font-size: 11px; color: #e0e0e0; backdrop-filter: blur(20px);
