@@ -8168,41 +8168,94 @@ function zepoApp() {
         const uniqueCats = [...new Set(validItems.map(it => it.category))];
         const labelText = uniqueCats.length > 1 ? 'Varios' : (CAT_MAP[uniqueCats[0]]?.label || uniqueCats[0] || 'Varios');
         const batchLabel = labelText + ' — ' + new Date(date + 'T12:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
-        const rows = validItems
-          .map(it => ({
+
+        // Compute split data (same logic as saveBatchEdit)
+        let isSplit = false, pct = 0, persona = '';
+        if (this.form.is_split && this.form.split_people && this.form.split_people.length >= 2) {
+          const tuPerson = this.form.split_people.find(p => p.you);
+          const others = this.form.split_people.filter(p => !p.you);
+          if (tuPerson && others.length > 0 && this.splitSum > 0) {
+            isSplit = true;
+            pct = parseFloat(tuPerson.pct) || 50;
+            persona = others.map(p => p.name || 'Sin nombre').filter(Boolean).join(', ') || 'Sin nombre';
+          }
+        }
+
+        const rows = validItems.map(it => {
+          const totalAmt = it.amount;
+          const miParte = isSplit ? Math.round(totalAmt * pct / 100 * 100) / 100 : totalAmt;
+          const pendiente = isSplit ? Math.round((totalAmt - miParte) * 100) / 100 : 0;
+          return {
             user_id: this.user.id,
-            amount: it.amount,
+            amount: miParte,
             category: it.category,
             description: it.description,
             date,
             is_income: !!it.is_income,
-            is_split: false,
+            is_split: isSplit,
+            split_total: isSplit ? totalAmt : null,
+            split_pct: isSplit ? pct : null,
+            split_persona: isSplit ? persona : null,
+            split_pending: isSplit ? pendiente : null,
+            split_status: isSplit ? 'pendiente' : null,
             batch_id: validItems.length > 1 ? batchId : null,
             batch_label: validItems.length > 1 ? batchLabel : null,
-          }));
+          };
+        });
         if (rows.length === 0) {
           this.showToast('No hay items válidos');
           this.saving = false;
           return;
         }
+        let insertedRows;
         try {
-          await withTimeout(
-            sb.from('expenses').insert(rows).then(r => { if (r.error) throw r.error; return r; }),
+          const r = await withTimeout(
+            sb.from('expenses').insert(rows).select('id').then(r => { if (r.error) throw r.error; return r; }),
             3000, 'multi-insert'
           );
+          insertedRows = r.data;
         } catch (e) {
           console.warn('[saveMultiItems] sb insert failed, fallback REST:', e.message);
-          await sbRestInsert('expenses', rows);
+          insertedRows = await sbRestInsert('expenses', rows);
         }
-        this.showToast(rows.length === 1 ? 'Registro guardado' : (rows.length + ' registros guardados'));
+        this.showToast(isSplit ? '💸 Split guardado' : (rows.length === 1 ? 'Registro guardado' : (rows.length + ' registros guardados')));
         this.parsedItems = [];
         this.sheetOpen = false;
         // Optimistic: add items to local array immediately
         const now = new Date().toISOString();
-        rows.forEach((r, i) => this.expenses.unshift({ ...r, id: 'temp_' + Date.now() + '_' + i, created_at: now }));
+        rows.forEach((r, i) => this.expenses.unshift({ ...r, id: insertedRows?.[i]?.id || ('temp_' + Date.now() + '_' + i), created_at: now }));
         try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
-        // Reload in background to get real IDs
-        this.loadExpenses().catch(e => console.warn('[saveMultiItems] bg reload:', e.message));
+        // Background: reload + create payment_requests for splits
+        const bgTasks = [this.loadExpenses()];
+        if (isSplit && insertedRows) {
+          bgTasks.push(this.loadSplits());
+          const names = persona.split(',').map(s => s.trim()).filter(Boolean);
+          const prInserts = [];
+          for (const name of names) {
+            const friend = this.friends.find(f => f.display_name.toLowerCase() === name.toLowerCase());
+            for (let i = 0; i < insertedRows.length; i++) {
+              const totalAmt = validItems[i]?.amount || 0;
+              const n = names.length;
+              const othersPct = (100 - pct) / n;
+              const perPersonAmt = Math.round(totalAmt * othersPct / 100 * 100) / 100;
+              if (perPersonAmt > 0) {
+                prInserts.push(sb.from('payment_requests').insert({
+                  from_user_id: this.user.id,
+                  to_user_id: friend?.user_id || null,
+                  debtor_name: name,
+                  amount: perPersonAmt,
+                  description: validItems[i]?.description || 'Gasto compartido',
+                  category: validItems[i]?.category || 'other',
+                  expense_id: insertedRows[i]?.id || null,
+                  expense_date: date,
+                  status: 'pending',
+                }));
+              }
+            }
+          }
+          if (prInserts.length) bgTasks.push(Promise.all(prInserts).then(() => this.loadPaymentRequests()));
+        }
+        Promise.all(bgTasks).catch(e => console.warn('[saveMultiItems] bg reload:', e.message));
       } catch (e) {
         this.showToast('Error: ' + e.message);
       }
