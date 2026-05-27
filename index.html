@@ -2553,6 +2553,19 @@
   <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;background:linear-gradient(135deg,#00F0FF,#7000FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-family:Inter,system-ui,sans-serif;">zepo</div>
 </div>
 <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+<script>
+// Safety net: remove splash after 12s even if Alpine fails to load
+setTimeout(function() {
+  var sp = document.getElementById('app-splash');
+  if (sp) {
+    sp.innerHTML = '<div style="text-align:center;color:#fff;font-family:Inter,system-ui,sans-serif;padding:24px;">'
+      + '<div style="font-size:18px;font-weight:600;margin-bottom:12px;">Cargando...</div>'
+      + '<div style="font-size:14px;opacity:0.6;">Si no carga, cierra la app completamente y reabre.</div>'
+      + '<div style="margin-top:20px;"><button onclick="location.reload()" style="background:linear-gradient(135deg,#00F0FF,#7000FF);color:#fff;border:none;padding:10px 24px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;">Reintentar</button></div>'
+      + '</div>';
+  }
+}, 12000);
+</script>
 
 <!-- ═══════════════════ ALPINE APP ═══════════════════ -->
 <div id="app" x-data="zepoApp()" x-init="init()" x-effect="if(appReady){const s=document.getElementById('app-splash');if(s){s.style.opacity='0';setTimeout(()=>s.remove(),300)}}">
@@ -6290,7 +6303,7 @@ function localDate(d) {
 }
 const GOOGLE_CLIENT_ID = '29513444600-qaosoiu34jbb0dgefho8ss2oumhjaiu2.apps.googleusercontent.com';
 const SUPABASE_URL = 'https://vchaxqisbypwwtyjjnjr.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjaGF4cWlzYnlwd3d0eWpqbmpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxODMxNjMsImV4cCI6MjA5Mzc1OTE2M30.JFrS9su3R-NaoqEGhnKRNLUW-fnMdPTAhTsyX39iIj0';
+const SUPABASE_KEY = 'sb_publishable_yj9z4wzmADhm23dXFq3pFg_5zCqu0am';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const VAPID_PUBLIC_KEY = 'BFarnYqUAFW5QEds5F0JQoL4BBpkApdV0hi9unggIHSky4wLmOJgEpIQEGVbHIJ36pL0kvv14mOlYD8orYzqXAM';
 function urlBase64ToUint8Array(b64) {
@@ -6752,6 +6765,39 @@ function zepoApp() {
         console.error('[init] Error during startup, continuing:', e);
       }
 
+      // Detecta y muestra errores OAuth (Supabase redirige con ?error=... cuando rechaza)
+      // Ej: cuando intentas Google con email que ya tiene cuenta email/password
+      const urlParams = new URLSearchParams(location.search);
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      const oauthError = urlParams.get('error') || hashParams.get('error');
+      const oauthErrorDesc = urlParams.get('error_description') || hashParams.get('error_description');
+      if (oauthError) {
+        console.warn('[init] OAuth error in URL:', { oauthError, oauthErrorDesc });
+        // Mensaje amigable según el tipo de error
+        if (oauthErrorDesc && /already.*registered|email.*exists|user.*exists|duplicate/i.test(oauthErrorDesc)) {
+          this.authError = 'Esta cuenta ya existe con email y contraseña. Inicia sesión con tu password abajo (o usa "Olvidé mi contraseña" si no la recuerdas).';
+        } else if (oauthError === 'access_denied') {
+          this.authError = 'Cancelaste el inicio con Google.';
+        } else {
+          this.authError = 'No se pudo iniciar con Google: ' + (oauthErrorDesc || oauthError);
+        }
+        // Limpia la URL para que el error no quede pegado
+        history.replaceState(null, '', window.location.pathname);
+        // Guarda el error en localStorage para que sobreviva el reload (PWA vs browser context)
+        try { localStorage.setItem('zepo:auth-error', this.authError); } catch {}
+      }
+
+      // Si no hay error en URL pero sí en localStorage (ej: del reload anterior), recupéralo
+      if (!this.authError) {
+        try {
+          const stored = localStorage.getItem('zepo:auth-error');
+          if (stored) {
+            this.authError = stored;
+            localStorage.removeItem('zepo:auth-error');
+          }
+        } catch {}
+      }
+
       // Limpia tokens de OAuth en el hash para que la URL quede limpia
       if (window.location.hash && window.location.hash.includes('access_token=')) {
         history.replaceState(null, '', window.location.pathname + window.location.search);
@@ -6767,21 +6813,30 @@ function zepoApp() {
 
       sb.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN' && session) {
+          console.log('[auth] SIGNED_IN', { provider: session.user.app_metadata?.provider, email: session.user.email });
           // Prevent duplicate accounts: if Google sign-in email already has
           // a different account (email/password), block and redirect.
           const provider = session.user.app_metadata?.provider;
           if (provider === 'google') {
             const email = session.user.email?.toLowerCase();
             if (email) {
-              const { data: others } = await sb
-                .from('users')
-                .select('id')
-                .eq('email', email)
-                .neq('id', session.user.id);
+              let others = null;
+              try {
+                const r = await sb.from('users').select('id').eq('email', email).neq('id', session.user.id);
+                others = r?.data;
+                console.log('[auth] duplicate check', { email, found: others?.length || 0 });
+              } catch (e) { console.warn('[auth] duplicate check failed:', e.message); }
               if (others && others.length > 0) {
-                await sb.auth.signOut();
-                this.authError = 'Ya tienes una cuenta con este correo creada con email y contraseña. Inicia sesión con email.';
+                // CRITICAL: set error+toast BEFORE signOut, so UI shows them
+                this.authError = 'Esta cuenta ya existe con email y contraseña. Inicia sesión con tu password (o usa "Olvidé mi contraseña" si no la recuerdas).';
+                this.toast = 'Esta cuenta usa email y contraseña — no Google.';
+                setTimeout(() => { if (this.toast === 'Esta cuenta usa email y contraseña — no Google.') this.toast = ''; }, 8000);
+                this.authEmail = email; // prefill email so user only needs to enter password
+                this.authMode = 'login';
                 this.oauthLoading = false;
+                await sb.auth.signOut();
+                // Re-set authError in case SIGNED_OUT handler clobbered it
+                this.authError = 'Esta cuenta ya existe con email y contraseña. Inicia sesión con tu password (o usa "Olvidé mi contraseña" si no la recuerdas).';
                 return;
               }
             }
@@ -10252,7 +10307,17 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  navigator.serviceWorker.register('sw.js');
+  navigator.serviceWorker.register('sw-v54.js', { updateViaCache: 'none' })
+    .then(reg => {
+      reg.update().catch(() => {});
+      let reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (reloaded) return;
+        reloaded = true;
+        location.reload();
+      });
+    })
+    .catch(err => console.error('[SW] register failed:', err));
 }
 </script>
 

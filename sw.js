@@ -1,24 +1,23 @@
-const CACHE_NAME = 'zepo-v52';
+const CACHE_NAME = 'zepo-v55';
+// Only cache external CDN scripts. Don't pre-cache HTML/manifest — let them be network-first
+// so the user always gets the latest version when online.
 const ASSETS = [
-  '/pwa/',
-  '/pwa/index.html',
-  '/pwa/manifest.json',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap'
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
+  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS).catch(() => {})));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
-  );
-  self.clients.claim();
+  e.waitUntil((async () => {
+    // Delete ALL old caches (not just non-matching) to be safe
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener('fetch', e => {
@@ -26,6 +25,25 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (url.origin === 'https://vchaxqisbypwwtyjjnjr.supabase.co') return;
   if (url.hostname.endsWith('.google.com') || url.hostname.endsWith('.googleapis.com')) return;
+
+  // Network-first for HTML and SW-related files (always get fresh)
+  const isHTML = e.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname === '/pwa/' || url.pathname === '/pwa/index.html';
+  const isManifest = url.pathname.endsWith('manifest.json');
+
+  if (isHTML || isManifest) {
+    e.respondWith(
+      fetch(e.request)
+        .then(resp => {
+          const clone = resp.clone();
+          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+          return resp;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Cache-first for everything else (icons, CDN scripts, fonts)
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request).then(resp => {
       const clone = resp.clone();
