@@ -1,16 +1,17 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════
-# Zepo PWA — Deploy script
+# Zepo PWA — Deploy script (v2 — physical /pwa/ structure)
+#
+# CRITICAL CONTEXT (no olvidar):
+# - CF Pages SOLO aplica _headers a archivos que existen FISICAMENTE
+# - Si usas _redirects rewrites, CF pone su cache default (7 dias!)
+# - Solucion: archivos viven en _dist/pwa/ fisicamente, no en rewrites
 #
 # Uso:
-#   ./deploy.sh preview      → deploy preview (Zepo Dev app)
+#   ./deploy.sh preview      → deploy preview (Zepo Dev)
 #   ./deploy.sh promote      → promover preview a produccion
 #   ./deploy.sh prod         → deploy directo a produccion
 #   ./deploy.sh status       → ver ultimos deploys
-#
-# Apps instalables:
-#   Produccion : app.zepo.lynoia.com/pwa/     → "Zepo"
-#   Preview    : dev.zepo-bca.pages.dev/pwa/  → "Zepo Dev"
 # ═══════════════════════════════════════════════════════════
 
 set -e
@@ -20,7 +21,6 @@ PROJECT="zepo"
 PROD_BRANCH="main"
 PREVIEW_BRANCH="dev"
 
-# Colores
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
@@ -28,118 +28,156 @@ RED='\033[0;31m'
 BOLD='\033[1m'
 NC='\033[0m'
 
-# --- Helpers ---
+# --- Build dist directory with proper /pwa/ structure ---
+build_dist() {
+  local manifest_src="$1"  # "prod" or "dev"
+  echo "  Building _dist/ with physical /pwa/ structure..."
+  rm -rf _dist
+  mkdir -p _dist/pwa/icons
 
-swap_to_dev() {
-  # Swap manifest to dev version for preview deploy
-  cp manifest.json manifest.json.prod-backup
-  cp manifest-dev.json manifest.json
-  echo "  (manifest swapped to dev)"
-}
-
-restore_prod() {
-  # Restore production manifest after preview deploy
-  if [ -f manifest.json.prod-backup ]; then
-    mv manifest.json.prod-backup manifest.json
-    echo "  (manifest restored to prod)"
+  # Copy app files into /pwa/
+  cp index.html sw.js _dist/pwa/
+  if [ "$manifest_src" = "dev" ]; then
+    cp manifest-dev.json _dist/pwa/manifest.json
+  else
+    cp manifest.json _dist/pwa/manifest.json
   fi
+
+  # Copy icons (exclude .bak and .py)
+  for f in icons/*; do
+    case "$f" in
+      *.bak|*.py) ;;
+      *) cp "$f" _dist/pwa/icons/ ;;
+    esac
+  done
+
+  # Copy reset.html at root (outside /pwa/ so it's outside SW scope)
+  cp reset.html _dist/
+
+  # Write _headers with rules for physical paths under /pwa/
+  cat > _dist/_headers <<'EOF'
+# Critical: SW and HTML must never be cached
+# Paths exist PHYSICALLY under /pwa/, so headers apply
+
+/pwa/sw-v54.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  Service-Worker-Allowed: /
+
+/pwa/index.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/pwa/
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/pwa/manifest.json
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/reset.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/pwa/icons/*
+  Cache-Control: public, max-age=3600
+EOF
+
+  # _redirects: only root → /pwa/
+  cat > _dist/_redirects <<'EOF'
+/ /pwa/ 302
+EOF
+
+  echo "  ✓ _dist/ ready"
 }
 
-# Trap to always restore manifest if script is interrupted
-trap restore_prod EXIT
-
-# --- Commands ---
+cleanup_dist() {
+  # Keep _dist for inspection but it's gitignored
+  echo "  (_dist/ left for inspection)"
+}
 
 case "${1:-help}" in
 
   preview|test|dev)
     echo -e "${CYAN}${BOLD}═══ Zepo Preview Deploy ═══${NC}"
     echo ""
-    swap_to_dev
+    build_dist dev
     echo ""
     echo "Subiendo preview..."
+    cd _dist
     npx wrangler@latest pages deploy . \
       --project-name="$PROJECT" \
       --branch="$PREVIEW_BRANCH" \
       --commit-dirty=true
+    cd ..
     echo ""
     echo -e "${GREEN}${BOLD}Preview deployado.${NC}"
     echo ""
     echo -e "  ${BOLD}URL:${NC} https://dev.zepo-bca.pages.dev/pwa/"
+    echo -e "  ${BOLD}Reset:${NC} https://dev.zepo-bca.pages.dev/reset"
     echo ""
-    echo -e "  ${YELLOW}Para instalar Zepo Dev en tu celular:${NC}"
-    echo -e "  1. Abre la URL de arriba en Chrome (Android) o Safari (iOS)"
-    echo -e "  2. Menu > Instalar app / Agregar a pantalla de inicio"
-    echo -e "  3. Aparecera como 'Zepo Dev' con icono naranja"
-    echo ""
-    echo -e "  Si funciona bien, corre: ${CYAN}./deploy.sh promote${NC}"
+    echo -e "  ${YELLOW}Si tenias instalado Zepo Dev antes:${NC}"
+    echo -e "  1. Abre primero la URL /reset → limpia SW viejo"
+    echo -e "  2. Click 'Abrir Zepo' → te lleva al app"
+    echo -e "  3. Instala desde el menu del browser"
     ;;
 
   promote)
     echo -e "${CYAN}${BOLD}═══ Promover Preview a Produccion ═══${NC}"
-    echo -e "${YELLOW}Esto copia lo que esta en preview a app.zepo.lynoia.com${NC}"
     echo ""
-    read -p "Ya probaste en Zepo Dev y funciona? (s/N) " confirm
-    if [[ "$confirm" != "s" && "$confirm" != "S" && "$confirm" != "si" && "$confirm" != "yes" ]]; then
-      echo "Cancelado. Prueba primero con: ./deploy.sh preview"
+    read -p "Ya probaste en Zepo Dev? (s/N) " confirm
+    if [[ "$confirm" != "s" && "$confirm" != "S" ]]; then
+      echo "Cancelado."
       exit 0
     fi
+    build_dist prod
     echo ""
-    echo "Subiendo a produccion (con manifest de prod)..."
-    COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "manual")
+    echo "Subiendo a produccion..."
+    cd _dist
     npx wrangler@latest pages deploy . \
       --project-name="$PROJECT" \
       --branch="$PROD_BRANCH" \
-      --commit-hash="$(git rev-parse HEAD 2>/dev/null || echo '')" \
-      --commit-message="$(git log -1 --format=%s 2>/dev/null || echo 'manual deploy')" \
       --commit-dirty=true
+    cd ..
     echo ""
-    echo -e "${GREEN}${BOLD}Produccion actualizada (${COMMIT}).${NC}"
-    echo -e "  https://app.zepo.lynoia.com"
-    echo -e "  Cierra y reabre Zepo en tu celular."
+    echo -e "${GREEN}${BOLD}Produccion actualizada.${NC}"
+    echo -e "  https://app.zepo.lynoia.com/pwa/"
+    echo -e "  Reset: https://app.zepo.lynoia.com/reset"
     ;;
 
   prod|production)
     echo -e "${CYAN}${BOLD}═══ Zepo Production Deploy (directo) ═══${NC}"
-    echo -e "${RED}${BOLD}ATENCION: Esto salta el paso de preview.${NC}"
-    echo -e "${YELLOW}Usa './deploy.sh preview' + './deploy.sh promote' para el flujo seguro.${NC}"
+    echo -e "${YELLOW}Salta el preview.${NC}"
     echo ""
-    read -p "Seguro que quieres deploy directo a produccion? (s/N) " confirm
-    if [[ "$confirm" != "s" && "$confirm" != "S" && "$confirm" != "si" && "$confirm" != "yes" ]]; then
+    read -p "Confirmar? (s/N) " confirm
+    if [[ "$confirm" != "s" && "$confirm" != "S" ]]; then
       echo "Cancelado."
       exit 0
     fi
-    echo ""
-    COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "manual")
+    build_dist prod
+    cd _dist
     npx wrangler@latest pages deploy . \
       --project-name="$PROJECT" \
       --branch="$PROD_BRANCH" \
-      --commit-hash="$(git rev-parse HEAD 2>/dev/null || echo '')" \
-      --commit-message="$(git log -1 --format=%s 2>/dev/null || echo 'manual deploy')" \
       --commit-dirty=true
+    cd ..
     echo ""
-    echo -e "${GREEN}${BOLD}Produccion actualizada (${COMMIT}).${NC}"
-    echo -e "  https://app.zepo.lynoia.com"
+    echo -e "${GREEN}${BOLD}Produccion actualizada.${NC}"
+    echo -e "  https://app.zepo.lynoia.com/pwa/"
     ;;
 
   status|list)
-    echo -e "${CYAN}${BOLD}═══ Ultimos deploys de Zepo ═══${NC}"
     npx wrangler@latest pages deployment list --project-name="$PROJECT" 2>&1 | head -20
     ;;
 
   *)
-    echo -e "${BOLD}Zepo PWA Deploy${NC}"
-    echo ""
-    echo "Uso: ./deploy.sh <comando>"
+    echo -e "${BOLD}Zepo PWA Deploy v2${NC}"
     echo ""
     echo "Comandos:"
-    echo -e "  ${CYAN}preview${NC}   Deploy a Zepo Dev (probar antes de produccion)"
-    echo -e "  ${CYAN}promote${NC}   Promover preview a produccion"
-    echo -e "  ${CYAN}prod${NC}      Deploy directo a produccion (salta preview)"
+    echo -e "  ${CYAN}preview${NC}   Deploy a Zepo Dev"
+    echo -e "  ${CYAN}promote${NC}   Preview → produccion"
+    echo -e "  ${CYAN}prod${NC}      Deploy directo a produccion"
     echo -e "  ${CYAN}status${NC}    Ver ultimos deploys"
     echo ""
-    echo "Flujo recomendado:"
-    echo "  1. ./deploy.sh preview   → probar en Zepo Dev"
-    echo "  2. ./deploy.sh promote   → publicar en Zepo"
+    echo "URLs:"
+    echo "  Produccion: https://app.zepo.lynoia.com/pwa/"
+    echo "  Preview:    https://dev.zepo-bca.pages.dev/pwa/"
+    echo "  Reset:      https://app.zepo.lynoia.com/reset  (limpia SW viejo)"
     ;;
 esac

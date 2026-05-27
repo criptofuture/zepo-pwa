@@ -6,3 +6,4 @@ Thumbs.db
 screenshots/
 *.bak
 .claude/settings.json
+_dist/
