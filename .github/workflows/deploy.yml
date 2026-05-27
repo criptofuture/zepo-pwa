@@ -59,6 +59,12 @@ jobs:
           cp manifest.json _deploy/
           cp sw.js _deploy/
           cp -r icons _deploy/
+          # CF Pages requires _redirects and _headers in the deployed folder.
+          # Without them, /pwa/* rewrites stop being served and Cache-Control
+          # falls back to CF Pages' 7-day default at the edge — sw.js updates
+          # stay cached even after a successful deploy.
+          [ -f _redirects ] && cp _redirects _deploy/
+          [ -f _headers ] && cp _headers _deploy/
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
