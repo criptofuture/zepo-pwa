@@ -1,0 +1,8 @@
+# Serve static assets correctly under /pwa/ prefix
+# (repo root has files, but app URLs use /pwa/ prefix)
+# Order matters: specific rules first, SPA fallback last
+
+/pwa/sw.js /sw.js 200
+/pwa/manifest.json /manifest.json 200
+/pwa/icons/* /icons/:splat 200
+/pwa/* /index.html 200

@@ -10,5 +10,20 @@
 /manifest.json
   Cache-Control: no-cache, no-store, must-revalidate
 
+/pwa/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/pwa/manifest.json
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/pwa/
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/pwa/index.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
 /icons/*
+  Cache-Control: public, max-age=3600
+
+/pwa/icons/*
   Cache-Control: public, max-age=3600
