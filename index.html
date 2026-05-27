@@ -8008,6 +8008,8 @@ function zepoApp() {
     },
 
     async saveExpense() {
+      // Flush split picker if still open (race condition: user taps Save while input focused)
+      if (this.splitPickerIdx >= 0) this.closeSplitPicker();
       // Batch edit mode: delete old items, re-insert updated ones
       if (this.editingBatch && this.parsedItems && this.parsedItems.length >= 1) {
         return this.saveBatchEdit();
