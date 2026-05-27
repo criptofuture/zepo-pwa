@@ -1,8 +1,19 @@
-# Serve static assets correctly under /pwa/ prefix
-# (repo root has files, but app URLs use /pwa/ prefix)
-# Order matters: specific rules first, SPA fallback last
+# Zepo PWA — URL rewrites
+# Files live at root, app URLs use /pwa/ prefix
+# IMPORTANT: No wildcard fallback — enumerate every file explicitly
 
+# Core files
+/pwa/ /index.html 200
+/pwa/index.html /index.html 200
 /pwa/sw.js /sw.js 200
 /pwa/manifest.json /manifest.json 200
-/pwa/icons/* /icons/:splat 200
-/pwa/* /index.html 200
+
+# Icons (explicit — splat :splat broken on CF Pages Direct Upload)
+/pwa/icons/icon-192.png /icons/icon-192.png 200
+/pwa/icons/icon-512.png /icons/icon-512.png 200
+/pwa/icons/icon-dev-192.png /icons/icon-dev-192.png 200
+/pwa/icons/icon-dev-512.png /icons/icon-dev-512.png 200
+/pwa/icons/apple-touch.png /icons/apple-touch.png 200
+/pwa/icons/favicon-32.png /icons/favicon-32.png 200
+/pwa/icons/icon.svg /icons/icon.svg 200
+/pwa/icons/og.png /icons/og.png 200
