@@ -7644,24 +7644,43 @@ function zepoApp() {
         this._dlog('processFile: ' + lines.length + ' lines → ' + chunks.length + ' chunks, parallel');
         this.importStatus = 'Analizando con IA (' + chunks.length + ' partes)...';
 
-        const callChunk = async (chunkText, idx) => {
-          const r = await withTimeout(fetch('https://vchaxqisbypwwtyjjnjr.supabase.co/functions/v1/parse-bank-statement', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-            body: JSON.stringify({ text: chunkText }),
-          }), 75000, 'parse-chunk-' + idx);
-          if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error || ('Error ' + r.status)); }
+        // callChunk con reintento + backoff para vertex_429 (rate limit de la IA).
+        // Vertex AI rechaza llamadas paralelas con 429; reintentar con espera lo resuelve.
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+        const callChunk = async (chunkText, idx, attempt = 0) => {
+          let r;
+          try {
+            r = await withTimeout(fetch('https://vchaxqisbypwwtyjjnjr.supabase.co/functions/v1/parse-bank-statement', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+              body: JSON.stringify({ text: chunkText }),
+            }), 75000, 'parse-chunk-' + idx);
+          } catch (e) {
+            if (attempt < 4) { await sleep(2000 * (attempt + 1)); return callChunk(chunkText, idx, attempt + 1); }
+            throw e;
+          }
+          if (!r.ok) {
+            const e = await r.json().catch(() => ({}));
+            const isRate = r.status === 429 || /429|rate|resource_exhausted|vertex_5/i.test(e.error || '');
+            if (isRate && attempt < 4) { await sleep(2500 * (attempt + 1)); return callChunk(chunkText, idx, attempt + 1); }
+            throw new Error(e.error || ('Error ' + r.status));
+          }
           const j = await r.json();
           return j.transactions || [];
         };
 
-        // Procesa en lotes de 4 para no exceder rate limits de Vertex AI en PDFs enormes
-        const POOL = 4;
+        // Procesa en lotes de 2 (menos presión sobre Vertex). allSettled: si un chunk
+        // falla definitivamente, NO se pierden los demás (antes Promise.all tumbaba todo).
+        const POOL = 2;
         const chunkResults = [];
+        let failedChunks = 0;
         for (let i = 0; i < chunks.length; i += POOL) {
           const batch = chunks.slice(i, i + POOL);
-          const batchRes = await Promise.all(batch.map((c, j) => callChunk(c, i + j)));
-          chunkResults.push(...batchRes);
+          const settled = await Promise.allSettled(batch.map((c, j) => callChunk(c, i + j)));
+          for (const s of settled) {
+            if (s.status === 'fulfilled') chunkResults.push(s.value);
+            else { failedChunks++; this._dlog('chunk failed: ' + (s.reason?.message || s.reason)); }
+          }
           if (chunks.length > POOL) this.importStatus = 'Analizando con IA (' + Math.min(i + POOL, chunks.length) + '/' + chunks.length + ')...';
         }
         // Combina y deduplica (misma fecha+monto+descripción)
@@ -7673,9 +7692,11 @@ function zepoApp() {
             if (!seen.has(key)) { seen.add(key); transactions.push(t); }
           }
         }
-        this._dlog('processFile: ' + transactions.length + ' transactions (from ' + chunks.length + ' chunks)');
+        this._dlog('processFile: ' + transactions.length + ' transactions (from ' + chunks.length + ' chunks, ' + failedChunks + ' failed)');
         if (transactions.length === 0) {
-          this.showToast('No se detectaron transacciones en el PDF');
+          this.showToast(failedChunks > 0
+            ? 'La IA está saturada ahora mismo. Espera 1 minuto e intenta de nuevo.'
+            : 'No se detectaron transacciones en el PDF');
           this.importProcessing = false;
           this.importStatus = '';
           return;
@@ -7707,7 +7728,9 @@ function zepoApp() {
         this.form.amount = clean.reduce((s, p) => s + p.amount, 0).toFixed(2);
         this.form.is_income = false;
         this.bankReconciliation = this._extractReconciliation(fullText);
-        this.showToast(clean.length + ' transacciones detectadas');
+        this.showToast(failedChunks > 0
+          ? clean.length + ' detectadas (algunas faltan, la IA se saturó — revisa y re-procesa si quieres el resto)'
+          : clean.length + ' transacciones detectadas');
         this._dlog('processFile: DONE, showing ' + clean.length + ' items');
       } catch (e) {
         console.error('[processImportedFile]', e);
