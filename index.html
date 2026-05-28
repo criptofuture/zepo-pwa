@@ -222,6 +222,12 @@
       -webkit-overflow-scrolling: touch;
       padding-bottom: var(--content-pad-bottom);
     }
+    /* PATRÓN x-show + flex: Alpine v3 al mostrar ejecuta style.removeProperty('display'),
+       lo que BORRA un `display:flex` inline → el elemento cae a `block` y apila sus hijos.
+       Solución: poner el display:flex en esta clase (no inline). El resto de estilos
+       (align-items, gap, etc.) pueden seguir inline. Usar en todo elemento con x-show
+       que deba ser flex. */
+    .flex-show { display: flex; }
     .screen-header {
       padding: 16px 20px;
       padding-top: calc(var(--safe-top) + 16px);
@@ -2602,7 +2608,7 @@ setTimeout(function() {
         <input x-show="authMode === 'signup'" class="auth-input" type="text" placeholder="Nombre completo" x-model="authName" autocomplete="name">
         <input class="auth-input" type="email" placeholder="Email" x-model="authEmail" required autocomplete="email">
         <input class="auth-input" type="password" :placeholder="authMode === 'login' ? 'Contraseña' : 'Minimo 8 caracteres'" x-model="authPassword" required minlength="6" :autocomplete="authMode === 'login' ? 'current-password' : 'new-password'">
-        <div x-show="authMode === 'signup' && authPassword.length > 0" style="display:flex;align-items:center;gap:8px;margin-top:-4px;">
+        <div x-show="authMode === 'signup' && authPassword.length > 0" class="flex-show" style="align-items:center;gap:8px;margin-top:-4px;">
           <div style="flex:1;height:4px;border-radius:2px;background:var(--border);overflow:hidden;">
             <div :style="'width:' + (authPassword.length >= 12 ? '100' : authPassword.length >= 8 ? '70' : authPassword.length >= 4 ? '40' : '15') + '%;height:100%;background:' + (authPassword.length >= 12 ? 'var(--success)' : authPassword.length >= 8 ? 'var(--success)' : authPassword.length >= 4 ? 'var(--warning)' : 'var(--danger)')"></div>
           </div>
@@ -4986,7 +4992,7 @@ setTimeout(function() {
 
               <!-- ═════════ CREATE MODE: nuevo orden ═════════ -->
               <!-- TIPO segmented pill (estilo Mensual/Anual) -->
-              <div x-show="!editingBatch" style="display:flex;background:var(--surface);padding:4px;border-radius:12px;margin-bottom:10px;border:1px solid var(--border);">
+              <div x-show="!editingBatch" class="flex-show" style="background:var(--surface);padding:4px;border-radius:12px;margin-bottom:10px;border:1px solid var(--border);">
                 <div @click="if (form.is_income) { form.is_income = false; form.category = ''; parsedItems = []; analyzed = false; }" style="flex:1;height:36px;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.18s;letter-spacing:-0.2px;" :style="{ background: !form.is_income ? 'var(--bg)' : 'transparent', color: !form.is_income ? 'var(--text)' : 'var(--muted)', boxShadow: !form.is_income ? '0 1px 3px rgba(0,0,0,0.18)' : 'none' }">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><polyline points="17 18 23 18 23 12"/><path d="M23 18l-9.5-9.5-5 5L1 6"/></svg>
                   Gasto
@@ -5693,7 +5699,7 @@ setTimeout(function() {
                 <template x-for="c in (catManagerMode === 'income' ? incomeCategories : categories)" :key="c.key">
                   <div style="border-radius:var(--radius-sm);overflow:hidden;flex-shrink:0;" :style="{ background: editingCatKey === c.key ? 'var(--surface2)' : 'var(--surface)', border: editingCatKey === c.key ? '1px solid rgba(0,240,255,0.3)' : '1px solid var(--border)' }">
                     <!-- Read row -->
-                    <div x-show="editingCatKey !== c.key" style="display:flex;align-items:center;gap:10px;padding:10px 12px;">
+                    <div x-show="editingCatKey !== c.key" class="flex-show" style="align-items:center;gap:10px;padding:10px 12px;">
                       <div style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;" :style="'background:' + c.color + '18;border:1px solid ' + c.color + '35'">
                         <span x-text="c.emoji"></span>
                       </div>
@@ -6745,7 +6751,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v63',
+    APP_VERSION: 'v64',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
