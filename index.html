@@ -6999,9 +6999,12 @@ function zepoApp() {
     _googleOAuthFallback() {
       const redirectTo = window.location.origin + window.location.pathname;
       this._dlog('OAuth-fallback start. redirectTo=' + redirectTo);
+      // Sin prompt:'consent' ni access_type:'offline' — esos forzaban la
+      // pantalla de consentimiento de Google en CADA login (doble "Continuar").
+      // Para login con Supabase no necesitamos refresh token de Google.
       sb.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo, queryParams: { access_type: 'offline', prompt: 'consent' } }
+        options: { redirectTo }
       }).then(({ data, error }) => {
         if (error) { this._dlog('OAuth err: ' + error.message); throw error; }
         if (data?.url) {
