@@ -7630,7 +7630,7 @@ function zepoApp() {
         // Divide por LÍNEAS (robusto: no depende de cómo pdf.js separe páginas)
         const lines = fullText.split(/\n|--- PAGE BREAK ---/).map(l => l.trim()).filter(l => l.length > 2);
         const header = lines.slice(0, 6).join('\n').slice(0, 400); // período/año para contexto
-        const CHUNK_CHARS = 6000; // ~50 transacciones por chunk → ~20s cada uno
+        const CHUNK_CHARS = 4000; // ~70 transacciones por chunk → ~30s cada uno (margen vs límite 60s)
         const chunks = [];
         let cur = '';
         for (const line of lines) {
@@ -7655,7 +7655,15 @@ function zepoApp() {
           return j.transactions || [];
         };
 
-        const chunkResults = await Promise.all(chunks.map((c, i) => callChunk(c, i)));
+        // Procesa en lotes de 4 para no exceder rate limits de Vertex AI en PDFs enormes
+        const POOL = 4;
+        const chunkResults = [];
+        for (let i = 0; i < chunks.length; i += POOL) {
+          const batch = chunks.slice(i, i + POOL);
+          const batchRes = await Promise.all(batch.map((c, j) => callChunk(c, i + j)));
+          chunkResults.push(...batchRes);
+          if (chunks.length > POOL) this.importStatus = 'Analizando con IA (' + Math.min(i + POOL, chunks.length) + '/' + chunks.length + ')...';
+        }
         // Combina y deduplica (misma fecha+monto+descripción)
         const seen = new Set();
         const transactions = [];
