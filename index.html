@@ -6628,7 +6628,7 @@ function zepoApp() {
     importedFile: null,
     importProcessing: false,
     importStatus: '',
-    APP_VERSION: 'v57',
+    APP_VERSION: 'v58',
     hiddenBankFees: [],
     showHiddenFees: false,
     bankReconciliation: null,
@@ -7514,8 +7514,12 @@ function zepoApp() {
           reader.onerror = () => reject(new Error('No se pudo leer la imagen'));
           reader.readAsDataURL(this.receiptFile);
         });
-        const session = await sb.auth.getSession();
-        const token = session?.data?.session?.access_token;
+        let token = null;
+        try {
+          const r = await withTimeout(sb.auth.getSession(), 5000, 'getSession');
+          token = r?.data?.session?.access_token || null;
+        } catch (e) {}
+        if (!token) { try { const raw = localStorage.getItem('sb-vchaxqisbypwwtyjjnjr-auth-token'); if (raw) token = JSON.parse(raw)?.access_token || null; } catch {} }
         if (!token) { this.showToast('Sesión expirada. Vuelve a iniciar sesión.'); return; }
         const resp = await fetch(SUPABASE_URL + '/functions/v1/gemini-analyze', {
           method: 'POST',
@@ -7617,8 +7621,21 @@ function zepoApp() {
           this.importStatus = '';
           return;
         }
-        const session = await sb.auth.getSession();
-        const token = session?.data?.session?.access_token;
+        this.importStatus = 'Verificando sesión...';
+        // getSession() puede colgarse en red móvil (intenta refrescar token vía network
+        // sin timeout). Lo envolvemos y caemos a localStorage si tarda. Era el cuelgue
+        // en "Leyendo pág 7/7" — el status no avanzaba porque getSession nunca resolvía.
+        let token = null;
+        try {
+          const r = await withTimeout(sb.auth.getSession(), 5000, 'getSession');
+          token = r?.data?.session?.access_token || null;
+        } catch (e) { this._dlog('getSession timeout, usando localStorage'); }
+        if (!token) {
+          try {
+            const raw = localStorage.getItem('sb-vchaxqisbypwwtyjjnjr-auth-token');
+            if (raw) token = JSON.parse(raw)?.access_token || null;
+          } catch {}
+        }
         if (!token) {
           this.showToast('Sesión expirada. Vuelve a iniciar sesión.');
           this.importProcessing = false;
