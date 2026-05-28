@@ -5245,6 +5245,8 @@ setTimeout(function() {
                       </template>
                     </button>
 
+                    <div x-show="importedFile" style="text-align:center;margin-top:6px;font-size:10px;color:var(--muted);opacity:0.6;font-family:'JetBrains Mono',monospace;" x-text="'build ' + APP_VERSION"></div>
+
                     <div x-show="importedFile && parsedItems.length > 0" style="margin-top:14px;">
                       <div class="cd-section-label">GASTOS DETECTADOS · <span x-text="parsedItems.length"></span></div>
                       <div style="background:var(--surface);border-radius:14px;border:1px solid var(--border);padding:4px 14px;">
@@ -6626,6 +6628,7 @@ function zepoApp() {
     importedFile: null,
     importProcessing: false,
     importStatus: '',
+    APP_VERSION: 'v57',
     hiddenBankFees: [],
     showHiddenFees: false,
     bankReconciliation: null,
@@ -10413,17 +10416,31 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  navigator.serviceWorker.register('sw-v54.js', { updateViaCache: 'none' })
-    .then(reg => {
-      reg.update().catch(() => {});
-      let reloaded = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (reloaded) return;
-        reloaded = true;
-        location.reload();
-      });
-    })
-    .catch(err => console.error('[SW] register failed:', err));
+  const CURRENT_SW = 'sw-v57.js';
+  // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
+  // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    let foundOld = false;
+    regs.forEach(r => {
+      const url = r.active?.scriptURL || r.installing?.scriptURL || r.waiting?.scriptURL || '';
+      if (url && !url.includes(CURRENT_SW)) { foundOld = true; r.unregister().catch(() => {}); }
+    });
+    if (foundOld) {
+      // Borra caches viejos y recarga para arrancar limpio con el SW nuevo
+      if ('caches' in window) caches.keys().then(ks => Promise.all(ks.map(k => caches.delete(k)))).then(() => location.reload());
+      else location.reload();
+      return;
+    }
+    navigator.serviceWorker.register(CURRENT_SW, { updateViaCache: 'none' })
+      .then(reg => {
+        reg.update().catch(() => {});
+        let reloaded = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (reloaded) return; reloaded = true; location.reload();
+        });
+      })
+      .catch(err => console.error('[SW] register failed:', err));
+  });
 }
 </script>
 
