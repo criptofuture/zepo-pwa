@@ -6526,6 +6526,11 @@ function zepoApp() {
     authPassword: '',
     authName: '',
     authError: '',
+    debugLog: [],
+    _dlog(msg) {
+      // Panel de debug removido de producción. Solo deja rastro en consola.
+      console.log('[ZEPO-DEBUG]', msg);
+    },
     authLoading: false,
     oauthLoading: false,
     expenses: [],
@@ -6700,6 +6705,7 @@ function zepoApp() {
     },
 
     async init() {
+      this._dlog('init() URL=' + location.href.slice(0, 150));
       window.addEventListener('online', () => this.offline = false);
       window.addEventListener('offline', () => this.offline = true);
       window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); this.installPrompt = e; });
@@ -6751,6 +6757,7 @@ function zepoApp() {
             }
           } catch {}
         }
+        this._dlog('getSession result: session=' + !!session + (session ? ' user=' + session.user.email + ' provider=' + (session.user.app_metadata?.provider||'?') : ''));
         if (session) {
           this.user = session.user;
           this.userName = session.user.user_metadata?.name || session.user.user_metadata?.full_name || session.user.email.split('@')[0];
@@ -6771,7 +6778,12 @@ function zepoApp() {
       const hashParams = new URLSearchParams(window.location.hash.slice(1));
       const oauthError = urlParams.get('error') || hashParams.get('error');
       const oauthErrorDesc = urlParams.get('error_description') || hashParams.get('error_description');
+      const hasCode = urlParams.get('code');
+      const hasAccessToken = hashParams.get('access_token');
+      if (hasCode) this._dlog('URL has ?code= (OAuth PKCE return)');
+      if (hasAccessToken) this._dlog('URL has #access_token= (OAuth implicit return)');
       if (oauthError) {
+        this._dlog('URL has ?error=' + oauthError + ' desc=' + (oauthErrorDesc||''));
         console.warn('[init] OAuth error in URL:', { oauthError, oauthErrorDesc });
         // Mensaje amigable según el tipo de error
         if (oauthErrorDesc && /already.*registered|email.*exists|user.*exists|duplicate/i.test(oauthErrorDesc)) {
@@ -6812,8 +6824,8 @@ function zepoApp() {
       }
 
       sb.auth.onAuthStateChange(async (event, session) => {
+        this._dlog('AuthEvent: ' + event + (session ? ' user=' + session.user.email + ' provider=' + (session.user.app_metadata?.provider||'?') : ' (no session)'));
         if (event === 'SIGNED_IN' && session) {
-          console.log('[auth] SIGNED_IN', { provider: session.user.app_metadata?.provider, email: session.user.email });
           // Prevent duplicate accounts: if Google sign-in email already has
           // a different account (email/password), block and redirect.
           const provider = session.user.app_metadata?.provider;
@@ -6986,14 +6998,18 @@ function zepoApp() {
 
     _googleOAuthFallback() {
       const redirectTo = window.location.origin + window.location.pathname;
+      this._dlog('OAuth-fallback start. redirectTo=' + redirectTo);
       sb.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo, queryParams: { access_type: 'offline', prompt: 'consent' } }
       }).then(({ data, error }) => {
-        if (error) throw error;
-        if (data?.url) window.location.href = data.url;
+        if (error) { this._dlog('OAuth err: ' + error.message); throw error; }
+        if (data?.url) {
+          this._dlog('OAuth redirecting to Google...');
+          window.location.href = data.url;
+        }
       }).catch(e => {
-        console.warn('[signInWithGoogle] OAuth fallback:', e.message);
+        this._dlog('OAuth catch: ' + e.message);
         this.authError = e.message || 'No se pudo iniciar Google.';
         this.oauthLoading = false;
       });
@@ -7001,6 +7017,7 @@ function zepoApp() {
     async signInWithGoogle() {
       this.authError = '';
       this.oauthLoading = true;
+      this._dlog('Google login clicked. GIS available=' + !!(window.google?.accounts?.id));
       if (!window.google?.accounts?.id) {
         this._googleOAuthFallback();
         return;
@@ -7010,14 +7027,16 @@ function zepoApp() {
         google.accounts.id.initialize({
           client_id: GOOGLE_CLIENT_ID,
           callback: async (response) => {
+            self._dlog('GIS callback got credential len=' + (response.credential?.length || 0));
             try {
               const { data, error } = await sb.auth.signInWithIdToken({
                 provider: 'google',
                 token: response.credential,
               });
-              if (error) throw error;
+              if (error) { self._dlog('idToken err: ' + error.message); throw error; }
+              self._dlog('idToken OK. session=' + !!data?.session + ' user=' + (data?.user?.email||'none'));
             } catch (e) {
-              console.warn('[signInWithGoogle] idToken:', e.message);
+              self._dlog('GIS catch: ' + e.message);
               self.authError = e.message || 'Error al iniciar sesión con Google.';
               self.oauthLoading = false;
             }
