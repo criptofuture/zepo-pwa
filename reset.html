@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reset Zepo</title>
+<style>
+body{font-family:system-ui,-apple-system,sans-serif;background:#0A0A0F;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:24px;text-align:center;}
+.card{background:#1a1a24;border:1px solid #2a2a3a;border-radius:16px;padding:32px 24px;max-width:420px;width:100%;}
+h1{margin:0 0 12px;font-size:22px;background:linear-gradient(135deg,#00F0FF,#7000FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+p{opacity:.7;line-height:1.5;margin:8px 0;font-size:15px;}
+#log{font-family:ui-monospace,monospace;font-size:12px;background:#0a0a0f;border:1px solid #2a2a3a;border-radius:8px;padding:12px;margin-top:16px;text-align:left;max-height:240px;overflow-y:auto;}
+.ok{color:#00F0FF;}
+.err{color:#ff6b6b;}
+button{margin-top:20px;background:linear-gradient(135deg,#00F0FF,#7000FF);color:#fff;border:none;padding:14px 32px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;width:100%;}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>Reset Zepo</h1>
+<p>Limpiando todo el cache y datos viejos para que Zepo se instale limpio.</p>
+<div id="log"></div>
+<button id="go" style="display:none" onclick="location.href='/pwa/'">Abrir Zepo</button>
+</div>
+<script>
+const log = document.getElementById('log');
+const btn = document.getElementById('go');
+function l(msg, ok=true){
+  const d = document.createElement('div');
+  d.className = ok ? 'ok' : 'err';
+  d.textContent = (ok?'✓ ':'✗ ') + msg;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+}
+(async () => {
+  // 1. Unregister all service workers
+  try {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      l('Encontrados '+regs.length+' service workers');
+      for (const r of regs) {
+        await r.unregister();
+        l('Desinstalado: '+(r.scope||'?'));
+      }
+    } else {
+      l('Service workers no soportados (ok)');
+    }
+  } catch(e) { l('SW: '+e.message, false); }
+
+  // 2. Delete all caches
+  try {
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      l('Encontrados '+keys.length+' caches');
+      for (const k of keys) {
+        await caches.delete(k);
+        l('Borrado cache: '+k);
+      }
+    }
+  } catch(e) { l('Cache: '+e.message, false); }
+
+  // 3. Clear localStorage and sessionStorage
+  try { localStorage.clear(); l('localStorage limpiado'); } catch(e){ l('localStorage: '+e.message, false); }
+  try { sessionStorage.clear(); l('sessionStorage limpiado'); } catch(e){ l('sessionStorage: '+e.message, false); }
+
+  // 4. Delete IndexedDB databases
+  try {
+    if (indexedDB.databases) {
+      const dbs = await indexedDB.databases();
+      l('Encontradas '+dbs.length+' bases IndexedDB');
+      for (const db of dbs) {
+        await new Promise(res => {
+          const req = indexedDB.deleteDatabase(db.name);
+          req.onsuccess = req.onerror = req.onblocked = res;
+        });
+        l('Borrada DB: '+db.name);
+      }
+    }
+  } catch(e) { l('IndexedDB: '+e.message, false); }
+
+  l('────────────');
+  l('LIMPIO. Toca el boton.');
+  btn.style.display = 'block';
+})();
+</script>
+</body>
+</html>

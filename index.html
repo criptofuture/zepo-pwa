@@ -5240,7 +5240,7 @@ setTimeout(function() {
                       <template x-if="importProcessing">
                         <span style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;">
                           <svg viewBox="0 0 24 24" width="16" height="16" style="animation:spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.5" fill="none" stroke-dasharray="60" stroke-linecap="round"/></svg>
-                          Analizando transacciones...
+                          <span x-text="importStatus || 'Analizando transacciones...'"></span>
                         </span>
                       </template>
                     </button>
@@ -6625,6 +6625,7 @@ function zepoApp() {
     voiceTranscript: '',
     importedFile: null,
     importProcessing: false,
+    importStatus: '',
     hiddenBankFees: [],
     showHiddenFees: false,
     bankReconciliation: null,
@@ -7582,24 +7583,35 @@ function zepoApp() {
         return;
       }
       this.importProcessing = true;
+      this.importStatus = 'Cargando PDF...';
+      this._dlog('processFile: start ' + file.name + ' (' + Math.round(file.size/1024) + 'KB)');
       try {
         if (!window.pdfjsLib) {
-          const pdfjs = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
+          this.importStatus = 'Cargando lector PDF...';
+          this._dlog('processFile: loading pdf.js');
+          const pdfjs = await withTimeout(import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs'), 20000, 'pdfjs-load');
           window.pdfjsLib = pdfjs;
           pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
         }
+        this._dlog('processFile: pdf.js ready');
         const arrayBuffer = await file.arrayBuffer();
-        const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        this.importStatus = 'Abriendo PDF...';
+        const pdf = await withTimeout(window.pdfjsLib.getDocument({ data: arrayBuffer }).promise, 30000, 'pdf-open');
+        this._dlog('processFile: PDF opened, ' + pdf.numPages + ' pages');
         let fullText = '';
         for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const content = await page.getTextContent();
+          this.importStatus = 'Leyendo pág ' + i + '/' + pdf.numPages + '...';
+          const page = await withTimeout(pdf.getPage(i), 15000, 'pdf-page-' + i);
+          const content = await withTimeout(page.getTextContent(), 15000, 'pdf-text-' + i);
           const pageText = content.items.map(item => item.str).join(' ');
           fullText += pageText + '\n--- PAGE BREAK ---\n';
         }
+        this._dlog('processFile: extracted ' + fullText.trim().length + ' chars');
         if (fullText.trim().length < 20) {
-          this.showToast('No se pudo extraer texto del PDF. Intenta con otro archivo.');
+          this._dlog('processFile: PDF has no extractable text (scanned?)');
+          this.showToast('Este PDF parece escaneado (sin texto). Toma una FOTO del estado de cuenta en su lugar.');
           this.importProcessing = false;
+          this.importStatus = '';
           return;
         }
         const session = await sb.auth.getSession();
@@ -7607,22 +7619,57 @@ function zepoApp() {
         if (!token) {
           this.showToast('Sesión expirada. Vuelve a iniciar sesión.');
           this.importProcessing = false;
+          this.importStatus = '';
           return;
         }
-        const resp = await fetch('https://vchaxqisbypwwtyjjnjr.supabase.co/functions/v1/parse-bank-statement', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ text: fullText }),
-        });
-        if (!resp.ok) {
-          const err = await resp.json().catch(() => ({}));
-          throw new Error(err.error || 'Error ' + resp.status);
+        this.importStatus = 'Analizando con IA...';
+        // Divide en chunks por páginas y procesa EN PARALELO.
+        // La edge function (Gemini) tarda ~0.4s por transacción; un estado de cuenta
+        // mensual completo excede los 60s de límite de Supabase si va en una sola llamada.
+        // Chunks paralelos = cada uno rápido, ninguno excede el límite.
+        // Divide por LÍNEAS (robusto: no depende de cómo pdf.js separe páginas)
+        const lines = fullText.split(/\n|--- PAGE BREAK ---/).map(l => l.trim()).filter(l => l.length > 2);
+        const header = lines.slice(0, 6).join('\n').slice(0, 400); // período/año para contexto
+        const CHUNK_CHARS = 6000; // ~50 transacciones por chunk → ~20s cada uno
+        const chunks = [];
+        let cur = '';
+        for (const line of lines) {
+          if (cur.length + line.length > CHUNK_CHARS && cur.trim()) {
+            chunks.push(cur);
+            cur = header + '\n';
+          }
+          cur += line + '\n';
         }
-        const data = await resp.json();
-        const transactions = data.transactions || [];
+        if (cur.trim()) chunks.push(cur);
+        this._dlog('processFile: ' + lines.length + ' lines → ' + chunks.length + ' chunks, parallel');
+        this.importStatus = 'Analizando con IA (' + chunks.length + ' partes)...';
+
+        const callChunk = async (chunkText, idx) => {
+          const r = await withTimeout(fetch('https://vchaxqisbypwwtyjjnjr.supabase.co/functions/v1/parse-bank-statement', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ text: chunkText }),
+          }), 75000, 'parse-chunk-' + idx);
+          if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error || ('Error ' + r.status)); }
+          const j = await r.json();
+          return j.transactions || [];
+        };
+
+        const chunkResults = await Promise.all(chunks.map((c, i) => callChunk(c, i)));
+        // Combina y deduplica (misma fecha+monto+descripción)
+        const seen = new Set();
+        const transactions = [];
+        for (const arr of chunkResults) {
+          for (const t of arr) {
+            const key = t.date + '|' + t.amount + '|' + (t.description || '').slice(0, 30);
+            if (!seen.has(key)) { seen.add(key); transactions.push(t); }
+          }
+        }
+        this._dlog('processFile: ' + transactions.length + ' transactions (from ' + chunks.length + ' chunks)');
         if (transactions.length === 0) {
           this.showToast('No se detectaron transacciones en el PDF');
           this.importProcessing = false;
+          this.importStatus = '';
           return;
         }
         const cats = [...this.categories, ...this.incomeCategories];
@@ -7653,11 +7700,17 @@ function zepoApp() {
         this.form.is_income = false;
         this.bankReconciliation = this._extractReconciliation(fullText);
         this.showToast(clean.length + ' transacciones detectadas');
+        this._dlog('processFile: DONE, showing ' + clean.length + ' items');
       } catch (e) {
         console.error('[processImportedFile]', e);
-        this.showToast('Error al procesar: ' + (e.message || 'intenta de nuevo'));
+        this._dlog('processFile: ERROR ' + (e.message || e));
+        const msg = (e.message || '').includes('timeout')
+          ? 'El PDF es muy grande o la conexión está lenta. Intenta con un PDF más pequeño o toma una foto.'
+          : 'Error al procesar: ' + (e.message || 'intenta de nuevo');
+        this.showToast(msg);
       } finally {
         this.importProcessing = false;
+        this.importStatus = '';
       }
     },
 

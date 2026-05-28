@@ -7,6 +7,8 @@ on:
       - 'index.html'
       - 'manifest.json'
       - 'sw.js'
+      - 'sw-kamikaze.js'
+      - 'reset.html'
       - 'icons/**'
       - 'supabase/**'
       - '.github/workflows/deploy.yml'
@@ -52,19 +54,46 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Prepare deploy folder
+      - name: Prepare deploy folder (physical /pwa/ structure)
         run: |
-          mkdir -p _deploy
-          cp index.html _deploy/
-          cp manifest.json _deploy/
-          cp sw.js _deploy/
-          cp -r icons _deploy/
-          # CF Pages requires _redirects and _headers in the deployed folder.
-          # Without them, /pwa/* rewrites stop being served and Cache-Control
-          # falls back to CF Pages' 7-day default at the edge — sw.js updates
-          # stay cached even after a successful deploy.
-          [ -f _redirects ] && cp _redirects _deploy/
-          [ -f _headers ] && cp _headers _deploy/
+          # CRITICAL: files must live PHYSICALLY under /pwa/ — not via _redirects rewrites.
+          # CF Pages only applies _headers to real file paths; rewritten paths get CF's
+          # 7-day edge cache default, which traps sw.js/HTML updates. See playbook.
+          mkdir -p _deploy/pwa/icons
+          cp index.html _deploy/pwa/index.html
+          cp manifest.json _deploy/pwa/manifest.json
+          # SW served under a cache-busting filename (sw-v54.js) — index.html registers this.
+          cp sw.js _deploy/pwa/sw-v54.js
+          # kamikaze sw.js at the legacy path auto-unregisters old SWs on update check.
+          [ -f sw-kamikaze.js ] && cp sw-kamikaze.js _deploy/pwa/sw.js
+          cp icons/icon-192.png icons/icon-512.png icons/apple-touch.png icons/favicon-32.png icons/og.png _deploy/pwa/icons/ 2>/dev/null || true
+          [ -f icons/icon.svg ] && cp icons/icon.svg _deploy/pwa/icons/
+          [ -f icons/icon-dev-192.png ] && cp icons/icon-dev-192.png _deploy/pwa/icons/
+          [ -f icons/icon-dev-512.png ] && cp icons/icon-dev-512.png _deploy/pwa/icons/
+          # reset.html at root (outside SW scope) — lets stuck users clear old SW + cache.
+          [ -f reset.html ] && cp reset.html _deploy/reset.html
+          # Generate _headers — applies to physical /pwa/ paths.
+          cat > _deploy/_headers <<'HEADERS'
+          /pwa/sw-v54.js
+            Cache-Control: no-cache, no-store, must-revalidate
+            Service-Worker-Allowed: /
+          /pwa/sw.js
+            Cache-Control: no-cache, no-store, must-revalidate
+            Service-Worker-Allowed: /
+          /pwa/index.html
+            Cache-Control: no-cache, no-store, must-revalidate
+          /pwa/
+            Cache-Control: no-cache, no-store, must-revalidate
+          /pwa/manifest.json
+            Cache-Control: no-cache, no-store, must-revalidate
+          /reset.html
+            Cache-Control: no-cache, no-store, must-revalidate
+          /pwa/icons/*
+            Cache-Control: public, max-age=3600
+          HEADERS
+          # Generate _redirects — only root → /pwa/, no rewrites.
+          printf '/ /pwa/ 302\n' > _deploy/_redirects
+          echo "=== _deploy tree ==="; find _deploy -type f | sort
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
