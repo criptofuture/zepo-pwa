@@ -5287,6 +5287,14 @@ setTimeout(function() {
                       </template>
                     </button>
 
+                    <!-- Barra de progreso durante el análisis -->
+                    <div x-show="importProcessing && importProgress > 0" style="margin-top:10px;">
+                      <div style="height:8px;border-radius:6px;background:var(--surface);overflow:hidden;border:1px solid var(--border);">
+                        <div style="height:100%;border-radius:6px;background:linear-gradient(90deg,#00F0FF,#7000FF);transition:width 0.4s ease;" :style="{ width: importProgress + '%' }"></div>
+                      </div>
+                      <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:5px;font-variant-numeric:tabular-nums;" x-text="importProgress + '% — esto puede tardar ~30-60s en estados de cuenta grandes'"></div>
+                    </div>
+
                     <div x-show="importedFile" style="text-align:center;margin-top:6px;font-size:10px;color:var(--muted);opacity:0.6;font-family:'JetBrains Mono',monospace;" x-text="'build ' + APP_VERSION"></div>
 
                     <div x-show="importedFile && parsedItems.length > 0" style="margin-top:14px;">
@@ -6697,9 +6705,24 @@ function zepoApp() {
     importedFile: null,
     importProcessing: false,
     importStatus: '',
+    importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v60',
+    APP_VERSION: 'v61',
+    // Diccionario de comercios → categoría. Corrige los "other" de la IA.
+    // Orden importa: la primera regla que matchea gana.
+    MERCHANT_RULES: [
+      { re: /NETFLIX|SPOTIFY|DISNEY|HBO\b|MAX\b|STAR\+|PRIME VIDEO|YOUTUBE|AMAZON PRIME|APPLE\.COM|APPLE BILL|GOOGLE ONE|ICLOUD|DEEZER|TWITCH|PARAMOUNT|CRUNCHYROLL|AUDIBLE/i, cat: 'fun' },
+      { re: /VERCEL|NETLIFY|HEROKU|DIGITALOCEAN|\bAWS\b|GOOGLE ?CLOUD|\bGCP\b|AZURE|CLOUDFLARE|OPENROUTER|ANTHROPIC|OPENAI|ABACUS|REPLICATE|HUGGINGFACE|GITHUB|GITLAB|CURSOR|PRICELABS|SUPABASE|FIREBASE|MONGODB|VPS|HOSTINGER|GODADDY|NAMECHEAP|FIGMA|NOTION|SLACK|ZOOM|CANVA|ADOBE|MICROSOFT|OFFICE 365|GSUITE|WORKSPACE/i, cat: 'shop' },
+      { re: /UBER EATS|RAPPI|PEDIDOSYA|GLOVO|DIDI FOOD|MCDONALD|KFC|BURGER|PIZZA|SUBWAY|DELI|RESTAURANT|CEVICH|PARRILLA|SUSHI|TACO|POLLO|MENESTR|ALMUERZO|COMIDA/i, cat: 'food' },
+      { re: /STARBUCKS|JUAN VALDEZ|SWEET ?(&|AND)? ?COFFEE|CAFE\b|COFFEE|DULCERIA|PANADERIA|CYRANO/i, cat: 'coffee' },
+      { re: /UBER\b|DIDI\b|CABIFY|INDRIVE|TAXI|METRO\b|ECOVIA|TROLE|PRIMAX|PETROECUADOR|PETROL|GASOLIN|MOVIL|PEAJE|PARQUEO|PARKING/i, cat: 'transport' },
+      { re: /SUPERMAXI|MEGAMAXI|MI COMISARIATO|COMISARIATO|\bTIA\b|SANTA MARIA|MERCADO|CORAL|\bAKI\b|GRAN AKI|TUTI|MAGDA|SUPERMERCADO/i, cat: 'market' },
+      { re: /FARMACIA|FYBECA|CRUZ AZUL|SANA SANA|PHARMACYS|MEDICINA|HOSPITAL|CLINICA|LABORATORIO|MEDICO|DENTAL/i, cat: 'health' },
+      { re: /GIMNASIO|\bGYM\b|SMARTFIT|SMART FIT|CROSSFIT|FITNESS/i, cat: 'gym' },
+      { re: /UDEMY|COURSERA|PLATZI|DOMESTIKA|EDUCAC|UNIVERSIDAD|COLEGIO|CURSO|LIBRO|LIBRERIA/i, cat: 'education' },
+      { re: /RECARGA|TUENTY|TUENTI|\bCLARO\b|MOVISTAR|\bCNT\b|NETLIFE|PUNTONET|TVCABLE|DIRECTV|LUZ\b|\bEEQ\b|AGUA|EPMAPS|INTERAGUA|TELEFONO|INTERNET HOGAR/i, cat: 'other' },
+    ],
     selectCatForItem(cat) {
       const it = this.catPickerItem;
       if (it) {
@@ -7319,7 +7342,7 @@ function zepoApp() {
     get monthIncome() { return this.expenses.filter(e => e.is_income && e.date >= this.currentMonthStart).reduce((s, e) => s + e.amount, 0); },
     get monthBalance() { return this.monthIncome - this.monthTotal; },
 
-    BANK_FEE_PATTERNS: /\b(ISD|IVASD|IMPUESTO ISD|IVA COBRADO|IVA TVCB|IVA TRF|IVA CONSUMO|IVA COMPRA|IVA SERV|IVA INT|COM TVCB|COM TRF|COM INTERBANC|COMISION|RETENCION|RET\.?\s*FTE|REG EN CTA|IMPUESTO SALIDA|IMP\.\s*SALIDA|RET\.\s*IVA|SOL\.\s*DIVISA|COSTO TRANSAC|NOTA DE DEBITO POR IMPUESTO|NOTA DEBITO POR IMP|S\.?\s*O\.?\s*L\.?\s*DIVISA)\b/i,
+    BANK_FEE_PATTERNS: /\b(ISD|IVASD|IMPUESTO ISD|IVA COBRADO|IVA TVCB|IVA TRF|IVA CONSUMO|IVA COMPRA|IVA SERV|IVA INT|COM TVCB|COM TRF|COM INTERBANC|COMISION|RETENCION|RET\.?\s*FTE|REG EN CTA|IMPUESTO SALIDA|IMP\.\s*SALIDA|RET\.\s*IVA|SOL\.\s*DIVISA|COSTO TRANSAC|TARIFA USO POS|MANTENIMIENTO CUENTA|NOTA DE DEBITO POR IMPUESTO|NOTA DEBITO POR IMP|S\.?\s*O\.?\s*L\.?\s*DIVISA)\b/i,
 
     get parsedCategorySummary() {
       const map = {};
@@ -7675,6 +7698,7 @@ function zepoApp() {
       }
       this.importProcessing = true;
       this.importStatus = 'Cargando PDF...';
+      this.importProgress = 0;
       this._dlog('processFile: start ' + file.name + ' (' + Math.round(file.size/1024) + 'KB)');
       try {
         if (!window.pdfjsLib) {
@@ -7773,25 +7797,39 @@ function zepoApp() {
           return j.transactions || [];
         };
 
-        // Procesa en lotes de 2 (menos presión sobre Vertex). allSettled: si un chunk
-        // falla definitivamente, NO se pierden los demás (antes Promise.all tumbaba todo).
-        const POOL = 2;
+        // Procesa en lotes de 3 (balance velocidad/rate-limit). allSettled: si un chunk
+        // falla definitivamente, NO se pierden los demás. Reintento backoff cubre los 429.
+        const POOL = 3;
         const chunkResults = [];
-        let failedChunks = 0;
+        let failedChunks = 0, done = 0;
         for (let i = 0; i < chunks.length; i += POOL) {
           const batch = chunks.slice(i, i + POOL);
           const settled = await Promise.allSettled(batch.map((c, j) => callChunk(c, i + j)));
           for (const s of settled) {
             if (s.status === 'fulfilled') chunkResults.push(s.value);
             else { failedChunks++; this._dlog('chunk failed: ' + (s.reason?.message || s.reason)); }
+            done++;
+            this.importProgress = Math.round((done / chunks.length) * 100);
           }
-          if (chunks.length > POOL) this.importStatus = 'Analizando con IA (' + Math.min(i + POOL, chunks.length) + '/' + chunks.length + ')...';
+          this.importStatus = 'Analizando con IA... ' + this.importProgress + '%';
         }
         // Combina TODOS los chunks. NO deduplicar: los chunks dividen por líneas sin
         // solapar transacciones (solo el header se repite, y no contiene transacciones).
         // Deduplicar colapsaba transacciones legítimas idénticas (ej: 2 viajes DIDI de
         // $3.50 el mismo día) — eran reales, no duplicados.
         const transactions = chunkResults.flat();
+        // Recategorización por diccionario de comercios: la IA manda muchos consumos a
+        // "other" porque no reconoce los nombres (VERCEL, ANTHROPIC, etc.). Estas reglas
+        // corrigen SOLO los que quedaron en other/other_income (no pisan lo que ya acertó).
+        transactions.forEach(t => {
+          const d = (t.description || '').toUpperCase();
+          // Fix: retiro de cajero NO es ingreso
+          if (/CORR POS ADQUISICION|RETIRO|CAJERO|ATM/.test(d)) { t.is_income = false; }
+          if (t.category === 'other' || t.category === 'other_income') {
+            const hit = this.MERCHANT_RULES.find(r => r.re.test(d));
+            if (hit) { t.category = hit.cat; t.is_income = false; }
+          }
+        });
         this._dlog('processFile: ' + transactions.length + ' transactions (from ' + chunks.length + ' chunks, ' + failedChunks + ' failed)');
         if (transactions.length === 0) {
           this.showToast(failedChunks > 0
