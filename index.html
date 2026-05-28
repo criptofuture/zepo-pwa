@@ -4163,6 +4163,25 @@ setTimeout(function() {
           </div>
         </div>
 
+        <!-- Tarjeta guardada -->
+        <template x-if="savedCard">
+          <div style="margin:0 20px 22px;">
+            <div class="settings-group-title" style="margin:0 0 8px;">Metodo de pago</div>
+            <div class="settings-group" style="padding:14px;">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:42px;height:28px;border-radius:6px;background:#fff;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);flex-shrink:0;">
+                  <span style="font-size:9px;font-weight:800;color:#1A1F71;" x-text="savedCard.brand"></span>
+                </div>
+                <div style="flex:1;">
+                  <div style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;">**** <span x-text="savedCard.last4"></span></div>
+                  <div style="font-size:11px;color:var(--muted);margin-top:2px;">Renovacion automatica activa</div>
+                </div>
+                <button @click="deleteSavedCard()" style="padding:6px 10px;border-radius:8px;background:rgba(255,107,107,0.08);border:1px solid rgba(255,107,107,0.25);color:var(--danger);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">Eliminar</button>
+              </div>
+            </div>
+          </div>
+        </template>
+
         <!-- Moneda -->
         <div class="settings-group-title">Moneda</div>
         <div class="settings-group" style="padding:14px;">
@@ -4710,6 +4729,20 @@ setTimeout(function() {
             </div>
           </div>
 
+          <!-- Save card for auto-renewal -->
+          <label style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:12px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--border);cursor:pointer;">
+            <div style="position:relative;width:20px;height:20px;flex-shrink:0;">
+              <input type="checkbox" x-model="saveCardChecked" style="position:absolute;opacity:0;width:20px;height:20px;cursor:pointer;">
+              <div style="width:20px;height:20px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;transition:all 0.15s;" :style="saveCardChecked ? 'background:var(--gradient);border-color:var(--cyan)' : ''">
+                <svg x-show="saveCardChecked" viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="3.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:600;">Guardar tarjeta para renovar</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px;">Se renueva al vencer. Puedes cancelar cuando quieras.</div>
+            </div>
+          </label>
+
           <!-- Pay button -->
           <button class="pay-btn" @click="initiatePayment" :disabled="paymentLoading">
             <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2.4" width="16" height="16"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
@@ -4774,9 +4807,18 @@ setTimeout(function() {
         <div style="font-size:30px;font-weight:700;letter-spacing:-0.9px;margin-bottom:10px;">
           Bienvenido a <span class="gradient-text" x-text="checkoutPlan === 'elite' ? 'Elite!' : 'Pro!'"></span>
         </div>
-        <div style="font-size:15px;color:var(--muted);line-height:1.5;margin-bottom:28px;max-width:320px;">
+        <div style="font-size:15px;color:var(--muted);line-height:1.5;margin-bottom:12px;max-width:320px;">
           Tu plan esta activo. Disfruta todas las funciones.
         </div>
+        <template x-if="savedCard">
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.2);margin-bottom:28px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" width="14" height="14" style="flex-shrink:0;"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            <span style="font-size:12px;color:var(--muted);">Tarjeta *<span x-text="savedCard.last4"></span> guardada para renovacion</span>
+          </div>
+        </template>
+        <template x-if="!savedCard">
+          <div style="margin-bottom:28px;"></div>
+        </template>
         <div style="width:100%;flex:1;"></div>
         <button class="save-btn" @click="tab = 'home'" style="width:100%;">Empezar a usar</button>
       </div>
@@ -5253,10 +5295,13 @@ setTimeout(function() {
                         <template x-for="(e, ei) in (showAllImported ? parsedItems : parsedItems.slice(0, 3))" :key="ei">
                           <div>
                             <div class="cd-detected-list-item">
-                              <div style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;" :style="{ background: (e.color||'#888') + '20', border: '1px solid ' + (e.color||'#888') + '40' }">
+                              <button @click="catPickerItem = e" style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;cursor:pointer;padding:0;position:relative;" :style="{ background: (e.color||'#888') + '20', border: '1px solid ' + (e.color||'#888') + '40' }" title="Cambiar categoría">
                                 <span x-text="e.emoji || (e.is_income ? '💰' : '📦')"></span>
-                              </div>
-                              <div style="flex:1;min-width:0;">
+                                <span style="position:absolute;bottom:-3px;right:-3px;width:12px;height:12px;border-radius:50%;background:var(--cyan);display:flex;align-items:center;justify-content:center;">
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="3" width="7" height="7"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                </span>
+                              </button>
+                              <div @click="catPickerItem = e" style="flex:1;min-width:0;cursor:pointer;">
                                 <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="e.description"></div>
                                 <div style="font-size:11px;color:var(--muted);margin-top:2px;"><span x-text="(e.label || e.category)"></span> · <span x-text="e.date"></span></div>
                               </div>
@@ -5925,6 +5970,32 @@ setTimeout(function() {
 
       <!-- ══ TOAST ══ -->
       <div class="toast" x-show="toast" x-text="toast" x-transition.opacity style="display:none"></div>
+
+      <!-- ══ PICKER DE CATEGORÍA (editar item importado) ══ -->
+      <div x-show="catPickerItem" @click.self="catPickerItem = null" x-cloak style="position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.65);display:flex;align-items:flex-end;justify-content:center;">
+        <div @click.stop style="background:var(--bg);border-radius:20px 20px 0 0;width:100%;max-width:430px;max-height:75vh;overflow-y:auto;padding:20px 18px 32px;">
+          <div style="font-size:15px;font-weight:700;color:var(--text);">Elegir categoría</div>
+          <div style="font-size:12px;color:var(--muted);margin:2px 0 16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="catPickerItem?.description"></div>
+          <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:0.5px;margin-bottom:8px;">GASTOS</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px;">
+            <template x-for="c in categories" :key="'gp_'+c.key">
+              <button @click="selectCatForItem(c)" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 4px;border-radius:12px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-family:inherit;" :style="catPickerItem?.category === c.key ? ('border-color:'+c.color+';background:'+c.color+'22') : ''">
+                <span style="font-size:20px;" x-text="c.emoji"></span>
+                <span style="font-size:9px;color:var(--muted);text-align:center;line-height:1.1;" x-text="c.label"></span>
+              </button>
+            </template>
+          </div>
+          <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:0.5px;margin-bottom:8px;">INGRESOS</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+            <template x-for="c in incomeCategories" :key="'ip_'+c.key">
+              <button @click="selectCatForItem(c)" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 4px;border-radius:12px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-family:inherit;" :style="catPickerItem?.category === c.key ? ('border-color:'+c.color+';background:'+c.color+'22') : ''">
+                <span style="font-size:20px;" x-text="c.emoji"></span>
+                <span style="font-size:9px;color:var(--muted);text-align:center;line-height:1.1;" x-text="c.label"></span>
+              </button>
+            </template>
+          </div>
+        </div>
+      </div>
 
       <!-- ══ INSTALL PROMPT ══ -->
       <div class="install-prompt" x-show="installPrompt" x-cloak>
@@ -6627,7 +6698,19 @@ function zepoApp() {
     importProcessing: false,
     importStatus: '',
     showAllImported: false,
-    APP_VERSION: 'v59',
+    catPickerItem: null,
+    APP_VERSION: 'v60',
+    selectCatForItem(cat) {
+      const it = this.catPickerItem;
+      if (it) {
+        it.category = cat.key;
+        it.emoji = cat.emoji;
+        it.color = cat.color;
+        it.label = cat.label;
+        it.is_income = this.incomeCategories.some(c => c.key === cat.key);
+      }
+      this.catPickerItem = null;
+    },
     hiddenBankFees: [],
     showHiddenFees: false,
     bankReconciliation: null,
@@ -6658,6 +6741,8 @@ function zepoApp() {
     checkoutPlan: 'pro',
     paymentLoading: false,
     paymentError: '',
+    saveCardChecked: true,
+    savedCard: null,
 
     /* === BUG REPORTING === */
     bugReportOpen: false,
@@ -7234,7 +7319,7 @@ function zepoApp() {
     get monthIncome() { return this.expenses.filter(e => e.is_income && e.date >= this.currentMonthStart).reduce((s, e) => s + e.amount, 0); },
     get monthBalance() { return this.monthIncome - this.monthTotal; },
 
-    BANK_FEE_PATTERNS: /\b(ISD|IVASD|IMPUESTO ISD|IVA COBRADO|RETENCION|RET\.?\s*FTE|COMISION|REG EN CTA|IMPUESTO SALIDA|IMP\.\s*SALIDA|RET\.\s*IVA|SOL\.\s*DIVISA|COSTO TRANSAC|NOTA DE DEBITO POR IMPUESTO|NOTA DEBITO POR IMP|S\.?\s*O\.?\s*L\.?\s*DIVISA)\b/i,
+    BANK_FEE_PATTERNS: /\b(ISD|IVASD|IMPUESTO ISD|IVA COBRADO|IVA TVCB|IVA TRF|IVA CONSUMO|IVA COMPRA|IVA SERV|IVA INT|COM TVCB|COM TRF|COM INTERBANC|COMISION|RETENCION|RET\.?\s*FTE|REG EN CTA|IMPUESTO SALIDA|IMP\.\s*SALIDA|RET\.\s*IVA|SOL\.\s*DIVISA|COSTO TRANSAC|NOTA DE DEBITO POR IMPUESTO|NOTA DEBITO POR IMP|S\.?\s*O\.?\s*L\.?\s*DIVISA)\b/i,
 
     get parsedCategorySummary() {
       const map = {};
@@ -7702,15 +7787,11 @@ function zepoApp() {
           }
           if (chunks.length > POOL) this.importStatus = 'Analizando con IA (' + Math.min(i + POOL, chunks.length) + '/' + chunks.length + ')...';
         }
-        // Combina y deduplica (misma fecha+monto+descripción)
-        const seen = new Set();
-        const transactions = [];
-        for (const arr of chunkResults) {
-          for (const t of arr) {
-            const key = t.date + '|' + t.amount + '|' + (t.description || '').slice(0, 30);
-            if (!seen.has(key)) { seen.add(key); transactions.push(t); }
-          }
-        }
+        // Combina TODOS los chunks. NO deduplicar: los chunks dividen por líneas sin
+        // solapar transacciones (solo el header se repite, y no contiene transacciones).
+        // Deduplicar colapsaba transacciones legítimas idénticas (ej: 2 viajes DIDI de
+        // $3.50 el mismo día) — eran reales, no duplicados.
+        const transactions = chunkResults.flat();
         this._dlog('processFile: ' + transactions.length + ' transactions (from ' + chunks.length + ' chunks, ' + failedChunks + ' failed)');
         if (transactions.length === 0) {
           this.showToast(failedChunks > 0
@@ -8531,7 +8612,7 @@ function zepoApp() {
             amount: miParte,
             category: it.category,
             description: it.description,
-            date,
+            date: it.date || date,  // fecha REAL de cada transacción (no la de hoy)
             is_income: !!it.is_income,
             is_split: isSplit,
             split_total: isSplit ? totalAmt : null,
@@ -8548,6 +8629,23 @@ function zepoApp() {
           this.saving = false;
           return;
         }
+
+        // Anti-duplicados: no re-insertar transacciones que ya existen (mismo PDF subido 2 veces).
+        // Compara contra gastos ya guardados por fecha+monto+descripción (normalizada).
+        const normDesc = s => (s || '').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 40);
+        const existingKeys = new Set((this.expenses || []).map(e => e.date + '|' + Number(e.amount).toFixed(2) + '|' + normDesc(e.description)));
+        const beforeCount = rows.length;
+        const dedupedRows = rows.filter(r => !existingKeys.has(r.date + '|' + Number(r.amount).toFixed(2) + '|' + normDesc(r.description)));
+        const skipped = beforeCount - dedupedRows.length;
+        if (dedupedRows.length === 0) {
+          this.showToast('Todos estos gastos ya estaban guardados (' + skipped + ' duplicados omitidos)');
+          this.parsedItems = [];
+          this.sheetOpen = false;
+          this.saving = false;
+          return;
+        }
+        rows.length = 0;
+        rows.push(...dedupedRows);
         let insertedRows;
         try {
           const r = await withTimeout(
@@ -8559,7 +8657,7 @@ function zepoApp() {
           console.warn('[saveMultiItems] sb insert failed, fallback REST:', e.message);
           insertedRows = await sbRestInsert('expenses', rows);
         }
-        this.showToast(isSplit ? '💸 Split guardado' : (rows.length === 1 ? 'Registro guardado' : (rows.length + ' registros guardados')));
+        this.showToast(isSplit ? '💸 Split guardado' : ((rows.length === 1 ? 'Registro guardado' : (rows.length + ' registros guardados')) + (skipped > 0 ? ' · ' + skipped + ' duplicados omitidos' : '')));
         this.parsedItems = [];
         this.sheetOpen = false;
         // Optimistic: add items to local array immediately
@@ -9790,6 +9888,8 @@ function zepoApp() {
         this.userPlan = data.plan || 'free';
         this.planExpiresAt = data.plan_expires_at;
       }
+      const { data: card } = await sb.from('saved_cards').select('card_brand, last_digits').eq('user_id', this.user.id).maybeSingle();
+      this.savedCard = card ? { last4: card.last_digits, brand: card.card_brand || 'CARD' } : null;
     },
 
     get planOptions() {
@@ -9886,7 +9986,7 @@ function zepoApp() {
               Authorization: 'Bearer ' + token,
               apikey: SUPABASE_KEY,
             },
-            body: JSON.stringify({ plan: planParam }),
+            body: JSON.stringify({ plan: planParam, saveCard: this.saveCardChecked }),
           }),
           12000, 'create-payment'
         );
@@ -9958,6 +10058,9 @@ function zepoApp() {
         try { result = await resp.json(); } catch { result = {}; }
         if (result.success) {
           this.userPlan = result.plan || this.checkoutPlan;
+          if (result.cardLast4) {
+            this.savedCard = { last4: result.cardLast4, brand: result.cardBrand || 'CARD' };
+          }
           this.tab = 'pay-success';
         } else {
           this.paymentError = result.error || 'Pago no confirmado';
@@ -9969,6 +10072,14 @@ function zepoApp() {
         this.tab = 'pay-failed';
       }
       window.history.replaceState({}, '', window.location.pathname);
+    },
+
+    async deleteSavedCard() {
+      if (!this.user || !this.savedCard) return;
+      if (!confirm('¿Eliminar tarjeta guardada? La renovacion automatica se desactivara.')) return;
+      await sb.from('saved_cards').delete().eq('user_id', this.user.id);
+      this.savedCard = null;
+      this.showToast('Tarjeta eliminada');
     },
 
     get weeklyChart() {
