@@ -69,9 +69,7 @@
       /* ── Layout tokens (single source of truth for safe-area math) ── */
       --tab-height: 84px;
       --tab-total: calc(var(--tab-height) + var(--safe-bottom));
-      /* tab-bar ahora es flex-shrink:0 (ocupa su espacio en el flujo), así que
-         el padding solo cubre el saliente del FAB sobre el contenido (~28px). */
-      --content-pad-bottom: 32px;
+      --content-pad-bottom: calc(var(--tab-height) + 16px + var(--safe-bottom));
       --overlay-pad-top: calc(var(--safe-top) + 16px);
       --fab-bottom: calc(38px + var(--safe-bottom));
     }
@@ -236,10 +234,15 @@
     /* ═══ TAB BAR ═══ */
     .tab-bar {
       height: var(--tab-total);
-      flex-shrink: 0;
-      /* ROBUSTO: flex item al fondo del column (NO absolute). Antes era
-         position:absolute+bottom:0 dentro de #app overflow:hidden, que en iOS
-         PWA se cortaba cuando 100dvh no coincidía con el viewport real. */
+      /* ROBUSTO: position:fixed anclada al VIEWPORT físico (no al #app). Inmune a
+         que 100dvh != viewport en iOS. Funciona porque ningún ancestro tiene
+         transform. left:50%+translateX centra igual que #app (max-width 430). */
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 430px;
       background: var(--surface);
       border-top: 1px solid var(--border);
       display: flex;
@@ -327,7 +330,7 @@
 
     /* ═══ FAB ═══ */
     .fab {
-      position: absolute;
+      position: fixed;
       bottom: var(--fab-bottom);
       left: 50%;
       transform: translateX(-50%);
@@ -6742,7 +6745,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v62',
+    APP_VERSION: 'v63',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
