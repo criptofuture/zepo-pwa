@@ -5239,7 +5239,7 @@ setTimeout(function() {
                       </template>
                       <template x-if="importProcessing">
                         <span style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;">
-                          <svg viewBox="0 0 24 24" width="16" height="16" style="animation:spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.5" fill="none" stroke-dasharray="60" stroke-linecap="round"/></svg>
+                          <svg viewBox="0 0 24 24" width="16" height="16" style="animation:spin 0.7s linear infinite;transform-origin:center;"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.6" fill="none" stroke-dasharray="34 23" stroke-linecap="round"/></svg>
                           <span x-text="importStatus || 'Analizando transacciones...'"></span>
                         </span>
                       </template>
@@ -5250,27 +5250,25 @@ setTimeout(function() {
                     <div x-show="importedFile && parsedItems.length > 0" style="margin-top:14px;">
                       <div class="cd-section-label">GASTOS DETECTADOS · <span x-text="parsedItems.length"></span></div>
                       <div style="background:var(--surface);border-radius:14px;border:1px solid var(--border);padding:4px 14px;">
-                        <template x-for="(e, ei) in parsedItems.slice(0, 3)" :key="ei">
+                        <template x-for="(e, ei) in (showAllImported ? parsedItems : parsedItems.slice(0, 3))" :key="ei">
                           <div>
                             <div class="cd-detected-list-item">
-                              <template x-for="c in categories" :key="c.key">
-                                <div x-show="c.key === e.category" style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;" :style="{ background: c.color + '20', border: '1px solid ' + c.color + '40' }">
-                                  <span x-text="c.emoji"></span>
-                                </div>
-                              </template>
+                              <div style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;" :style="{ background: (e.color||'#888') + '20', border: '1px solid ' + (e.color||'#888') + '40' }">
+                                <span x-text="e.emoji || (e.is_income ? '💰' : '📦')"></span>
+                              </div>
                               <div style="flex:1;min-width:0;">
                                 <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="e.description"></div>
-                                <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="e.date"></div>
+                                <div style="font-size:11px;color:var(--muted);margin-top:2px;"><span x-text="(e.label || e.category)"></span> · <span x-text="e.date"></span></div>
                               </div>
-                              <div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text);" x-text="'−$' + parseFloat(e.amount).toFixed(2)"></div>
-                              <div style="width:18px;height:18px;border-radius:5px;background:var(--cyan);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="3.4" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
-                              </div>
+                              <div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;" :style="{ color: e.is_income ? 'var(--accent-green, #00E5A0)' : 'var(--text)' }" x-text="(e.is_income ? '+$' : '−$') + parseFloat(e.amount).toFixed(2)"></div>
+                              <button @click="parsedItems.splice(parsedItems.indexOf(e), 1)" style="width:22px;height:22px;border-radius:6px;background:var(--surface-2,#222);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;padding:0;" title="Quitar">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                              </button>
                             </div>
-                            <div x-show="ei < Math.min(parsedItems.length, 3) - 1" style="height:1px;background:var(--border);"></div>
+                            <div x-show="ei < (showAllImported ? parsedItems.length : Math.min(parsedItems.length, 3)) - 1" style="height:1px;background:var(--border);"></div>
                           </div>
                         </template>
-                        <div x-show="parsedItems.length > 3" style="padding:10px 0;text-align:center;font-size:11px;color:var(--cyan);font-weight:600;border-top:1px solid var(--border);" x-text="'+' + (parsedItems.length - 3) + ' gastos más · ver todos'"></div>
+                        <button x-show="parsedItems.length > 3" @click="showAllImported = !showAllImported" style="width:100%;padding:12px 0;text-align:center;font-size:12px;color:var(--cyan);font-weight:700;border:none;border-top:1px solid var(--border);background:none;cursor:pointer;" x-text="showAllImported ? 'Ver menos ▲' : ('Ver los ' + parsedItems.length + ' gastos ▼')"></button>
                       </div>
                     </div>
                   </div>
@@ -6628,7 +6626,8 @@ function zepoApp() {
     importedFile: null,
     importProcessing: false,
     importStatus: '',
-    APP_VERSION: 'v58',
+    showAllImported: false,
+    APP_VERSION: 'v59',
     hiddenBankFees: [],
     showHiddenFees: false,
     bankReconciliation: null,
