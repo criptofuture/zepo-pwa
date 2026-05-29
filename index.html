@@ -14,6 +14,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <!-- Fase 1: precarga de fuentes del rebrand (aún NO aplicadas; se activan en Fase 3) -->
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://accounts.google.com/gsi/client" async></script>
@@ -47,20 +49,50 @@
 
     /* ═══ DESIGN TOKENS ═══ */
     :root {
-      --bg: #0A0A0F;
-      --surface: #13131A;
-      --surface2: #191923;
-      --border: #1E1E2E;
-      --border2: #2A2A3D;
-      --cyan: #00F0FF;
-      --purple: #7000FF;
-      --gradient: linear-gradient(135deg, #00F0FF 0%, #7000FF 100%);
-      --text: #FFFFFF;
-      --muted: #8888AA;
-      --dim: #5A5A75;
-      --success: #00E5A0;
-      --warning: #FFB800;
-      --danger: #FF6B6B;
+      /* COLOR semántico — el flip (Fase 3) cambia SOLO estos valores */
+      --c-bg: #0A0A0F;
+      --c-surface: #13131A;
+      --c-surface-2: #191923;
+      --c-ink: #FFFFFF;
+      --c-ink-soft: #8888AA;
+      --c-ink-faint: #5A5A75;
+      --c-border: #1E1E2E;
+      --c-border-strong: #2A2A3D;
+      --c-brand: #00F0FF;
+      --c-brand-contrast: #0A0A0F;
+      --c-income: #00E5A0;
+      --c-expense: #FF6B6B;
+      --c-accent: #7000FF;
+      --c-warning: #FFB800;
+      --grad-brand: linear-gradient(135deg, #00F0FF 0%, #7000FF 100%);
+      --elev-card: none; /* hoy sin sombra fuerte; token reservado para el flip */
+      /* TYPE — el flip (Fase 3) cambia familias/tracking */
+      --font-display: 'JetBrains Mono', monospace;   /* Fase 3 -> Bricolage Grotesque */
+      --font-body: 'Inter', system-ui, sans-serif;   /* Fase 3 -> Geist */
+      --fs-hero: 56px;
+      --fs-h1: 36px;
+      --fs-h2: 24px;
+      --fs-h3: 18px;
+      --fs-body: 15px;
+      --fs-caption: 12px;
+      --tracking-display: -0.02em;
+      --tracking-body: 0;
+      /* ALIASES viejo->semántico (NO romper las 1.429 referencias existentes) */
+      --bg: var(--c-bg);
+      --surface: var(--c-surface);
+      --surface2: var(--c-surface-2);
+      --border: var(--c-border);
+      --border2: var(--c-border-strong);
+      --cyan: var(--c-brand);
+      --purple: var(--c-accent);
+      --gradient: var(--grad-brand);
+      --text: var(--c-ink);
+      --muted: var(--c-ink-soft);
+      --dim: var(--c-ink-faint);
+      --success: var(--c-income);
+      --warning: var(--c-warning);
+      --danger: var(--c-expense);
+      /* radius + safe-area + layout: SE MANTIENEN igual */
       --radius: 16px;
       --radius-sm: 10px;
       --radius-pill: 50px;
