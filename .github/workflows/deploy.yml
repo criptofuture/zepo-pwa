@@ -37,6 +37,9 @@ jobs:
           [ $FAIL -eq 1 ] && echo "🚨 BLOCKED — regression detected" && exit 1
           echo "✅ All checks passed"
 
+      - name: Brand guardrail (lint-design.py · editorial V2.0)
+        run: python3 tools/lint-design.py index.html
+
       - name: Check commit has verification tag
         run: |
           MSG=$(git log -1 --pretty=%B)
