@@ -105,11 +105,11 @@
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       /* ── Layout tokens (single source of truth for safe-area math) ── */
-      --tab-height: 84px;
+      --tab-height: 66px;
       --tab-total: calc(var(--tab-height) + var(--safe-bottom));
       --content-pad-bottom: calc(var(--tab-height) + 16px + var(--safe-bottom));
       --overlay-pad-top: calc(var(--safe-top) + 16px);
-      --fab-bottom: calc(38px + var(--safe-bottom));
+      --fab-bottom: calc(22px + var(--safe-bottom));
     }
 
     /* ═══ UTILITY ═══ */
@@ -291,8 +291,8 @@
       border-top: 1px solid var(--border);
       display: flex;
       justify-content: space-around;
-      align-items: flex-start;
-      padding-top: 10px;
+      align-items: center;
+      padding-top: 0;
       padding-bottom: var(--safe-bottom);
       z-index: 50;
     }
@@ -382,6 +382,7 @@
       border-radius: 32px;
       background: var(--gradient);
       display: flex; align-items: center; justify-content: center;
+      line-height: 0;
       box-shadow: 0 0 0 4px var(--c-bg), 0 6px 16px rgba(26,36,24,0.18);
       z-index: 51;
       transition: transform 0.2s, box-shadow 0.2s;
@@ -716,7 +717,9 @@
       font-size: 15px; font-weight: 700; letter-spacing: -0.3px;
       text-align: right; white-space: nowrap;
       font-variant-numeric: tabular-nums;
+      color: var(--c-expense);
     }
+    .batch-amount.income { color: var(--success); }
     .batch-chevron-badge {
       width: 22px; height: 22px; border-radius: 6px;
       background: var(--surface2); border: 1px solid var(--border2);
@@ -3181,7 +3184,7 @@ setTimeout(function() {
                       <div class="batch-meta" x-text="formatDate(entry.date) + ' · ' + entry.items.length + ' items'"></div>
                     </div>
                     <div class="batch-right">
-                      <div class="batch-amount" x-text="'-$' + fmtMoney(entry.total)"></div>
+                      <div class="batch-amount" :class="{ income: entry.net >= 0 }" x-text="(entry.net >= 0 ? '+$' : '-$') + fmtMoney(Math.abs(entry.net))"></div>
                       <svg @click.stop="openEditBatch(entry)" class="expense-row-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       <div class="batch-chevron-badge" @click.stop="toggleBatch(entry.batch_id)">
                         <svg :class="{ open: isBatchExpanded(entry.batch_id) }" class="batch-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="10" height="10"><polyline points="6 9 12 15 18 9"/></svg>
@@ -3305,7 +3308,7 @@ setTimeout(function() {
                           <div class="batch-meta" x-text="formatTime(entry.created_at) + ' · ' + entry.items.length + ' items'"></div>
                         </div>
                         <div class="batch-right">
-                          <div class="batch-amount" x-text="'-$' + fmtMoney(entry.total)"></div>
+                          <div class="batch-amount" :class="{ income: entry.net >= 0 }" x-text="(entry.net >= 0 ? '+$' : '-$') + fmtMoney(Math.abs(entry.net))"></div>
                           <svg @click.stop="openEditBatch(entry)" class="expense-row-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                           <div class="batch-chevron-badge" @click.stop="toggleBatch(entry.batch_id)">
                             <svg :class="{ open: isBatchExpanded(entry.batch_id) }" class="batch-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="10" height="10"><polyline points="6 9 12 15 18 9"/></svg>
@@ -3376,7 +3379,7 @@ setTimeout(function() {
           <div class="ph-actions">
             <button x-show="cuentasTab === 'amigos'"
               @click="addFriendEmail='';addFriendResult=null;addFriendError='';friendsSubTab='add'"
-              style="width:36px;height:36px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;">
+              style="width:36px;height:36px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;line-height:0;">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
             <button x-show="cuentasTab !== 'amigos'" class="ph-icon-btn" @click="tab = 'settings'">
@@ -6790,7 +6793,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v65',
+    APP_VERSION: 'v66',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
@@ -7606,11 +7609,12 @@ function zepoApp() {
       items.forEach(exp => {
         if (exp.batch_id) {
           if (!batches[exp.batch_id]) {
-            batches[exp.batch_id] = { _isBatch: true, batch_id: exp.batch_id, batch_label: exp.batch_label || 'Registro múltiple', items: [], total: 0, date: exp.date, created_at: exp.created_at };
+            batches[exp.batch_id] = { _isBatch: true, batch_id: exp.batch_id, batch_label: exp.batch_label || 'Registro múltiple', items: [], total: 0, net: 0, date: exp.date, created_at: exp.created_at };
             result.push(batches[exp.batch_id]);
           }
           batches[exp.batch_id].items.push(exp);
           if (!exp.is_income) batches[exp.batch_id].total += Number(exp.amount);
+          batches[exp.batch_id].net += exp.is_income ? Number(exp.amount) : -Number(exp.amount);
         } else {
           result.push(exp);
         }

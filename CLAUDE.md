@@ -55,7 +55,7 @@ Gates correctos:
 | `.fab bottom` | `var(--fab-bottom)` |
 | `.approve-header padding-top` | `var(--overlay-pad-top)` |
 | Toggle gasto/ingreso | `style="display:flex;..."` (estático, NO `:style`) |
-| `.tab-bar padding-top` | `10px` |
+| `.tab-bar padding-top` | `0` (íconos centrados con `align-items:center`; barra compacta `--tab-height:66px`) |
 | `.cd-split-picker background` | `var(--surface)` (NUNCA `var(--card)`) |
 | `.cd-split-picker-avatar color` | `var(--bg)` (NUNCA `#000`) |
 
