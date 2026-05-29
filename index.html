@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-  <meta name="theme-color" content="#0A0A0F">
+  <meta name="theme-color" content="#EFEADB">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Zepo</title>
@@ -382,16 +382,16 @@
       border-radius: 32px;
       background: var(--gradient);
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 0 4px #0A0A0F, 0 8px 32px rgba(var(--c-brand-rgb),0.4), 0 0 48px rgba(var(--c-accent-rgb),0.3);
+      box-shadow: 0 0 0 4px var(--c-bg), 0 6px 16px rgba(26,36,24,0.18);
       z-index: 51;
       transition: transform 0.2s, box-shadow 0.2s;
     }
     .fab:active { transform: translateX(-50%) scale(0.92); }
-    .fab svg { width: 28px; height: 28px; stroke: #0A0A0F; stroke-width: 2.6; }
+    .fab svg { width: 28px; height: 28px; stroke: var(--c-brand-contrast); stroke-width: 2.6; }
     .fab.pulse { animation: fabPulse 2s ease-in-out infinite; }
     @keyframes fabPulse {
-      0%, 100% { box-shadow: 0 0 0 4px #0A0A0F, 0 8px 32px rgba(var(--c-brand-rgb),0.4), 0 0 48px rgba(var(--c-accent-rgb),0.3); }
-      50% { box-shadow: 0 0 0 8px rgba(var(--c-brand-rgb),0.15), 0 8px 32px rgba(var(--c-brand-rgb),0.5), 0 0 48px rgba(var(--c-accent-rgb),0.4); }
+      0%, 100% { box-shadow: 0 0 0 4px var(--c-bg), 0 6px 16px rgba(26,36,24,0.18); }
+      50% { box-shadow: 0 0 0 8px rgba(var(--c-brand-rgb),0.18), 0 6px 16px rgba(26,36,24,0.22); }
     }
 
     /* ═══ PAGE HEADER ═══ */
@@ -1015,7 +1015,7 @@
     }
     .cd-send-btn:active:not(:disabled) { transform: scale(0.92); }
     .cd-send-btn:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
-    .cd-send-btn svg { stroke: #0A0A0F; }
+    .cd-send-btn svg { stroke: var(--c-brand-contrast); }
     @keyframes cd-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .cd-send-btn .cd-spin { animation: cd-spin 0.8s linear infinite; }
     .approve-close {
@@ -2596,12 +2596,12 @@
 <div id="app-splash" style="position:fixed;inset:0;z-index:9999;background:var(--c-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.3s ease;">
   <div style="width:120px;height:120px;position:relative;margin-bottom:24px;">
     <div style="position:absolute;inset:0;border-radius:50%;border:4px solid rgba(var(--c-ink-rgb),0.08);"></div>
-    <div style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg, #00F0FF 0deg, #7000FF 240deg, transparent 250deg, transparent 360deg);-webkit-mask:radial-gradient(circle,transparent 54px,black 56px);mask:radial-gradient(circle,transparent 54px,black 56px);filter:drop-shadow(0 0 12px rgba(var(--c-brand-rgb),0.6));animation:spin 1.1s linear infinite;"></div>
+    <div style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg, #507D5A 0deg, #84AF72 240deg, transparent 250deg, transparent 360deg);-webkit-mask:radial-gradient(circle,transparent 54px,black 56px);mask:radial-gradient(circle,transparent 54px,black 56px);filter:drop-shadow(0 0 12px rgba(var(--c-brand-rgb),0.6));animation:spin 1.1s linear infinite;"></div>
     <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:32px;background:linear-gradient(135deg, rgba(var(--c-brand-rgb),0.18), rgba(var(--c-accent-rgb),0.18));border:1px solid rgba(var(--c-brand-rgb),0.35);display:flex;align-items:center;justify-content:center;">
-      <span style="font-size:28px;font-weight:800;background:linear-gradient(135deg,#00F0FF,#7000FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-family:Inter,system-ui,sans-serif;">Z</span>
+      <span style="font-size:28px;font-weight:800;background:linear-gradient(135deg,#507D5A,#84AF72);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-family:Inter,system-ui,sans-serif;">Z</span>
     </div>
   </div>
-  <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;background:linear-gradient(135deg,#00F0FF,#7000FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-family:Inter,system-ui,sans-serif;">zepo</div>
+  <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;background:linear-gradient(135deg,#507D5A,#84AF72);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-family:Inter,system-ui,sans-serif;">zepo</div>
 </div>
 <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 <script>
@@ -2612,7 +2612,7 @@ setTimeout(function() {
     sp.innerHTML = '<div style="text-align:center;color:#fff;font-family:Inter,system-ui,sans-serif;padding:24px;">'
       + '<div style="font-size:18px;font-weight:600;margin-bottom:12px;">Cargando...</div>'
       + '<div style="font-size:14px;opacity:0.6;">Si no carga, cierra la app completamente y reabre.</div>'
-      + '<div style="margin-top:20px;"><button onclick="location.reload()" style="background:linear-gradient(135deg,#00F0FF,#7000FF);color:#fff;border:none;padding:10px 24px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;">Reintentar</button></div>'
+      + '<div style="margin-top:20px;"><button onclick="location.reload()" style="background:linear-gradient(135deg,#507D5A,#84AF72);color:#fff;border:none;padding:10px 24px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;">Reintentar</button></div>'
       + '</div>';
   }
 }, 12000);
@@ -2754,7 +2754,7 @@ setTimeout(function() {
               <div class="onb-currency-code" x-text="c.code"></div>
               <div class="onb-currency-country" x-text="c.country"></div>
               <div class="onb-currency-check" x-show="onboardingCurrency === c.code">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="3.5" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.5" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
               </div>
             </button>
           </template>
@@ -2997,42 +2997,42 @@ setTimeout(function() {
           <!-- TEXT -->
           <button class="onb-method-card" :class="{ selected: onboardingMethod === 'text' }" @click="onboardingMethod = 'text'" style="text-align:left;">
             <div class="onb-method-icon" :class="{ active: onboardingMethod === 'text' }">
-              <svg viewBox="0 0 24 24" fill="none" :stroke="onboardingMethod === 'text' ? '#0A0A0F' : 'var(--muted)'" stroke-width="2.2" width="22" height="22"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" :stroke="onboardingMethod === 'text' ? 'var(--c-brand-contrast)' : 'var(--muted)'" stroke-width="2.2" width="22" height="22"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </div>
             <div style="flex:1;">
               <div style="font-size:17px;font-weight:700;letter-spacing:-0.3px;">Texto</div>
               <div style="font-size:12px;color:var(--muted);margin-top:2px;">Escribe en lenguaje natural</div>
             </div>
             <div class="onb-method-check" x-show="onboardingMethod === 'text'">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="3.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
           </button>
 
           <!-- VOICE -->
           <button class="onb-method-card" :class="{ selected: onboardingMethod === 'voice' }" @click="onboardingMethod = 'voice'" style="text-align:left;">
             <div class="onb-method-icon" :class="{ active: onboardingMethod === 'voice' }">
-              <svg viewBox="0 0 24 24" fill="none" :stroke="onboardingMethod === 'voice' ? '#0A0A0F' : 'var(--muted)'" stroke-width="2.2" width="22" height="22"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" :stroke="onboardingMethod === 'voice' ? 'var(--c-brand-contrast)' : 'var(--muted)'" stroke-width="2.2" width="22" height="22"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>
             </div>
             <div style="flex:1;">
               <div style="font-size:17px;font-weight:700;letter-spacing:-0.3px;">Voz</div>
               <div style="font-size:12px;color:var(--muted);margin-top:2px;">Habla y nosotros transcribimos</div>
             </div>
             <div class="onb-method-check" x-show="onboardingMethod === 'voice'">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="3.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
           </button>
 
           <!-- PHOTO -->
           <button class="onb-method-card" :class="{ selected: onboardingMethod === 'photo' }" @click="onboardingMethod = 'photo'" style="text-align:left;">
             <div class="onb-method-icon" :class="{ active: onboardingMethod === 'photo' }">
-              <svg viewBox="0 0 24 24" fill="none" :stroke="onboardingMethod === 'photo' ? '#0A0A0F' : 'var(--muted)'" stroke-width="2.2" width="22" height="22"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" :stroke="onboardingMethod === 'photo' ? 'var(--c-brand-contrast)' : 'var(--muted)'" stroke-width="2.2" width="22" height="22"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </div>
             <div style="flex:1;">
               <div style="font-size:17px;font-weight:700;letter-spacing:-0.3px;">Foto</div>
               <div style="font-size:12px;color:var(--muted);margin-top:2px;">Captura el recibo, listo</div>
             </div>
             <div class="onb-method-check" x-show="onboardingMethod === 'photo'">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="3.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
           </button>
         </div>
@@ -3071,12 +3071,12 @@ setTimeout(function() {
         <!-- Sunset banner para Free: chip normal hasta 7 días, urgente (rojo) cuando ≤ 7 -->
         <div x-show="userPlan === 'free' && daysUntilSunset > 7" @click="tab = 'plans'" class="home-sunset-banner">
           <div style="display:flex;align-items:center;gap:8px;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2.4" width="14" height="14"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" width="14" height="14"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <span>Plan Free vence el 31 dic · <span x-text="daysUntilSunset"></span> días</span>
           </div>
           <div style="display:flex;align-items:center;gap:2px;font-weight:700;">
             Mejorar
-            <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2.6" width="12" height="12"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" width="12" height="12"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </div>
         </div>
 
@@ -3227,7 +3227,7 @@ setTimeout(function() {
                 <span class="es-spark s2"></span>
                 <span class="es-spark s3"></span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="url(#es-grad)" stroke-width="1.6" width="50" height="50">
-                  <defs><linearGradient id="es-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00F0FF"/><stop offset="100%" stop-color="#7000FF"/></linearGradient></defs>
+                  <defs><linearGradient id="es-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#507D5A"/><stop offset="100%" stop-color="#84AF72"/></linearGradient></defs>
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                 </svg>
               </div>
@@ -3430,9 +3430,9 @@ setTimeout(function() {
           <template x-if="pendingSplits.length === 0 && paidSplits.length === 0 && meDebenPaidClaims.length === 0">
             <div class="empty-state">
               <div class="empty-icon" style="background:radial-gradient(circle at 35% 35%, rgba(var(--c-accent-rgb),0.18), rgba(var(--c-brand-rgb),0.10) 60%, transparent 80%);border:1px solid rgba(var(--c-accent-rgb),0.35);box-shadow:0 0 48px rgba(var(--c-accent-rgb),0.15);position:relative;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#B794F6" stroke-width="1.6" width="48" height="48"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#507D5A" stroke-width="1.6" width="48" height="48"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
                 <div style="position:absolute;bottom:-6px;right:-6px;width:32px;height:32px;border-radius:10px;background:var(--success);display:flex;align-items:center;justify-content:center;border:3px solid var(--bg);">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="3.2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
               </div>
               <div class="empty-title">Sin cobros <span class="gradient-text">pendientes</span></div>
@@ -3545,7 +3545,7 @@ setTimeout(function() {
           <template x-if="deboSolicitudes.length === 0 && deboDeudas.length === 0 && deboPaidWaiting.length === 0 && incomeSplitDebts.length === 0">
             <div class="empty-state">
               <div class="empty-icon" style="background:radial-gradient(circle at 35% 35%, rgba(0,229,160,0.15), rgba(var(--c-brand-rgb),0.08) 60%, transparent 80%);border:1px solid rgba(0,229,160,0.3);box-shadow:0 0 48px rgba(0,229,160,0.10);">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#00E5A0" stroke-width="1.6" width="48" height="48"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#84AF72" stroke-width="1.6" width="48" height="48"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
               </div>
               <div class="empty-title">Sin <span class="gradient-text">deudas</span> pendientes</div>
               <div class="empty-desc">Aqui aparecen solicitudes de cobro y deudas confirmadas.</div>
@@ -3808,7 +3808,7 @@ setTimeout(function() {
             </template>
             <template x-for="c in pendingReceived" :key="c.id">
               <div class="friend-row">
-                <div class="friend-avatar" :style="`background:${c.avatar_color || '#00F0FF'}`" x-text="(c.display_name||'?').charAt(0).toUpperCase()"></div>
+                <div class="friend-avatar" :style="`background:${c.avatar_color || '#507D5A'}`" x-text="(c.display_name||'?').charAt(0).toUpperCase()"></div>
                 <div class="friend-info">
                   <div class="friend-name" x-text="c.display_name || 'Usuario'"></div>
                   <div style="font-size:12px;color:var(--muted);">quiere conectarse contigo</div>
@@ -3825,7 +3825,7 @@ setTimeout(function() {
             </template>
             <template x-for="c in pendingSent" :key="c.id">
               <div class="friend-row">
-                <div class="friend-avatar" :style="`background:${c.avatar_color || '#7000FF'}`" x-text="(c.display_name||'?').charAt(0).toUpperCase()"></div>
+                <div class="friend-avatar" :style="`background:${c.avatar_color || '#8A6E9C'}`" x-text="(c.display_name||'?').charAt(0).toUpperCase()"></div>
                 <div class="friend-info">
                   <div class="friend-name" x-text="c.display_name || 'Usuario'"></div>
                   <div style="font-size:12px;color:var(--muted);">pendiente de respuesta</div>
@@ -4101,7 +4101,7 @@ setTimeout(function() {
             </div>
             <div class="insight-card">
               <div class="insight-icon" style="background:rgba(var(--c-accent-rgb),0.1);">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#B794F6" stroke-width="2" width="16" height="16"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#507D5A" stroke-width="2" width="16" height="16"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
               </div>
               <div>
                 <div style="font-size:13px;font-weight:700;">Categoría top</div>
@@ -4186,7 +4186,7 @@ setTimeout(function() {
 
         <!-- Profile hero — flex row like design v2 -->
         <div style="margin:0 20px 22px;display:flex;gap:14px;align-items:center;">
-          <div style="width:64px;height:64px;border-radius:32px;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:var(--c-brand-contrast);flex-shrink:0;box-shadow:0 0 0 4px #0A0A0F, 0 0 24px rgba(var(--c-brand-rgb),0.3);" x-text="(userName || 'Z')[0].toUpperCase()"></div>
+          <div style="width:64px;height:64px;border-radius:32px;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:var(--c-brand-contrast);flex-shrink:0;box-shadow:0 0 0 3px var(--c-bg), 0 4px 12px rgba(26,36,24,0.16);" x-text="(userName || 'Z')[0].toUpperCase()"></div>
           <div style="flex:1;min-width:0;">
             <div style="font-size:18px;font-weight:700;letter-spacing:-0.3px;" x-text="userName"></div>
             <div style="font-size:12px;color:var(--muted);margin-top:2px;" x-text="user.email"></div>
@@ -4384,7 +4384,7 @@ setTimeout(function() {
           </button>
           <button class="settings-item" @click="openImporter()">
             <div class="si-icon" style="background:rgba(var(--c-accent-rgb),0.12);">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#B794F6" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#507D5A" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             </div>
             <span class="si-label">Importar desde otra app</span>
             <svg class="si-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 18l6-6-6-6"/></svg>
@@ -4552,7 +4552,7 @@ setTimeout(function() {
             <button @click="sendPasswordReset" :disabled="!forgotEmail || forgotLoading" style="width:100%;height:50px;border-radius:25px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 20px rgba(var(--c-brand-rgb),0.2);" :style="{ opacity: (!forgotEmail || forgotLoading) ? 0.5 : 1, cursor: (!forgotEmail || forgotLoading) ? 'not-allowed' : 'pointer' }">
               <template x-if="!forgotLoading">
                 <span style="display:inline-flex;align-items:center;gap:8px;">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2.4" width="15" height="15"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" width="15" height="15"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
                   Enviar enlace
                 </span>
               </template>
@@ -4583,7 +4583,7 @@ setTimeout(function() {
               </div>
             </div>
             <button @click="tab = user ? 'settings' : 'auth'; forgotEmail = ''; forgotSent = false" style="width:100%;height:50px;border-radius:25px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2.4" width="15" height="15"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" width="15" height="15"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
               <span x-text="user ? 'Volver a configuración' : 'Volver al login'"></span>
             </button>
             <button @click="sendPasswordReset" :disabled="forgotLoading" style="margin-top:8px;width:100%;height:42px;border-radius:21px;background:transparent;border:none;color:var(--cyan);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">
@@ -4785,7 +4785,7 @@ setTimeout(function() {
             <div style="position:relative;width:20px;height:20px;flex-shrink:0;">
               <input type="checkbox" x-model="saveCardChecked" style="position:absolute;opacity:0;width:20px;height:20px;cursor:pointer;">
               <div style="width:20px;height:20px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;transition:all 0.15s;" :style="saveCardChecked ? 'background:var(--gradient);border-color:var(--cyan)' : ''">
-                <svg x-show="saveCardChecked" viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="3.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
+                <svg x-show="saveCardChecked" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
               </div>
             </div>
             <div>
@@ -4796,7 +4796,7 @@ setTimeout(function() {
 
           <!-- Pay button -->
           <button class="pay-btn" @click="initiatePayment" :disabled="paymentLoading">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2.4" width="16" height="16"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" width="16" height="16"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
             <span x-show="!paymentLoading" x-text="'Pagar $' + checkoutPrice + ' con PayPhone'"></span>
             <span x-show="paymentLoading">Conectando...</span>
           </button>
@@ -4823,7 +4823,7 @@ setTimeout(function() {
               <div style="width:48px;height:30px;border-radius:6px;background:#fff;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);">
                 <span style="font-family:Arial,sans-serif;font-weight:700;font-size:7px;color:#0079BE;letter-spacing:0.2px;">DINERS</span>
               </div>
-              <div style="width:48px;height:30px;border-radius:6px;background:linear-gradient(135deg, #00F0FF, #7000FF);display:flex;align-items:center;justify-content:center;border:1px solid var(--border);">
+              <div style="width:48px;height:30px;border-radius:6px;background:linear-gradient(135deg, #507D5A, #84AF72);display:flex;align-items:center;justify-content:center;border:1px solid var(--border);">
                 <span style="color:var(--c-brand-contrast);font-weight:800;font-size:8px;letter-spacing:0.4px;">PayPhone</span>
               </div>
             </div>
@@ -5341,7 +5341,7 @@ setTimeout(function() {
                     <!-- Barra de progreso durante el análisis (aparece desde el inicio del proceso) -->
                     <div x-show="importProcessing" style="margin-top:10px;">
                       <div style="height:8px;border-radius:6px;background:var(--surface);overflow:hidden;border:1px solid var(--border);">
-                        <div style="height:100%;border-radius:6px;background:linear-gradient(90deg,#00F0FF,#7000FF);transition:width 0.4s ease;" :style="{ width: Math.max(importProgress, 6) + '%' }"></div>
+                        <div style="height:100%;border-radius:6px;background:linear-gradient(90deg,#507D5A,#84AF72);transition:width 0.4s ease;" :style="{ width: Math.max(importProgress, 6) + '%' }"></div>
                       </div>
                       <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:5px;" x-text="(importProgress > 0 ? importProgress + '% · ' : '') + (importStatus || 'Procesando...')"></div>
                     </div>
@@ -5384,7 +5384,7 @@ setTimeout(function() {
                         <button @click="catPickerItem = e" style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;cursor:pointer;padding:0;position:relative;" :style="{ background: (e.color||'#888') + '20', border: '1px solid ' + (e.color||'#888') + '40' }" title="Cambiar categoría">
                           <span x-text="e.emoji || (e.is_income ? '💰' : '📦')"></span>
                           <span style="position:absolute;bottom:-3px;right:-3px;width:12px;height:12px;border-radius:50%;background:var(--cyan);display:flex;align-items:center;justify-content:center;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="3" width="7" height="7"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" width="7" height="7"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                           </span>
                         </button>
                         <div @click="catPickerItem = e" style="flex:1;min-width:0;cursor:pointer;">
@@ -5565,7 +5565,7 @@ setTimeout(function() {
                         Agregar persona
                       </button>
                       <button @click="splitEqual()" style="flex:1;height:38px;border-radius:10px;background:rgba(var(--c-accent-rgb),0.08);border:1px solid rgba(var(--c-accent-rgb),0.3);color:var(--c-accent-soft);font-weight:600;font-size:12px;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#B794F6" stroke-width="2" width="12" height="12"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#507D5A" stroke-width="2" width="12" height="12"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
                         Partes iguales
                       </button>
                     </div>
@@ -5649,7 +5649,7 @@ setTimeout(function() {
               <!-- PDF (Elite) -->
               <button @click="userPlan !== 'elite' ? (tab = 'plans', exportSheetOpen = false) : (exportPDF(), exportSheetOpen = false)" class="cd-export-item">
                 <div class="cd-export-icon" style="background:rgba(var(--c-accent-rgb),0.10);">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#B794F6" stroke-width="1.8" width="20" height="20"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#507D5A" stroke-width="1.8" width="20" height="20"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
                 </div>
                 <div style="flex:1;text-align:left;">
                   <div style="font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;">
@@ -5788,7 +5788,7 @@ setTimeout(function() {
                 </div>
                 <div style="font-size:10px;color:var(--dim);margin-bottom:10px;line-height:1.4;">Toca el ícono para cambiar el emoji.</div>
                 <button @click="addCategory()" :disabled="!newCatLabel || !newCatLabel.trim()" style="width:100%;height:40px;border-radius:20px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:13px;font-family:inherit;border:none;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;" :style="{ opacity: (!newCatLabel || !newCatLabel.trim()) ? '0.4' : '1' }">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2.6" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                   Agregar
                 </button>
               </div>
@@ -5851,7 +5851,7 @@ setTimeout(function() {
               <!-- Acciones -->
               <template x-if="activeCobro.split_status !== 'cobrado'">
                 <button @click="markSplitPaid(activeCobro.id); cobroDetailOpen = false" style="width:100%;height:50px;border-radius:25px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2.6" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
                   Marcar como pagado
                 </button>
               </template>
@@ -5896,7 +5896,7 @@ setTimeout(function() {
               </button>
               <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">Se separara del grupo y quedara como registro individual.</div>
               <button @click="editWholeBatch()" style="width:100%;height:50px;border-radius:25px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
                 Todo el grupo
               </button>
               <button @click="batchEditPromptExp = null; batchEditPromptItems = []" style="margin-top:12px;width:100%;height:40px;background:transparent;border:none;color:var(--muted);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">Cancelar</button>
@@ -5957,7 +5957,7 @@ setTimeout(function() {
               <template x-if="activeDeboType === 'solicitud'">
                 <div style="display:flex;flex-direction:column;gap:8px;">
                   <button @click="acceptPrModal = activeDebo; deboDetailOpen = false" style="width:100%;height:50px;border-radius:25px;background:var(--cyan);color:var(--c-brand-contrast);font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2.6" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
                     Aceptar cobro
                   </button>
                   <button @click="declinePaymentRequest(activeDebo.id); deboDetailOpen = false" style="width:100%;height:46px;border-radius:23px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">Ignorar</button>
@@ -6005,7 +6005,7 @@ setTimeout(function() {
                 <div style="font-size:18px;font-weight:800;margin-bottom:6px;">Presupuestos</div>
                 <div style="font-size:14px;color:var(--muted);line-height:1.5;margin-bottom:20px;">Esta función está disponible en el plan <span class="gradient-text" style="font-weight:700;">Pro</span>. Controla tus gastos con límites por categoría.</div>
                 <button @click="budgetSheetOpen = false; tab = 'plans'" style="width:100%;height:48px;border-radius:14px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2" width="16" height="16"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" width="16" height="16"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                   Ver planes
                 </button>
                 <button @click="budgetSheetOpen = false" style="margin-top:10px;width:100%;height:40px;background:transparent;color:var(--muted);font-size:13px;font-weight:600;">Cancelar</button>
@@ -6032,7 +6032,7 @@ setTimeout(function() {
 
             <!-- Pro gate notice for category budgets -->
             <div x-show="userPlan === 'pro'" style="padding:12px 14px;border-radius:12px;background:rgba(var(--c-accent-rgb),0.06);border:1px solid rgba(var(--c-accent-rgb),0.2);margin-bottom:14px;display:flex;align-items:center;gap:10px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#B794F6" stroke-width="1.6" width="20" height="20" style="flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#507D5A" stroke-width="1.6" width="20" height="20" style="flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
               <div style="flex:1;">
                 <div style="font-size:12px;font-weight:600;color:var(--text);">Presupuestos por categoría</div>
                 <div style="font-size:11px;color:var(--muted);margin-top:2px;">Disponibles en plan <span style="color:var(--c-accent-soft);font-weight:600;">Elite</span></div>
@@ -6231,7 +6231,7 @@ setTimeout(function() {
         <div class="coach-scan"></div>
         <div class="coach-flash"></div>
         <div class="coach-finger">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#0A0A0F" stroke-width="2.5" width="14" height="14"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" width="14" height="14"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </div>
         <div class="coach-result">
           <div class="coach-result-emoji">🍽</div>
@@ -6560,36 +6560,36 @@ async function sbFreshToken() {
 }
 
 const CATEGORIES = [
-  { key: 'food', emoji: '🍽', label: 'Comida', color: '#FF6B6B' },
-  { key: 'transport', emoji: '🚌', label: 'Transporte', color: '#00F0FF' },
-  { key: 'market', emoji: '🛒', label: 'Mercado', color: '#00E5A0' },
-  { key: 'health', emoji: '💊', label: 'Salud', color: '#00E5A0' },
-  { key: 'rent', emoji: '🏠', label: 'Vivienda', color: '#7000FF' },
-  { key: 'fun', emoji: '🎮', label: 'Ocio', color: '#7000FF' },
-  { key: 'shop', emoji: '🛍', label: 'Compras', color: '#FFB800' },
-  { key: 'coffee', emoji: '☕', label: 'Café', color: '#C49A6C' },
-  { key: 'pets', emoji: '🐾', label: 'Mascotas', color: '#FFB800' },
-  { key: 'savings', emoji: '🐷', label: 'Ahorro', color: '#00E5A0' },
-  { key: 'invest_out', emoji: '📈', label: 'Inversión', color: '#7000FF' },
-  { key: 'gym', emoji: '💪', label: 'Gym', color: '#FF6B6B' },
-  { key: 'education', emoji: '📚', label: 'Educación', color: '#00F0FF' },
-  { key: 'travel', emoji: '✈️', label: 'Viaje', color: '#B794F6' },
-  { key: 'other', emoji: '✨', label: 'Otro', color: '#8888AA' },
+  { key: 'food', emoji: '🍽', label: 'Comida', color: '#C2553F' },
+  { key: 'transport', emoji: '🚌', label: 'Transporte', color: '#4F8A99' },
+  { key: 'market', emoji: '🛒', label: 'Mercado', color: '#5E9469' },
+  { key: 'health', emoji: '💊', label: 'Salud', color: '#5E9469' },
+  { key: 'rent', emoji: '🏠', label: 'Vivienda', color: '#8A6E9C' },
+  { key: 'fun', emoji: '🎮', label: 'Ocio', color: '#8A6E9C' },
+  { key: 'shop', emoji: '🛍', label: 'Compras', color: '#C9972F' },
+  { key: 'coffee', emoji: '☕', label: 'Café', color: '#B0875B' },
+  { key: 'pets', emoji: '🐾', label: 'Mascotas', color: '#C9972F' },
+  { key: 'savings', emoji: '🐷', label: 'Ahorro', color: '#5E9469' },
+  { key: 'invest_out', emoji: '📈', label: 'Inversión', color: '#8A6E9C' },
+  { key: 'gym', emoji: '💪', label: 'Gym', color: '#C2553F' },
+  { key: 'education', emoji: '📚', label: 'Educación', color: '#4F8A99' },
+  { key: 'travel', emoji: '✈️', label: 'Viaje', color: '#A98BB0' },
+  { key: 'other', emoji: '✨', label: 'Otro', color: '#948E80' },
 ];
 const INCOME_CATEGORIES = [
-  { key: 'salary', emoji: '💰', label: 'Sueldo', color: '#00E5A0' },
-  { key: 'freelance', emoji: '💻', label: 'Freelance', color: '#00F0FF' },
-  { key: 'business', emoji: '🏪', label: 'Negocio', color: '#7000FF' },
-  { key: 'investment', emoji: '📈', label: 'Inversión', color: '#FFB800' },
-  { key: 'gift', emoji: '🎁', label: 'Regalo', color: '#B794F6' },
-  { key: 'refund', emoji: '🔄', label: 'Reembolso', color: '#00F0FF' },
-  { key: 'rental', emoji: '🏠', label: 'Arriendo', color: '#FF6B6B' },
-  { key: 'sale', emoji: '🏷', label: 'Venta', color: '#C49A6C' },
-  { key: 'other_income', emoji: '✨', label: 'Otro', color: '#8888AA' },
+  { key: 'salary', emoji: '💰', label: 'Sueldo', color: '#5E9469' },
+  { key: 'freelance', emoji: '💻', label: 'Freelance', color: '#4F8A99' },
+  { key: 'business', emoji: '🏪', label: 'Negocio', color: '#8A6E9C' },
+  { key: 'investment', emoji: '📈', label: 'Inversión', color: '#C9972F' },
+  { key: 'gift', emoji: '🎁', label: 'Regalo', color: '#A98BB0' },
+  { key: 'refund', emoji: '🔄', label: 'Reembolso', color: '#4F8A99' },
+  { key: 'rental', emoji: '🏠', label: 'Arriendo', color: '#C2553F' },
+  { key: 'sale', emoji: '🏷', label: 'Venta', color: '#B0875B' },
+  { key: 'other_income', emoji: '✨', label: 'Otro', color: '#948E80' },
 ];
 // Legacy keys (no en el grid pero sí en CAT_MAP para que rows antiguos sigan mostrando emoji/label)
 const LEGACY_CATEGORIES = [
-  { key: 'taxi', emoji: '🚖', label: 'Transporte', color: '#00F0FF' },
+  { key: 'taxi', emoji: '🚖', label: 'Transporte', color: '#4F8A99' },
 ];
 const CAT_MAP = Object.fromEntries([...CATEGORIES, ...INCOME_CATEGORIES, ...LEGACY_CATEGORIES].map(c => [c.key, c]));
 const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -7968,7 +7968,7 @@ function zepoApp() {
       }
     },
 
-    splitColorPalette: ['#00F0FF', '#7000FF', '#FFB800', '#FF6B6B', '#00E5A0', '#7FB8FF', '#FF8AC4', '#B794F6'],
+    splitColorPalette: ['#507D5A', '#8A6E9C', '#C9972F', '#C2553F', '#5E9469', '#6F97C2', '#C57BA0', '#A98BB0'],
 
     toggleSplit() {
       // Dividir cuentas: solo Elite
@@ -8251,7 +8251,7 @@ function zepoApp() {
         return;
       }
       const key = 'custom_' + Date.now().toString(36);
-      const palette = ['#FF6B6B', '#00F0FF', '#00E5A0', '#7000FF', '#FFB800', '#B794F6', '#C49A6C'];
+      const palette = ['#C2553F', '#4F8A99', '#5E9469', '#8A6E9C', '#C9972F', '#A98BB0', '#B0875B'];
       const color = palette[Math.floor(Math.random() * palette.length)];
       const cat = { key, emoji, label, color };
       if (this.catManagerMode === 'income') this.incomeCategories.push(cat);
@@ -8319,7 +8319,7 @@ function zepoApp() {
       return this.budgets.filter(b => b.category).map(b => {
         const spent = this.monthExpenses.filter(e => e.category === b.category).reduce((s, e) => s + e.amount, 0);
         const cat = CAT_MAP[b.category] || {};
-        return { cat: b.category, label: cat.label || b.category, emoji: cat.emoji || '✨', color: cat.color || '#8888AA', budget: b.amount, spent, pct: Math.round(spent / b.amount * 100) };
+        return { cat: b.category, label: cat.label || b.category, emoji: cat.emoji || '✨', color: cat.color || '#948E80', budget: b.amount, spent, pct: Math.round(spent / b.amount * 100) };
       });
     },
 
@@ -9147,12 +9147,12 @@ function zepoApp() {
       // Friends not already used
       const friendOpts = (this.friends || [])
         .filter(f => !usedNames.includes(f.display_name.toLowerCase()))
-        .map(f => ({ name: f.display_name, type: 'friend', freq: freq[f.display_name] || 0, color: f.avatar_color || '#00F0FF' }));
+        .map(f => ({ name: f.display_name, type: 'friend', freq: freq[f.display_name] || 0, color: f.avatar_color || '#507D5A' }));
 
       // Known personas from history, not friends, not used
       const knownOpts = Object.keys(freq)
         .filter(n => !usedNames.includes(n.toLowerCase()) && !friendNames.has(n.toLowerCase()))
-        .map(n => ({ name: n, type: 'known', freq: freq[n], color: '#888' }));
+        .map(n => ({ name: n, type: 'known', freq: freq[n], color: '#948E80' }));
 
       let all = [...friendOpts, ...knownOpts];
 
@@ -9165,7 +9165,7 @@ function zepoApp() {
       // If query doesn't match anyone exactly, add "new" option
       if (query.length >= 1 && !all.some(o => o.name.toLowerCase() === query)) {
         const cap = query.charAt(0).toUpperCase() + query.slice(1);
-        all.push({ name: cap, type: 'new', freq: 0, color: '#00E5A0' });
+        all.push({ name: cap, type: 'new', freq: 0, color: '#5E9469' });
       }
 
       return all;
@@ -9439,7 +9439,7 @@ function zepoApp() {
         for (const cat of this.importNewCats.filter(c => c.createNew)) {
           const emoji = this.emojiForLabel(cat.raw) || '✨';
           const key = 'custom_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
-          const palette = ['#FF6B6B','#00F0FF','#00E5A0','#7000FF','#FFB800','#B794F6','#C49A6C'];
+          const palette = ['#C2553F','#4F8A99','#5E9469','#8A6E9C','#C9972F','#A98BB0','#B0875B'];
           const color = palette[Math.floor(Math.random() * palette.length)];
           const newCat = { key, emoji, label: cat.raw, color };
           this.categories.push(newCat);
@@ -9670,7 +9670,7 @@ function zepoApp() {
 
     getCatEmoji(key) { return CAT_MAP[key]?.emoji || '✨'; },
     getCatLabel(key) { return CAT_MAP[key]?.label || key; },
-    getCatColor(key) { return CAT_MAP[key]?.color || '#8888AA'; },
+    getCatColor(key) { return CAT_MAP[key]?.color || '#948E80'; },
 
     formatDate(d) {
       if (!d) return '';
@@ -9940,7 +9940,7 @@ function zepoApp() {
         is_income,
         emoji: cat.emoji || '✨',
         label: cat.label || category,
-        color: cat.color || '#8888AA',
+        color: cat.color || '#948E80',
       };
     },
 
@@ -10372,7 +10372,7 @@ function zepoApp() {
           pct: Math.round(val / total * 100),
           label: CAT_MAP[key]?.label || key,
           emoji: CAT_MAP[key]?.emoji || '✨',
-          color: CAT_MAP[key]?.color || '#8888AA',
+          color: CAT_MAP[key]?.color || '#948E80',
         }));
     },
 
@@ -10420,7 +10420,7 @@ function zepoApp() {
       }
 
       const nameFor = id => settingsMap[id]?.display_name || id.slice(0, 8);
-      const colorFor = id => settingsMap[id]?.avatar_color || '#00F0FF';
+      const colorFor = id => settingsMap[id]?.avatar_color || '#507D5A';
 
       const { data: prs } = await sb.from('payment_requests')
         .select('from_user_id,to_user_id,amount,status')
