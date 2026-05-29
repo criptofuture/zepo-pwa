@@ -75,7 +75,8 @@ jobs:
           [ -f icons/icon-dev-192.png ] && cp icons/icon-dev-192.png _deploy/pwa/icons/
           [ -f icons/icon-dev-512.png ] && cp icons/icon-dev-512.png _deploy/pwa/icons/
           # reset.html at root (outside SW scope) — lets stuck users clear old SW + cache.
-          [ -f reset.html ] && cp reset.html _deploy/reset.html
+          # Copied to BOTH root and /pwa/ so neither URL guess 404s (CF strips .html → /reset, /pwa/reset).
+          [ -f reset.html ] && cp reset.html _deploy/reset.html && cp reset.html _deploy/pwa/reset.html
           # Generate _headers — applies to physical /pwa/ paths.
           cat > _deploy/_headers <<'HEADERS'
           /pwa/sw-v57.js
@@ -91,6 +92,8 @@ jobs:
           /pwa/manifest.json
             Cache-Control: no-cache, no-store, must-revalidate
           /reset.html
+            Cache-Control: no-cache, no-store, must-revalidate
+          /pwa/reset.html
             Cache-Control: no-cache, no-store, must-revalidate
           /pwa/icons/*
             Cache-Control: public, max-age=3600
