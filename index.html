@@ -816,15 +816,28 @@
       margin: 0 auto;
       background: var(--bg);
       z-index: 101;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
       padding-bottom: var(--safe-bottom);
     }
+    /* Scrollable body: contenido fluye arriba; el composer (.cd-describe-block)
+       se ancla al fondo via margin-top:auto + order alto (estilo Claude). */
+    .approve-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      display: flex;
+      flex-direction: column;
+      padding: 0 20px 20px;
+    }
+    .cd-describe-block { margin-top: auto; order: 10; padding-top: 12px; }
     .approve-header {
       display: flex; align-items: center; gap: 12px;
       padding: 14px 20px 12px;
       padding-top: var(--overlay-pad-top);
-      position: sticky; top: 0; background: var(--bg); z-index: 10;
+      background: var(--bg); flex-shrink: 0;
     }
     .approve-back {
       width: 36px; height: 36px; border-radius: 18px;
@@ -5030,7 +5043,7 @@ setTimeout(function() {
             </div>
 
             <!-- Main content area -->
-            <div style="padding:0 20px 32px;">
+            <div class="approve-body">
 
               <!-- ═════════ CREATE MODE: nuevo orden ═════════ -->
               <!-- TIPO segmented pill (estilo Mensual/Anual) -->
@@ -5055,7 +5068,7 @@ setTimeout(function() {
               </div>
 
               <!-- DESCRIBE CARD con iconos inline (mic + foto + archivo) -->
-              <div x-show="!editingExpense && !editingBatch && !receiptPreview && !importedFile" style="margin-bottom:12px;">
+              <div class="cd-describe-block" x-show="!editingExpense && !editingBatch && !receiptPreview && !importedFile" style="margin-bottom:12px;">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
                   <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   <div style="font-size:14px;font-weight:700;letter-spacing:-0.2px;">Describe el registro</div>
@@ -5065,17 +5078,6 @@ setTimeout(function() {
                   <textarea x-model="form.description" maxlength="500" rows="3" @keydown.enter.prevent="analyzeTextInput()" :placeholder="form.is_income ? 'sueldo octubre 1200 · freelance diseño 350' : 'almuerzo 15 · taxi 8.50 · café 3.20'"></textarea>
                   <div class="cd-describe-footer">
                     <div style="display:flex;gap:6px;align-items:center;">
-                      <!-- Mic (voz) -->
-                      <button type="button" class="cd-inline-action" @click="if (userPlan === 'free') { tab = 'plans'; sheetOpen = false; return } toggleVoice()" :style="voiceRecording ? 'background:rgba(255,77,109,0.15);border-color:var(--danger)' : ''" title="Voz">
-                        <template x-if="!voiceRecording">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
-                        </template>
-                        <template x-if="voiceRecording">
-                          <svg viewBox="0 0 24 24" fill="var(--danger)" width="11" height="11"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-                        </template>
-                        <svg x-show="userPlan === 'free'" class="cd-inline-lock" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                      </button>
-
                       <!-- Foto (camara) -->
                       <label class="cd-inline-action" :style="userPlan !== 'elite' ? 'opacity:0.7' : ''" title="Foto del recibo" @click="if (userPlan !== 'elite') { $event.preventDefault(); tab = 'plans'; sheetOpen = false; } else { triggerCoachPhoto(); }">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -5092,6 +5094,16 @@ setTimeout(function() {
                     </div>
                     <div style="display:flex;align-items:center;gap:10px;">
                       <div class="cd-char-count"><span x-text="(form.description || '').length"></span>/500</div>
+                      <!-- Mic (voz) -->
+                      <button type="button" class="cd-inline-action" @click="if (userPlan === 'free') { tab = 'plans'; sheetOpen = false; return } toggleVoice()" :style="voiceRecording ? 'background:rgba(255,77,109,0.15);border-color:var(--danger)' : ''" title="Voz">
+                        <template x-if="!voiceRecording">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+                        </template>
+                        <template x-if="voiceRecording">
+                          <svg viewBox="0 0 24 24" fill="var(--danger)" width="11" height="11"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                        </template>
+                        <svg x-show="userPlan === 'free'" class="cd-inline-lock" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                      </button>
                       <button type="button" class="cd-send-btn" @click="analyzeTextInput()" :disabled="analyzing || !form.description || form.description.length < 3" title="Analizar">
                         <svg x-show="!analyzing" viewBox="0 0 24 24" fill="none" stroke-width="2.6" width="14" height="14"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
                         <svg x-show="analyzing" class="cd-spin" viewBox="0 0 24 24" fill="none" stroke-width="2.4" width="14" height="14"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
@@ -6793,7 +6805,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v66',
+    APP_VERSION: 'v67',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
