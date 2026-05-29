@@ -141,7 +141,7 @@
       mask-composite: exclude;
       pointer-events: none;
     }
-    .mono { font-family: 'JetBrains Mono', monospace; }
+    .mono { font-family: var(--font-display); }
 
     /* ═══ APP SHELL ═══ */
     #app {
@@ -1094,7 +1094,7 @@
       margin-top: 22px; padding: 12px 16px; border-radius: 14px;
       background: var(--surface); border: 1px solid var(--border);
       font-size: 14px; color: var(--text); line-height: 1.4;
-      width: 100%; text-align: center; font-family: 'JetBrains Mono', monospace;
+      width: 100%; text-align: center; font-family: var(--font-display);
     }
     .cd-voice-wave {
       margin-top: 22px; display: flex; align-items: center; gap: 3px; height: 40px;
@@ -1167,7 +1167,7 @@
     .cd-format-badge {
       padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700;
       background: var(--bg); color: var(--muted); letter-spacing: 0.6px;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--font-display);
     }
     .cd-selected-file {
       padding: 14px; background: var(--surface); border-radius: 14px;
@@ -1278,7 +1278,7 @@
     }
     .cd-pw-input {
       flex: 1; background: transparent; border: none; outline: none;
-      color: var(--text); font-size: 15px; font-family: 'JetBrains Mono', monospace;
+      color: var(--text); font-size: 15px; font-family: var(--font-display);
       letter-spacing: 1px; min-width: 0;
     }
     .cd-pw-input::placeholder { color: var(--dim); letter-spacing: 2px; }
@@ -1824,7 +1824,7 @@
       margin-bottom: 8px;
     }
     .budget-bar-label { font-size: 13px; font-weight: 600; }
-    .budget-bar-amount { font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+    .budget-bar-amount { font-size: 12px; color: var(--muted); font-family: var(--font-display); }
     .budget-bar-track {
       height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;
     }
@@ -1862,7 +1862,7 @@
     }
     .budget-grid-item input {
       width: 100%; background: none; border: none; outline: none;
-      color: var(--cyan); font-family: 'JetBrains Mono', monospace;
+      color: var(--cyan); font-family: var(--font-display);
       font-size: 14px; font-weight: 600; margin-top: 4px;
     }
     .budget-grid-item input::placeholder { color: var(--dim); }
@@ -2869,7 +2869,7 @@ setTimeout(function() {
 
         <!-- Monto hero -->
         <div style="text-align:center;margin-bottom:16px;">
-          <div style="font-family:'JetBrains Mono', monospace;font-size:64px;font-weight:800;letter-spacing:-3px;line-height:1;font-feature-settings:'tnum';">
+          <div style="font-family:var(--font-display);font-size:64px;font-weight:800;letter-spacing:-3px;line-height:1;font-feature-settings:'tnum';">
             <span style="font-size:36px;color:var(--muted);font-weight:600;vertical-align:8px;margin-right:4px;">$</span>
             <span class="gradient-text" x-text="onboardingFirstAmount || '12.50'"></span>
           </div>
@@ -2933,7 +2933,7 @@ setTimeout(function() {
 
         <!-- Amount big input -->
         <div style="text-align:center;margin-bottom:8px;">
-          <div style="font-family:'JetBrains Mono',monospace;font-size:56px;font-weight:800;letter-spacing:-2.5px;line-height:1;font-feature-settings:'tnum';">
+          <div style="font-family:var(--font-display);font-size:56px;font-weight:800;letter-spacing:-2.5px;line-height:1;font-feature-settings:'tnum';">
             <span style="font-size:32px;color:var(--muted);font-weight:600;vertical-align:6px;margin-right:4px;">$</span>
             <span class="gradient-text" x-text="onboardingBudget || '0'"></span>
           </div>
@@ -2945,7 +2945,7 @@ setTimeout(function() {
         <!-- Quick chips -->
         <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:18px 0;">
           <template x-for="amt in [200, 500, 800, 1200, 2000]" :key="amt">
-            <button @click="onboardingBudget = amt" class="onb-cat-chip" :class="{ selected: onboardingBudget == amt }" style="font-family:'JetBrains Mono',monospace;">
+            <button @click="onboardingBudget = amt" class="onb-cat-chip" :class="{ selected: onboardingBudget == amt }" style="font-family:var(--font-display);">
               <span x-text="'$' + amt"></span>
             </button>
           </template>
@@ -2954,7 +2954,7 @@ setTimeout(function() {
         <!-- Slider -->
         <div style="padding:8px 4px;">
           <input type="range" min="0" max="5000" step="50" x-model="onboardingBudget" style="width:100%;accent-color:var(--cyan);">
-          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-top:4px;font-family:'JetBrains Mono',monospace;">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-top:4px;font-family:var(--font-display);">
             <span>$0</span>
             <span>$5,000</span>
           </div>
@@ -4540,7 +4540,7 @@ setTimeout(function() {
               <div class="field-box-label">EMAIL</div>
               <div class="field-box-inner">
                 <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="14" height="14" style="flex-shrink:0;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                <input type="email" x-model="forgotEmail" placeholder="tu@email.com" autocomplete="email" style="flex:1;font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.2px;">
+                <input type="email" x-model="forgotEmail" placeholder="tu@email.com" autocomplete="email" style="flex:1;font-family:var(--font-display);font-size:13px;letter-spacing:0.2px;">
               </div>
             </div>
 
@@ -4573,7 +4573,7 @@ setTimeout(function() {
                 <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;">Revisa tu email</div>
                 <div style="font-size:13px;color:var(--muted);line-height:1.6;">
                   Te enviamos un enlace a<br>
-                  <span style="color:var(--text);font-weight:700;font-family:'JetBrains Mono',monospace;font-size:12px;" x-text="forgotEmail"></span>
+                  <span style="color:var(--text);font-weight:700;font-family:var(--font-display);font-size:12px;" x-text="forgotEmail"></span>
                 </div>
               </div>
             </div>
@@ -4902,9 +4902,9 @@ setTimeout(function() {
             </div>
             <div style="margin-bottom:6px;">
               <div style="font-size:11px;color:var(--muted);letter-spacing:1px;font-weight:600;margin-bottom:6px;">
-                ESCRIBE <span style="color:var(--danger);font-family:'JetBrains Mono',monospace;">ELIMINAR</span> PARA CONFIRMAR
+                ESCRIBE <span style="color:var(--danger);font-family:var(--font-display);">ELIMINAR</span> PARA CONFIRMAR
               </div>
-              <input class="field-input" type="text" x-model="deleteConfirmText" placeholder="ELIMINAR" style="font-family:'JetBrains Mono',monospace;letter-spacing:1.2px;margin-bottom:0;">
+              <input class="field-input" type="text" x-model="deleteConfirmText" placeholder="ELIMINAR" style="font-family:var(--font-display);letter-spacing:1.2px;margin-bottom:0;">
             </div>
             <button @click="confirmDeleteAccount" :disabled="deleteConfirmText !== 'ELIMINAR'" style="margin-top:18px;width:100%;height:50px;border-radius:25px;background:rgba(255,107,107,0.15);border:1px solid rgba(255,107,107,0.3);color:var(--danger);font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;" :style="deleteConfirmText !== 'ELIMINAR' ? 'opacity:0.55' : ''">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
@@ -5310,7 +5310,7 @@ setTimeout(function() {
                       <div class="cd-file-icon" x-text="importedFile.ext"></div>
                       <div style="flex:1;min-width:0;">
                         <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="importedFile.name"></div>
-                        <div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace;" x-text="importedFile.meta"></div>
+                        <div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--font-display);" x-text="importedFile.meta"></div>
                       </div>
                       <button @click="importedFile = null" style="background:none;border:none;cursor:pointer;padding:4px;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -5341,7 +5341,7 @@ setTimeout(function() {
                       <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:5px;" x-text="(importProgress > 0 ? importProgress + '% · ' : '') + (importStatus || 'Procesando...')"></div>
                     </div>
 
-                    <div x-show="importedFile" style="text-align:center;margin-top:6px;font-size:10px;color:var(--muted);opacity:0.6;font-family:'JetBrains Mono',monospace;" x-text="'build ' + APP_VERSION"></div>
+                    <div x-show="importedFile" style="text-align:center;margin-top:6px;font-size:10px;color:var(--muted);opacity:0.6;font-family:var(--font-display);" x-text="'build ' + APP_VERSION"></div>
                   </div>
                 </template>
               </div>
@@ -10710,7 +10710,7 @@ if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && 
       color: #00F0FF; font-size: 12px; font-weight: 700; letter-spacing: 0.5px;
       padding: 8px 14px; border-radius: 20px; cursor: pointer;
       backdrop-filter: blur(12px); box-shadow: 0 0 16px rgba(0,240,255,0.3);
-      font-family: 'JetBrains Mono', monospace; transition: all 0.2s;
+      font-family: var(--font-display); transition: all 0.2s;
       display: flex; align-items: center; gap: 6px;
     }
     .ztb-action.active { background: #00F0FF; color: #0A0A0F; box-shadow: 0 0 24px rgba(0,240,255,0.6); }
@@ -10719,7 +10719,7 @@ if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && 
     #ztb-snap-toast {
       position: fixed; bottom: calc(140px + var(--safe-bottom, 0px)); left: 50%; transform: translateX(-50%); z-index: 99999;
       background: #B794F6; color: #0A0A0F; font-size: 12px; font-weight: 700;
-      padding: 10px 20px; border-radius: 12px; font-family: 'JetBrains Mono', monospace;
+      padding: 10px 20px; border-radius: 12px; font-family: var(--font-display);
       box-shadow: 0 4px 24px rgba(112,0,255,0.4); display: none; white-space: nowrap;
     }
     #ztb-highlight {
@@ -10731,13 +10731,13 @@ if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && 
     #ztb-label {
       position: fixed; z-index: 99999; pointer-events: none;
       background: #00F0FF; color: #0A0A0F; font-size: 11px; font-weight: 700;
-      padding: 3px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;
+      padding: 3px 8px; border-radius: 4px; font-family: var(--font-display);
       white-space: nowrap; display: none; max-width: 260px; overflow: hidden; text-overflow: ellipsis;
     }
     #ztb-panel {
       position: fixed; bottom: calc(130px + var(--safe-bottom, 0px)); left: 16px; right: 16px; z-index: 99999;
       background: rgba(10,10,20,0.97); border: 1.5px solid #00F0FF;
-      border-radius: 14px; padding: 16px; font-family: 'JetBrains Mono', monospace;
+      border-radius: 14px; padding: 16px; font-family: var(--font-display);
       font-size: 11px; color: #e0e0e0; backdrop-filter: blur(20px);
       box-shadow: 0 8px 40px rgba(0,240,255,0.2); display: none; max-height: 50vh; overflow-y: auto;
     }
