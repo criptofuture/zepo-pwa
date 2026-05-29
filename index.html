@@ -63,6 +63,7 @@
       --c-income: #00E5A0;
       --c-expense: #FF6B6B;
       --c-accent: #7000FF;
+      --c-accent-soft: #B794F6; /* púrpura claro (texto de tags/acentos sutiles) */
       --c-warning: #FFB800;
       --grad-brand: linear-gradient(135deg, #00F0FF 0%, #7000FF 100%);
       --elev-card: none; /* hoy sin sombra fuerte; token reservado para el flip */
@@ -1393,7 +1394,7 @@
     }
     .onb-cta {
       width: 100%; height: 52px; border-radius: 999px;
-      background: var(--gradient); color: #0A0A0F;
+      background: var(--gradient); color: var(--c-brand-contrast);
       font-size: 15px; font-weight: 700;
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 4px 16px rgba(0,240,255,0.2);
@@ -1450,16 +1451,16 @@
     }
     .onb-plan-head { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
     .onb-plan-name { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); }
-    .onb-plan-price { font-size: 22px; font-weight: 800; letter-spacing: -1px; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+    .onb-plan-price { font-size: 22px; font-weight: 800; letter-spacing: -1px; color: var(--text); font-family: var(--font-display); }
     .onb-plan-period { font-size: 12px; color: var(--muted); }
-    .onb-plan-strike { font-size: 13px; color: var(--dim); text-decoration: line-through; font-family: 'JetBrains Mono', monospace; margin-left: 4px; }
+    .onb-plan-strike { font-size: 13px; color: var(--dim); text-decoration: line-through; font-family: var(--font-display); margin-left: 4px; }
     .onb-plan-tag {
       font-size: 10px; font-weight: 700; padding: 3px 7px;
       border-radius: 5px; letter-spacing: 0.4px;
     }
     .onb-plan-tag.warning { background: rgba(255,184,0,0.12); color: var(--warning); }
     .onb-plan-tag.cyan    { background: rgba(0,240,255,0.12); color: var(--cyan); }
-    .onb-plan-tag.purple  { background: rgba(112,0,255,0.18); color: #B794F6; }
+    .onb-plan-tag.purple  { background: rgba(112,0,255,0.18); color: var(--c-accent-soft); }
     .onb-plan-bullets { display: flex; flex-direction: column; gap: 4px; }
     .onb-bullet { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
     .onb-check { color: var(--cyan); font-weight: 700; font-size: 12px; }
