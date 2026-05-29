@@ -822,10 +822,11 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      padding-bottom: var(--safe-bottom);
     }
-    /* Scrollable body: contenido fluye arriba; el composer (.cd-describe-block)
-       se ancla al fondo via margin-top:auto + order alto (estilo Claude). */
+    /* Body scrolleable. El composer (.cd-describe-block) flota como capa anclada
+       al fondo (sobre el teclado); el resto (Tipo/Fecha/Dividir/Aprobar) scrollea
+       detrás. En modo crear, .has-composer reserva espacio para que Aprobar quede
+       alcanzable por scroll sobre el cuadro. */
     .approve-body {
       flex: 1;
       min-height: 0;
@@ -835,7 +836,14 @@
       flex-direction: column;
       padding: 0 20px 20px;
     }
-    .cd-describe-block { margin-top: auto; order: 10; padding-top: 12px; }
+    .approve-body.has-composer { padding-bottom: calc(200px + var(--safe-bottom)); }
+    .cd-describe-block {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      padding: 12px 20px calc(12px + var(--safe-bottom));
+      background: var(--bg);
+      z-index: 5;
+    }
     .approve-header {
       display: flex; align-items: center; gap: 12px;
       padding: 14px 20px 12px;
@@ -5046,7 +5054,7 @@ setTimeout(function() {
             </div>
 
             <!-- Main content area -->
-            <div class="approve-body">
+            <div class="approve-body" :class="{ 'has-composer': !editingExpense && !editingBatch && !receiptPreview && !importedFile }">
 
               <!-- ═════════ CREATE MODE: nuevo orden ═════════ -->
               <!-- TIPO segmented pill (estilo Mensual/Anual) -->
@@ -6808,7 +6816,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v68',
+    APP_VERSION: 'v69',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
