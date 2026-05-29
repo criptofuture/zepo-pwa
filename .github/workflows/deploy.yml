@@ -2,7 +2,7 @@ name: Deploy — PWA + Supabase Functions
 
 on:
   push:
-    branches: [master, main]
+    branches: [master, main, dev]
     paths:
       - 'index.html'
       - 'manifest.json'
@@ -48,7 +48,7 @@ jobs:
           fi
 
   deploy-pwa:
-    name: Deploy PWA → app.zepo.lynoia.com
+    name: Deploy PWA (prod main / preview dev)
     needs: regression-check
     runs-on: ubuntu-latest
     steps:
@@ -96,12 +96,24 @@ jobs:
           printf '/ /pwa/ 302\n' > _deploy/_redirects
           echo "=== _deploy tree ==="; find _deploy -type f | sort
 
+      - name: Resolve CF Pages branch (master/main → main = prod · dev → dev = preview)
+        id: cfbranch
+        run: echo "name=${{ (github.ref_name == 'master' || github.ref_name == 'main') && 'main' || github.ref_name }}" >> "$GITHUB_OUTPUT"
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy _deploy --project-name=zepo --branch=main --commit-dirty=true
+          command: pages deploy _deploy --project-name=zepo --branch=${{ steps.cfbranch.outputs.name }} --commit-dirty=true
+
+      - name: Print target URL
+        run: |
+          if [ "${{ steps.cfbranch.outputs.name }}" = "main" ]; then
+            echo "🌐 PROD → https://app.zepo.lynoia.com/pwa/"
+          else
+            echo "🔎 PREVIEW (${{ steps.cfbranch.outputs.name }}) → https://${{ steps.cfbranch.outputs.name }}.zepo-bca.pages.dev/pwa/"
+          fi
 
   deploy-functions:
     name: Deploy Edge Functions → Supabase
