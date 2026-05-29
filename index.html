@@ -1252,9 +1252,15 @@
     .cd-split-picker-empty {
       padding: 14px 12px; font-size: 12px; color: var(--dim); text-align: center;
     }
+    .cd-split-namebox {
+      height: 40px; border-radius: 10px;
+      background: var(--bg); border: 1px solid var(--border2);
+      display: flex; align-items: center; padding: 0 10px;
+    }
+    .cd-split-namebox.cd-split-namebox-active { border-color: var(--cyan); background: var(--surface); }
     .cd-split-pct-input {
       width: 64px; height: 40px; border-radius: 10px;
-      background: var(--surface); border: 1px solid var(--border2);
+      background: var(--bg); border: 1px solid var(--border2);
       text-align: center; font-size: 12px; font-weight: 700;
       color: var(--text); font-variant-numeric: tabular-nums;
       outline: none; font-family: inherit;
@@ -4239,6 +4245,20 @@ setTimeout(function() {
           </div>
         </div>
 
+        <!-- Invita y gana -->
+        <div style="margin:0 20px 22px;" x-show="referralCode" x-cloak>
+          <div class="settings-group-title" style="margin:0 0 8px;">Invita y gana</div>
+          <div class="settings-group" style="padding:16px;">
+            <div style="font-size:15px;font-weight:700;letter-spacing:-0.3px;margin-bottom:4px;">Regala Zepo, gana meses gratis</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:14px;">Comparte tu código. Cuando tu amigo se suscriba, ganas <b style="color:var(--text);">hasta 2 meses gratis</b> y él arranca con descuento.</div>
+            <div @click="copyReferralCode()" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:var(--radius-sm);background:var(--surface2);border:1px dashed var(--border2);cursor:pointer;margin-bottom:12px;">
+              <span style="font-family:var(--font-display);font-size:18px;font-weight:700;letter-spacing:1px;color:var(--cyan);" x-text="referralCode || '—'"></span>
+              <span style="font-size:11px;font-weight:600;color:var(--muted);" x-text="referralCopied ? 'Copiado ✓' : 'Tocar para copiar'"></span>
+            </div>
+            <button class="save-btn" @click="shareReferral()">Compartir mi link</button>
+          </div>
+        </div>
+
         <!-- Tarjeta guardada -->
         <template x-if="savedCard">
           <div style="margin:0 20px 22px;">
@@ -5438,7 +5458,7 @@ setTimeout(function() {
               </div>
 
               <!-- SPLIT SECTION — CD: multi-person with proportion bar -->
-              <div style="border-radius:14px;margin-bottom:12px;" :style="form.is_split ? { background: 'rgba(var(--c-brand-rgb),0.03)', border: '1px solid var(--cyan)', overflow: splitPickerIdx >= 0 ? 'visible' : 'hidden' } : { background: 'var(--surface)', border: '1px solid var(--border)', overflow: 'hidden' }">
+              <div style="border-radius:14px;margin-bottom:12px;" :style="form.is_split ? { background: 'var(--surface)', border: '1px solid var(--cyan)', overflow: splitPickerIdx >= 0 ? 'visible' : 'hidden' } : { background: 'var(--surface)', border: '1px solid var(--border)', overflow: 'hidden' }">
                 <div @click="toggleSplit()" style="padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;">
                   <div style="width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;" :style="{ background: form.is_split ? 'rgba(var(--c-brand-rgb),0.12)' : 'var(--bg)' }">
                     <svg viewBox="0 0 24 24" fill="none" :stroke="form.is_split ? 'var(--cyan)' : 'var(--muted)'" stroke-width="2" width="15" height="15"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -5478,7 +5498,7 @@ setTimeout(function() {
                         <div style="display:flex;align-items:center;gap:8px;">
                           <div style="width:10px;height:10px;border-radius:2px;flex-shrink:0;" :style="'background:' + p.color"></div>
                           <div style="flex:1;min-width:0;">
-                            <div style="height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--border2);display:flex;align-items:center;padding:0 10px;" :style="splitPickerIdx === pi ? 'border-color:var(--cyan)' : ''">
+                            <div class="cd-split-namebox" :class="{ 'cd-split-namebox-active': splitPickerIdx === pi }">
                               <template x-if="p.you">
                                 <input value="Tú" readonly class="cd-split-name-input cd-split-name-you">
                               </template>
@@ -5503,7 +5523,7 @@ setTimeout(function() {
                             </div>
                           </div>
                           <input type="number" min="0" max="100" x-model.number="p.pct" @input="onSplitPctChange()" class="cd-split-pct-input">
-                          <div style="width:70px;height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--cyan);font-variant-numeric:tabular-nums;" x-text="'$' + (parseFloat(form.amount || 0) * (p.pct || 0) / 100).toFixed(2)"></div>
+                          <div style="width:70px;height:40px;border-radius:10px;background:var(--bg);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--cyan);font-variant-numeric:tabular-nums;" x-text="'$' + (parseFloat(form.amount || 0) * (p.pct || 0) / 100).toFixed(2)"></div>
                           <button x-show="!p.you" @click="removeSplitPerson(pi)" style="width:30px;height:40px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                           </button>
@@ -6700,6 +6720,8 @@ function zepoApp() {
   return {
     user: null,
     userName: '',
+    referralCode: '',
+    referralCopied: false,
     appReady: false,
     tab: 'home',
     prevTab: 'home',
@@ -6822,7 +6844,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v70',
+    APP_VERSION: 'v71',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
@@ -7015,6 +7037,12 @@ function zepoApp() {
       // Ej: cuando intentas Google con email que ya tiene cuenta email/password
       const urlParams = new URLSearchParams(location.search);
       const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      // Captura código de referido (?ref=ZEPO-XXXXX) sin tocar el formulario de registro.
+      // Se guarda y se aplica tras el login en applyPendingReferral().
+      const refParam = urlParams.get('ref');
+      if (refParam && /^ZEPO-[A-Z0-9]{5}$/i.test(refParam)) {
+        try { localStorage.setItem('zepo_ref', refParam.toUpperCase()); } catch {}
+      }
       const oauthError = urlParams.get('error') || hashParams.get('error');
       const oauthErrorDesc = urlParams.get('error_description') || hashParams.get('error_description');
       const hasCode = urlParams.get('code');
@@ -10054,13 +10082,52 @@ function zepoApp() {
 
     async loadUserPlan() {
       if (!this.user) return;
-      const { data } = await sb.from('users').select('plan, plan_expires_at').eq('id', this.user.id).maybeSingle();
+      const { data } = await sb.from('users').select('plan, plan_expires_at, referral_code').eq('id', this.user.id).maybeSingle();
       if (data) {
         this.userPlan = data.plan || 'free';
         this.planExpiresAt = data.plan_expires_at;
+        this.referralCode = data.referral_code || '';
       }
       const { data: card } = await sb.from('saved_cards').select('card_brand, last_digits').eq('user_id', this.user.id).maybeSingle();
       this.savedCard = card ? { last4: card.last_digits, brand: card.card_brand || 'CARD' } : null;
+      this.applyPendingReferral();
+    },
+
+    // Aplica el código de referido guardado al cargar (?ref=). El RPC valida
+    // auth, auto-referencia y duplicados; cualquier resultado no transitorio limpia el código.
+    async applyPendingReferral() {
+      let code;
+      try { code = localStorage.getItem('zepo_ref'); } catch {}
+      if (!code || !this.user) return;
+      try {
+        await sb.rpc('zepo_apply_referral', { p_code: code });
+        try { localStorage.removeItem('zepo_ref'); } catch {}
+      } catch (e) {
+        // Error de red: conservar el código para reintentar en la próxima carga.
+        console.warn('[referral] apply diferido:', e.message);
+      }
+    },
+
+    copyReferralCode() {
+      if (!this.referralCode) return;
+      try { navigator.clipboard.writeText(this.referralCode); } catch {}
+      this.referralCopied = true;
+      setTimeout(() => { this.referralCopied = false; }, 2000);
+    },
+
+    async shareReferral() {
+      if (!this.referralCode) return;
+      const base = location.origin + location.pathname.replace(/index\.html$/, '');
+      const url = base + '?ref=' + this.referralCode;
+      const text = 'Llevo mis gastos con Zepo y me encanta. Pruébalo gratis y arranca con beneficios usando mi link: ' + url;
+      try {
+        if (navigator.share) { await navigator.share({ title: 'Zepo', text, url }); return; }
+      } catch (e) { if (e && e.name === 'AbortError') return; }
+      try {
+        await navigator.clipboard.writeText(url);
+        this.referralCopied = true;
+        setTimeout(() => { this.referralCopied = false; }, 2000);
+      } catch {}
     },
 
     get planOptions() {
