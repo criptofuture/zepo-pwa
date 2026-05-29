@@ -811,7 +811,10 @@
     }
     .approve-screen {
       position: fixed;
-      inset: 0;
+      top: var(--vvt, 0px);
+      left: 0;
+      right: 0;
+      height: var(--vvh, 100dvh);
       max-width: 430px;
       margin: 0 auto;
       background: var(--bg);
@@ -6805,7 +6808,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v67',
+    APP_VERSION: 'v68',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
@@ -6917,6 +6920,20 @@ function zepoApp() {
       window.addEventListener('online', () => this.offline = false);
       window.addEventListener('offline', () => this.offline = true);
       window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); this.installPrompt = e; });
+
+      // Teclado: el sheet fullscreen (.approve-screen) se ajusta a la altura VISIBLE
+      // (visualViewport) para que el composer quede sobre el teclado sin scrollear
+      // toda la pantalla. --vvh = altura visible; --vvt = desplazamiento superior.
+      if (window.visualViewport) {
+        const vv = window.visualViewport;
+        const syncVV = () => {
+          document.documentElement.style.setProperty('--vvh', vv.height + 'px');
+          document.documentElement.style.setProperty('--vvt', vv.offsetTop + 'px');
+        };
+        vv.addEventListener('resize', syncVV);
+        vv.addEventListener('scroll', syncVV);
+        syncVV();
+      }
 
       history.replaceState({ zepo: true }, '');
       window.addEventListener('popstate', () => {
