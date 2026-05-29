@@ -823,10 +823,9 @@
       display: flex;
       flex-direction: column;
     }
-    /* Body scrolleable. El composer (.cd-describe-block) flota como capa anclada
-       al fondo (sobre el teclado); el resto (Tipo/Fecha/Dividir/Aprobar) scrollea
-       detrás. En modo crear, .has-composer reserva espacio para que Aprobar quede
-       alcanzable por scroll sobre el cuadro. */
+    /* Body scrolleable. El composer (.cd-describe-block) es una barra fija al fondo
+       (hermano flex, fuera del scroll). El resto (Tipo/Fecha/Dividir/Aprobar) scrollea
+       independientemente arriba de la barra → la página queda siempre navegable. */
     .approve-body {
       flex: 1;
       min-height: 0;
@@ -836,13 +835,11 @@
       flex-direction: column;
       padding: 0 20px 20px;
     }
-    .approve-body.has-composer { padding-bottom: calc(200px + var(--safe-bottom)); }
     .cd-describe-block {
-      position: absolute;
-      left: 0; right: 0; bottom: 0;
+      flex-shrink: 0;
       padding: 12px 20px calc(12px + var(--safe-bottom));
       background: var(--bg);
-      z-index: 5;
+      border-top: 1px solid var(--border);
     }
     .approve-header {
       display: flex; align-items: center; gap: 12px;
@@ -1228,11 +1225,11 @@
     .cd-split-name-input::placeholder { color: var(--dim); }
     .cd-split-name-you { font-weight: 600; cursor: default; }
     .cd-split-picker {
-      position: absolute; top: 48px; left: 18px; right: 0;
-      background: var(--surface); border: 1px solid var(--border);
+      position: absolute; top: 44px; left: 18px; right: 0;
+      background: var(--surface); border: 1px solid var(--border2);
       border-radius: 12px; overflow: hidden; z-index: 90;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-      max-height: 200px; overflow-y: auto;
+      box-shadow: 0 6px 20px rgba(var(--c-ink-rgb),0.16);
+      max-height: 180px; overflow-y: auto;
       -webkit-overflow-scrolling: touch;
     }
     .cd-split-picker-item {
@@ -1257,7 +1254,7 @@
     }
     .cd-split-pct-input {
       width: 64px; height: 40px; border-radius: 10px;
-      background: var(--surface); border: 1px solid var(--border);
+      background: var(--surface); border: 1px solid var(--border2);
       text-align: center; font-size: 12px; font-weight: 700;
       color: var(--text); font-variant-numeric: tabular-nums;
       outline: none; font-family: inherit;
@@ -5054,7 +5051,7 @@ setTimeout(function() {
             </div>
 
             <!-- Main content area -->
-            <div class="approve-body" :class="{ 'has-composer': !editingExpense && !editingBatch && !receiptPreview && !importedFile }">
+            <div class="approve-body">
 
               <!-- ═════════ CREATE MODE: nuevo orden ═════════ -->
               <!-- TIPO segmented pill (estilo Mensual/Anual) -->
@@ -5078,58 +5075,6 @@ setTimeout(function() {
                 </div>
               </div>
 
-              <!-- DESCRIBE CARD con iconos inline (mic + foto + archivo) -->
-              <div class="cd-describe-block" x-show="!editingExpense && !editingBatch && !receiptPreview && !importedFile" style="margin-bottom:12px;">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  <div style="font-size:14px;font-weight:700;letter-spacing:-0.2px;">Describe el registro</div>
-                </div>
-
-                <div class="cd-describe-card">
-                  <textarea x-model="form.description" maxlength="500" rows="3" @keydown.enter.prevent="analyzeTextInput()" :placeholder="form.is_income ? 'sueldo octubre 1200 · freelance diseño 350' : 'almuerzo 15 · taxi 8.50 · café 3.20'"></textarea>
-                  <div class="cd-describe-footer">
-                    <div style="display:flex;gap:6px;align-items:center;">
-                      <!-- Foto (camara) -->
-                      <label class="cd-inline-action" :style="userPlan !== 'elite' ? 'opacity:0.7' : ''" title="Foto del recibo" @click="if (userPlan !== 'elite') { $event.preventDefault(); tab = 'plans'; sheetOpen = false; } else { triggerCoachPhoto(); }">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                        <input type="file" accept="image/*" capture="environment" @change="handlePhoto($event)" style="display:none" :disabled="userPlan !== 'elite'">
-                        <svg x-show="userPlan !== 'elite'" class="cd-inline-lock" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                      </label>
-
-                      <!-- Archivo (clip) -->
-                      <label class="cd-inline-action" :style="userPlan !== 'elite' ? 'opacity:0.7' : ''" title="Importar archivo" @click="if (userPlan !== 'elite') { $event.preventDefault(); tab = 'plans'; sheetOpen = false; }">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
-                        <input type="file" accept=".pdf,.xlsx,.csv,.xml,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,application/xml" @change="handleFileImport($event)" style="display:none" :disabled="userPlan !== 'elite'">
-                        <svg x-show="userPlan !== 'elite'" class="cd-inline-lock" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                      </label>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:10px;">
-                      <div class="cd-char-count"><span x-text="(form.description || '').length"></span>/500</div>
-                      <!-- Mic (voz) -->
-                      <button type="button" class="cd-inline-action" @click="if (userPlan === 'free') { tab = 'plans'; sheetOpen = false; return } toggleVoice()" :style="voiceRecording ? 'background:rgba(255,77,109,0.15);border-color:var(--danger)' : ''" title="Voz">
-                        <template x-if="!voiceRecording">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
-                        </template>
-                        <template x-if="voiceRecording">
-                          <svg viewBox="0 0 24 24" fill="var(--danger)" width="11" height="11"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-                        </template>
-                        <svg x-show="userPlan === 'free'" class="cd-inline-lock" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                      </button>
-                      <button type="button" class="cd-send-btn" @click="analyzeTextInput()" :disabled="analyzing || !form.description || form.description.length < 3" title="Analizar">
-                        <svg x-show="!analyzing" viewBox="0 0 24 24" fill="none" stroke-width="2.6" width="14" height="14"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-                        <svg x-show="analyzing" class="cd-spin" viewBox="0 0 24 24" fill="none" stroke-width="2.4" width="14" height="14"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Voice waveform inline (mientras se graba) -->
-                <div x-show="voiceRecording" style="margin-top:10px;padding:10px 14px;border-radius:12px;background:rgba(255,77,109,0.05);border:1px solid rgba(255,77,109,0.2);display:flex;align-items:center;gap:10px;">
-                  <div style="width:8px;height:8px;border-radius:4px;background:var(--danger);animation:pulse 1s infinite;flex-shrink:0;"></div>
-                  <div style="flex:1;font-size:12px;color:var(--text);font-weight:500;" x-text="voiceTranscript || 'Escuchando...'"></div>
-                  <button @click="toggleVoice" style="font-size:11px;color:var(--danger);font-weight:700;background:transparent;border:none;cursor:pointer;">DETENER</button>
-                </div>
-              </div>
 
               <!-- ═════════ ITEMS DETECTADOS (solo TEXTO manual; foto/archivo usan el bloque unificado abajo) ═════════ -->
               <div x-show="!editingExpense && parsedItems.length >= 1 && !importedFile && !receiptPreview" style="margin-bottom:14px;">
@@ -5519,13 +5464,21 @@ setTimeout(function() {
                       </template>
                     </div>
 
+                    <!-- Column labels -->
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding-left:18px;">
+                      <div style="flex:1;min-width:0;font-size:10px;font-weight:700;letter-spacing:0.5px;color:var(--dim);">QUIÉN</div>
+                      <div style="width:64px;text-align:center;font-size:10px;font-weight:700;letter-spacing:0.5px;color:var(--dim);">%</div>
+                      <div style="width:70px;text-align:center;font-size:10px;font-weight:700;letter-spacing:0.5px;color:var(--dim);">MONTO</div>
+                      <div style="width:30px;"></div>
+                    </div>
+
                     <!-- Person rows -->
                     <template x-for="(p, pi) in form.split_people" :key="pi">
-                      <div style="position:relative;margin-bottom:8px;">
+                      <div class="cd-split-row" style="position:relative;margin-bottom:8px;">
                         <div style="display:flex;align-items:center;gap:8px;">
                           <div style="width:10px;height:10px;border-radius:2px;flex-shrink:0;" :style="'background:' + p.color"></div>
                           <div style="flex:1;min-width:0;">
-                            <div style="height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;padding:0 10px;" :style="splitPickerIdx === pi ? 'border-color:var(--cyan)' : ''">
+                            <div style="height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--border2);display:flex;align-items:center;padding:0 10px;" :style="splitPickerIdx === pi ? 'border-color:var(--cyan)' : ''">
                               <template x-if="p.you">
                                 <input value="Tú" readonly class="cd-split-name-input cd-split-name-you">
                               </template>
@@ -5534,7 +5487,7 @@ setTimeout(function() {
                               </template>
                               <template x-if="!p.you && splitPickerIdx === pi">
                                 <input x-model="splitPickerQuery"
-                                  x-init="$nextTick(() => $el.focus())"
+                                  x-init="$nextTick(() => { $el.focus(); $el.closest('.cd-split-row')?.scrollIntoView({ block: 'center', behavior: 'smooth' }); })"
                                   @keydown.escape="closeSplitPicker()"
                                   @blur="setTimeout(() => closeSplitPicker(), 200)"
                                   placeholder="Buscar o agregar..."
@@ -5550,7 +5503,7 @@ setTimeout(function() {
                             </div>
                           </div>
                           <input type="number" min="0" max="100" x-model.number="p.pct" @input="onSplitPctChange()" class="cd-split-pct-input">
-                          <div style="width:70px;height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--cyan);font-variant-numeric:tabular-nums;" x-text="'$' + (parseFloat(form.amount || 0) * (p.pct || 0) / 100).toFixed(2)"></div>
+                          <div style="width:70px;height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--cyan);font-variant-numeric:tabular-nums;" x-text="'$' + (parseFloat(form.amount || 0) * (p.pct || 0) / 100).toFixed(2)"></div>
                           <button x-show="!p.you" @click="removeSplitPerson(pi)" style="width:30px;height:40px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                           </button>
@@ -5580,7 +5533,7 @@ setTimeout(function() {
                     </template>
 
                     <!-- Sum check -->
-                    <div :style="'margin-top:4px;padding:8px 10px;border-radius:8px;display:flex;justify-content:space-between;font-size:11px;font-weight:600;' + (splitSum === 100 ? 'background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2)' : 'background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25)')">
+                    <div :style="'margin-top:4px;padding:8px 10px;border-radius:8px;display:flex;justify-content:space-between;font-size:11px;font-weight:600;' + (splitSum === 100 ? 'background:rgba(var(--c-brand-rgb),0.08);border:1px solid rgba(var(--c-brand-rgb),0.25)' : 'background:rgba(var(--c-accent-rgb),0.10);border:1px solid rgba(var(--c-accent-rgb),0.30)')">
                       <span style="color:var(--muted);">Suma de partes</span>
                       <span :style="'color:' + (splitSum === 100 ? 'var(--success)' : 'var(--warning)')" x-text="splitSum + '%' + (splitSum === 100 ? ' ✓' : ' · debe ser 100%')"></span>
                     </div>
@@ -5592,7 +5545,7 @@ setTimeout(function() {
                         Agregar persona
                       </button>
                       <button @click="splitEqual()" style="flex:1;height:38px;border-radius:10px;background:rgba(var(--c-accent-rgb),0.08);border:1px solid rgba(var(--c-accent-rgb),0.3);color:var(--c-accent-soft);font-weight:600;font-size:12px;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#507D5A" stroke-width="2" width="12" height="12"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--c-accent-soft)" stroke-width="2" width="12" height="12"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
                         Partes iguales
                       </button>
                     </div>
@@ -5629,6 +5582,59 @@ setTimeout(function() {
                 </button>
               </div>
 
+            </div>
+
+            <!-- COMPOSER (barra fija al fondo, fuera del scroll) -->
+            <div class="cd-describe-block" x-show="!editingExpense && !editingBatch && !receiptPreview && !importedFile">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                <div style="font-size:14px;font-weight:700;letter-spacing:-0.2px;">Describe el registro</div>
+              </div>
+
+              <div class="cd-describe-card">
+                <textarea x-model="form.description" maxlength="500" rows="3" @keydown.enter.prevent="analyzeTextInput()" :placeholder="form.is_income ? 'sueldo octubre 1200 · freelance diseño 350' : 'almuerzo 15 · taxi 8.50 · café 3.20'"></textarea>
+                <div class="cd-describe-footer">
+                  <div style="display:flex;gap:6px;align-items:center;">
+                    <!-- Foto (camara) -->
+                    <label class="cd-inline-action" :style="userPlan !== 'elite' ? 'opacity:0.7' : ''" title="Foto del recibo" @click="if (userPlan !== 'elite') { $event.preventDefault(); tab = 'plans'; sheetOpen = false; } else { triggerCoachPhoto(); }">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                      <input type="file" accept="image/*" capture="environment" @change="handlePhoto($event)" style="display:none" :disabled="userPlan !== 'elite'">
+                      <svg x-show="userPlan !== 'elite'" class="cd-inline-lock" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                    </label>
+
+                    <!-- Archivo (clip) -->
+                    <label class="cd-inline-action" :style="userPlan !== 'elite' ? 'opacity:0.7' : ''" title="Importar archivo" @click="if (userPlan !== 'elite') { $event.preventDefault(); tab = 'plans'; sheetOpen = false; }">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+                      <input type="file" accept=".pdf,.xlsx,.csv,.xml,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,application/xml" @change="handleFileImport($event)" style="display:none" :disabled="userPlan !== 'elite'">
+                      <svg x-show="userPlan !== 'elite'" class="cd-inline-lock" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                    </label>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <div class="cd-char-count"><span x-text="(form.description || '').length"></span>/500</div>
+                    <!-- Mic (voz) -->
+                    <button type="button" class="cd-inline-action" @click="if (userPlan === 'free') { tab = 'plans'; sheetOpen = false; return } toggleVoice()" :style="voiceRecording ? 'background:rgba(255,77,109,0.15);border-color:var(--danger)' : ''" title="Voz">
+                      <template x-if="!voiceRecording">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+                      </template>
+                      <template x-if="voiceRecording">
+                        <svg viewBox="0 0 24 24" fill="var(--danger)" width="11" height="11"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                      </template>
+                      <svg x-show="userPlan === 'free'" class="cd-inline-lock" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                    </button>
+                    <button type="button" class="cd-send-btn" @click="analyzeTextInput()" :disabled="analyzing || !form.description || form.description.length < 3" title="Analizar">
+                      <svg x-show="!analyzing" viewBox="0 0 24 24" fill="none" stroke-width="2.6" width="14" height="14"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                      <svg x-show="analyzing" class="cd-spin" viewBox="0 0 24 24" fill="none" stroke-width="2.4" width="14" height="14"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Voice waveform inline (mientras se graba) -->
+              <div x-show="voiceRecording" style="margin-top:10px;padding:10px 14px;border-radius:12px;background:rgba(255,77,109,0.05);border:1px solid rgba(255,77,109,0.2);display:flex;align-items:center;gap:10px;">
+                <div style="width:8px;height:8px;border-radius:4px;background:var(--danger);animation:pulse 1s infinite;flex-shrink:0;"></div>
+                <div style="flex:1;font-size:12px;color:var(--text);font-weight:500;" x-text="voiceTranscript || 'Escuchando...'"></div>
+                <button @click="toggleVoice" style="font-size:11px;color:var(--danger);font-weight:700;background:transparent;border:none;cursor:pointer;">DETENER</button>
+              </div>
             </div>
           </div>
         </div>
@@ -6816,7 +6822,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v69',
+    APP_VERSION: 'v70',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
