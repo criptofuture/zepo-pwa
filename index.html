@@ -515,6 +515,17 @@
     .pay-spinner {
       width: 120px; height: 120px; position: relative; margin: 0 auto 38px;
     }
+    /* display:flex en clase (no inline): Alpine borra display inline al hacer x-show */
+    .pay-processing-view {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 0 28px;
+      background: radial-gradient(circle at 50% 35%, rgba(var(--c-brand-rgb),0.10) 0%, transparent 60%);
+    }
+    .save-cbx {
+      width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+    }
+    .save-cbx.on { background: var(--gradient); border-color: var(--cyan); }
     .pay-spinner .track {
       position: absolute; inset: 0; border-radius: 50%;
       border: 4px solid var(--border);
@@ -4829,7 +4840,7 @@ setTimeout(function() {
           <label style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:12px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--border);cursor:pointer;">
             <div style="position:relative;width:20px;height:20px;flex-shrink:0;">
               <input type="checkbox" x-model="saveCardChecked" style="position:absolute;opacity:0;width:20px;height:20px;cursor:pointer;">
-              <div style="width:20px;height:20px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;transition:all 0.15s;" :style="saveCardChecked ? 'background:var(--gradient);border-color:var(--cyan)' : ''">
+              <div class="save-cbx" :class="saveCardChecked ? 'on' : ''">
                 <svg x-show="saveCardChecked" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
               </div>
             </div>
@@ -4878,7 +4889,7 @@ setTimeout(function() {
       </div>
 
       <!-- ══ PAYMENT PROCESSING ══ -->
-      <div x-show="tab === 'pay-processing'" x-cloak style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 28px;background:radial-gradient(circle at 50% 35%, rgba(var(--c-brand-rgb),0.10) 0%, transparent 60%);">
+      <div x-show="tab === 'pay-processing'" x-cloak class="pay-processing-view">
         <div class="pay-spinner">
           <div class="track"></div>
           <div class="arc"></div>
@@ -6844,7 +6855,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v75',
+    APP_VERSION: 'v76',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
