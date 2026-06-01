@@ -2703,11 +2703,12 @@ setTimeout(function() {
 
       <div class="auth-divider" x-text="authMode === 'login' ? 'O CONTINUA CON' : 'O'"></div>
 
-      <div style="width:100%;">
+      <div style="width:100%;position:relative;">
         <button class="auth-oauth-btn" type="button" style="width:100%;" :style="oauthLoading ? 'opacity:0.6;cursor:wait' : ''" :disabled="oauthLoading" @click="signInWithGoogle()" title="Continuar con Google">
           <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
           <span x-text="oauthLoading ? 'Abriendo...' : 'Continuar con Google'"></span>
         </button>
+        <div id="gisOverlay" x-init="initGoogleButton()" aria-hidden="true" style="position:absolute;inset:0;opacity:0;overflow:hidden;pointer-events:none;border-radius:14px;"></div>
       </div>
 
       <p class="auth-switch" style="margin-top:auto;padding-top:20px;padding-bottom:14px;">
@@ -6525,7 +6526,7 @@ function localDate(d) {
   d = d || new Date();
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
-const GOOGLE_CLIENT_ID = '29513444600-qaosoiu34jbb0dgefho8ss2oumhjaiu2.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = '640676678825-ag45bt81m91jd1tab3emj9o4v7fdv2qm.apps.googleusercontent.com';
 const SUPABASE_URL = 'https://vchaxqisbypwwtyjjnjr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_yj9z4wzmADhm23dXFq3pFg_5zCqu0am';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -6855,7 +6856,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v76',
+    APP_VERSION: 'v77',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
@@ -7294,6 +7295,53 @@ function zepoApp() {
         this.authError = e.message || 'No se pudo iniciar Google.';
         this.oauthLoading = false;
       });
+    },
+    _handleGoogleCredential(response) {
+      this._dlog('GIS credential len=' + (response.credential?.length || 0));
+      this.oauthLoading = true;
+      sb.auth.signInWithIdToken({ provider: 'google', token: response.credential })
+        .then(({ data, error }) => {
+          if (error) { this._dlog('idToken err: ' + error.message); throw error; }
+          this._dlog('idToken OK. session=' + !!data?.session + ' user=' + (data?.user?.email || 'none'));
+        })
+        .catch((e) => {
+          this._dlog('GIS catch: ' + e.message);
+          this.authError = e.message || 'Error al iniciar sesion con Google.';
+          this.oauthLoading = false;
+        });
+    },
+    initGoogleButton() {
+      const self = this;
+      let tries = 0;
+      const render = () => {
+        const host = document.getElementById('gisOverlay');
+        if (!host || host.dataset.rendered) return;
+        if (!window.google?.accounts?.id) {
+          if (tries++ < 24) setTimeout(render, 250);
+          return;
+        }
+        try {
+          google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: (response) => self._handleGoogleCredential(response),
+            auto_select: false,
+            context: 'signin',
+            ux_mode: 'popup',
+          });
+          const w = Math.min(Math.max(host.offsetWidth || 320, 200), 400);
+          google.accounts.id.renderButton(host, {
+            type: 'standard', theme: 'outline', size: 'large',
+            text: 'continue_with', shape: 'pill', logo_alignment: 'center',
+            locale: 'es', width: w,
+          });
+          host.dataset.rendered = '1';
+          host.style.pointerEvents = 'auto';
+          self._dlog('GIS button rendered (popup)');
+        } catch (e) {
+          self._dlog('GIS render failed: ' + e.message);
+        }
+      };
+      render();
     },
     async signInWithGoogle() {
       this.authError = '';
@@ -10792,7 +10840,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v57.js';
+  const CURRENT_SW = 'sw-v58.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
