@@ -4684,7 +4684,7 @@ setTimeout(function() {
           <!-- Plan cards -->
           <template x-for="p in planOptions" :key="p.key">
             <div style="margin-bottom:14px;border-radius:20px;" :style="p.gradient ? { padding: '1.8px', background: 'var(--gradient)', boxShadow: '0 0 40px rgba(var(--c-accent-rgb),0.28)' } : {}">
-              <div :style="p.gradient ? { borderRadius: '18.2px', background: 'linear-gradient(160deg, rgba(var(--c-brand-rgb),0.14) 0%, rgba(var(--c-accent-rgb),0.18) 100%)', backgroundColor: '#0F0F18' } : { borderRadius: '18px', background: 'var(--surface)', border: '1px solid ' + (p.highlight ? 'var(--cyan)' : 'var(--border)'), boxShadow: p.highlight ? '0 0 0 3px rgba(var(--c-brand-rgb),0.06)' : 'none' }">
+              <div :style="p.gradient ? { borderRadius: '18.2px', background: 'linear-gradient(160deg, rgba(var(--c-brand-rgb),0.14) 0%, rgba(var(--c-accent-rgb),0.18) 100%)', backgroundColor: 'var(--surface)' } : { borderRadius: '18px', background: 'var(--surface)', border: '1px solid ' + (p.highlight ? 'var(--cyan)' : 'var(--border)'), boxShadow: p.highlight ? '0 0 0 3px rgba(var(--c-brand-rgb),0.06)' : 'none' }">
                 <div style="padding:22px 20px;">
                   <!-- Header row -->
                   <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:10px;">
@@ -6844,7 +6844,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v74',
+    APP_VERSION: 'v75',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
