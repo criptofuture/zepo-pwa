@@ -4793,6 +4793,7 @@ setTimeout(function() {
                 </div>
               </template>
             </div>
+            <div style="height:28px;" aria-hidden="true"></div>
           </div>
         </div>
       </div>
@@ -5034,7 +5035,7 @@ setTimeout(function() {
       </div>
 
       <!-- ══ GENERIC SAVING OVERLAY (estilo procesando pago) ══ -->
-      <div x-show="saving || savingBudget" x-cloak class="safe-overlay" style="z-index:300;background:rgba(10,10,15,0.92);backdrop-filter:blur(8px);padding-top:0;">
+      <div x-show="saving || savingBudget" x-cloak class="safe-overlay" style="z-index:300;background:var(--c-bg);padding-top:0;">
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;">
           <div class="pay-spinner" style="margin-bottom:24px;">
             <div class="track"></div>
@@ -6560,25 +6561,43 @@ function sbAuthHeaders() {
   } catch {}
   return { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' };
 }
+// Igual que sbAuthHeaders pero garantiza token FRESCO (refresca si está vencido/por vencer).
+// Evita el 401 "JWT expired" cuando la app lleva rato abierta antes de guardar.
+async function sbAuthHeadersFresh() {
+  const token = await sbFreshToken();
+  return { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' };
+}
+// Fetch REST con token fresco; si IGUAL cae 401 (token muerto/revocado/reloj desfasado),
+// fuerza un refresh y reintenta UNA vez. Garantiza que el "JWT expired" no llegue al usuario.
+async function sbRestFetch(url, options = {}) {
+  const base = await sbAuthHeadersFresh();
+  const opts = { ...options, headers: { ...base, ...(options.headers || {}) } };
+  let res = await fetch(url, opts);
+  if (res.status === 401) {
+    const fresh = await sbFreshToken(true); // fuerza refresh ignorando el margen
+    opts.headers = { ...opts.headers, Authorization: 'Bearer ' + fresh };
+    res = await fetch(url, opts); // reintento único
+  }
+  return res;
+}
 async function sbRestInsert(table, payload) {
-  const headers = sbAuthHeaders();
-  headers['Prefer'] = 'return=representation';
-  const res = await fetch(SUPABASE_URL + '/rest/v1/' + table, { method: 'POST', headers, body: JSON.stringify(payload) });
+  const res = await sbRestFetch(SUPABASE_URL + '/rest/v1/' + table, {
+    method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify(payload),
+  });
   if (!res.ok) throw new Error('REST insert ' + res.status + ': ' + (await res.text()));
   return res.json();
 }
 async function sbRestUpdate(table, idKey, idVal, payload) {
-  const headers = sbAuthHeaders();
-  headers['Prefer'] = 'return=minimal';
   const url = SUPABASE_URL + '/rest/v1/' + table + '?' + idKey + '=eq.' + encodeURIComponent(idVal);
-  const res = await fetch(url, { method: 'PATCH', headers, body: JSON.stringify(payload) });
+  const res = await sbRestFetch(url, {
+    method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(payload),
+  });
   if (!res.ok) throw new Error('REST update ' + res.status + ': ' + (await res.text()));
   return true;
 }
 async function sbRestDelete(table, filters) {
-  const headers = sbAuthHeaders();
   let qs = Object.entries(filters).map(([k, v]) => k + '=eq.' + encodeURIComponent(v)).join('&');
-  const res = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + qs, { method: 'DELETE', headers });
+  const res = await sbRestFetch(SUPABASE_URL + '/rest/v1/' + table + '?' + qs, { method: 'DELETE' });
   if (!res.ok) throw new Error('REST delete ' + res.status + ': ' + (await res.text()));
   return true;
 }
@@ -6591,7 +6610,7 @@ function withTimeout(promise, ms, label) {
 
 // Devuelve un access_token FRESCO (refrescando via REST si el actual está expirado o cerca).
 // Resuelve el bug "HTTP 401" al llamar edge functions con token caducado del localStorage.
-async function sbFreshToken() {
+async function sbFreshToken(force = false) {
   const RAW_KEY = 'sb-vchaxqisbypwwtyjjnjr-auth-token';
   let raw = localStorage.getItem(RAW_KEY);
   if (!raw) return SUPABASE_KEY;
@@ -6607,7 +6626,7 @@ async function sbFreshToken() {
   } catch { /* token malformado, intenta refrescar igual */ }
 
   const now = Math.floor(Date.now() / 1000);
-  if (expSec - now > 60) return j.access_token; // todavía válido con margen 1 min
+  if (!force && expSec - now > 60) return j.access_token; // válido con margen; force salta esto
 
   // Refresh via REST con timeout corto
   if (!j.refresh_token) return j.access_token; // sin refresh_token nada que hacer
@@ -6866,7 +6885,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v84',
+    APP_VERSION: 'v85',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
@@ -10856,7 +10875,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v65.js';
+  const CURRENT_SW = 'sw-v66.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {

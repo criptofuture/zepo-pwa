@@ -67,7 +67,7 @@ jobs:
           cp manifest.json _deploy/pwa/manifest.json
           # SW served under a cache-busting filename (sw-v65.js) — index.html registers this.
           # New filename each bump forces CF edge MISS (CF caches old names 7 days).
-          cp sw.js _deploy/pwa/sw-v65.js
+          cp sw.js _deploy/pwa/sw-v66.js
           # kamikaze sw.js at the legacy path auto-unregisters old SWs on update check.
           [ -f sw-kamikaze.js ] && cp sw-kamikaze.js _deploy/pwa/sw.js
           cp icons/icon-192.png icons/icon-512.png icons/apple-touch.png icons/favicon-32.png icons/og.png _deploy/pwa/icons/ 2>/dev/null || true
@@ -79,7 +79,7 @@ jobs:
           [ -f reset.html ] && cp reset.html _deploy/reset.html && cp reset.html _deploy/pwa/reset.html
           # Generate _headers — applies to physical /pwa/ paths.
           cat > _deploy/_headers <<'HEADERS'
-          /pwa/sw-v65.js
+          /pwa/sw-v66.js
             Cache-Control: no-cache, no-store, must-revalidate
             Service-Worker-Allowed: /
           /pwa/sw.js
