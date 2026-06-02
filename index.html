@@ -4246,6 +4246,12 @@ setTimeout(function() {
           </div>
         </div>
 
+        <!-- QA TEMP: certificar tokenizacion con cobro real de $1 (solo Alvaro) -->
+        <div x-show="user && user.email === 'alvarorhea@gmail.com'" x-cloak style="margin:0 20px 22px;">
+          <button class="save-btn" @click="checkoutPlan='test'; annualBilling=false; saveCardChecked=true; initiatePayment()">Probar tokenizacion ($1)</button>
+          <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;">QA temporal: cobra $1 real y guarda el token de tu tarjeta.</div>
+        </div>
+
         <!-- Plan card with gradient border -->
         <div style="margin:0 20px 22px;position:relative;border-radius:16px;padding:1px;background:var(--gradient);">
           <div style="background:var(--surface);border-radius:15px;padding:16px;">
@@ -6866,7 +6872,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v82',
+    APP_VERSION: 'v83',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
@@ -10866,7 +10872,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v63.js';
+  const CURRENT_SW = 'sw-v64.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
