@@ -6526,7 +6526,7 @@ function localDate(d) {
   d = d || new Date();
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
-const GOOGLE_CLIENT_ID = '640676678825-ag45bt81m91jd1tab3emj9o4v7fdv2qm.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = '639713754837-enfgj5r0s6ua8cdo6onb41ss9pt5fe52.apps.googleusercontent.com';
 const SUPABASE_URL = 'https://vchaxqisbypwwtyjjnjr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_yj9z4wzmADhm23dXFq3pFg_5zCqu0am';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -6856,7 +6856,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v77',
+    APP_VERSION: 'v78',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
@@ -10840,7 +10840,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v58.js';
+  const CURRENT_SW = 'sw-v59.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
