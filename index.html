@@ -6885,7 +6885,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v86',
+    APP_VERSION: 'v87',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
@@ -9964,9 +9964,27 @@ function zepoApp() {
     },
 
 
+    // Voz en español: el dictado devuelve números en PALABRAS ("cinco", "treinta y cinco").
+    // Esto los convierte a dígitos para que el parser detecte el monto. Solo corre al
+    // presionar Enter (no al grabar). Excluye un/uno/una sueltos (artículos) salvo en compuestos.
+    normalizeSpokenNumbers(text) {
+      const units = { dos:2, tres:3, cuatro:4, cinco:5, seis:6, siete:7, ocho:8, nueve:9, diez:10, once:11, doce:12, trece:13, catorce:14, quince:15, dieciseis:16, 'dieciséis':16, diecisiete:17, dieciocho:18, diecinueve:19, veinte:20, veintiuno:21, veintiun:21, 'veintiún':21, veintiuna:21, veintidos:22, 'veintidós':22, veintitres:23, 'veintitrés':23, veinticuatro:24, veinticinco:25, veintiseis:26, 'veintiséis':26, veintisiete:27, veintiocho:28, veintinueve:29 };
+      const tens = { treinta:30, cuarenta:40, cincuenta:50, sesenta:60, setenta:70, ochenta:80, noventa:90, cien:100, ciento:100 };
+      const comp = { uno:1, 'ún':1, un:1, dos:2, tres:3, cuatro:4, cinco:5, seis:6, siete:7, ocho:8, nueve:9 };
+      let t = text.toLowerCase();
+      for (const [tw, tv] of Object.entries(tens))
+        for (const [uw, uv] of Object.entries(comp))
+          t = t.replace(new RegExp('\\b' + tw + '\\s+y\\s+' + uw + '\\b', 'g'), tv + uv);
+      for (const [w, v] of Object.entries({ ...tens, ...units }))
+        t = t.replace(new RegExp('\\b' + w + '\\b', 'g'), v);
+      t = t.replace(/(\d+)\s+(?:con|punto|coma)\s+(\d+)/g, '$1.$2'); // decimales hablados: "ocho con cincuenta" → 8.50
+      return t.replace(/\s{2,}/g, ' ').trim();
+    },
+
     analyzeTextInput() {
-      const text = this.form.description || '';
+      let text = this.form.description || '';
       if (!text || text.length < 2) return;
+      text = this.normalizeSpokenNumbers(text); // voz: "cinco de pollo" → "5 de pollo"
       this.analyzing = true;
       this.parsedItems = [];
       const userIsIncome = this.form.is_income;
@@ -10032,6 +10050,9 @@ function zepoApp() {
     },
 
     splitItems(text) {
+      // Patrón hablado ecuatoriano "N de X N de Y" → un ítem por cada "N de ...".
+      // Inserta separador antes de cada "<número> de " que NO esté al inicio.
+      text = text.replace(/(\S\s+)(\d+[\.,]?\d*\s+de\s)/gi, '$1\n$2');
       // Coma solo separa si va seguida de espacio (para no romper decimales como 3,50)
       let segments = text
         .split(/\s*(?:,\s+|;\s*|·|\.\s+| y | e |\n)\s*/i)
@@ -10051,6 +10072,7 @@ function zepoApp() {
         .replace(/(\d+[\.,]?\d*)/, '')
         .replace(/\$/g, '')
         .replace(/\b(d[oó]lar(?:es)?|usd|dls?|dlrs?|centavos?|ctvs?)\b/gi, '')
+        .replace(/^\s*de\s+/i, '')
         .replace(/\s{2,}/g, ' ')
         .trim() || text;
       const expCats = {
@@ -10884,7 +10906,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v67.js';
+  const CURRENT_SW = 'sw-v68.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
