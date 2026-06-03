@@ -6885,7 +6885,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v85',
+    APP_VERSION: 'v86',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
@@ -7813,7 +7813,10 @@ function zepoApp() {
       rec.onresult = (e) => {
         const text = e.results[0][0].transcript;
         this.voiceTranscript = text;
-        this.parseVoiceText(text);
+        // Continuar escribiendo (NO sobrescribir): una nueva grabación se suma a lo anterior.
+        // NO se extrae monto ni categoría aquí; eso ocurre al presionar Enter (analyzeTextInput).
+        const prev = (this.form.description || '').trim();
+        this.form.description = prev ? prev + ' ' + text : text;
         this.voiceRecording = false;
       };
       rec.onerror = () => { this.voiceRecording = false; this.showToast('No se pudo escuchar'); };
@@ -10043,7 +10046,13 @@ function zepoApp() {
       const lower = text.toLowerCase();
       const numMatch = lower.match(/(\d+[\.,]?\d*)/);
       const amount = numMatch ? parseFloat(numMatch[1].replace(',', '.')) : 0;
-      const description = text.replace(/(\d+[\.,]?\d*)/, '').trim() || text;
+      // Quitar de la descripción: el número Y el símbolo/palabra de moneda ($ , dólares, usd, ctvs...).
+      const description = text
+        .replace(/(\d+[\.,]?\d*)/, '')
+        .replace(/\$/g, '')
+        .replace(/\b(d[oó]lar(?:es)?|usd|dls?|dlrs?|centavos?|ctvs?)\b/gi, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim() || text;
       const expCats = {
         food: ['comida','almuerzo','desayuno','cena','restaurante','pollo','arroz','menú','menu del dia','hamburguesa','hamburg','pizza','sushi','panaderia','panadería','asado','fritada','encebollado','ceviche','chifa','empanada','hot dog','sandwich','wrap','ensalada','snack','helado','postre','dulce','sopa','caldo','merienda','tienda','pan ','panes','leche','huevo','queso','fruta','jugo','batido','agua ','gaseosa','cola','yogurt','yogur','cereal','galleta','chocolate','torta','pastel','mandarina','manzana','platano','plátano','papas','papa ','carne','res','cerdo','pescado','atún','atun','camarón','camaron','salchicha','jamon','jamón','lomo','chuleta','filete','seco de','guatita','hornado','mote','humita','bolón','bolon','tigrillo','tamal','patacón','patacon','corviche','taco','burrito','alitas','wonton','ramen','lasaña','lasagna','pasta','spagueti','spaghetti','parrillada','menestra','fideo','comida rapida'],
         transport: ['bus','transporte','gasolina','combustible','pasaje','metro','taxi','uber','cabify','indriver','didi','bici','bicicleta','cicla','moto','parqueo','parking','peaje','llanta','mecanico','mecánico','aceite motor','lavada auto','lavado auto','taller'],
@@ -10875,7 +10884,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v66.js';
+  const CURRENT_SW = 'sw-v67.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
