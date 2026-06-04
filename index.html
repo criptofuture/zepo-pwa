@@ -6916,7 +6916,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v93',
+    APP_VERSION: 'v94',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
@@ -8892,10 +8892,12 @@ function zepoApp() {
         // "lleno" y dejaba el freno de recálculo activo). Va DESPUÉS del bloque optimista que lo lee.
         this.editingExpense = null;
 
-        // Background reload + splits in parallel (don't block UI)
-        const bgTasks = [this.loadExpenses()];
+        // Background reload + splits in parallel (don't block UI).
+        // loadSplits SIEMPRE: si una edición QUITA el split (isSplit=false), pendingSplits
+        // debe refrescarse para que el registro desaparezca de "Me deben"/"Debo". Antes solo
+        // se recargaba cuando el nuevo estado ERA split → al quitar la división quedaba viejo.
+        const bgTasks = [this.loadExpenses(), this.loadSplits()];
         if (isSplit) {
-          bgTasks.push(this.loadSplits());
           const names = persona.split(',').map(s => s.trim()).filter(Boolean);
           const prInserts = [];
           for (const name of names) {
@@ -10966,7 +10968,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v74.js';
+  const CURRENT_SW = 'sw-v75.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
