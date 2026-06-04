@@ -853,10 +853,17 @@
     .approve-body > * { flex-shrink: 0; }
     .cd-describe-block {
       flex-shrink: 0;
+      margin: 0 -20px;   /* full-bleed dentro de .approve-body (que tiene padding 20px) */
       padding: 12px 20px calc(12px + var(--safe-bottom));
       background: var(--bg);
       border-top: 1px solid var(--border);
+      position: sticky;  /* pegado al fondo del scroll... */
+      bottom: 0;
+      z-index: 2;
     }
+    /* ...salvo cuando el split está abierto: el composer pasa al flujo normal y se
+       alcanza scrolleando, para no competir con el dropdown del picker (pedido Alvaro). */
+    .cd-describe-block.cd-describe-flow { position: static; }
     .approve-header {
       display: flex; align-items: center; gap: 12px;
       padding: 14px 20px 12px;
@@ -3545,7 +3552,8 @@ setTimeout(function() {
                               <div @click="openCobroDetail(c)" style="padding:10px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;border-bottom:1px solid var(--border);">
                                 <div style="width:32px;height:32px;border-radius:16px;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--c-brand-contrast);flex-shrink:0;" x-text="(c._person || '?').charAt(0).toUpperCase()"></div>
                                 <div style="flex:1;min-width:0;">
-                                  <div style="font-size:13px;font-weight:600;color:var(--text);" x-text="c._person"></div>
+                                  <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="c.description || getCatLabel(c.category)"></div>
+                                  <div style="font-size:11px;color:var(--muted);margin-top:1px;" x-text="c._person"></div>
                                 </div>
                                 <div style="font-size:14px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;" x-text="'$' + c._amount.toFixed(2)"></div>
                               </div>
@@ -5228,8 +5236,9 @@ setTimeout(function() {
                 </template>
               </div>
 
-              <!-- DETECTADO preview card (despues de analizar texto) — solo si NO hay parsedItems en lista -->
-              <div x-show="!editingExpense && analyzed && form.amount && parsedItems.length === 0 && !receiptPreview && !importedFile" style="margin-bottom:14px;">
+              <!-- DETECTADO preview card (despues de analizar texto) — solo si NO hay parsedItems en lista.
+                   Se muestra también SIN monto (form.category presente) para avisar que falta el monto. -->
+              <div x-show="!editingExpense && analyzed && parsedItems.length === 0 && !receiptPreview && !importedFile && (form.amount || form.category)" style="margin-bottom:14px;">
                 <div class="cd-section-label">DETECTADO</div>
                 <div class="cd-detected-card">
                   <div class="cd-detected-card-inner">
@@ -5247,11 +5256,17 @@ setTimeout(function() {
                           <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;" x-text="form.description"></div>
                         </div>
                       </div>
-                      <input type="text" inputmode="decimal" x-model="form.amount" @input="form.amount = $el.value.replace(',', '.')" @keydown.enter.prevent="$el.blur()" class="gradient-text" style="font-size:22px;font-weight:800;letter-spacing:-0.8px;font-variant-numeric:tabular-nums;background:transparent;border:none;outline:none;text-align:right;width:110px;font-family:inherit;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">
+                      <input type="text" inputmode="decimal" placeholder="$0.00" x-model="form.amount" @input="form.amount = $el.value.replace(',', '.')" @keydown.enter.prevent="$el.blur()" class="gradient-text" style="font-size:22px;font-weight:800;letter-spacing:-0.8px;font-variant-numeric:tabular-nums;background:transparent;border:none;outline:none;text-align:right;width:110px;font-family:inherit;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;" :style="(!form.amount || parseFloat(form.amount) <= 0) ? '-webkit-text-fill-color:var(--c-accent-soft);color:var(--c-accent-soft);' : ''">
                     </div>
-                    <div style="font-size:11px;color:var(--dim);display:flex;align-items:center;gap:4px;">
+                    <!-- Con monto: hint sutil -->
+                    <div x-show="form.amount && parseFloat(form.amount) > 0" style="font-size:11px;color:var(--dim);display:flex;align-items:center;gap:4px;">
                       <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="10" height="10"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       Toca el monto o cambia la categoría abajo
+                    </div>
+                    <!-- Sin monto: aviso enfatizado (no se puede aprobar sin monto) -->
+                    <div x-show="!form.amount || parseFloat(form.amount) <= 0" style="margin-top:2px;padding:9px 11px;border-radius:var(--radius-sm);background:rgba(var(--c-accent-rgb),0.14);border:1px solid var(--warning);display:flex;align-items:center;gap:8px;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="var(--c-accent-soft)" stroke-width="2.2" width="14" height="14" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                      <span style="font-size:12px;font-weight:600;color:var(--c-accent-soft);line-height:1.35;">No detectamos un monto. Toca <strong>$0.00</strong> para escribirlo.</span>
                     </div>
                   </div>
                 </div>
@@ -5535,7 +5550,7 @@ setTimeout(function() {
                               </template>
                               <template x-if="!p.you && splitPickerIdx === pi">
                                 <input x-model="splitPickerQuery"
-                                  x-init="$nextTick(() => { $el.focus(); $el.closest('.cd-split-row')?.scrollIntoView({ block: 'center', behavior: 'smooth' }); })"
+                                  x-init="$nextTick(() => { $el.closest('.cd-split-row')?.scrollIntoView({ block: 'center', behavior: 'smooth' }); })"
                                   @keydown.escape="closeSplitPicker()"
                                   @blur="setTimeout(() => closeSplitPicker(), 200)"
                                   placeholder="Buscar o agregar..."
@@ -5630,10 +5645,9 @@ setTimeout(function() {
                 </button>
               </div>
 
-            </div>
-
-            <!-- COMPOSER (barra fija al fondo, fuera del scroll) -->
-            <div class="cd-describe-block" x-show="!editingExpense && !editingBatch && !receiptPreview && !importedFile">
+            <!-- COMPOSER: dentro del scroll. Normalmente sticky al fondo; con el split
+                 abierto pasa al flujo (cd-describe-flow) para no tapar el dropdown. -->
+            <div class="cd-describe-block" :class="form.is_split && 'cd-describe-flow'" x-show="!editingExpense && !editingBatch && !receiptPreview && !importedFile">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 <div style="font-size:14px;font-weight:700;letter-spacing:-0.2px;">Describe el registro</div>
@@ -5683,6 +5697,7 @@ setTimeout(function() {
                 <div style="flex:1;font-size:12px;color:var(--text);font-weight:500;" x-text="voiceTranscript || 'Escuchando...'"></div>
                 <button @click="toggleVoice" style="font-size:11px;color:var(--danger);font-weight:700;background:transparent;border:none;cursor:pointer;">DETENER</button>
               </div>
+            </div>
             </div>
           </div>
         </div>
@@ -6059,9 +6074,16 @@ setTimeout(function() {
                 </div>
               </template>
               <template x-if="activeDeboType === 'income-split'">
-                <div style="padding:14px;border-radius:12px;background:rgba(255,184,0,0.06);border:1px solid rgba(255,184,0,0.2);text-align:center;">
-                  <div style="font-size:13px;color:var(--warning);font-weight:600;">Deuda por ingreso compartido</div>
-                  <div style="font-size:12px;color:var(--muted);margin-top:4px;">Registrado por ti al dividir un ingreso.</div>
+                <div>
+                  <div style="padding:14px;border-radius:12px;background:rgba(255,184,0,0.06);border:1px solid rgba(255,184,0,0.2);text-align:center;">
+                    <div style="font-size:13px;color:var(--warning);font-weight:600;">Deuda por ingreso compartido</div>
+                    <div style="font-size:12px;color:var(--muted);margin-top:4px;">Registrado por ti al dividir un ingreso.</div>
+                  </div>
+                  <!-- Editar registro: solo en income-split porque ese registro lo creaste tú (pedido Alvaro) -->
+                  <button x-show="expenses.some(e => e.id === activeDebo.id)" @click="deboDetailOpen = false; $nextTick(() => { const exp = expenses.find(e => e.id === activeDebo.id); if (exp) openEdit(exp); })" style="margin-top:12px;width:100%;height:46px;border-radius:23px;background:rgba(var(--c-brand-rgb),0.08);border:1px solid rgba(var(--c-brand-rgb),0.25);color:var(--cyan);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Editar registro
+                  </button>
                 </div>
               </template>
 
@@ -6890,7 +6912,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v88',
+    APP_VERSION: 'v89',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
@@ -7856,7 +7878,6 @@ function zepoApp() {
       if (lower.includes('ingreso') || lower.includes('cobr') || lower.includes('recibi') || lower.includes('me pag')) {
         this.form.is_income = true;
       }
-      this.showToast('Voz: "' + text.slice(0, 40) + '"');
     },
 
     // ── Photo Upload ──
@@ -10911,7 +10932,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v69.js';
+  const CURRENT_SW = 'sw-v70.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
