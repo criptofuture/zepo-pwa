@@ -846,6 +846,11 @@
       flex-direction: column;
       padding: 0 20px 20px;
     }
+    /* En un flex-column scrollable, los hijos tienen flex-shrink:1 por defecto y se
+       COMPRIMEN cuando el contenido excede la altura (teclado abierto o split expandido)
+       en vez de scrollear → el botón Aprobar se subía sobre "Dividir" y la tarjeta de
+       split se recortaba ocultando sus botones. flex-shrink:0 obliga a scrollear. */
+    .approve-body > * { flex-shrink: 0; }
     .cd-describe-block {
       flex-shrink: 0;
       padding: 12px 20px calc(12px + var(--safe-bottom));
@@ -6885,7 +6890,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v87',
+    APP_VERSION: 'v88',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
@@ -10906,7 +10911,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v68.js';
+  const CURRENT_SW = 'sw-v69.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
