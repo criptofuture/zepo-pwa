@@ -6784,6 +6784,10 @@ const IMPORT_INSTRUCTIONS = {
 
 const chunk = (a, n) => Array.from({length:Math.ceil(a.length/n)}, (_, i) => a.slice(i*n, i*n+n));
 
+// Cache NO reactivo para getters pesados. Vive fuera de Alpine a propósito:
+// escribir aquí dentro de un getter no dispara re-render (evita loops).
+const _ZCACHE = {};
+
 function zepoApp() {
   return {
     user: null,
@@ -6912,7 +6916,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v90',
+    APP_VERSION: 'v91',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
@@ -7550,6 +7554,7 @@ function zepoApp() {
     },
 
     get filteredHistoryGroups() {
+      return this._memo('historyGroups', 'history', () => {
       const groups = {};
       const order = [];
       const today = localDate();
@@ -7572,6 +7577,7 @@ function zepoApp() {
         const g = groups[l];
         g.groupedItems = this.groupByBatch(g.items);
         return g;
+      });
       });
     },
 
@@ -7812,8 +7818,18 @@ function zepoApp() {
       });
       return result;
     },
+    get _busyEditing() {
+      return this.sheetOpen || !!this.editingExpense || !!this.editingBatch || !!this.receiptPreview || !!this.importedFile;
+    },
+    // Congela el cómputo pesado cuando hay una superficie de edición abierta (las listas
+    // quedan detrás del overlay = invisibles) o cuando su tab no está activo. Devuelve el
+    // último valor cacheado. Al cerrar el editor / cambiar de tab vuelve a calcular fresco.
+    _memo(key, activeTab, compute) {
+      if ((this._busyEditing || (activeTab && this.tab !== activeTab)) && (key in _ZCACHE)) return _ZCACHE[key];
+      return (_ZCACHE[key] = compute());
+    },
     get recentExpensesGrouped() {
-      return this.groupByBatch(this.expenses).slice(0, 8);
+      return this._memo('recentGrouped', 'home', () => this.groupByBatch(this.expenses).slice(0, 8));
     },
     toggleBatch(batchId) {
       const i = this.expandedBatches.indexOf(batchId);
@@ -8521,11 +8537,11 @@ function zepoApp() {
     },
 
     get budgetBars() {
-      return this.budgets.filter(b => b.category).map(b => {
+      return this._memo('budgetBars', null, () => this.budgets.filter(b => b.category).map(b => {
         const spent = this.monthExpenses.filter(e => e.category === b.category).reduce((s, e) => s + e.amount, 0);
         const cat = CAT_MAP[b.category] || {};
         return { cat: b.category, label: cat.label || b.category, emoji: cat.emoji || '✨', color: cat.color || '#948E80', budget: b.amount, spent, pct: Math.round(spent / b.amount * 100) };
-      });
+      }));
     },
 
     get budgetAlerts() {
@@ -9268,16 +9284,16 @@ function zepoApp() {
       return this.payReqs.filter(p => p.status === 'paid');
     },
     get pendingCobrosGrouped() {
-      return this.groupByBatch(this.filteredPendingCobros);
+      return this._memo('pendingCobrosGrouped', 'cuentas', () => this.groupByBatch(this.filteredPendingCobros));
     },
     get deboSolicitudesGrouped() {
-      return this.groupDeboByExpense(this.deboSolicitudes);
+      return this._memo('deboSolicitudesGrouped', 'cuentas', () => this.groupDeboByExpense(this.deboSolicitudes));
     },
     get deboDeudasGrouped() {
-      return this.groupDeboByExpense(this.deboDeudas, this.incomeSplitDebts);
+      return this._memo('deboDeudasGrouped', 'cuentas', () => this.groupDeboByExpense(this.deboDeudas, this.incomeSplitDebts));
     },
     get deboPaidWaitingGrouped() {
-      return this.groupDeboByExpense(this.deboPaidWaiting);
+      return this._memo('deboPaidWaitingGrouped', 'cuentas', () => this.groupDeboByExpense(this.deboPaidWaiting));
     },
     groupDeboByExpense(payReqItems, incomeSplitItems) {
       const groups = {};
@@ -10519,6 +10535,7 @@ function zepoApp() {
     },
 
     get monthlyDayGrid() {
+      return this._memo('monthlyDayGrid', 'dash', () => {
       const now = new Date();
       const month = now.getMonth(), year = now.getFullYear();
       const todayDay = now.getDate();
@@ -10553,9 +10570,11 @@ function zepoApp() {
       const rows = [];
       for (let i = 0; i < cells.length; i += 7) rows.push(cells.slice(i, i + 7));
       return { rows, max, total: Object.values(totalsByDay).reduce((s, v) => s + v, 0) };
+      });
     },
 
     get yearlyChart() {
+      return this._memo('yearlyChart', 'dash', () => {
       const labels = ['E','F','M','A','M','J','J','A','S','O','N','D'];
       const now = new Date();
       const year = now.getFullYear();
@@ -10592,11 +10611,11 @@ function zepoApp() {
         row.forEach(c => flat.push({ ...c, type: 'cell', text: c.total > 0 ? Math.round(c.total) : '' }));
       });
       return { labels, grid, flat };
+      });
     },
 
     get periodChart() {
-      if (this.dashPeriod === 'semana') return this.weeklyChart;
-      return this.monthlyChart;
+      return this._memo('periodChart', 'dash', () => this.dashPeriod === 'semana' ? this.weeklyChart : this.monthlyChart);
     },
 
     get periodChartTitle() {
@@ -10626,6 +10645,7 @@ function zepoApp() {
     },
 
     get categoryBreakdown() {
+      return this._memo('categoryBreakdown', 'dash', () => {
       const mode = this.dashViewMode;
       const src = mode === 'income'
         ? this.expenses.filter(e => e.is_income && e.date >= this.periodStart)
@@ -10647,6 +10667,7 @@ function zepoApp() {
           emoji: CAT_MAP[key]?.emoji || '✨',
           color: CAT_MAP[key]?.color || '#948E80',
         }));
+      });
     },
 
     get catDrillExpenses() {
@@ -10939,7 +10960,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v71.js';
+  const CURRENT_SW = 'sw-v72.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
