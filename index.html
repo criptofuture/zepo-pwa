@@ -3532,7 +3532,7 @@ setTimeout(function() {
               <div x-show="filteredPendingCobros.length > 0" style="margin-top:22px;">
                 <div style="font-size:11px;color:var(--muted);letter-spacing:1.4px;font-weight:700;margin-bottom:8px;padding-left:4px;">PENDIENTES · <span x-text="filteredPendingCobros.length"></span></div>
                 <div style="background:var(--surface);border-radius:14px;border:1px solid var(--border);overflow:hidden;">
-                  <template x-for="(entry, ci) in pendingCobrosGrouped" :key="entry._isBatch ? entry.batch_id : (entry.id || ci)">
+                  <template x-for="(entry, ci) in pendingCobrosGrouped" :key="entry._isBatch ? entry.batch_id : ((entry.id || ci) + '|' + (entry._person || ''))">
                     <div>
                       <template x-if="entry._isBatch">
                         <div>
@@ -3548,7 +3548,7 @@ setTimeout(function() {
                             </div>
                           </div>
                           <div class="batch-subitems" x-show="isBatchExpanded(entry.batch_id)" x-transition.duration.200ms>
-                            <template x-for="c in entry.items" :key="c.id">
+                            <template x-for="(c, si) in entry.items" :key="(c.id || si) + '|' + (c._person || '')">
                               <div @click="openCobroDetail(c)" style="padding:10px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;border-bottom:1px solid var(--border);">
                                 <div style="width:32px;height:32px;border-radius:16px;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--c-brand-contrast);flex-shrink:0;" x-text="(c._person || '?').charAt(0).toUpperCase()"></div>
                                 <div style="flex:1;min-width:0;">
@@ -6916,7 +6916,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v92',
+    APP_VERSION: 'v93',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
@@ -10966,7 +10966,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v73.js';
+  const CURRENT_SW = 'sw-v74.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
