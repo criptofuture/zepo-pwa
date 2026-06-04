@@ -6912,7 +6912,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v89',
+    APP_VERSION: 'v90',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
@@ -7944,6 +7944,7 @@ function zepoApp() {
     // Unifica la lógica para que foto y PDF se comporten igual.
     _finalizeImportItems(transactions) {
       const curYear = new Date().getFullYear();
+      const todayStr = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD' local (Ecuador)
       transactions.forEach(t => {
         const d = (t.description || '').toUpperCase();
         // Retiro de cajero NO es ingreso
@@ -7953,11 +7954,17 @@ function zepoApp() {
           const hit = this.MERCHANT_RULES.find(r => r.re.test(d));
           if (hit) { t.category = hit.cat; t.is_income = false; }
         }
-        // Fix año: OCR de fotos a veces asume un año viejo (2024) en estados sin año.
-        // Si el año detectado es anterior al año pasado o futuro, usar el año actual.
+        // Fecha por ítem: respeta la fecha de la FACTURA cuando es válida, pero la sanea.
+        // (1) año fuera de rango → año actual. (2) NUNCA una fecha futura: una factura no
+        // puede ser de mañana. Esto fue la causa del bug 2026-12-06 (el OCR devolvía una
+        // fecha futura/errónea y solo se validaba el año). Aplica a foto Y a archivos
+        // (cada ítem conserva su propia fecha saneada).
         if (t.date && /^\d{4}-\d{2}-\d{2}/.test(t.date)) {
           const y = parseInt(t.date.slice(0, 4), 10);
           if (y < curYear - 1 || y > curYear) t.date = curYear + t.date.slice(4);
+          if (t.date.slice(0, 10) > todayStr) t.date = todayStr;
+        } else {
+          t.date = todayStr;
         }
       });
       const cats = [...this.categories, ...this.incomeCategories];
@@ -10932,7 +10939,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v70.js';
+  const CURRENT_SW = 'sw-v71.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
