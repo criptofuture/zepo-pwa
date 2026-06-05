@@ -40,6 +40,8 @@ CHECKS = [
     ("E2E presupuestos",               ["python", os.path.join(TOOLS, "qa-e2e-budgets.py")]),
     ("Smoke todas las pantallas (sin errores)", ["python", os.path.join(TOOLS, "qa-smoke-screens.py")]),
     ("E2E solicitudes cobro (aceptar/rechazar/pagar)", ["python", os.path.join(TOOLS, "qa-e2e-payreq.py")]),
+    ("E2E amigos (aceptar/rechazar conexion)", ["python", os.path.join(TOOLS, "qa-e2e-friends.py")]),
+    ("E2E onboarding (primer gasto/presupuesto/finalizar)", ["python", os.path.join(TOOLS, "qa-e2e-onboarding.py")]),
 ]
 
 def main():
