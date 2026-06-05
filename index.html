@@ -81,6 +81,12 @@
       --c-warning: #C47F1A;
       --grad-brand: linear-gradient(135deg, #3F7150 0%, #6FA15C 100%);
       --elev-card: none;
+      /* "más color": hero en verde + tiles con tinte */
+      --c-hero-bg: linear-gradient(150deg, #3F7150, #274D35);
+      --c-hero-ink: #F4F1E3;
+      --tile-inc: rgba(111,161,92,.13);
+      --tile-exp: rgba(192,57,43,.10);
+      --tile-wk: rgba(214,216,100,.24);
       /* grano editorial (book grain ~0.06) */
       --grain-img: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.05'/%3E%3C/svg%3E");
       /* TYPE */
@@ -127,29 +133,35 @@
        Se aplica con el tema RESUELTO en <html data-theme="dark"> (auto o manual).
        Cambia SOLO los tokens semánticos; las 1.429 referencias var(--*) lo heredan. ═══ */
     :root[data-theme="dark"] {
-      --c-bg: #0F140D;
-      --c-surface: #1F261C;
-      --c-surface-2: #181F15;
-      --c-ink: #EFEADB;
-      --c-ink-rgb: 239,234,219;
-      --c-ink-soft: rgba(239,234,219,.62);
-      --c-ink-faint: rgba(239,234,219,.40);
-      --c-border: rgba(239,234,219,.10);
-      --c-border-strong: rgba(239,234,219,.20);
-      --c-brand: #84AF72;
-      --c-brand-rgb: 132,175,114;
+      /* DARK = negro neutro (decisión de Alvaro; NO el verde-oscuro del book) */
+      --c-bg: #0B0B0C;
+      --c-surface: #161618;
+      --c-surface-2: #1C1C1F;
+      --c-ink: #ECECEA;
+      --c-ink-rgb: 236,236,234;
+      --c-ink-soft: rgba(236,236,234,.62);
+      --c-ink-faint: rgba(236,236,234,.40);
+      --c-border: rgba(255,255,255,.09);
+      --c-border-strong: rgba(255,255,255,.18);
+      --c-brand: #8FD08A;
+      --c-brand-rgb: 143,208,138;
       --c-brand-deep: #507D5A;
       --c-brand-soft: #2A3A28;
       --c-accent: #D6D864;
       --c-accent-rgb: 214,216,100;
       --c-accent-ink: #2D2E0A;
-      --c-accent-soft: #D99A3A;
-      --c-brand-contrast: #0F140D;
-      --c-income: #9EC48A;
-      --c-expense: #D96B5A;
-      --c-warning: #D99A3A;
-      --grad-brand: linear-gradient(135deg, #84AF72 0%, #9EC48A 100%);
+      --c-accent-soft: #E0B65A;
+      --c-brand-contrast: #0B0B0C;
+      --c-income: #8FD08A;
+      --c-expense: #E2796B;
+      --c-warning: #E0B65A;
+      --grad-brand: linear-gradient(135deg, #6FA15C 0%, #9ED98F 100%);
       --grain-img: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.08'/%3E%3C/svg%3E");
+      --c-hero-bg: linear-gradient(150deg, #2F6B43, #173524);
+      --c-hero-ink: #EAF3E6;
+      --tile-inc: rgba(143,208,138,.10);
+      --tile-exp: rgba(226,121,107,.10);
+      --tile-wk: rgba(214,216,100,.10);
       color-scheme: dark;
     }
 
@@ -628,11 +640,20 @@
     .hero-card {
       margin: 0 20px 20px;
       padding: 20px 22px 18px;
-      background: var(--surface);
+      background: var(--c-hero-bg);
+      color: var(--c-hero-ink);
       border-radius: 20px;
       position: relative;
       overflow: hidden;
     }
+    /* "más color": hero en verde — texto legible sobre el verde */
+    .hero-card .hero-label { color: var(--c-hero-ink); opacity: .74; }
+    .hero-card .hero-currency { color: var(--c-hero-ink); opacity: .7; }
+    .hero-card .hero-delta.up { color: #FFD2C9; }
+    .hero-card .hero-delta.down { color: var(--c-accent); }
+    .hero-card .hero-stat-label { color: var(--c-hero-ink); opacity: .62; }
+    .hero-card .hero-stat-value { color: var(--c-hero-ink); }
+    .hero-card .hero-progress { background: rgba(255,255,255,.18); }
     .hero-card.gradient-border { border-radius: 20px; }
     .hero-card.gradient-border::before { border-radius: 20px; }
     .hero-card.glow {
@@ -700,6 +721,9 @@
       position: relative;
     }
     .stat-card.locked { opacity: 0.55; }
+    .stat-card.tint-inc { background: var(--tile-inc); }
+    .stat-card.tint-exp { background: var(--tile-exp); }
+    .stat-card.tint-wk  { background: var(--tile-wk); }
     .stat-card .lock-icon {
       position: absolute; top: 12px; right: 12px;
     }
@@ -2712,7 +2736,7 @@
     var r = resolve(p);
     document.documentElement.setAttribute('data-theme', r);
     var m = document.querySelector('meta[name="theme-color"]');
-    if (m) m.setAttribute('content', r === 'dark' ? '#0F140D' : '#E9E2CF');
+    if (m) m.setAttribute('content', r === 'dark' ? '#0B0B0C' : '#E9E2CF');
   }
   window.getZepoThemePref = pref;
   window.setZepoTheme = function (p) { try { localStorage.setItem(KEY, p); } catch (e) {} apply(p); };
@@ -3257,7 +3281,7 @@ setTimeout(function() {
         </div>
 
         <!-- Hero Card — Balance -->
-        <div class="hero-card gradient-border glow">
+        <div class="hero-card">
           <div class="hero-top-row">
             <div class="hero-label" x-text="'BALANCE EN ' + currentMonthName.toUpperCase()"></div>
             <div class="hero-delta" :class="monthDelta >= 0 ? 'up' : 'down'">
@@ -3266,24 +3290,24 @@ setTimeout(function() {
             </div>
           </div>
           <div class="hero-amount-row">
-            <span class="hero-currency" :style="monthBalance < 0 ? 'color:var(--danger)' : ''">$</span>
-            <span class="hero-amount" :style="monthBalance >= 0 ? 'color:var(--success)' : 'color:var(--danger)'" x-text="(monthBalance < 0 ? '-' : '') + fmtMoney(Math.abs(monthBalance))"></span>
+            <span class="hero-currency" :style="monthBalance < 0 ? 'color:#FFD2C9' : ''">$</span>
+            <span class="hero-amount" :style="monthBalance >= 0 ? '' : 'color:#FFD2C9'" x-text="(monthBalance < 0 ? '-' : '') + fmtMoney(Math.abs(monthBalance))"></span>
           </div>
         </div>
 
         <!-- Stat cards -->
         <div class="stat-row">
-          <div class="stat-card">
+          <div class="stat-card tint-inc">
             <div class="stat-card-label">INGRESOS</div>
             <div class="stat-card-value mono" style="color:var(--success);" x-text="'+$' + fmtMoney(monthIncome)"></div>
             <div class="stat-card-sub" x-text="expenses.filter(e => e.is_income && e.date >= currentMonthStart).length + ' este mes'"></div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card tint-exp">
             <div class="stat-card-label">GASTOS</div>
             <div class="stat-card-value mono" style="color:var(--c-expense);" x-text="'-$' + fmtMoney(monthTotal)"></div>
             <div class="stat-card-sub" x-text="monthExpenses.length + ' este mes'"></div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card tint-wk">
             <div class="stat-card-label">ESTA SEMANA</div>
             <div class="stat-card-value mono" x-text="'$' + fmtMoney(weekTotal)"></div>
             <div class="stat-card-sub" x-text="weekExpenseCount + (weekExpenseCount === 1 ? ' gasto' : ' gastos')"></div>
