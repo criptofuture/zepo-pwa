@@ -8,3 +8,4 @@ screenshots/
 .claude/settings.json
 _dist/
 tools/_shots/
+supabase/.temp/

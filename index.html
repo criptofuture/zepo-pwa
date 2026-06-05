@@ -3875,8 +3875,8 @@ setTimeout(function() {
                                 </div>
                                 <div class="batch-right">
                                   <div class="batch-amount" style="color:var(--success);" x-text="'$' + en._shareTotal.toFixed(2)"></div>
-                                  <svg @click.stop="openEditBatch(en)" class="expense-row-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                   <div class="batch-chevron-badge" @click.stop="toggleBatch(en.batch_id)"><svg :class="{ open: isBatchExpanded(en.batch_id) }" class="batch-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="10" height="10"><polyline points="6 9 12 15 18 9"/></svg></div>
+                                  <svg @click.stop="openEditBatch(en)" class="expense-row-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                 </div>
                               </div>
                               <div class="batch-subitems" x-show="isBatchExpanded(en.batch_id)" x-transition.duration.200ms>
@@ -3974,8 +3974,8 @@ setTimeout(function() {
                                 </div>
                                 <div class="batch-right">
                                   <div class="batch-amount" style="color:var(--success);" x-text="'$' + en._shareTotal.toFixed(2)"></div>
-                                  <svg @click.stop="openEditBatch(en)" class="expense-row-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                   <div class="batch-chevron-badge" @click.stop="toggleBatch(en.batch_id)"><svg :class="{ open: isBatchExpanded(en.batch_id) }" class="batch-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="10" height="10"><polyline points="6 9 12 15 18 9"/></svg></div>
+                                  <svg @click.stop="openEditBatch(en)" class="expense-row-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                 </div>
                               </div>
                               <div class="batch-subitems" x-show="isBatchExpanded(en.batch_id)" x-transition.duration.200ms>
@@ -4458,8 +4458,8 @@ setTimeout(function() {
             <div class="settings-group-title" style="margin:0 0 8px;">Metodo de pago</div>
             <div class="settings-group" style="padding:14px;">
               <div style="display:flex;align-items:center;gap:12px;">
-                <div style="width:42px;height:28px;border-radius:6px;background:#fff;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);flex-shrink:0;">
-                  <span style="font-size:9px;font-weight:800;color:#1A1F71;" x-text="savedCard.brand"></span>
+                <div style="width:42px;height:28px;border-radius:6px;background:#fff;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);flex-shrink:0;overflow:hidden;">
+                  <span style="font-size:9px;font-weight:800;color:#1A1F71;letter-spacing:0.3px;white-space:nowrap;" x-text="cardBrandShort"></span>
                 </div>
                 <div style="flex:1;">
                   <div style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;">**** <span x-text="savedCard.last4"></span></div>
@@ -5361,12 +5361,13 @@ setTimeout(function() {
                     <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--muted);">TOTAL</span>
                     <span class="gradient-text" style="font-size:18px;font-weight:800;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;" x-text="'$' + parsedItems.reduce((s,p) => s + (parseFloat(p.amount)||0), 0).toFixed(2)"></span>
                   </div>
-                  <div x-show="parsedItems.length > 5" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(var(--c-brand-rgb),0.15);display:flex;flex-wrap:wrap;gap:6px;">
+                  <div x-show="parsedItems.length > 5" style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(var(--c-brand-rgb),0.15);display:flex;flex-direction:column;gap:7px;">
                     <template x-for="cs in parsedCategorySummary" :key="cs.key">
-                      <div style="display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;background:var(--surface);border:1px solid var(--border);">
-                        <span style="font-size:11px;" x-text="cs.emoji"></span>
-                        <span style="font-size:10px;font-weight:600;color:var(--muted);" x-text="cs.count"></span>
-                        <span style="font-size:10px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;" x-text="'$' + cs.total.toFixed(2)"></span>
+                      <div style="display:flex;align-items:center;gap:8px;">
+                        <span style="font-size:15px;flex-shrink:0;" x-text="cs.emoji"></span>
+                        <span style="font-size:13px;font-weight:600;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="getCatLabel(cs.key)"></span>
+                        <span style="font-size:12px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;flex-shrink:0;width:38px;text-align:right;" x-text="Math.round(cs.total / Math.max(0.01, parsedItems.reduce((s,p) => s + (parseFloat(p.amount)||0), 0)) * 100) + '%'"></span>
+                        <span style="font-size:14px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;flex-shrink:0;min-width:66px;text-align:right;" x-text="'$' + cs.total.toFixed(2)"></span>
                       </div>
                     </template>
                   </div>
@@ -5639,13 +5640,7 @@ setTimeout(function() {
 
               <!-- ═════════ CATEGORY GRID (solo cuando no hay items en lista; los items tienen su propio selector) ═════════ -->
               <div x-show="parsedItems.length === 0 && (editingExpense || analyzed || form.amount)" style="margin-bottom:12px;">
-                <div class="cd-section-label" style="display:flex;align-items:center;justify-content:space-between;">
-                  <span>CATEGORÍA</span>
-                  <button type="button" @click="openCatManager()" style="font-size:10px;color:var(--cyan);font-weight:700;background:transparent;display:inline-flex;align-items:center;gap:4px;cursor:pointer;letter-spacing:0.4px;border:none;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="10" height="10"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    GESTIONAR
-                  </button>
-                </div>
+                <div class="cd-section-label"><span>CATEGORÍA</span></div>
                 <div class="cd-cat-grid">
                   <template x-for="c in (form.is_income ? incomeCategories : categories)" :key="c.key">
                     <button type="button" @click="form.category = c.key" class="cd-cat-tile" :class="{ 'cd-cat-tile-active': form.category === c.key }" :style="form.category === c.key ? 'border-color:' + c.color + ';background:' + c.color + '15' : ''">
@@ -5655,6 +5650,27 @@ setTimeout(function() {
                       <span class="cd-cat-tile-label" x-text="c.label"></span>
                     </button>
                   </template>
+                  <!-- casilla para agregar categoria (reemplaza el boton GESTIONAR) -->
+                  <button type="button" @click="gridAddingCat = true; $nextTick(() => $refs.gridCatInput && $refs.gridCatInput.focus())" class="cd-cat-tile" style="border-style:dashed;">
+                    <div class="cd-cat-tile-icon" style="background:rgba(var(--c-brand-rgb),0.10);border:1px solid var(--border2);">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.6" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </div>
+                    <span class="cd-cat-tile-label">Nueva</span>
+                  </button>
+                </div>
+                <!-- alta inline de categoria desde el grid -->
+                <div x-show="gridAddingCat" x-cloak style="margin-top:8px;display:flex;flex-direction:column;gap:8px;">
+                  <div style="display:flex;gap:8px;align-items:center;">
+                    <div style="position:relative;width:42px;height:42px;flex-shrink:0;">
+                      <div style="width:100%;height:100%;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;pointer-events:none;" x-text="newCatEmoji || '✨'"></div>
+                      <input type="text" x-model="newCatEmoji" @input="cleanEmojiInput('newCatEmoji')" maxlength="4" style="position:absolute;inset:0;width:100%;height:100%;background:transparent;border:none;text-align:center;font-size:18px;color:transparent;caret-color:var(--cyan);font-family:inherit;outline:none;">
+                    </div>
+                    <input type="text" x-ref="gridCatInput" x-model="newCatLabel" @keydown.enter="quickAddCatForForm()" maxlength="24" placeholder="Nombre (ej: Mascotas)" style="flex:1;height:42px;border-radius:10px;background:var(--surface);border:1px solid var(--border);padding:0 14px;font-size:13px;color:var(--text);font-family:inherit;outline:none;">
+                  </div>
+                  <div style="display:flex;gap:8px;">
+                    <button type="button" @click="_resetGridCat()" style="flex:0 0 auto;height:40px;padding:0 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--muted);font-weight:600;font-size:13px;font-family:inherit;cursor:pointer;">Cancelar</button>
+                    <button type="button" @click="quickAddCatForForm()" :disabled="!newCatLabel || !newCatLabel.trim()" :style="{ opacity: (!newCatLabel || !newCatLabel.trim()) ? '0.4' : '1' }" style="flex:1;height:40px;border-radius:var(--radius-sm);background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:13px;font-family:inherit;border:none;cursor:pointer;">Crear y elegir</button>
+                  </div>
                 </div>
               </div>
 
@@ -5723,11 +5739,16 @@ setTimeout(function() {
                               </template>
                             </div>
                           </div>
-                          <input type="number" min="0" max="100" x-model.number="p.pct" @input="onSplitPctChange()" class="cd-split-pct-input">
-                          <div style="width:70px;height:40px;border-radius:10px;background:var(--bg);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--cyan);font-variant-numeric:tabular-nums;" x-text="'$' + (parseFloat(form.amount || 0) * (p.pct || 0) / 100).toFixed(2)"></div>
-                          <button x-show="!p.you" @click="removeSplitPerson(pi)" style="width:30px;height:40px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                          </button>
+                          <input type="number" min="0" max="100" x-model.number="p.pct" @input="onSplitPctChange()" class="cd-split-pct-input" style="flex-shrink:0;">
+                          <div style="width:70px;height:40px;flex-shrink:0;border-radius:10px;background:var(--bg);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--cyan);font-variant-numeric:tabular-nums;" x-text="'$' + (parseFloat(form.amount || 0) * (p.pct || 0) / 100).toFixed(2)"></div>
+                          <template x-if="!p.you">
+                            <button @click="removeSplitPerson(pi)" style="width:30px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </button>
+                          </template>
+                          <template x-if="p.you">
+                            <div style="width:30px;flex-shrink:0;"></div>
+                          </template>
                         </div>
                         <!-- Picker dropdown — outside flex row, spans full wrapper width -->
                         <div x-show="splitPickerIdx === pi" x-cloak class="cd-split-picker" @mousedown.prevent>
@@ -6362,6 +6383,19 @@ setTimeout(function() {
                 <button @click="quickAddCatForItem()" :disabled="!newCatLabel || !newCatLabel.trim()" :style="{ opacity: (!newCatLabel || !newCatLabel.trim()) ? '0.4' : '1' }" style="flex:1;height:42px;border-radius:var(--radius-sm);background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:13px;font-family:inherit;border:none;cursor:pointer;">Crear y asignar</button>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ MODAL APODO (reemplaza window.prompt) ══ -->
+      <div x-show="aliasModalOpen" @click.self="aliasModalOpen = false" x-cloak style="position:fixed;inset:0;z-index:10001;background:rgba(26,36,24,0.45);display:flex;align-items:center;justify-content:center;padding:24px;">
+        <div @click.stop style="background:var(--bg);border-radius:var(--radius);width:100%;max-width:360px;padding:22px 20px;border:1px solid var(--border);box-shadow:0 20px 50px rgba(var(--c-ink-rgb),0.18);">
+          <div style="font-size:16px;font-weight:700;color:var(--text);font-family:var(--font-display);">Ponerle un apodo</div>
+          <div style="font-size:12px;color:var(--muted);margin:4px 0 16px;">Solo tú lo verás, para <span x-text="aliasModalContact?.display_name || 'este contacto'"></span>.</div>
+          <input type="text" x-model="aliasModalValue" @keydown.enter="confirmAlias()" maxlength="40" placeholder="Ej: Beti" style="width:100%;height:48px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--border);padding:0 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none;">
+          <div style="display:flex;gap:8px;margin-top:16px;">
+            <button @click="aliasModalOpen = false" style="flex:0 0 auto;height:46px;padding:0 18px;border-radius:var(--radius-pill);border:1px solid var(--border);background:var(--surface);color:var(--muted);font-weight:600;font-size:14px;font-family:inherit;cursor:pointer;">Cancelar</button>
+            <button @click="confirmAlias()" class="save-btn" style="flex:1;margin-top:0;height:46px;">Guardar</button>
           </div>
         </div>
       </div>
@@ -7094,7 +7128,11 @@ function zepoApp() {
     showAllImported: false,
     catPickerItem: null,
     catPickerAdding: false,
-    APP_VERSION: 'v99',
+    gridAddingCat: false,
+    aliasModalOpen: false,
+    aliasModalContact: null,
+    aliasModalValue: '',
+    APP_VERSION: 'v101',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
@@ -7145,6 +7183,30 @@ function zepoApp() {
       this.newCatLabel = '';
       this.newCatEmoji = '✨';
       this.catPickerAdding = false;
+    },
+    // Crea una categoria nueva DESDE el grid del formulario (alta/edicion) y la elige.
+    quickAddCatForForm() {
+      const label = (this.newCatLabel || '').trim();
+      if (!label) { this.showToast('Pon un nombre'); return; }
+      const emoji = (this.newCatEmoji || '').trim() || '✨';
+      const list = this.form.is_income ? this.incomeCategories : this.categories;
+      const dup = list.find(c => c.label.toLowerCase() === label.toLowerCase());
+      if (dup) { this.form.category = dup.key; this._resetGridCat(); return; }
+      const key = 'custom_' + Date.now().toString(36);
+      const palette = ['#C2553F', '#4F8A99', '#5E9469', '#8A6E9C', '#C9972F', '#A98BB0', '#B0875B'];
+      const color = palette[Math.floor(Math.random() * palette.length)];
+      const cat = { key, emoji, label, color };
+      list.push(cat);
+      CAT_MAP[key] = cat;
+      this.saveCustomCategories();
+      this.form.category = key;
+      this._resetGridCat();
+      this.showToast('✓ Categoría "' + label + '" creada');
+    },
+    _resetGridCat() {
+      this.newCatLabel = '';
+      this.newCatEmoji = '✨';
+      this.gridAddingCat = false;
     },
     hiddenBankFees: [],
     showHiddenFees: false,
@@ -8823,6 +8885,7 @@ function zepoApp() {
       this.voiceTranscript = '';
       this.importedFile = null;
       this.catDropdownOpen = false;
+      this.gridAddingCat = false;
       this.parsedItems = [];
       this.form = {
         amount: '',
@@ -8855,6 +8918,7 @@ function zepoApp() {
     _doOpenEdit(exp) {
       this.editingExpense = exp;
       this.saving = false;
+      this.gridAddingCat = false;
       this.removeReceipt();
       // Rebuild split_people array from legacy split_persona (comma-separated names) + split_pct (your %)
       let splitPeople = [];
@@ -8892,6 +8956,7 @@ function zepoApp() {
       this.voiceTranscript = '';
       this.importedFile = null;
       this.catDropdownOpen = false;
+      this.gridAddingCat = false;
       this.removeReceipt();
 
       // Detect if ALL batch items share same split state
@@ -9713,8 +9778,26 @@ function zepoApp() {
 
     // Apodo privado para un contacto (solo usuarios reales tienen user_id).
     promptAlias(f) {
-      const v = window.prompt('Apodo para ' + (f.display_name || 'este contacto') + ':', f.display_name || '');
-      if (v !== null) this.saveAlias(f.user_id, v.trim());
+      this.aliasModalContact = f;
+      this.aliasModalValue = f.display_name || '';
+      this.aliasModalOpen = true;
+    },
+    confirmAlias() {
+      const f = this.aliasModalContact;
+      if (f) this.saveAlias(f.user_id, (this.aliasModalValue || '').trim());
+      this.aliasModalOpen = false;
+      this.aliasModalContact = null;
+      this.aliasModalValue = '';
+    },
+    // Red de la tarjeta en corto (card_brand puede venir como "Visa Pichincha" y desbordar el logo).
+    get cardBrandShort() {
+      const b = (this.savedCard && this.savedCard.brand || '').toLowerCase();
+      if (b.includes('visa')) return 'VISA';
+      if (b.includes('master')) return 'MC';
+      if (b.includes('amex') || b.includes('american')) return 'AMEX';
+      if (b.includes('diners')) return 'DINERS';
+      if (b.includes('discover')) return 'DISC';
+      return ((this.savedCard && this.savedCard.brand) || 'CARD').split(' ')[0].toUpperCase().slice(0, 6);
     },
     async saveAlias(contactId, alias) {
       if (!contactId) return;
@@ -11302,7 +11385,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v80.js';
+  const CURRENT_SW = 'sw-v81.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
