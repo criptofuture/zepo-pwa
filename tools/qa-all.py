@@ -42,6 +42,8 @@ CHECKS = [
     ("E2E solicitudes cobro (aceptar/rechazar/pagar)", ["python", os.path.join(TOOLS, "qa-e2e-payreq.py")]),
     ("E2E amigos (aceptar/rechazar conexion)", ["python", os.path.join(TOOLS, "qa-e2e-friends.py")]),
     ("E2E onboarding (primer gasto/presupuesto/finalizar)", ["python", os.path.join(TOOLS, "qa-e2e-onboarding.py")]),
+    ("E2E nombres de contacto (anti-UUID)", ["python", os.path.join(TOOLS, "qa-e2e-names.py")]),
+    ("E2E Contactos/Amigos (saldo neto + apodo)", ["python", os.path.join(TOOLS, "qa-e2e-contactos.py")]),
 ]
 
 def main():

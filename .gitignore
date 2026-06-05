@@ -7,3 +7,4 @@ screenshots/
 *.bak
 .claude/settings.json
 _dist/
+tools/_shots/

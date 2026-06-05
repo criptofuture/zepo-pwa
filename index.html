@@ -3822,7 +3822,8 @@ setTimeout(function() {
         <!-- ── Amigos ── -->
         <div x-show="cuentasTab === 'amigos'">
           <div class="friends-subtabs">
-            <button class="subtab-btn" :class="{active: friendsSubTab==='list'}" @click="friendsSubTab='list'">Contactos</button>
+            <button class="subtab-btn" :class="{active: friendsSubTab==='contactos'}" @click="friendsSubTab='contactos'; expandedContact=null; loadFriends()">Contactos</button>
+            <button class="subtab-btn" :class="{active: friendsSubTab==='amigos'}" @click="friendsSubTab='amigos'; expandedContact=null; loadFriends()">Amigos</button>
             <button class="subtab-btn" :class="{active: friendsSubTab==='requests'}" @click="friendsSubTab='requests'; loadFriends()">
               Solicitudes
               <span x-show="friendBadge > 0" x-text="friendBadge"
@@ -3830,7 +3831,56 @@ setTimeout(function() {
             </button>
             <button class="subtab-btn" :class="{active: friendsSubTab==='add'}" @click="friendsSubTab='add'">Agregar</button>
           </div>
-          <div x-show="friendsSubTab === 'list'">
+          <!-- CONTACTOS: todos con quienes tienes saldo (amigos + nombres sueltos de splits) -->
+          <div x-show="friendsSubTab === 'contactos'">
+            <div x-init="loadFriends()" style="display:none;"></div>
+            <template x-if="accountsByPerson.length === 0">
+              <div style="padding:48px 20px;text-align:center;">
+                <div style="font-size:40px;margin-bottom:12px;">🧾</div>
+                <div style="font-size:16px;font-weight:700;margin-bottom:8px;">Sin cuentas abiertas</div>
+                <div style="font-size:13px;color:var(--muted);">Cuando dividas un gasto o aceptes una deuda, la persona aparece aquí con su saldo.</div>
+              </div>
+            </template>
+            <template x-for="p in accountsByPerson" :key="p.key">
+              <div>
+                <div class="friend-row" @click="toggleContact(p.key)" style="cursor:pointer;">
+                  <div class="friend-avatar" style="background:var(--gradient);color:var(--c-brand-contrast);" x-text="p.name.charAt(0).toUpperCase()"></div>
+                  <div class="friend-info">
+                    <div class="friend-name" x-text="p.name"></div>
+                    <div class="friend-bal" :class="p.neto > 0 ? 'owed' : p.neto < 0 ? 'owe' : 'even'"
+                      x-text="p.neto > 0 ? 'Te debe $' + p.neto.toFixed(2) : p.neto < 0 ? 'Le debes $' + Math.abs(p.neto).toFixed(2) : 'A mano'"></div>
+                  </div>
+                  <svg class="batch-chevron" :class="{ open: expandedContact===p.key }" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="16" height="16"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+                <div x-show="expandedContact===p.key" x-transition.duration.200ms style="background:var(--surface2);padding:4px 16px 12px;border-bottom:1px solid var(--border);">
+                  <template x-if="p.debeItems.length">
+                    <div style="margin-top:8px;">
+                      <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--success);text-transform:uppercase;margin-bottom:4px;">Te debe</div>
+                      <template x-for="(it,ii) in p.debeItems" :key="'d'+ii">
+                        <div style="display:flex;justify-content:space-between;gap:10px;padding:4px 0;font-size:13px;">
+                          <span style="color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="it.desc"></span>
+                          <span style="color:var(--success);font-weight:600;flex-shrink:0;" x-text="'$' + it.amount.toFixed(2)"></span>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+                  <template x-if="p.debesItems.length">
+                    <div style="margin-top:8px;">
+                      <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--danger);text-transform:uppercase;margin-bottom:4px;">Le debes</div>
+                      <template x-for="(it,ii) in p.debesItems" :key="'e'+ii">
+                        <div style="display:flex;justify-content:space-between;gap:10px;padding:4px 0;font-size:13px;">
+                          <span style="color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="it.desc"></span>
+                          <span style="color:var(--danger);font-weight:600;flex-shrink:0;" x-text="'-$' + it.amount.toFixed(2)"></span>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+          </div>
+          <!-- AMIGOS: solo amistades aceptadas (usuarios reales) -->
+          <div x-show="friendsSubTab === 'amigos'">
             <template x-if="!friendsLoaded">
               <div style="padding:40px 20px;text-align:center;color:var(--muted);font-size:14px;">
                 <div x-init="loadFriends()"></div>Cargando...
@@ -3839,29 +3889,60 @@ setTimeout(function() {
             <template x-if="friendsLoaded && friends.length === 0">
               <div style="padding:48px 20px;text-align:center;">
                 <div style="font-size:40px;margin-bottom:12px;">👥</div>
-                <div style="font-size:16px;font-weight:700;margin-bottom:8px;">Sin contactos aún</div>
+                <div style="font-size:16px;font-weight:700;margin-bottom:8px;">Sin amigos aún</div>
                 <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">Agrega a alguien por su correo para enviarle cobros y ver saldos compartidos.</div>
-                <button class="btn-primary" @click="friendsSubTab='add'" style="font-size:13px;padding:10px 20px;">Agregar primer contacto</button>
+                <button class="btn-primary" @click="friendsSubTab='add'" style="font-size:13px;padding:10px 20px;">Agregar primer amigo</button>
               </div>
             </template>
-            <template x-for="f in friends" :key="f.user_id">
-              <div class="friend-row">
-                <div class="friend-avatar" :style="`background:${f.avatar_color}`" x-text="f.display_name.charAt(0).toUpperCase()"></div>
-                <div class="friend-info">
-                  <div class="friend-name" x-text="f.display_name"></div>
-                  <div class="friend-bal"
-                    :class="f.balance > 0 ? 'owed' : f.balance < 0 ? 'owe' : 'even'"
-                    x-text="f.balance > 0 ? 'Te debe $' + f.balance.toFixed(2) : f.balance < 0 ? 'Le debes $' + Math.abs(f.balance).toFixed(2) : 'A mano'">
+            <template x-for="f in friendsWithAccounts" :key="f.user_id">
+              <div>
+                <div class="friend-row" @click="toggleContact('amg_'+f.user_id)" style="cursor:pointer;">
+                  <div class="friend-avatar" :style="`background:${f.avatar_color}`" x-text="f.display_name.charAt(0).toUpperCase()"></div>
+                  <div class="friend-info">
+                    <div class="friend-name" x-text="f.display_name"></div>
+                    <div class="friend-bal" :class="f.neto > 0 ? 'owed' : f.neto < 0 ? 'owe' : 'even'"
+                      x-text="f.neto > 0 ? 'Te debe $' + f.neto.toFixed(2) : f.neto < 0 ? 'Le debes $' + Math.abs(f.neto).toFixed(2) : 'A mano'"></div>
+                  </div>
+                  <div style="display:flex;gap:8px;align-items:center;" @click.stop>
+                    <button x-show="f.neto !== 0" @click="settleWithFriend(f.user_id, f.display_name, f.neto)"
+                      style="padding:6px 12px;border-radius:8px;background:rgba(var(--c-brand-rgb),0.08);border:1px solid rgba(var(--c-brand-rgb),0.2);color:var(--cyan);font-size:12px;font-weight:700;">
+                      Saldar
+                    </button>
+                    <button @click="sendPrTo=f; prForm={amount:'',description:'',category:'food',date:localDate()}; sendPrOpen=true"
+                      style="width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
                   </div>
                 </div>
-                <div style="display:flex;gap:8px;align-items:center;">
-                  <button x-show="f.balance !== 0" @click="settleWithFriend(f.user_id, f.display_name, f.balance)"
-                    style="padding:6px 12px;border-radius:8px;background:rgba(var(--c-brand-rgb),0.08);border:1px solid rgba(var(--c-brand-rgb),0.2);color:var(--cyan);font-size:12px;font-weight:700;">
-                    Saldar
-                  </button>
-                  <button @click="sendPrTo=f; prForm={amount:'',description:'',category:'food',date:localDate()}; sendPrOpen=true"
-                    style="width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <div x-show="expandedContact==='amg_'+f.user_id" x-transition.duration.200ms style="background:var(--surface2);padding:4px 16px 12px;border-bottom:1px solid var(--border);">
+                  <template x-if="!f.debeItems.length && !f.debesItems.length">
+                    <div style="font-size:12px;color:var(--muted);padding:8px 0;">Sin movimientos. A mano.</div>
+                  </template>
+                  <template x-if="f.debeItems.length">
+                    <div style="margin-top:8px;">
+                      <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--success);text-transform:uppercase;margin-bottom:4px;">Te debe</div>
+                      <template x-for="(it,ii) in f.debeItems" :key="'d'+ii">
+                        <div style="display:flex;justify-content:space-between;gap:10px;padding:4px 0;font-size:13px;">
+                          <span style="color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="it.desc"></span>
+                          <span style="color:var(--success);font-weight:600;flex-shrink:0;" x-text="'$' + it.amount.toFixed(2)"></span>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+                  <template x-if="f.debesItems.length">
+                    <div style="margin-top:8px;">
+                      <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--danger);text-transform:uppercase;margin-bottom:4px;">Le debes</div>
+                      <template x-for="(it,ii) in f.debesItems" :key="'e'+ii">
+                        <div style="display:flex;justify-content:space-between;gap:10px;padding:4px 0;font-size:13px;">
+                          <span style="color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="it.desc"></span>
+                          <span style="color:var(--danger);font-weight:600;flex-shrink:0;" x-text="'-$' + it.amount.toFixed(2)"></span>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+                  <button @click.stop="promptAlias(f)" style="margin-top:10px;padding:6px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+                    Ponerle un apodo
                   </button>
                 </div>
               </div>
@@ -6916,7 +6997,7 @@ function zepoApp() {
     importProgress: 0,
     showAllImported: false,
     catPickerItem: null,
-    APP_VERSION: 'v95',
+    APP_VERSION: 'v96',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
@@ -6987,7 +7068,8 @@ function zepoApp() {
     pendingReceived: [],
     pendingSent: [],
     cuentasTab: 'me-deben',
-    friendsSubTab: 'list',
+    friendsSubTab: 'contactos',
+    expandedContact: null,
     addFriendEmail: '',
     addFriendResult: null,
     addFriendError: '',
@@ -7247,6 +7329,11 @@ function zepoApp() {
           try { await sbRestInsert('users', payload); } catch (e2) { console.warn('[ensureUserRow] REST insert failed:', e2.message); }
         }
       }
+      // Mirror del nombre publico en profiles (legible por amigos; user_settings es privado).
+      // Solo display_name -> avatar_color conserva su valor o el default de la tabla.
+      try {
+        await sb.from('profiles').upsert({ user_id: uid, display_name: payload.name }, { onConflict: 'user_id' });
+      } catch (e) { console.warn('[ensureUserRow] profiles upsert:', e.message); }
     },
 
     async handleAuth() {
@@ -9420,6 +9507,86 @@ function zepoApp() {
       return filtered;
     },
 
+    // Saldo por persona: combina "te deben" (splits pendientes, gasto) con "le debes"
+    // (deudas confirmadas + ingresos compartidos). Fuentes DISJUNTAS -> sin doble conteo.
+    // Reusa los mismos datos que las pestanas Me deben / Debo, solo reagrupados por nombre.
+    get accountsByPerson() {
+      return this._memo('accountsByPerson', 'cuentas', () => {
+        const map = {};
+        const ensure = (name) => {
+          const nm = (name && name.trim()) || 'Sin nombre';
+          const k = nm.toLowerCase();
+          if (!map[k]) map[k] = { key: k, name: nm, teDebe: 0, leDebes: 0, debeItems: [], debesItems: [] };
+          return map[k];
+        };
+        // Te deben: splits pendientes (gasto, no ingreso)
+        (this.pendingSplits || []).filter(e => !e.is_income).forEach(exp => {
+          const amt = this.cobroFor(exp);
+          (exp.split_persona || 'Sin nombre').split(',').map(s => s.trim()).filter(Boolean).forEach(name => {
+            const g = ensure(name);
+            g.teDebe += amt;
+            g.debeItems.push({ desc: exp.description || this.getCatLabel(exp.category), amount: amt, date: exp.date });
+          });
+        });
+        // Le debes: deudas confirmadas (payment_requests aceptadas)
+        (this.deboDeudas || []).forEach(d => {
+          const amt = Number(d.amount || 0);
+          const g = ensure(d.from_name);
+          g.leDebes += amt;
+          g.debesItems.push({ desc: d.description || this.getCatLabel(d.category), amount: amt, date: d.expense_date });
+        });
+        // Le debes: ingresos compartidos (otros dividieron un ingreso contigo)
+        (this.pendingSplits || []).filter(e => e.is_income).forEach(exp => {
+          const amt = this.cobroFor(exp);
+          (exp.split_persona || 'Sin nombre').split(',').map(s => s.trim()).filter(Boolean).forEach(name => {
+            const g = ensure(name);
+            g.leDebes += amt;
+            g.debesItems.push({ desc: exp.description || 'Ingreso compartido', amount: amt, date: exp.date });
+          });
+        });
+        return Object.values(map).map(g => {
+          const teDebe = Math.round(g.teDebe * 100) / 100;
+          const leDebes = Math.round(g.leDebes * 100) / 100;
+          return { ...g, teDebe, leDebes, neto: Math.round((teDebe - leDebes) * 100) / 100 };
+        }).sort((a, b) => Math.abs(b.neto) - Math.abs(a.neto));
+      });
+    },
+
+    // Amigos aceptados, enriquecidos con el neto+desglose combinado (por nombre).
+    get friendsWithAccounts() {
+      const acc = {};
+      this.accountsByPerson.forEach(a => { acc[a.key] = a; });
+      return (this.friends || []).map(f => {
+        const a = acc[(f.display_name || '').toLowerCase()];
+        return { ...f, neto: a ? a.neto : 0, teDebe: a ? a.teDebe : 0, leDebes: a ? a.leDebes : 0,
+                 debeItems: a ? a.debeItems : [], debesItems: a ? a.debesItems : [] };
+      });
+    },
+
+    toggleContact(key) {
+      this.expandedContact = this.expandedContact === key ? null : key;
+    },
+
+    // Apodo privado para un contacto (solo usuarios reales tienen user_id).
+    promptAlias(f) {
+      const v = window.prompt('Apodo para ' + (f.display_name || 'este contacto') + ':', f.display_name || '');
+      if (v !== null) this.saveAlias(f.user_id, v.trim());
+    },
+    async saveAlias(contactId, alias) {
+      if (!contactId) return;
+      try {
+        if (!alias) {
+          await sb.from('contact_aliases').delete().eq('owner_id', this.user.id).eq('contact_id', contactId);
+        } else {
+          await sb.from('contact_aliases').upsert(
+            { owner_id: this.user.id, contact_id: contactId, alias },
+            { onConflict: 'owner_id,contact_id' });
+        }
+        await this.loadFriends();
+        this.showToast(alias ? 'Apodo guardado' : 'Apodo quitado');
+      } catch (e) { console.warn('[saveAlias]', e.message); this.showToast('Error al guardar apodo'); }
+    },
+
     openCobroDetail(c) {
       this.activeCobro = c;
       this.cobroDetailOpen = true;
@@ -10222,11 +10389,20 @@ function zepoApp() {
       it.color = cat.color;
     },
 
-    finishOnboarding() {
+    async finishOnboarding() {
       // Mark onboarding complete + go home
       localStorage.setItem('zepo:onboarded', '1');
       if (this.onboardingMethod) localStorage.setItem('zepo:preferred-method', this.onboardingMethod);
       this.tab = 'home';
+      // Persiste el nombre escrito en onboarding como override del de registro/Google.
+      const nm = (this.onboardingName || '').trim();
+      if (nm && this.user) {
+        this.userName = nm;
+        try {
+          await sb.from('profiles').upsert({ user_id: this.user.id, display_name: nm }, { onConflict: 'user_id' });
+          await sb.from('users').update({ name: nm }).eq('id', this.user.id);
+        } catch (e) { console.warn('[finishOnboarding name]', e.message); }
+      }
     },
 
     async sendPasswordReset() {
@@ -10715,14 +10891,18 @@ function zepoApp() {
         ...received.map(c => c.requester_id),
         ...sent.map(c => c.addressee_id),
       ])];
-      let settingsMap = {};
+      let profMap = {};
       if (allIds.length) {
-        const { data: sets } = await sb.from('user_settings').select('user_id,display_name,avatar_color').in('user_id', allIds);
-        (sets || []).forEach(s => { settingsMap[s.user_id] = s; });
+        const { data: profs } = await sb.from('profiles').select('user_id,display_name,avatar_color').in('user_id', allIds);
+        (profs || []).forEach(p => { profMap[p.user_id] = p; });
       }
+      // Apodos privados que TU le pusiste a tus contactos (ganan sobre el nombre del perfil).
+      let aliasMap = {};
+      const { data: aliases } = await sb.from('contact_aliases').select('contact_id,alias').eq('owner_id', uid);
+      (aliases || []).forEach(a => { aliasMap[a.contact_id] = a.alias; });
 
-      const nameFor = id => settingsMap[id]?.display_name || id.slice(0, 8);
-      const colorFor = id => settingsMap[id]?.avatar_color || '#507D5A';
+      const nameFor = id => aliasMap[id] || profMap[id]?.display_name || id.slice(0, 8);
+      const colorFor = id => profMap[id]?.avatar_color || '#507D5A';
 
       const { data: prs } = await sb.from('payment_requests')
         .select('from_user_id,to_user_id,amount,status')
@@ -10810,8 +10990,10 @@ function zepoApp() {
       const allIds  = [...new Set([...fromIds, ...toIds])];
       let namesMap = {};
       if (allIds.length) {
-        const { data: sets } = await sb.from('user_settings').select('user_id,display_name').in('user_id', allIds);
-        (sets || []).forEach(s => { namesMap[s.user_id] = s.display_name || s.user_id.slice(0, 8); });
+        const { data: profs } = await sb.from('profiles').select('user_id,display_name').in('user_id', allIds);
+        (profs || []).forEach(p => { namesMap[p.user_id] = p.display_name || p.user_id.slice(0, 8); });
+        const { data: aliases } = await sb.from('contact_aliases').select('contact_id,alias').eq('owner_id', uid);
+        (aliases || []).forEach(a => { namesMap[a.contact_id] = a.alias; });
       }
       this.payReqs     = (received || []).map(p => ({ ...p, from_name: namesMap[p.from_user_id] || '?' }));
       this.payReqsSent = (sent     || []).map(p => ({ ...p, to_name:   namesMap[p.to_user_id]   || '?' }));
@@ -10968,7 +11150,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v76.js';
+  const CURRENT_SW = 'sw-v77.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
