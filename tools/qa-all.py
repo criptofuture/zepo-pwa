@@ -36,6 +36,8 @@ CHECKS = [
     ("E2E editar cobro + agregar persona", ["python", os.path.join(TOOLS, "qa-e2e-edit-split.py")]),
     ("E2E editar 'Debo' quitar division",  ["python", os.path.join(TOOLS, "qa-e2e-remove-split.py")]),
     ("Parpadeo Cuentas (keys duplicadas)", ["python", os.path.join(TOOLS, "qa-cuentas-flicker.py")]),
+    ("E2E multi-item / batch",         ["python", os.path.join(TOOLS, "qa-e2e-batch.py")]),
+    ("E2E presupuestos",               ["python", os.path.join(TOOLS, "qa-e2e-budgets.py")]),
 ]
 
 def main():
