@@ -2754,10 +2754,7 @@
       <span style="font-size:30px;font-weight:800;background:var(--grad-brand);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-family:'Bricolage Grotesque',system-ui,sans-serif;">Z</span>
     </div>
   </div>
-  <div style="position:relative;display:inline-block;">
-    <div style="font-size:26px;font-weight:800;letter-spacing:-0.5px;background:var(--grad-brand);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-family:'Bricolage Grotesque',system-ui,sans-serif;">zepo</div>
-    <span style="position:absolute;top:-2px;right:1px;width:6px;height:6px;border-radius:50%;background:var(--c-income);"></span>
-  </div>
+  <div style="font-size:26px;font-weight:800;letter-spacing:-0.5px;background:var(--grad-brand);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-family:'Bricolage Grotesque',system-ui,sans-serif;">zepo</div>
 </div>
 <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 <script>
@@ -2787,7 +2784,7 @@ setTimeout(function() {
     <div class="auth-screen">
       <div class="auth-logo-row" style="margin-bottom:40px;">
         <div class="auth-logo" style="width:36px;height:36px;border-radius:10px;font-size:20px;"><span class="gradient-text">Z</span></div>
-        <span class="auth-logo-name" style="position:relative;">Zepo<span style="position:absolute;top:0;right:-3px;width:5px;height:5px;border-radius:50%;background:var(--c-brand);"></span></span>
+        <span class="auth-logo-name">Zepo</span>
       </div>
 
       <h1 class="auth-title" style="text-align:left;margin-bottom:8px;">
@@ -7246,7 +7243,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v104',
+    APP_VERSION: 'v105',
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
