@@ -30,6 +30,7 @@ process.exit(b>0?1:0);'''
 CHECKS = [
     ("Sintaxis JS (parse)",            parse_check),
     ("Marca / tokens (lint-design)",   ["python", os.path.join(TOOLS, "lint-design.py"), "index.html"]),
+    ("Keys x-for por-persona (lint)",  ["python", os.path.join(TOOLS, "qa-keys-lint.py")]),
     ("Layout teclado/split (5 perfiles)", ["python", os.path.join(TOOLS, "qa-keyboard.py")]),
     ("E2E editar cobro + agregar persona", ["python", os.path.join(TOOLS, "qa-e2e-edit-split.py")]),
     ("E2E editar 'Debo' quitar division",  ["python", os.path.join(TOOLS, "qa-e2e-remove-split.py")]),
