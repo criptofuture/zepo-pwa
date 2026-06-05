@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-  <meta name="theme-color" content="#EFEADB">
+  <meta name="theme-color" content="#E9E2CF">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Zepo</title>
@@ -33,15 +33,20 @@
     input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     /* Modern date input styling */
     input[type=date]::-webkit-calendar-picker-indicator {
-      filter: invert(1) opacity(0.6); cursor: pointer;
+      filter: opacity(0.55); cursor: pointer;
     }
-    input[type=date] { color-scheme: dark; }
-    input[type=time] { color-scheme: dark; }
-    html { color-scheme: light; }
+    :root[data-theme="dark"] input[type=date]::-webkit-calendar-picker-indicator {
+      filter: invert(1) opacity(0.6);
+    }
+    html { color-scheme: light; } /* el bloque dark de tokens fija color-scheme:dark */
     body {
       font-family: var(--font-body), -apple-system, system-ui, sans-serif;
       letter-spacing: var(--tracking-body);
-      background: var(--bg);
+      background-color: var(--c-bg);
+      background-image: var(--grain-img);
+      background-repeat: repeat;
+      background-size: 140px 140px;
+      background-attachment: fixed;
       color: var(--text);
       -webkit-tap-highlight-color: transparent;
       -webkit-font-smoothing: antialiased;
@@ -52,26 +57,32 @@
     /* ═══ DESIGN TOKENS ═══ */
     :root {
       /* COLOR semántico — el flip (Fase 3) cambia SOLO estos valores */
-      --c-bg: #EFEADB;
+      /* LIGHT — variante Bricolage del brand book (valores exactos): cream + forest + lime */
+      --c-bg: #E9E2CF;
       --c-surface: #FFFFFF;
-      --c-surface-2: #F4EFE2;
-      --c-ink: #1A2418;
-      --c-ink-rgb: 26,36,24;
-      --c-ink-soft: rgba(26,36,24,.62);
-      --c-ink-faint: rgba(26,36,24,.40);
-      --c-border: rgba(26,36,24,.14);
-      --c-border-strong: rgba(26,36,24,.30);
-      --c-brand: #507D5A;
-      --c-brand-rgb: 80,125,90;
+      --c-surface-2: #F3EEDE;
+      --c-ink: #13201A;
+      --c-ink-rgb: 19,32,26;
+      --c-ink-soft: rgba(19,32,26,.62);
+      --c-ink-faint: rgba(19,32,26,.40);
+      --c-border: rgba(19,32,26,.10);
+      --c-border-strong: rgba(19,32,26,.20);
+      --c-brand: #3F7150;
+      --c-brand-rgb: 63,113,80;
+      --c-brand-deep: #2B5238;
+      --c-brand-soft: #C2D6B8;
       --c-accent-rgb: 214,216,100;
-      --c-brand-contrast: #FFFFFF;
-      --c-income: #84AF72;
-      --c-expense: #B8483A;
+      --c-accent-ink: #2D2E0A;
+      --c-brand-contrast: #F4F1E3;
+      --c-income: #6FA15C;
+      --c-expense: #C0392B;
       --c-accent: #D6D864;
-      --c-accent-soft: #BF8A2A; /* gold legible para texto de acento sobre crema */
-      --c-warning: #BF8A2A;
-      --grad-brand: linear-gradient(135deg, #507D5A 0%, #84AF72 100%);
+      --c-accent-soft: #A8761A; /* gold legible para texto de acento sobre crema */
+      --c-warning: #C47F1A;
+      --grad-brand: linear-gradient(135deg, #3F7150 0%, #6FA15C 100%);
       --elev-card: none;
+      /* grano editorial (book grain ~0.06) */
+      --grain-img: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.05'/%3E%3C/svg%3E");
       /* TYPE */
       --font-display: 'Bricolage Grotesque', sans-serif;
       --font-body: 'Geist', system-ui, sans-serif;
@@ -110,6 +121,36 @@
       --content-pad-bottom: calc(var(--tab-height) + 16px + var(--safe-bottom));
       --overlay-pad-top: calc(var(--safe-top) + 16px);
       --fab-bottom: calc(22px + var(--safe-bottom));
+    }
+
+    /* ═══ DARK THEME — variante Bricolage dark del brand book (valores exactos).
+       Se aplica con el tema RESUELTO en <html data-theme="dark"> (auto o manual).
+       Cambia SOLO los tokens semánticos; las 1.429 referencias var(--*) lo heredan. ═══ */
+    :root[data-theme="dark"] {
+      --c-bg: #0F140D;
+      --c-surface: #1F261C;
+      --c-surface-2: #181F15;
+      --c-ink: #EFEADB;
+      --c-ink-rgb: 239,234,219;
+      --c-ink-soft: rgba(239,234,219,.62);
+      --c-ink-faint: rgba(239,234,219,.40);
+      --c-border: rgba(239,234,219,.10);
+      --c-border-strong: rgba(239,234,219,.20);
+      --c-brand: #84AF72;
+      --c-brand-rgb: 132,175,114;
+      --c-brand-deep: #507D5A;
+      --c-brand-soft: #2A3A28;
+      --c-accent: #D6D864;
+      --c-accent-rgb: 214,216,100;
+      --c-accent-ink: #2D2E0A;
+      --c-accent-soft: #D99A3A;
+      --c-brand-contrast: #0F140D;
+      --c-income: #9EC48A;
+      --c-expense: #D96B5A;
+      --c-warning: #D99A3A;
+      --grad-brand: linear-gradient(135deg, #84AF72 0%, #9EC48A 100%);
+      --grain-img: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.08'/%3E%3C/svg%3E");
+      color-scheme: dark;
     }
 
     /* ═══ UTILITY ═══ */
@@ -347,6 +388,7 @@
       width: 42px; height: 42px; border-radius: 21px;
       display: flex; align-items: center; justify-content: center;
       font-weight: 800; font-size: 17px; color: var(--c-brand-contrast); flex-shrink: 0;
+      box-shadow: 0 0 0 3px rgba(var(--c-brand-rgb), 0.12); /* sage suave — jovial */
     }
     .friend-info { flex: 1; min-width: 0; }
     .friend-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -2657,16 +2699,41 @@
   })();
 </script>
 
+<script>
+// ── Tema claro/oscuro. Preferencia guardada: 'auto' | 'light' | 'dark'.
+//    data-theme en <html> guarda el tema RESUELTO (light/dark). Corre antes del
+//    splash para que no haya parpadeo. 'auto' sigue al sistema en vivo.
+(function () {
+  var KEY = 'zepo_theme';
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  function pref() { try { return localStorage.getItem(KEY) || 'auto'; } catch (e) { return 'auto'; } }
+  function resolve(p) { return p === 'auto' ? (mq.matches ? 'dark' : 'light') : p; }
+  function apply(p) {
+    var r = resolve(p);
+    document.documentElement.setAttribute('data-theme', r);
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.setAttribute('content', r === 'dark' ? '#0F140D' : '#E9E2CF');
+  }
+  window.getZepoThemePref = pref;
+  window.setZepoTheme = function (p) { try { localStorage.setItem(KEY, p); } catch (e) {} apply(p); };
+  if (mq.addEventListener) mq.addEventListener('change', function () { if (pref() === 'auto') apply('auto'); });
+  apply(pref());
+})();
+</script>
+
 <!-- ═══ SPLASH (pure HTML, visible before Alpine loads) ═══ -->
 <div id="app-splash" style="position:fixed;inset:0;z-index:9999;background:var(--c-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.3s ease;">
   <div style="width:120px;height:120px;position:relative;margin-bottom:24px;">
     <div style="position:absolute;inset:0;border-radius:50%;border:4px solid rgba(var(--c-ink-rgb),0.08);"></div>
-    <div style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg, #507D5A 0deg, #84AF72 240deg, transparent 250deg, transparent 360deg);-webkit-mask:radial-gradient(circle,transparent 54px,black 56px);mask:radial-gradient(circle,transparent 54px,black 56px);filter:drop-shadow(0 0 12px rgba(var(--c-brand-rgb),0.6));animation:spin 1.1s linear infinite;"></div>
+    <div style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg, var(--c-brand) 0deg, var(--c-income) 240deg, transparent 250deg, transparent 360deg);-webkit-mask:radial-gradient(circle,transparent 54px,black 56px);mask:radial-gradient(circle,transparent 54px,black 56px);filter:drop-shadow(0 0 12px rgba(var(--c-brand-rgb),0.6));animation:spin 1.1s linear infinite;"></div>
     <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:32px;background:linear-gradient(135deg, rgba(var(--c-brand-rgb),0.18), rgba(var(--c-accent-rgb),0.18));border:1px solid rgba(var(--c-brand-rgb),0.35);display:flex;align-items:center;justify-content:center;">
-      <span style="font-size:28px;font-weight:800;background:linear-gradient(135deg,#507D5A,#84AF72);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-family:Inter,system-ui,sans-serif;">Z</span>
+      <span style="font-size:30px;font-weight:800;background:var(--grad-brand);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-family:'Bricolage Grotesque',system-ui,sans-serif;">Z</span>
     </div>
   </div>
-  <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;background:linear-gradient(135deg,#507D5A,#84AF72);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-family:Inter,system-ui,sans-serif;">zepo</div>
+  <div style="position:relative;display:inline-block;">
+    <div style="font-size:26px;font-weight:800;letter-spacing:-0.5px;background:var(--grad-brand);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-family:'Bricolage Grotesque',system-ui,sans-serif;">zepo</div>
+    <span style="position:absolute;top:-2px;right:1px;width:6px;height:6px;border-radius:50%;background:var(--c-income);"></span>
+  </div>
 </div>
 <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 <script>
@@ -2677,7 +2744,7 @@ setTimeout(function() {
     sp.innerHTML = '<div style="text-align:center;color:#1A2418;font-family:Inter,system-ui,sans-serif;padding:24px;">'
       + '<div style="font-size:18px;font-weight:600;margin-bottom:12px;">Cargando...</div>'
       + '<div style="font-size:14px;opacity:0.6;">Si no carga, cierra la app completamente y reabre.</div>'
-      + '<div style="margin-top:20px;"><button onclick="location.reload()" style="background:linear-gradient(135deg,#507D5A,#84AF72);color:#fff;border:none;padding:10px 24px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;">Reintentar</button></div>'
+      + '<div style="margin-top:20px;"><button onclick="location.reload()" style="background:var(--grad-brand);color:#fff;border:none;padding:10px 24px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;">Reintentar</button></div>'
       + '</div>';
   }
 }, 12000);
@@ -2696,7 +2763,7 @@ setTimeout(function() {
     <div class="auth-screen">
       <div class="auth-logo-row" style="margin-bottom:40px;">
         <div class="auth-logo" style="width:36px;height:36px;border-radius:10px;font-size:20px;"><span class="gradient-text">Z</span></div>
-        <span class="auth-logo-name">Zepo</span>
+        <span class="auth-logo-name" style="position:relative;">Zepo<span style="position:absolute;top:0;right:-3px;width:5px;height:5px;border-radius:50%;background:var(--c-brand);"></span></span>
       </div>
 
       <h1 class="auth-title" style="text-align:left;margin-bottom:8px;">
@@ -3296,7 +3363,7 @@ setTimeout(function() {
                 <span class="es-spark s2"></span>
                 <span class="es-spark s3"></span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="url(#es-grad)" stroke-width="1.6" width="50" height="50">
-                  <defs><linearGradient id="es-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#507D5A"/><stop offset="100%" stop-color="#84AF72"/></linearGradient></defs>
+                  <defs><linearGradient id="es-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3F7150"/><stop offset="100%" stop-color="#6FA15C"/></linearGradient></defs>
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                 </svg>
               </div>
@@ -3499,7 +3566,7 @@ setTimeout(function() {
           <template x-if="pendingSplits.length === 0 && paidSplits.length === 0 && meDebenPaidClaims.length === 0">
             <div class="empty-state">
               <div class="empty-icon" style="background:radial-gradient(circle at 35% 35%, rgba(var(--c-accent-rgb),0.18), rgba(var(--c-brand-rgb),0.10) 60%, transparent 80%);border:1px solid rgba(var(--c-accent-rgb),0.35);box-shadow:0 0 48px rgba(var(--c-accent-rgb),0.15);position:relative;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#507D5A" stroke-width="1.6" width="48" height="48"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" style="stroke:var(--c-brand)" stroke-width="1.6" width="48" height="48"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
                 <div style="position:absolute;bottom:-6px;right:-6px;width:32px;height:32px;border-radius:10px;background:var(--success);display:flex;align-items:center;justify-content:center;border:3px solid var(--bg);">
                   <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
@@ -3615,7 +3682,7 @@ setTimeout(function() {
           <template x-if="deboSolicitudes.length === 0 && deboDeudas.length === 0 && deboPaidWaiting.length === 0 && incomeSplitDebts.length === 0">
             <div class="empty-state">
               <div class="empty-icon" style="background:radial-gradient(circle at 35% 35%, rgba(0,229,160,0.15), rgba(var(--c-brand-rgb),0.08) 60%, transparent 80%);border:1px solid rgba(0,229,160,0.3);box-shadow:0 0 48px rgba(0,229,160,0.10);">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#84AF72" stroke-width="1.6" width="48" height="48"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" style="stroke:var(--c-income)" stroke-width="1.6" width="48" height="48"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
               </div>
               <div class="empty-title">Sin <span class="gradient-text">deudas</span> pendientes</div>
               <div class="empty-desc">Aqui aparecen solicitudes de cobro y deudas confirmadas.</div>
@@ -4030,7 +4097,7 @@ setTimeout(function() {
             </template>
             <template x-for="c in pendingReceived" :key="c.id">
               <div class="friend-row">
-                <div class="friend-avatar" :style="`background:${c.avatar_color || '#507D5A'}`" x-text="(c.display_name||'?').charAt(0).toUpperCase()"></div>
+                <div class="friend-avatar" :style="`background:${c.avatar_color || 'var(--c-brand)'}`" x-text="(c.display_name||'?').charAt(0).toUpperCase()"></div>
                 <div class="friend-info">
                   <div class="friend-name" x-text="c.display_name || 'Usuario'"></div>
                   <div style="font-size:12px;color:var(--muted);">quiere conectarse contigo</div>
@@ -4047,7 +4114,7 @@ setTimeout(function() {
             </template>
             <template x-for="c in pendingSent" :key="c.id">
               <div class="friend-row">
-                <div class="friend-avatar" :style="`background:${c.avatar_color || '#8A6E9C'}`" x-text="(c.display_name||'?').charAt(0).toUpperCase()"></div>
+                <div class="friend-avatar" :style="`background:${c.avatar_color || 'var(--c-accent)'}`" x-text="(c.display_name||'?').charAt(0).toUpperCase()"></div>
                 <div class="friend-info">
                   <div class="friend-name" x-text="c.display_name || 'Usuario'"></div>
                   <div style="font-size:12px;color:var(--muted);">pendiente de respuesta</div>
@@ -4325,7 +4392,7 @@ setTimeout(function() {
             </div>
             <div class="insight-card">
               <div class="insight-icon" style="background:rgba(var(--c-accent-rgb),0.1);">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#507D5A" stroke-width="2" width="16" height="16"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" style="stroke:var(--c-brand)" stroke-width="2" width="16" height="16"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
               </div>
               <div>
                 <div style="font-size:13px;font-weight:700;">Categoría top</div>
@@ -4470,6 +4537,21 @@ setTimeout(function() {
             </div>
           </div>
         </template>
+
+        <!-- Apariencia (tema claro/oscuro) -->
+        <div class="settings-group-title">Apariencia</div>
+        <div class="settings-group" style="padding:14px;">
+          <div style="font-size:11px;color:var(--muted);letter-spacing:0.6px;font-weight:600;margin-bottom:8px;">TEMA</div>
+          <div style="display:flex;gap:6px;">
+            <template x-for="opt in [{k:'auto',l:'Auto',e:'🌗'},{k:'light',l:'Claro',e:'☀️'},{k:'dark',l:'Oscuro',e:'🌙'}]" :key="opt.k">
+              <div @click="setTheme(opt.k)" class="cd-currency-pill" :class="{ active: theme === opt.k }" style="flex:1;justify-content:center;">
+                <span style="font-size:14px;" x-text="opt.e"></span><span x-text="opt.l"></span>
+                <template x-if="theme === opt.k"><svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="3" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg></template>
+              </div>
+            </template>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.4;">«Auto» sigue el ajuste de tu teléfono.</div>
+        </div>
 
         <!-- Moneda -->
         <div class="settings-group-title">Moneda</div>
@@ -4622,7 +4704,7 @@ setTimeout(function() {
           </button>
           <button class="settings-item" @click="openImporter()">
             <div class="si-icon" style="background:rgba(var(--c-accent-rgb),0.12);">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#507D5A" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" style="stroke:var(--c-brand)" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             </div>
             <span class="si-label">Importar desde otra app</span>
             <svg class="si-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 18l6-6-6-6"/></svg>
@@ -5062,7 +5144,7 @@ setTimeout(function() {
               <div style="width:48px;height:30px;border-radius:6px;background:#fff;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);">
                 <span style="font-family:Arial,sans-serif;font-weight:700;font-size:7px;color:#0079BE;letter-spacing:0.2px;">DINERS</span>
               </div>
-              <div style="width:48px;height:30px;border-radius:6px;background:linear-gradient(135deg, #507D5A, #84AF72);display:flex;align-items:center;justify-content:center;border:1px solid var(--border);">
+              <div style="width:48px;height:30px;border-radius:6px;background:var(--grad-brand);display:flex;align-items:center;justify-content:center;border:1px solid var(--border);">
                 <span style="color:var(--c-brand-contrast);font-weight:800;font-size:8px;letter-spacing:0.4px;">PayPhone</span>
               </div>
             </div>
@@ -5543,7 +5625,7 @@ setTimeout(function() {
                     <!-- Barra de progreso durante el análisis (aparece desde el inicio del proceso) -->
                     <div x-show="importProcessing" style="margin-top:10px;">
                       <div style="height:8px;border-radius:6px;background:var(--surface);overflow:hidden;border:1px solid var(--border);">
-                        <div style="height:100%;border-radius:6px;background:linear-gradient(90deg,#507D5A,#84AF72);transition:width 0.4s ease;" :style="{ width: Math.max(importProgress, 6) + '%' }"></div>
+                        <div style="height:100%;border-radius:6px;background:var(--grad-brand);transition:width 0.4s ease;" :style="{ width: Math.max(importProgress, 6) + '%' }"></div>
                       </div>
                       <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:5px;" x-text="(importProgress > 0 ? importProgress + '% · ' : '') + (importStatus || 'Procesando...')"></div>
                     </div>
@@ -5932,7 +6014,7 @@ setTimeout(function() {
               <!-- PDF (Elite) -->
               <button @click="userPlan !== 'elite' ? (tab = 'plans', exportSheetOpen = false) : (exportPDF(), exportSheetOpen = false)" class="cd-export-item">
                 <div class="cd-export-icon" style="background:rgba(var(--c-accent-rgb),0.10);">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#507D5A" stroke-width="1.8" width="20" height="20"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+                  <svg viewBox="0 0 24 24" fill="none" style="stroke:var(--c-brand)" stroke-width="1.8" width="20" height="20"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
                 </div>
                 <div style="flex:1;text-align:left;">
                   <div style="font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;">
@@ -6322,7 +6404,7 @@ setTimeout(function() {
 
             <!-- Pro gate notice for category budgets -->
             <div x-show="userPlan === 'pro'" style="padding:12px 14px;border-radius:12px;background:rgba(var(--c-accent-rgb),0.06);border:1px solid rgba(var(--c-accent-rgb),0.2);margin-bottom:14px;display:flex;align-items:center;gap:10px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#507D5A" stroke-width="1.6" width="20" height="20" style="flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" style="stroke:var(--c-brand)" stroke-width="1.6" width="20" height="20" style="flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
               <div style="flex:1;">
                 <div style="font-size:12px;font-weight:600;color:var(--text);">Presupuestos por categoría</div>
                 <div style="font-size:11px;color:var(--muted);margin-top:2px;">Disponibles en plan <span style="color:var(--c-accent-soft);font-weight:600;">Elite</span></div>
@@ -7140,7 +7222,9 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v102',
+    APP_VERSION: 'v103',
+    theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
+    setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
@@ -9671,7 +9755,7 @@ function zepoApp() {
       // Friends not already used
       const friendOpts = (this.friends || [])
         .filter(f => !usedNames.includes(f.display_name.toLowerCase()))
-        .map(f => ({ name: f.display_name, type: 'friend', freq: freq[f.display_name] || 0, color: f.avatar_color || '#507D5A' }));
+        .map(f => ({ name: f.display_name, type: 'friend', freq: freq[f.display_name] || 0, color: f.avatar_color || 'var(--c-brand)' }));
 
       // Known personas from history, not friends, not used
       const knownOpts = Object.keys(freq)
@@ -11150,7 +11234,7 @@ function zepoApp() {
       (aliases || []).forEach(a => { aliasMap[a.contact_id] = a.alias; });
 
       const nameFor = id => aliasMap[id] || profMap[id]?.display_name || id.slice(0, 8);
-      const colorFor = id => profMap[id]?.avatar_color || '#507D5A';
+      const colorFor = id => profMap[id]?.avatar_color || 'var(--c-brand)';
 
       const { data: prs } = await sb.from('payment_requests')
         .select('from_user_id,to_user_id,amount,status')
