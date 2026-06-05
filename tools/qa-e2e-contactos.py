@@ -63,6 +63,7 @@ async ([fromId]) => {
   c.tab = 'cuentas'; c.cuentasTab = 'amigos'; c.friendsSubTab = 'contactos';
   await Promise.all([c.loadExpenses(), c.loadSplits(), c.loadPaymentRequests(), c.loadFriends()]);
   const acc = c.accountsByPerson || [];
+  const noZepo = c.nonZepoAccounts || [];
   const carlos = acc.find(p => p.name === 'Carlos QA');
   const beatriz = acc.find(p => p.name === 'Beatriz QA');
   const fwa = (c.friendsWithAccounts || []).find(f => f.user_id === fromId);
@@ -71,10 +72,13 @@ async ([fromId]) => {
   const renamed = (c.friends || []).find(f => f.user_id === fromId);
   return {
     carlosNeto: carlos ? carlos.neto : null,
-    carlosDebe: carlos ? carlos.debeItems.length : 0,
+    carlosDebeGroups: carlos ? carlos.debeGroups.length : 0,
+    carlosEnNoZepo: noZepo.some(p => p.name === 'Carlos QA'),
     beatrizNeto: beatriz ? beatriz.neto : null,
     beatrizDebes: beatriz ? beatriz.debesItems.length : 0,
+    beatrizEnNoZepo: noZepo.some(p => p.name === 'Beatriz QA'),
     friendNeto: fwa ? fwa.neto : null,
+    friendDebes: fwa ? fwa.debesItems.length : 0,
     aliasApplied: renamed ? renamed.display_name : null,
   };
 }
@@ -127,10 +131,12 @@ def main():
     if res is None: return 1
     checks = [
         ("Carlos QA: te debe neto +10",        res.get("carlosNeto") == 10),
-        ("Carlos QA: desglose 'te debe' tiene items", res.get("carlosDebe") >= 1),
+        ("Carlos QA: desglose 'te debe' tiene registros", res.get("carlosDebeGroups") >= 1),
+        ("Carlos QA en 'Que no Zepo' (no amigo)", res.get("carlosEnNoZepo") is True),
         ("Beatriz QA: le debes neto -4",       res.get("beatrizNeto") == -4),
-        ("Beatriz QA: desglose 'le debes' tiene items", res.get("beatrizDebes") >= 1),
-        ("Amigos: qa-from con neto -4 (combinado)", res.get("friendNeto") == -4),
+        ("Beatriz QA: desglose 'le debes' tiene registros", res.get("beatrizDebes") >= 1),
+        ("Beatriz QA NO esta en 'Que no Zepo' (es amiga)", res.get("beatrizEnNoZepo") is False),
+        ("'Que si Zepo': qa-from con neto -4 + registro le debes", res.get("friendNeto") == -4 and res.get("friendDebes") >= 1),
         ("Apodo: el amigo se ve como 'Beti'",  res.get("aliasApplied") == "Beti"),
     ]
     ok = all(v for _, v in checks)
