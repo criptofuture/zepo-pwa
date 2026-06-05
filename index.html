@@ -5342,15 +5342,23 @@ setTimeout(function() {
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
                       </div>
-                      <div x-show="editingParsedCatIdx === idx" x-transition class="cd-cat-grid" style="padding:6px 10px 10px;">
-                        <template x-for="c in (it.is_income ? incomeCategories : categories)" :key="c.key">
-                          <button type="button" @click="updateParsedItemCat(idx, c.key); editingParsedCatIdx = -1" class="cd-cat-tile" :class="{ 'cd-cat-tile-active': it.category === c.key }" :style="it.category === c.key ? 'border-color:' + c.color + ';background:' + c.color + '15' : ''">
-                            <div class="cd-cat-tile-icon" :style="'background:' + c.color + '20;border:1px solid ' + c.color + '40'">
-                              <span x-text="c.emoji"></span>
-                            </div>
-                            <span class="cd-cat-tile-label" x-text="c.label"></span>
-                          </button>
-                        </template>
+                      <div x-show="editingParsedCatIdx === idx" x-transition style="padding:6px 10px 10px;">
+                        <div class="cd-cat-grid">
+                          <template x-for="c in (it.is_income ? incomeCategories : categories)" :key="c.key">
+                            <button type="button" @click="updateParsedItemCat(idx, c.key)" class="cd-cat-tile" :class="{ 'cd-cat-tile-active': it.category === c.key }" :style="it.category === c.key ? 'border-color:' + c.color + ';background:' + c.color + '15' : ''">
+                              <div class="cd-cat-tile-icon" :style="'background:' + c.color + '20;border:1px solid ' + c.color + '40'">
+                                <span x-text="c.emoji"></span>
+                              </div>
+                              <span class="cd-cat-tile-label" x-text="c.label"></span>
+                            </button>
+                          </template>
+                        </div>
+                        <!-- fecha por item (como en Home) -->
+                        <div style="margin-top:10px;display:flex;align-items:center;gap:8px;">
+                          <span style="font-size:10px;font-weight:700;letter-spacing:0.5px;color:var(--muted);flex-shrink:0;">FECHA</span>
+                          <input type="date" x-model="it.date" style="flex:1;height:38px;border-radius:10px;background:var(--bg);border:1px solid var(--border);padding:0 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;">
+                          <button type="button" @click="editingParsedCatIdx = -1" style="flex-shrink:0;height:38px;padding:0 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;">Listo</button>
+                        </div>
                       </div>
                     </div>
                   </template>
@@ -7132,7 +7140,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v101',
+    APP_VERSION: 'v102',
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
     // Orden importa: la primera regla que matchea gana.
     MERCHANT_RULES: [
@@ -8917,6 +8925,10 @@ function zepoApp() {
 
     _doOpenEdit(exp) {
       this.editingExpense = exp;
+      // Editar 1 elemento = UI individual: limpia el estado de grupo (si no, queda
+      // "Editar grupo" / "Guardar N registros" pegado y se oculta el grid de categoria).
+      this.editingBatch = null;
+      this.parsedItems = [];
       this.saving = false;
       this.gridAddingCat = false;
       this.removeReceipt();
@@ -8985,6 +8997,7 @@ function zepoApp() {
         description: exp.description || '',
         amount: batchIsSplit ? (exp.split_total || exp.amount) : exp.amount,
         category: exp.category,
+        date: exp.date || localDate(),
         is_income: !!exp.is_income,
         emoji: this.getCatEmoji(exp.category),
         label: this.getCatLabel(exp.category),
@@ -9378,7 +9391,7 @@ function zepoApp() {
             amount: miParte,
             category: it.category,
             description: it.description,
-            date,
+            date: it.date || date,
             is_income: !!it.is_income,
             is_split: isSplit,
             split_total: isSplit ? totalAmt : null,
@@ -11385,7 +11398,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v81.js';
+  const CURRENT_SW = 'sw-v82.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
