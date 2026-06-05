@@ -38,6 +38,7 @@ CHECKS = [
     ("Parpadeo Cuentas (keys duplicadas)", ["python", os.path.join(TOOLS, "qa-cuentas-flicker.py")]),
     ("E2E multi-item / batch",         ["python", os.path.join(TOOLS, "qa-e2e-batch.py")]),
     ("E2E presupuestos",               ["python", os.path.join(TOOLS, "qa-e2e-budgets.py")]),
+    ("Smoke todas las pantallas (sin errores)", ["python", os.path.join(TOOLS, "qa-smoke-screens.py")]),
 ]
 
 def main():
