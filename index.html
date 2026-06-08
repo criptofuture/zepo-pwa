@@ -4658,6 +4658,15 @@ setTimeout(function() {
           </div>
         </div>
 
+        <!-- Gastos recurrentes -->
+        <div class="settings-group-title">Gastos recurrentes</div>
+        <div class="settings-group" style="padding:14px;">
+          <div style="font-size:12px;color:var(--muted);line-height:1.4;margin-bottom:10px;" x-text="recurringTemplates.length ? (recurringTemplates.length + ' recurrente(s). Se crean solos cada mes.') : 'Aún no tienes. Marca «Repetir cada mes» al agregar un gasto.'"></div>
+          <button @click="openRecurringManager()" style="width:100%;height:42px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--text);font-weight:600;font-size:13px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="14" height="14"><polyline points="23 4 23 10 17 10"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Gestionar recurrentes
+          </button>
+        </div>
+
         <!-- Notificaciones -->
         <div class="settings-group-title">Notificaciones</div>
         <div class="settings-group">
@@ -5806,6 +5815,27 @@ setTimeout(function() {
                 </div>
               </div>
 
+              <!-- ═════════ RECURRENTE (crear, item único, no split) ═════════ -->
+              <div x-show="!editingExpense && !editingBatch && !form.is_split && parsedItems.length <= 1 && (analyzed || form.amount || parsedItems.length)" style="border-radius:14px;margin-bottom:12px;background:var(--surface);overflow:hidden;" :style="recurringOn ? 'border:1px solid var(--cyan)' : 'border:1px solid var(--border)'">
+                <div @click="recurringOn = !recurringOn; if (recurringOn && !recurringDay) recurringDay = new Date().getDate()" style="padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;">
+                  <div style="width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;" :style="{ background: recurringOn ? 'rgba(var(--c-brand-rgb),0.12)' : 'var(--bg)' }">
+                    <svg viewBox="0 0 24 24" fill="none" :stroke="recurringOn ? 'var(--cyan)' : 'var(--muted)'" stroke-width="2" width="15" height="15"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                  </div>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:14px;font-weight:600;">Repetir cada mes</div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="recurringOn ? ('Se creará solo el día ' + recurringDay + ' de cada mes') : 'Para arriendo, Netflix, gym…'"></div>
+                  </div>
+                  <div style="width:38px;height:22px;border-radius:11px;position:relative;transition:background 0.2s;flex-shrink:0;" :style="{ background: recurringOn ? 'var(--cyan)' : 'var(--border2)' }">
+                    <div style="position:absolute;top:2px;width:18px;height:18px;border-radius:9px;background:#fff;transition:left 0.2s;" :style="{ left: recurringOn ? '18px' : '2px' }"></div>
+                  </div>
+                </div>
+                <div x-show="recurringOn" x-cloak style="padding:0 14px 14px;display:flex;align-items:center;gap:10px;">
+                  <span style="font-size:12px;color:var(--muted);font-weight:600;flex-shrink:0;">Día del mes</span>
+                  <input type="number" min="1" max="31" x-model.number="recurringDay" style="width:66px;height:38px;border-radius:10px;background:var(--bg);border:1px solid var(--border);padding:0 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;text-align:center;">
+                  <span style="font-size:10px;color:var(--dim);flex:1;line-height:1.3;">Si el mes no tiene ese día, cae el último.</span>
+                </div>
+              </div>
+
               <!-- SPLIT SECTION — CD: multi-person with proportion bar -->
               <div style="border-radius:14px;margin-bottom:12px;" :style="form.is_split ? { background: 'var(--surface)', border: '1px solid var(--cyan)', overflow: splitPickerIdx >= 0 ? 'visible' : 'hidden' } : { background: 'var(--surface)', border: '1px solid var(--border)', overflow: 'hidden' }">
                 <div @click="toggleSplit()" style="padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;">
@@ -6284,6 +6314,78 @@ setTimeout(function() {
               </div>
 
               <button @click="pmManagerOpen = false; cancelEditPm()" style="width:100%;height:42px;border-radius:21px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ══ RECURRENTES MANAGER SHEET (Feature 4) ══ -->
+      <template x-if="recurringManagerOpen">
+        <div style="position:fixed;inset:0;z-index:200;">
+          <div class="sheet-backdrop" style="z-index:200;" @click="recurringManagerOpen = false; cancelEditRt()"></div>
+          <div class="sheet" style="max-height:calc(100% - var(--safe-top) - var(--safe-bottom) - 20px);position:fixed;left:0;right:0;bottom:0;max-width:430px;margin:0 auto;background:var(--bg);border-top-left-radius:24px;border-top-right-radius:24px;padding:14px 0 calc(16px + var(--safe-bottom));z-index:201;overflow-y:auto;border-top:1px solid var(--border);">
+            <div class="sheet-grabber"></div>
+            <div style="padding:6px 20px 24px;">
+              <div class="sheet-title">Gastos recurrentes</div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">Se crean solos cada mes el día que elijas. Editar afecta solo lo futuro.</div>
+
+              <template x-if="recurringTemplates.length === 0">
+                <div style="padding:24px 14px;text-align:center;color:var(--dim);font-size:13px;line-height:1.5;">No tienes gastos recurrentes.<br>Marca «Repetir cada mes» al agregar un gasto.</div>
+              </template>
+
+              <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:6px;">
+                <template x-for="t in recurringTemplates" :key="t.id">
+                  <div style="border-radius:var(--radius-sm);overflow:hidden;flex-shrink:0;" :style="{ background: editingRtId === t.id ? 'var(--surface2)' : 'var(--surface)', border: editingRtId === t.id ? '1px solid rgba(var(--c-brand-rgb),0.3)' : '1px solid var(--border)', opacity: t.active ? '1' : '0.55' }">
+                    <!-- Read row -->
+                    <div x-show="editingRtId !== t.id" class="flex-show" style="align-items:center;gap:10px;padding:10px 12px;">
+                      <div style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border);">
+                        <span x-text="_catEmoji(t.category)"></span>
+                      </div>
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="t.description || _catLabel(t.category)"></div>
+                        <div style="font-size:10px;color:var(--muted);letter-spacing:0.3px;margin-top:1px;">
+                          <span style="font-weight:700;color:var(--text);" x-text="'$' + Number(t.amount).toFixed(2)"></span>
+                          · día <span x-text="t.day_of_month"></span>
+                          <span x-show="!t.active"> · en pausa</span>
+                        </div>
+                      </div>
+                      <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">
+                        <button @click="toggleRecurringActive(t)" style="width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;" :style="t.active ? 'color:var(--success)' : 'color:var(--dim)'" :title="t.active ? 'Pausar' : 'Reanudar'">
+                          <svg x-show="t.active" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                          <svg x-show="!t.active" viewBox="0 0 24 24" fill="currentColor" stroke="none" width="13" height="13"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        </button>
+                        <button @click="startEditRt(t)" style="width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;color:var(--muted);display:flex;align-items:center;justify-content:center;" title="Editar">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                        <button @click="removeRecurringTemplate(t)" style="width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;color:var(--danger);display:flex;align-items:center;justify-content:center;" title="Eliminar">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                    <!-- Edit row -->
+                    <div x-show="editingRtId === t.id" style="padding:12px;">
+                      <div style="display:flex;gap:8px;margin-bottom:10px;">
+                        <div style="flex:1;">
+                          <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:0.4px;margin-bottom:4px;">MONTO</div>
+                          <input type="text" inputmode="decimal" x-model="editRtAmount" style="width:100%;height:42px;border-radius:10px;background:var(--bg);border:1px solid var(--border);padding:0 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;">
+                        </div>
+                        <div style="width:90px;">
+                          <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:0.4px;margin-bottom:4px;">DÍA</div>
+                          <input type="number" min="1" max="31" x-model.number="editRtDay" style="width:100%;height:42px;border-radius:10px;background:var(--bg);border:1px solid var(--border);padding:0 12px;font-size:14px;color:var(--text);font-family:inherit;outline:none;text-align:center;">
+                        </div>
+                      </div>
+                      <div style="display:flex;gap:6px;">
+                        <button @click="saveEditRt()" style="flex:1;height:36px;border-radius:10px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;border:none;">Guardar</button>
+                        <button @click="cancelEditRt()" style="flex:1;height:36px;border-radius:10px;background:transparent;color:var(--muted);font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;border:1px solid var(--border);">Cancelar</button>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+
+              <div style="font-size:11px;color:var(--dim);line-height:1.4;margin:12px 0 16px;">Para crear uno nuevo, marca «Repetir cada mes» cuando agregues un gasto.</div>
+
+              <button @click="recurringManagerOpen = false; cancelEditRt()" style="width:100%;height:42px;border-radius:21px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">Cerrar</button>
             </div>
           </div>
         </div>
@@ -7294,6 +7396,13 @@ function zepoApp() {
     form: { amount: '', description: '', category: '', date: '', is_income: false, is_split: false, split_persona: '', split_pct: '', split_people: [], payment_method: '' },
     paymentMethods: [],
     learnedCats: {},
+    recurringTemplates: [],
+    recurringOn: false,
+    recurringDay: 1,
+    recurringManagerOpen: false,
+    editingRtId: null,
+    editRtAmount: '',
+    editRtDay: 1,
     pmTypes: [
       { key: 'efectivo', label: 'Efectivo', emoji: '💵' },
       { key: 'tarjeta', label: 'Tarjeta', emoji: '💳' },
@@ -7383,7 +7492,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v110',
+    APP_VERSION: 'v111',
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
@@ -7566,7 +7675,8 @@ function zepoApp() {
 
       history.replaceState({ zepo: true }, '');
       window.addEventListener('popstate', () => {
-        if (this.pmManagerOpen) { this.pmManagerOpen = false; this.cancelEditPm(); }
+        if (this.recurringManagerOpen) { this.recurringManagerOpen = false; this.cancelEditRt(); }
+        else if (this.pmManagerOpen) { this.pmManagerOpen = false; this.cancelEditPm(); }
         else if (this.catManagerOpen) { this.catManagerOpen = false; this.cancelEditCategory(); }
         else if (this.budgetSheetOpen) { this.budgetSheetOpen = false; }
         else if (this.exportSheetOpen) { this.exportSheetOpen = false; }
@@ -7593,7 +7703,7 @@ function zepoApp() {
         if (val !== old) pushBack();
       });
 
-      ['sheetOpen','catManagerOpen','pmManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen'].forEach(k => {
+      ['sheetOpen','catManagerOpen','pmManagerOpen','recurringManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen'].forEach(k => {
         this.$watch(k, v => { if (v) pushBack(); });
       });
 
@@ -7617,7 +7727,7 @@ function zepoApp() {
           this.user = session.user;
           this.userName = session.user.user_metadata?.name || session.user.user_metadata?.full_name || session.user.email.split('@')[0];
           await this.ensureUserRow();
-          await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadBudgets(), this.loadUserPlan(), this.loadFriends(), this.loadPaymentRequests(), this.loadPaymentMethods(), this.loadCategoryLearning()]);
+          await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadBudgets(), this.loadUserPlan(), this.loadFriends(), this.loadPaymentRequests(), this.loadPaymentMethods(), this.loadCategoryLearning(), this.loadRecurringTemplates()]);
           this.handlePaymentReturn();
           this.initWelcomeCarousel();
           this.loadNotifSettings();
@@ -9021,6 +9131,82 @@ function zepoApp() {
       if (this.parsedItems.length >= 2) return; // multi-item: cada item se aprende por su cuenta
       this._learnCategory(this.form.description || (this.parsedItems[0] && this.parsedItems[0].description) || '', key);
     },
+    // ── Gastos recurrentes (Feature 4) ──
+    _catEmoji(key) { return (CAT_MAP[key] && CAT_MAP[key].emoji) || '📦'; },
+    _catLabel(key) { return (CAT_MAP[key] && CAT_MAP[key].label) || key || 'Otro'; },
+    async loadRecurringTemplates() {
+      if (!this.user) return;
+      let data = null;
+      try {
+        const r = await withTimeout(
+          sb.from('recurring_templates').select('*').eq('user_id', this.user.id).order('created_at', { ascending: false }),
+          2500, 'loadRecurringTemplates'
+        );
+        data = r.data;
+      } catch (e) {
+        try {
+          const url = SUPABASE_URL + '/rest/v1/recurring_templates?user_id=eq.' + encodeURIComponent(this.user.id) + '&order=created_at.desc';
+          const res = await fetch(url, { headers: sbAuthHeaders() });
+          data = res.ok ? await res.json() : [];
+        } catch (e2) { data = []; }
+      }
+      this.recurringTemplates = data || [];
+    },
+    async saveRecurringTemplate(data) {
+      if (!this.user || !data.amount || !data.category) return;
+      const day = Math.min(31, Math.max(1, parseInt(this.recurringDay) || (new Date().getDate())));
+      const row = {
+        user_id: this.user.id,
+        description: data.description || '',
+        amount: data.amount,
+        category: data.category,
+        payment_method: data.payment_method || null,
+        is_income: !!data.is_income,
+        day_of_month: day,
+        active: true,
+        last_generated: localDate(), // este mes ya queda cubierto por el gasto que se guarda ahora
+      };
+      try {
+        const ins = await sbRestInsert('recurring_templates', row);
+        const created = (ins && ins[0]) || row;
+        this.recurringTemplates.unshift(created);
+      } catch (e) { console.warn('[saveRecurringTemplate]', e.message); }
+    },
+    openRecurringManager() {
+      this.editingRtId = null;
+      this.recurringManagerOpen = true;
+    },
+    async toggleRecurringActive(t) {
+      const next = !t.active;
+      t.active = next;
+      try { await sbRestUpdate('recurring_templates', 'id', t.id, { active: next }); }
+      catch (e) { t.active = !next; this.showToast('Error: ' + e.message); }
+    },
+    async removeRecurringTemplate(t) {
+      if (!confirm('¿Eliminar el recurrente "' + (t.description || this._catLabel(t.category)) + '"? Los gastos ya creados NO se borran.')) return;
+      try {
+        await sbRestDelete('recurring_templates', { id: t.id });
+        this.recurringTemplates = this.recurringTemplates.filter(x => x.id !== t.id);
+      } catch (e) { this.showToast('Error: ' + e.message); }
+    },
+    startEditRt(t) {
+      this.editingRtId = t.id;
+      this.editRtAmount = String(t.amount);
+      this.editRtDay = t.day_of_month;
+    },
+    cancelEditRt() { this.editingRtId = null; this.editRtAmount = ''; this.editRtDay = 1; },
+    async saveEditRt() {
+      const t = this.recurringTemplates.find(x => x.id === this.editingRtId);
+      if (!t) return this.cancelEditRt();
+      const amount = parseFloat(String(this.editRtAmount).replace(',', '.')) || 0;
+      const day = Math.min(31, Math.max(1, parseInt(this.editRtDay) || t.day_of_month));
+      if (!amount) { this.showToast('Monto inválido'); return; }
+      try {
+        await sbRestUpdate('recurring_templates', 'id', t.id, { amount, day_of_month: day });
+        t.amount = amount; t.day_of_month = day; // editar afecta solo lo futuro
+      } catch (e) { this.showToast('Error: ' + e.message); }
+      this.cancelEditRt();
+    },
     // ── Métodos de pago (Feature 1) ──
     _defaultPaymentMethod() {
       const def = this.paymentMethods.find(m => m.is_default) || this.paymentMethods[0];
@@ -9336,6 +9522,8 @@ function zepoApp() {
         split_people: [],
         payment_method: this._defaultPaymentMethod(),
       };
+      this.recurringOn = false;
+      this.recurringDay = new Date().getDate();
       this.removeReceipt();
       this.sheetOpen = true;
     },
@@ -9505,6 +9693,18 @@ function zepoApp() {
     async saveExpense() {
       // Flush split picker if still open (race condition: user taps Save while input focused)
       if (this.splitPickerIdx >= 0) this.closeSplitPicker();
+      // Feature 4: si está marcado "Repetir cada mes" (item único, no split), crea la
+      // PLANTILLA. La copia de ESTE mes se guarda como gasto normal por el flujo de abajo.
+      if (this.recurringOn && !this.editingExpense && !this.editingBatch && !this.form.is_split && this.parsedItems.length <= 1) {
+        const src = this.parsedItems[0] || {};
+        await this.saveRecurringTemplate({
+          amount: parseFloat(src.amount != null ? src.amount : this.form.amount) || 0,
+          category: src.category || this.form.category,
+          description: src.description || this.form.description || '',
+          is_income: src.is_income !== undefined ? src.is_income : this.form.is_income,
+          payment_method: this.form.payment_method || null,
+        });
+      }
       // Batch edit mode: delete old items, re-insert updated ones
       if (this.editingBatch && this.parsedItems && this.parsedItems.length >= 1) {
         return this.saveBatchEdit();
@@ -11852,7 +12052,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v87.js';
+  const CURRENT_SW = 'sw-v88.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
