@@ -5785,6 +5785,25 @@ setTimeout(function() {
                 </div>
               </div>
 
+              <!-- ═════════ MÉTODO DE PAGO (solo gastos) ═════════ -->
+              <div x-show="!form.is_income && (editingExpense || analyzed || form.amount || parsedItems.length)" style="margin-bottom:12px;">
+                <div class="cd-section-label" style="display:flex;align-items:center;justify-content:space-between;">
+                  <span>MÉTODO DE PAGO</span>
+                  <button type="button" @click="openPmManager()" style="background:transparent;border:none;color:var(--cyan);font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:4px;padding:0;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                    Gestionar
+                  </button>
+                </div>
+                <div style="display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;-webkit-overflow-scrolling:touch;">
+                  <template x-for="m in paymentMethods" :key="m.id || m.name">
+                    <button type="button" @click="form.payment_method = m.name" style="display:flex;align-items:center;gap:7px;padding:9px 13px;border-radius:var(--radius-pill);background:var(--surface);cursor:pointer;font-family:inherit;flex-shrink:0;white-space:nowrap;" :style="form.payment_method === m.name ? 'border:1px solid var(--cyan);background:rgba(var(--c-brand-rgb),0.10)' : 'border:1px solid var(--border)'">
+                      <span style="font-size:15px;line-height:1;" x-text="m.emoji || '💳'"></span>
+                      <span style="font-size:13px;font-weight:600;color:var(--text);" x-text="m.name"></span>
+                    </button>
+                  </template>
+                </div>
+              </div>
+
               <!-- SPLIT SECTION — CD: multi-person with proportion bar -->
               <div style="border-radius:14px;margin-bottom:12px;" :style="form.is_split ? { background: 'var(--surface)', border: '1px solid var(--cyan)', overflow: splitPickerIdx >= 0 ? 'visible' : 'hidden' } : { background: 'var(--surface)', border: '1px solid var(--border)', overflow: 'hidden' }">
                 <div @click="toggleSplit()" style="padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;">
@@ -6185,6 +6204,80 @@ setTimeout(function() {
         </div>
       </template>
 
+
+      <!-- ══ PAYMENT METHOD MANAGER SHEET ══ -->
+      <template x-if="pmManagerOpen">
+        <div style="position:fixed;inset:0;z-index:200;">
+          <div class="sheet-backdrop" style="z-index:200;" @click="pmManagerOpen = false"></div>
+          <div class="sheet" style="max-height:calc(100% - var(--safe-top) - var(--safe-bottom) - 20px);position:fixed;left:0;right:0;bottom:0;max-width:430px;margin:0 auto;background:var(--bg);border-top-left-radius:24px;border-top-right-radius:24px;padding:14px 0 calc(16px + var(--safe-bottom));z-index:201;overflow-y:auto;border-top:1px solid var(--border);">
+            <div class="sheet-grabber"></div>
+            <div style="padding:6px 20px 24px;">
+              <div class="sheet-title">Métodos de pago</div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">Toca la estrella para marcar el que usas por defecto.</div>
+
+              <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px;">
+                <template x-for="m in paymentMethods" :key="m.id || m.name">
+                  <div style="border-radius:var(--radius-sm);overflow:hidden;flex-shrink:0;" :style="{ background: editingPmId === m.id ? 'var(--surface2)' : 'var(--surface)', border: editingPmId === m.id ? '1px solid rgba(var(--c-brand-rgb),0.3)' : '1px solid var(--border)' }">
+                    <!-- Read row -->
+                    <div x-show="editingPmId !== m.id" class="flex-show" style="align-items:center;gap:10px;padding:10px 12px;">
+                      <div style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border);">
+                        <span x-text="m.emoji || '💳'"></span>
+                      </div>
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="m.name"></div>
+                        <div x-show="m.is_default" style="font-size:9px;color:var(--cyan);letter-spacing:0.4px;font-weight:700;margin-top:1px;">POR DEFECTO</div>
+                      </div>
+                      <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">
+                        <button @click="setDefaultPaymentMethod(m)" style="width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;" :style="m.is_default ? 'color:var(--warning)' : 'color:var(--dim)'" title="Marcar por defecto">
+                          <svg viewBox="0 0 24 24" :fill="m.is_default ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" width="14" height="14"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        </button>
+                        <button @click="startEditPm(m)" style="width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;color:var(--muted);display:flex;align-items:center;justify-content:center;" title="Editar">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                        <button @click="removePaymentMethod(m)" style="width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;color:var(--danger);display:flex;align-items:center;justify-content:center;" title="Eliminar">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                    <!-- Edit row -->
+                    <div x-show="editingPmId === m.id" style="padding:12px;">
+                      <div style="display:flex;gap:8px;margin-bottom:10px;align-items:stretch;">
+                        <div style="position:relative;width:46px;height:42px;flex-shrink:0;">
+                          <div style="width:100%;height:100%;border-radius:10px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;pointer-events:none;" x-text="editingPmEmoji || '💳'"></div>
+                          <input type="text" x-model="editingPmEmoji" @input="cleanEmojiInput('editingPmEmoji')" maxlength="4" style="position:absolute;inset:0;width:100%;height:100%;background:transparent;border:none;text-align:center;font-size:20px;color:transparent;caret-color:var(--cyan);font-family:inherit;outline:none;">
+                        </div>
+                        <input type="text" x-model="editingPmName" maxlength="24" style="flex:1;height:42px;border-radius:10px;background:var(--bg);border:1px solid var(--border);padding:0 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;">
+                      </div>
+                      <div style="display:flex;gap:6px;">
+                        <button @click="saveEditPm()" style="flex:1;height:36px;border-radius:10px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;border:none;">Guardar</button>
+                        <button @click="cancelEditPm()" style="flex:1;height:36px;border-radius:10px;background:transparent;color:var(--muted);font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;border:1px solid var(--border);">Cancelar</button>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+
+              <!-- Agregar nuevo método -->
+              <div style="padding:14px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);margin-bottom:16px;">
+                <div style="font-size:11px;color:var(--muted);letter-spacing:1px;font-weight:700;margin-bottom:10px;">NUEVO MÉTODO</div>
+                <div style="display:flex;gap:8px;margin-bottom:10px;align-items:stretch;">
+                  <div style="position:relative;width:48px;height:44px;flex-shrink:0;">
+                    <div style="width:100%;height:100%;border-radius:10px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;pointer-events:none;" x-text="newPmEmoji || '💳'"></div>
+                    <input type="text" x-model="newPmEmoji" @input="cleanEmojiInput('newPmEmoji')" maxlength="4" style="position:absolute;inset:0;width:100%;height:100%;background:transparent;border:none;text-align:center;font-size:20px;color:transparent;caret-color:var(--cyan);font-family:inherit;outline:none;">
+                  </div>
+                  <input type="text" x-model="newPmName" @keydown.enter="addPaymentMethod()" maxlength="24" placeholder="Nombre (ej: Pichincha Visa)" style="flex:1;height:44px;border-radius:10px;background:var(--bg);border:1px solid var(--border);padding:0 14px;font-size:13px;color:var(--text);font-family:inherit;outline:none;">
+                </div>
+                <button @click="addPaymentMethod()" :disabled="!newPmName || !newPmName.trim()" style="width:100%;height:40px;border-radius:20px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:13px;font-family:inherit;border:none;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;" :style="{ opacity: (!newPmName || !newPmName.trim()) ? '0.4' : '1' }">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Agregar
+                </button>
+              </div>
+
+              <button @click="pmManagerOpen = false; cancelEditPm()" style="width:100%;height:42px;border-radius:21px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </template>
 
       <!-- ══ COBRO DETAIL SHEET ══ -->
       <template x-if="cobroDetailOpen && activeCobro">
@@ -7165,7 +7258,15 @@ function zepoApp() {
     histAll: false,
     histType: 'all',
     homeViewMode: 'expense',
-    form: { amount: '', description: '', category: '', date: '', is_income: false, is_split: false, split_persona: '', split_pct: '', split_people: [] },
+    form: { amount: '', description: '', category: '', date: '', is_income: false, is_split: false, split_persona: '', split_pct: '', split_people: [], payment_method: '' },
+    paymentMethods: [],
+    pmManagerOpen: false,
+    newPmName: '',
+    newPmEmoji: '💳',
+    editingPmId: null,
+    editingPmName: '',
+    editingPmEmoji: '',
+    _pmSeeding: false,
     splitPickerIdx: -1,
     splitPickerQuery: '',
     pendingSplits: [],
@@ -7243,7 +7344,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v105',
+    APP_VERSION: 'v106',
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
@@ -7425,7 +7526,8 @@ function zepoApp() {
 
       history.replaceState({ zepo: true }, '');
       window.addEventListener('popstate', () => {
-        if (this.catManagerOpen) { this.catManagerOpen = false; this.cancelEditCategory(); }
+        if (this.pmManagerOpen) { this.pmManagerOpen = false; this.cancelEditPm(); }
+        else if (this.catManagerOpen) { this.catManagerOpen = false; this.cancelEditCategory(); }
         else if (this.budgetSheetOpen) { this.budgetSheetOpen = false; }
         else if (this.exportSheetOpen) { this.exportSheetOpen = false; }
         else if (this.deboDetailOpen) { this.deboDetailOpen = false; }
@@ -7451,7 +7553,7 @@ function zepoApp() {
         if (val !== old) pushBack();
       });
 
-      ['sheetOpen','catManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen'].forEach(k => {
+      ['sheetOpen','catManagerOpen','pmManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen'].forEach(k => {
         this.$watch(k, v => { if (v) pushBack(); });
       });
 
@@ -7475,7 +7577,7 @@ function zepoApp() {
           this.user = session.user;
           this.userName = session.user.user_metadata?.name || session.user.user_metadata?.full_name || session.user.email.split('@')[0];
           await this.ensureUserRow();
-          await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadBudgets(), this.loadUserPlan(), this.loadFriends(), this.loadPaymentRequests()]);
+          await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadBudgets(), this.loadUserPlan(), this.loadFriends(), this.loadPaymentRequests(), this.loadPaymentMethods()]);
           this.handlePaymentReturn();
           this.initWelcomeCarousel();
           this.loadNotifSettings();
@@ -8812,6 +8914,111 @@ function zepoApp() {
       });
       try { localStorage.setItem('zepo:cat-overrides', JSON.stringify(overrides)); } catch {}
     },
+    // ── Métodos de pago (Feature 1) ──
+    _defaultPaymentMethod() {
+      const def = this.paymentMethods.find(m => m.is_default) || this.paymentMethods[0];
+      return def ? def.name : '';
+    },
+    async loadPaymentMethods() {
+      if (!this.user) return;
+      let data = null;
+      try {
+        const r = await withTimeout(
+          sb.from('payment_methods').select('*').eq('user_id', this.user.id).order('sort', { ascending: true }),
+          2500, 'loadPaymentMethods'
+        );
+        data = r.data;
+      } catch (e) {
+        console.warn('[loadPaymentMethods] fallback REST:', e.message);
+        try {
+          const url = SUPABASE_URL + '/rest/v1/payment_methods?user_id=eq.' + encodeURIComponent(this.user.id) + '&order=sort.asc';
+          const res = await fetch(url, { headers: sbAuthHeaders() });
+          data = res.ok ? await res.json() : [];
+        } catch (e2) { data = []; }
+      }
+      this.paymentMethods = data || [];
+      if (this.paymentMethods.length === 0 && !this._pmSeeding) await this.seedPaymentMethods();
+      if (!this.form.payment_method) this.form.payment_method = this._defaultPaymentMethod();
+    },
+    async seedPaymentMethods() {
+      this._pmSeeding = true;
+      const defaults = [
+        { name: 'Efectivo', emoji: '💵', is_default: true, sort: 0 },
+        { name: 'Tarjeta', emoji: '💳', is_default: false, sort: 1 },
+        { name: 'Transferencia', emoji: '🏦', is_default: false, sort: 2 },
+      ].map(d => ({ ...d, user_id: this.user.id }));
+      try {
+        const rows = await sbRestInsert('payment_methods', defaults);
+        this.paymentMethods = (rows && rows.length) ? rows : defaults;
+      } catch (e) { console.warn('[seedPaymentMethods]', e.message); }
+      this._pmSeeding = false;
+    },
+    openPmManager() {
+      this.newPmName = '';
+      this.newPmEmoji = '💳';
+      this.editingPmId = null;
+      this.pmManagerOpen = true;
+    },
+    async addPaymentMethod() {
+      const name = (this.newPmName || '').trim();
+      if (!name) return;
+      if (this.paymentMethods.some(m => (m.name || '').toLowerCase() === name.toLowerCase())) { this.showToast('Ya existe ese método'); return; }
+      const row = { user_id: this.user.id, name, emoji: this.newPmEmoji || '💳', is_default: this.paymentMethods.length === 0, sort: this.paymentMethods.length };
+      try {
+        const ins = await sbRestInsert('payment_methods', row);
+        const created = (ins && ins[0]) || row;
+        this.paymentMethods.push(created);
+        this.newPmName = ''; this.newPmEmoji = '💳';
+        if (!this.form.payment_method) this.form.payment_method = created.name;
+        this.showToast('Método agregado');
+      } catch (e) { this.showToast('Error: ' + e.message); }
+    },
+    startEditPm(m) {
+      this.editingPmId = m.id;
+      this.editingPmName = m.name;
+      this.editingPmEmoji = m.emoji || '💳';
+    },
+    cancelEditPm() {
+      this.editingPmId = null; this.editingPmName = ''; this.editingPmEmoji = '';
+    },
+    async saveEditPm() {
+      const m = this.paymentMethods.find(x => x.id === this.editingPmId);
+      if (!m) return this.cancelEditPm();
+      const name = (this.editingPmName || '').trim();
+      if (!name) return;
+      const oldName = m.name;
+      try {
+        await sbRestUpdate('payment_methods', 'id', m.id, { name, emoji: this.editingPmEmoji || '💳' });
+        m.name = name; m.emoji = this.editingPmEmoji || '💳';
+        if (this.form.payment_method === oldName) this.form.payment_method = name;
+      } catch (e) { this.showToast('Error: ' + e.message); }
+      this.cancelEditPm();
+    },
+    async removePaymentMethod(m) {
+      if (this.paymentMethods.length <= 1) { this.showToast('Deja al menos un método'); return; }
+      if (!confirm('¿Eliminar el método "' + m.name + '"? Los gastos ya guardados no cambian.')) return;
+      try {
+        await sbRestDelete('payment_methods', { id: m.id });
+        this.paymentMethods = this.paymentMethods.filter(x => x.id !== m.id);
+        if (m.is_default && this.paymentMethods.length) {
+          const nd = this.paymentMethods[0];
+          await sbRestUpdate('payment_methods', 'id', nd.id, { is_default: true });
+          nd.is_default = true;
+        }
+        if (this.form.payment_method === m.name) this.form.payment_method = this._defaultPaymentMethod();
+      } catch (e) { this.showToast('Error: ' + e.message); }
+    },
+    async setDefaultPaymentMethod(m) {
+      try {
+        for (const p of this.paymentMethods.filter(x => x.is_default && x.id !== m.id)) {
+          await sbRestUpdate('payment_methods', 'id', p.id, { is_default: false });
+        }
+        await sbRestUpdate('payment_methods', 'id', m.id, { is_default: true });
+        this.paymentMethods.forEach(x => x.is_default = (x.id === m.id));
+        this.showToast('Predeterminado: ' + m.name);
+      } catch (e) { this.showToast('Error: ' + e.message); }
+    },
+
     emojiForLabel(label) {
       const l = (label || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       const map = [
@@ -9010,6 +9217,7 @@ function zepoApp() {
         split_persona: '',
         split_pct: '',
         split_people: [],
+        payment_method: this._defaultPaymentMethod(),
       };
       this.removeReceipt();
       this.sheetOpen = true;
@@ -9060,6 +9268,7 @@ function zepoApp() {
         split_persona: exp.split_persona || '',
         split_pct: exp.split_pct || '',
         split_people: splitPeople,
+        payment_method: exp.payment_method || this._defaultPaymentMethod(),
       };
       this.sheetOpen = true;
     },
@@ -9119,6 +9328,7 @@ function zepoApp() {
         split_persona: batchIsSplit ? (first.split_persona || '') : '',
         split_pct: batchIsSplit ? (first.split_pct || '') : '',
         split_people: splitPeople,
+        payment_method: first?.payment_method || this._defaultPaymentMethod(),
       };
       this.sheetOpen = true;
     },
@@ -9229,7 +9439,8 @@ function zepoApp() {
           split_pct: isSplit ? pct : null,
           split_persona: isSplit ? persona : null,
           split_pending: isSplit ? pendiente : null,
-          split_status: isSplit ? 'pendiente' : null
+          split_status: isSplit ? 'pendiente' : null,
+          payment_method: this.form.payment_method || null
         };
 
         // If extracting a single item from a batch, clear batch association
@@ -9372,6 +9583,7 @@ function zepoApp() {
             split_persona: isSplit ? persona : null,
             split_pending: isSplit ? pendiente : null,
             split_status: isSplit ? 'pendiente' : null,
+            payment_method: this.form.payment_method || null,
             batch_id: validItems.length > 1 ? batchId : null,
             batch_label: validItems.length > 1 ? batchLabel : null,
           };
@@ -9504,6 +9716,7 @@ function zepoApp() {
             split_persona: isSplit ? persona : null,
             split_pending: isSplit ? pendiente : null,
             split_status: isSplit ? 'pendiente' : null,
+            payment_method: this.form.payment_method || null,
             batch_id: validItems.length > 1 ? batchId : null,
             batch_label: validItems.length > 1 ? batchLabel : null,
           };
@@ -10505,7 +10718,7 @@ function zepoApp() {
         description: desc,
         category: this.onboardingFirstCat || 'food',
         date: localDate(),
-        is_income: false, is_split: false, split_persona: '', split_pct: '', split_people: []
+        is_income: false, is_split: false, split_persona: '', split_pct: '', split_people: [], payment_method: this._defaultPaymentMethod()
       };
       this.editingExpense = null;
       try {
@@ -11503,7 +11716,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v82.js';
+  const CURRENT_SW = 'sw-v83.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
