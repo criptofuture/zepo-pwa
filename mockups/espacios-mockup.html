@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zepo · Espacios (centros de gasto) — mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EFEADB; --surface:#FFFFFF; --surface2:#F4EFE2;
+    --ink:#1A2418; --ink-soft:rgba(26,36,24,.62); --ink-faint:rgba(26,36,24,.40);
+    --border:rgba(26,36,24,.14); --border2:rgba(26,36,24,.30);
+    --sage:#507D5A; --sage-rgb:80,125,90; --lima:#D6D864; --gold:#BF8A2A;
+    --income:#84AF72; --expense:#B8483A;
+    --grad:linear-gradient(135deg,#507D5A,#84AF72);
+    --r:16px; --r-sm:10px; --pill:50px;
+    --font-d:'Bricolage Grotesque',sans-serif; --font-b:'Geist',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#E2DBC8;font-family:var(--font-b);color:var(--ink);padding:32px 16px 64px;}
+  .intro{max-width:920px;margin:0 auto 32px;text-align:center;}
+  .intro h1{font-family:var(--font-d);font-size:30px;font-weight:700;margin-bottom:8px;}
+  .intro p{color:var(--ink-soft);font-size:15px;max-width:620px;margin:0 auto;line-height:1.5;}
+  .row{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;max-width:1200px;margin:0 auto;}
+  .phone{width:330px;background:var(--bg);border-radius:34px;padding:14px;
+    box-shadow:0 24px 60px rgba(26,36,24,.22);border:1px solid rgba(26,36,24,.08);}
+  .screen{background:var(--bg);border-radius:24px;overflow:hidden;position:relative;min-height:600px;display:flex;flex-direction:column;}
+  .cap{text-align:center;font-size:13px;font-weight:600;color:var(--ink-soft);margin-top:14px;}
+  .cap b{color:var(--sage);}
+
+  /* ---- shared bits ---- */
+  .pad{padding:18px 18px 0;}
+  .sec-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px;}
+
+  /* ---- screen 1: home ---- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 6px;}
+  .space-chip{display:inline-flex;align-items:center;gap:9px;background:var(--surface);
+    border:1px solid var(--border);border-radius:var(--pill);padding:8px 14px 8px 10px;
+    box-shadow:0 2px 8px rgba(26,36,24,.06);cursor:pointer;}
+  .space-dot{width:26px;height:26px;border-radius:9px;display:grid;place-items:center;font-size:15px;}
+  .space-chip .nm{font-family:var(--font-d);font-weight:700;font-size:16px;}
+  .space-chip .car{color:var(--ink-faint);font-size:12px;margin-left:2px;}
+  .ic{width:38px;height:38px;border-radius:12px;background:var(--surface);border:1px solid var(--border);
+    display:grid;place-items:center;font-size:17px;}
+  .hero{margin:14px 18px 4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;}
+  .hero .lbl{font-size:12px;color:var(--ink-soft);margin-bottom:6px;}
+  .hero .big{font-family:var(--font-d);font-size:38px;font-weight:700;letter-spacing:-.02em;}
+  .hero .sub{font-size:12px;color:var(--ink-soft);margin-top:6px;}
+  .hero .sub .up{color:var(--expense);font-weight:600;}
+  .mini{display:flex;gap:10px;margin:12px 18px 0;}
+  .mini .b{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;}
+  .mini .b .t{font-size:11px;color:var(--ink-soft);}
+  .mini .b .v{font-family:var(--font-d);font-weight:700;font-size:17px;margin-top:3px;}
+  .mini .b .v.in{color:var(--income);} .mini .b .v.ex{color:var(--expense);}
+  .list{margin:16px 18px 0;}
+  .li{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--border);}
+  .li .em{width:36px;height:36px;border-radius:11px;background:var(--surface2);display:grid;place-items:center;font-size:16px;}
+  .li .mid{flex:1;} .li .mid .d{font-weight:600;font-size:14px;} .li .mid .c{font-size:12px;color:var(--ink-soft);}
+  .li .amt{font-family:var(--font-d);font-weight:700;font-size:15px;color:var(--expense);}
+  .tabbar{margin-top:auto;display:flex;justify-content:space-around;padding:12px 0 16px;
+    background:var(--surface);border-top:1px solid var(--border);}
+  .tabbar span{font-size:20px;opacity:.5;} .tabbar span.on{opacity:1;}
+  .fab{position:absolute;right:20px;bottom:78px;width:54px;height:54px;border-radius:50%;
+    background:var(--grad);color:#fff;display:grid;place-items:center;font-size:26px;font-weight:300;
+    box-shadow:0 8px 20px rgba(var(--sage-rgb),.4);}
+
+  /* ---- screen 2: switcher sheet ---- */
+  .scrim{position:absolute;inset:0;background:rgba(26,36,24,.35);}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--bg);
+    border-radius:24px 24px 0 0;padding:8px 18px 22px;box-shadow:0 -10px 40px rgba(26,36,24,.2);}
+  .grab{width:42px;height:5px;border-radius:3px;background:var(--border2);margin:6px auto 16px;}
+  .sheet h3{font-family:var(--font-d);font-size:19px;font-weight:700;margin-bottom:4px;}
+  .sheet .hint{font-size:12px;color:var(--ink-soft);margin-bottom:16px;}
+  .sp{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--r);padding:13px;margin-bottom:10px;}
+  .sp.active{border-color:var(--sage);box-shadow:0 0 0 2px rgba(var(--sage-rgb),.15);}
+  .sp .ico{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-size:20px;}
+  .sp .info{flex:1;} .sp .info .n{font-family:var(--font-d);font-weight:700;font-size:15px;}
+  .sp .info .m{font-size:12px;color:var(--ink-soft);margin-top:1px;}
+  .sp .chk{color:var(--sage);font-size:18px;font-weight:700;}
+  .sp.all{background:var(--surface2);border-style:dashed;}
+  .newsp{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+    background:var(--grad);color:#fff;border:none;border-radius:var(--pill);padding:14px;
+    font-family:var(--font-b);font-weight:700;font-size:15px;margin-top:6px;cursor:pointer;}
+
+  /* ---- screen 3: add expense w/ space selector ---- */
+  .ahead{padding:18px 18px 4px;display:flex;align-items:center;justify-content:space-between;}
+  .ahead .x{font-size:20px;color:var(--ink-soft);} .ahead h3{font-family:var(--font-d);font-size:18px;font-weight:700;}
+  .field{margin:14px 18px 0;}
+  .field .l{font-size:12px;color:var(--ink-soft);margin-bottom:7px;font-weight:600;}
+  .amount-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+    padding:16px;display:flex;align-items:center;gap:6px;}
+  .amount-box .cur{font-family:var(--font-d);font-size:24px;color:var(--ink-faint);}
+  .amount-box .val{font-family:var(--font-d);font-size:30px;font-weight:700;}
+  .inp{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:13px;font-size:14px;color:var(--ink);}
+  /* space selector inside add */
+  .ssel{display:flex;gap:8px;overflow:auto;padding-bottom:2px;}
+  .stile{flex:0 0 auto;display:flex;align-items:center;gap:8px;background:var(--surface);
+    border:1px solid var(--border);border-radius:var(--pill);padding:8px 14px 8px 8px;font-size:13px;font-weight:600;cursor:pointer;}
+  .stile .d{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;font-size:13px;}
+  .stile.on{border-color:var(--sage);background:rgba(var(--sage-rgb),.08);}
+  .save{margin:20px 18px 0;background:var(--grad);color:#fff;border:none;border-radius:var(--pill);
+    padding:16px;width:calc(100% - 36px);font-family:var(--font-b);font-weight:700;font-size:16px;}
+</style>
+</head>
+<body>
+  <div class="intro">
+    <h1>Zepo · Espacios</h1>
+    <p>Cada gasto vive en un <b>espacio</b> (Personal, un negocio, otro negocio…). Cambias de espacio desde arriba y todo —saldos, lista, presupuestos— se filtra solo. Tres pantallas de ejemplo:</p>
+  </div>
+
+  <div class="row">
+
+    <!-- ============ SCREEN 1 ============ -->
+    <div>
+    <div class="phone"><div class="screen">
+      <div class="topbar">
+        <div class="space-chip">
+          <div class="space-dot" style="background:rgba(80,125,90,.16);">🏠</div>
+          <span class="nm">Personal</span><span class="car">▾</span>
+        </div>
+        <div class="ic">🔔</div>
+      </div>
+
+      <div class="hero">
+        <div class="lbl">Gastado este mes · Personal</div>
+        <div class="big">$842<span style="font-size:22px;color:var(--ink-faint);">.30</span></div>
+        <div class="sub">de $1.200 presupuesto · <span class="up">70%</span></div>
+      </div>
+      <div class="mini">
+        <div class="b"><div class="t">Ingresos</div><div class="v in">$2.100</div></div>
+        <div class="b"><div class="t">Balance</div><div class="v">$1.257</div></div>
+      </div>
+
+      <div class="list">
+        <div class="sec-label" style="margin-bottom:6px;">Hoy</div>
+        <div class="li"><div class="em">🛒</div><div class="mid"><div class="d">Supermaxi</div><div class="c">Mercado</div></div><div class="amt">-$54.20</div></div>
+        <div class="li"><div class="em">⛽</div><div class="mid"><div class="d">Gasolina</div><div class="c">Transporte</div></div><div class="amt">-$30.00</div></div>
+        <div class="li"><div class="em">☕</div><div class="mid"><div class="d">Café</div><div class="c">Comida</div></div><div class="amt">-$4.50</div></div>
+      </div>
+
+      <div class="fab">+</div>
+      <div class="tabbar"><span class="on">🏠</span><span>📊</span><span>📅</span><span>⚙️</span></div>
+    </div></div>
+    <div class="cap">1 · Inicio. El chip de arriba dice <b>en qué espacio estás</b>. Todo lo de abajo es solo de ese espacio.</div>
+    </div>
+
+    <!-- ============ SCREEN 2 ============ -->
+    <div>
+    <div class="phone"><div class="screen">
+      <!-- faded home behind -->
+      <div class="topbar" style="opacity:.5;">
+        <div class="space-chip"><div class="space-dot" style="background:rgba(80,125,90,.16);">🏠</div><span class="nm">Personal</span><span class="car">▾</span></div>
+        <div class="ic">🔔</div>
+      </div>
+      <div class="hero" style="opacity:.5;"><div class="lbl">Gastado este mes</div><div class="big">$842.30</div></div>
+
+      <div class="scrim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h3>Cambiar de espacio</h3>
+        <div class="hint">Toca uno para verlo. Mantén presionado para editar.</div>
+
+        <div class="sp active">
+          <div class="ico" style="background:rgba(80,125,90,.16);">🏠</div>
+          <div class="info"><div class="n">Personal</div><div class="m">$842 este mes · 24 gastos</div></div>
+          <div class="chk">✓</div>
+        </div>
+        <div class="sp">
+          <div class="ico" style="background:rgba(191,138,42,.16);">🏪</div>
+          <div class="info"><div class="n">Mi Tienda</div><div class="m">$3.410 este mes · 61 gastos</div></div>
+        </div>
+        <div class="sp">
+          <div class="ico" style="background:rgba(184,72,58,.14);">💻</div>
+          <div class="info"><div class="n">Agencia</div><div class="m">$1.120 este mes · 18 gastos</div></div>
+        </div>
+        <div class="sp all">
+          <div class="ico" style="background:var(--surface);">🌐</div>
+          <div class="info"><div class="n">Ver todos juntos</div><div class="m">Resumen de los 3 espacios</div></div>
+        </div>
+
+        <button class="newsp">＋ Nuevo espacio</button>
+      </div>
+    </div></div>
+    <div class="cap">2 · El <b>selector</b>. Cada espacio tiene su ícono, color y su total. "Ver todos" suma todo (solo lectura).</div>
+    </div>
+
+    <!-- ============ SCREEN 3 ============ -->
+    <div>
+    <div class="phone"><div class="screen">
+      <div class="ahead"><div class="x">✕</div><h3>Nuevo gasto</h3><div class="x" style="opacity:0;">✕</div></div>
+
+      <div class="field">
+        <div class="l">Monto</div>
+        <div class="amount-box"><span class="cur">$</span><span class="val">54.20</span></div>
+      </div>
+
+      <div class="field">
+        <div class="l">Espacio</div>
+        <div class="ssel">
+          <div class="stile on"><span class="d" style="background:rgba(80,125,90,.16);">🏠</span>Personal</div>
+          <div class="stile"><span class="d" style="background:rgba(191,138,42,.16);">🏪</span>Mi Tienda</div>
+          <div class="stile"><span class="d" style="background:rgba(184,72,58,.14);">💻</span>Agencia</div>
+        </div>
+      </div>
+
+      <div class="field"><div class="l">Descripción</div><div class="inp">Supermaxi</div></div>
+      <div class="field"><div class="l">Categoría</div><div class="inp">🛒 Mercado</div></div>
+
+      <button class="save">Guardar gasto</button>
+    </div></div>
+    <div class="cap">3 · Al registrar, ya viene marcado el <b>espacio activo</b>. Lo cambias con un toque si el gasto es de otro negocio.</div>
+    </div>
+
+  </div>
+</body>
+</html>

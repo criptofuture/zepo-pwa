@@ -3225,6 +3225,15 @@ setTimeout(function() {
           </div>
         </div>
 
+        <!-- Selector de espacio (centros de gasto) -->
+        <div style="padding:0 20px 14px;">
+          <button type="button" @click="openSpaceSwitcher()" style="display:inline-flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-pill);padding:8px 14px 8px 9px;box-shadow:0 2px 8px rgba(var(--c-ink-rgb),0.06);cursor:pointer;font-family:inherit;max-width:100%;">
+            <span :style="{ background: spaceViewAll ? 'var(--surface2)' : spaceTint(activeSpace, 0.16) }" style="width:26px;height:26px;border-radius:9px;display:grid;place-items:center;font-size:15px;flex-shrink:0;" x-text="spaceViewAll ? '🌐' : (activeSpace ? activeSpace.icon : '🏠')"></span>
+            <span style="font-family:var(--font-display);font-weight:700;font-size:15px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="spaceViewAll ? 'Todos los espacios' : (activeSpace ? activeSpace.name : 'Personal')"></span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2.4" width="13" height="13" style="flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+
         <!-- Sunset banner para Free: chip normal hasta 7 días, urgente (rojo) cuando ≤ 7 -->
         <div x-show="userPlan === 'free' && daysUntilSunset > 7" @click="tab = 'plans'" class="home-sunset-banner">
           <div style="display:flex;align-items:center;gap:8px;">
@@ -3368,7 +3377,12 @@ setTimeout(function() {
                   </div>
                   <div class="expense-info">
                     <div class="expense-desc" x-text="entry.description || getCatLabel(entry.category)"></div>
-                    <div class="expense-meta" x-text="formatDate(entry.date)"></div>
+                    <div class="expense-meta">
+                      <span x-text="formatDate(entry.date)"></span>
+                      <template x-if="spaceViewAll && entry.space_id && spaceById(entry.space_id)">
+                        <span style="color:var(--dim);"> · <span x-text="(spaceById(entry.space_id)||{}).icon"></span> <span x-text="(spaceById(entry.space_id)||{}).name"></span></span>
+                      </template>
+                    </div>
                   </div>
                   <svg x-show="entry.receipt_image_path" class="receipt-indicator" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                   <div class="expense-amount" :class="{ income: entry.is_income }" x-text="(entry.is_income ? '+' : '-') + '$' + fmtMoney(entry.amount)"></div>
@@ -5794,6 +5808,27 @@ setTimeout(function() {
                 </div>
               </div>
 
+              <!-- ═════════ ESPACIO (centro de gasto) ═════════ -->
+              <div x-show="spaces.length > 1 && (editingExpense || analyzed || form.amount || parsedItems.length)" style="margin-bottom:12px;">
+                <div class="cd-section-label" style="display:flex;align-items:center;justify-content:space-between;">
+                  <span>ESPACIO</span>
+                  <button type="button" @click="openSpaceManager()" style="background:transparent;border:none;color:var(--cyan);font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:4px;padding:0;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="12" height="12"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Nuevo
+                  </button>
+                </div>
+                <div class="cd-cat-grid">
+                  <template x-for="s in spaces" :key="'fs'+s.id">
+                    <button type="button" @click="form.space_id = s.id" class="cd-cat-tile" :class="{ 'cd-cat-tile-active': form.space_id === s.id }" :style="form.space_id === s.id ? 'border-color:var(--cyan);background:rgba(var(--c-brand-rgb),0.08)' : ''">
+                      <div class="cd-cat-tile-icon" :style="{ background: spaceTint(s, 0.16), border: '1px solid ' + spaceTint(s, 0.3) }">
+                        <span x-text="s.icon || '🏠'"></span>
+                      </div>
+                      <span class="cd-cat-tile-label" x-text="s.name"></span>
+                    </button>
+                  </template>
+                </div>
+              </div>
+
               <!-- ═════════ MÉTODO DE PAGO (solo gastos) ═════════ -->
               <div x-show="!form.is_income && (editingExpense || analyzed || form.amount || parsedItems.length)" style="margin-bottom:12px;">
                 <div class="cd-section-label" style="display:flex;align-items:center;justify-content:space-between;">
@@ -6386,6 +6421,130 @@ setTimeout(function() {
               <div style="font-size:11px;color:var(--dim);line-height:1.4;margin:12px 0 16px;">Para crear uno nuevo, marca «Repetir cada mes» cuando agregues un gasto.</div>
 
               <button @click="recurringManagerOpen = false; cancelEditRt()" style="width:100%;height:42px;border-radius:21px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ══ SWITCHER DE ESPACIOS ══ -->
+      <template x-if="spaceSwitcherOpen">
+        <div style="position:fixed;inset:0;z-index:200;">
+          <div class="sheet-backdrop" style="z-index:200;" @click="spaceSwitcherOpen = false"></div>
+          <div class="sheet" style="max-height:calc(100% - var(--safe-top) - var(--safe-bottom) - 20px);position:fixed;left:0;right:0;bottom:0;max-width:430px;margin:0 auto;background:var(--bg);border-top-left-radius:24px;border-top-right-radius:24px;padding:14px 0 calc(16px + var(--safe-bottom));z-index:201;overflow-y:auto;border-top:1px solid var(--border);">
+            <div class="sheet-grabber"></div>
+            <div style="padding:6px 20px 24px;">
+              <div class="sheet-title">Cambiar de espacio</div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">Cada espacio separa sus gastos, presupuestos y recurrentes.</div>
+
+              <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+                <template x-for="s in spaces" :key="s.id">
+                  <button type="button" @click="selectSpace(s.id)" style="display:flex;align-items:center;gap:12px;border-radius:var(--radius);padding:13px;cursor:pointer;font-family:inherit;text-align:left;width:100%;" :style="{ background:'var(--surface)', border: (!spaceViewAll && activeSpaceId === s.id) ? '1px solid var(--cyan)' : '1px solid var(--border)', boxShadow: (!spaceViewAll && activeSpaceId === s.id) ? '0 0 0 2px rgba(var(--c-brand-rgb),0.15)' : 'none' }">
+                    <span :style="{ background: spaceTint(s, 0.16) }" style="width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-size:20px;flex-shrink:0;" x-text="s.icon || '🏠'"></span>
+                    <div style="flex:1;min-width:0;">
+                      <div style="font-family:var(--font-display);font-weight:700;font-size:15px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="s.name"></div>
+                      <div style="font-size:12px;color:var(--muted);margin-top:1px;" x-text="spaceMonthLabel(s.id)"></div>
+                    </div>
+                    <span x-show="!spaceViewAll && activeSpaceId === s.id" style="color:var(--cyan);font-size:18px;font-weight:700;flex-shrink:0;">✓</span>
+                  </button>
+                </template>
+
+                <button type="button" @click="selectSpace('__all__')" style="display:flex;align-items:center;gap:12px;border-radius:var(--radius);padding:13px;cursor:pointer;font-family:inherit;text-align:left;width:100%;background:var(--surface2);" :style="{ border: spaceViewAll ? '1px solid var(--cyan)' : '1px dashed var(--border2)' }">
+                  <span style="width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-size:20px;flex-shrink:0;background:var(--surface);">🌐</span>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-family:var(--font-display);font-weight:700;font-size:15px;color:var(--text);">Ver todos juntos</div>
+                    <div style="font-size:12px;color:var(--muted);margin-top:1px;">Resumen de todos los espacios</div>
+                  </div>
+                  <span x-show="spaceViewAll" style="color:var(--cyan);font-size:18px;font-weight:700;flex-shrink:0;">✓</span>
+                </button>
+              </div>
+
+              <button @click="openSpaceManager()" style="width:100%;height:46px;border-radius:23px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;border:none;display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Crear o editar espacios
+              </button>
+              <button @click="spaceSwitcherOpen = false" style="width:100%;height:42px;border-radius:21px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ══ MANAGER DE ESPACIOS ══ -->
+      <template x-if="spaceManagerOpen">
+        <div style="position:fixed;inset:0;z-index:210;">
+          <div class="sheet-backdrop" style="z-index:210;" @click="spaceManagerOpen = false; cancelEditSpace()"></div>
+          <div class="sheet" style="max-height:calc(100% - var(--safe-top) - var(--safe-bottom) - 20px);position:fixed;left:0;right:0;bottom:0;max-width:430px;margin:0 auto;background:var(--bg);border-top-left-radius:24px;border-top-right-radius:24px;padding:14px 0 calc(16px + var(--safe-bottom));z-index:211;overflow-y:auto;border-top:1px solid var(--border);">
+            <div class="sheet-grabber"></div>
+            <div style="padding:6px 20px 24px;">
+              <div class="sheet-title">Espacios</div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">Crea negocios o centros aparte de lo personal.</div>
+
+              <!-- Lista de espacios existentes -->
+              <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px;">
+                <template x-for="s in spaces" :key="s.id">
+                  <div style="border-radius:var(--radius-sm);overflow:hidden;flex-shrink:0;" :style="{ background: editingSpaceId === s.id ? 'var(--surface2)' : 'var(--surface)', border: editingSpaceId === s.id ? '1px solid rgba(var(--c-brand-rgb),0.3)' : '1px solid var(--border)' }">
+                    <!-- Read row -->
+                    <div x-show="editingSpaceId !== s.id" class="flex-show" style="align-items:center;gap:10px;padding:10px 12px;">
+                      <div :style="{ background: spaceTint(s, 0.16) }" style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;">
+                        <span x-text="s.icon || '🏠'"></span>
+                      </div>
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="s.name"></div>
+                        <div x-show="s.is_default" style="font-size:9px;color:var(--cyan);letter-spacing:0.4px;font-weight:700;margin-top:1px;">PERSONAL</div>
+                      </div>
+                      <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">
+                        <button @click="startEditSpace(s)" style="width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;color:var(--muted);display:flex;align-items:center;justify-content:center;" title="Editar">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                        <button x-show="!s.is_default" @click="removeSpace(s)" style="width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;color:var(--danger);display:flex;align-items:center;justify-content:center;" title="Eliminar">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                    <!-- Edit row -->
+                    <div x-show="editingSpaceId === s.id" style="padding:12px;">
+                      <input type="text" x-model="editSpaceName" maxlength="24" style="width:100%;height:42px;border-radius:10px;background:var(--bg);border:1px solid var(--border);padding:0 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;margin-bottom:10px;">
+                      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+                        <template x-for="ic in spaceIconChoices" :key="'ei'+ic">
+                          <button type="button" @click="editSpaceIcon = ic" style="width:38px;height:38px;border-radius:10px;font-size:18px;cursor:pointer;display:grid;place-items:center;" :style="{ background: editSpaceIcon === ic ? 'rgba(var(--c-brand-rgb),0.12)' : 'var(--surface2)', border: editSpaceIcon === ic ? '1px solid var(--cyan)' : '1px solid var(--border)' }" x-text="ic"></button>
+                        </template>
+                      </div>
+                      <div style="display:flex;gap:8px;margin-bottom:12px;">
+                        <template x-for="col in spaceColorChoices" :key="'ec'+col">
+                          <button type="button" @click="editSpaceColor = col" :style="{ background: col, boxShadow: editSpaceColor === col ? '0 0 0 2px var(--bg), 0 0 0 4px ' + col : 'none' }" style="width:30px;height:30px;border-radius:50%;border:none;cursor:pointer;flex-shrink:0;"></button>
+                        </template>
+                      </div>
+                      <div style="display:flex;gap:6px;">
+                        <button @click="saveEditSpace()" style="flex:1;height:36px;border-radius:10px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;border:none;">Guardar</button>
+                        <button @click="cancelEditSpace()" style="flex:1;height:36px;border-radius:10px;background:transparent;color:var(--muted);font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;border:1px solid var(--border);">Cancelar</button>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+
+              <!-- Nuevo espacio -->
+              <div style="padding:14px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);margin-bottom:16px;">
+                <div style="font-size:11px;color:var(--muted);letter-spacing:1px;font-weight:700;margin-bottom:10px;">NUEVO ESPACIO</div>
+                <input type="text" x-model="newSpaceName" @keydown.enter="addSpace()" maxlength="24" placeholder="Nombre (ej: Mi Tienda)" style="width:100%;height:44px;border-radius:10px;background:var(--bg);border:1px solid var(--border);padding:0 14px;font-size:13px;color:var(--text);font-family:inherit;outline:none;margin-bottom:12px;">
+                <div style="font-size:10px;color:var(--dim);letter-spacing:0.5px;font-weight:700;margin-bottom:7px;">ÍCONO</div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+                  <template x-for="ic in spaceIconChoices" :key="'ni'+ic">
+                    <button type="button" @click="newSpaceIcon = ic" style="width:38px;height:38px;border-radius:10px;font-size:18px;cursor:pointer;display:grid;place-items:center;" :style="{ background: newSpaceIcon === ic ? 'rgba(var(--c-brand-rgb),0.12)' : 'var(--surface2)', border: newSpaceIcon === ic ? '1px solid var(--cyan)' : '1px solid var(--border)' }" x-text="ic"></button>
+                  </template>
+                </div>
+                <div style="font-size:10px;color:var(--dim);letter-spacing:0.5px;font-weight:700;margin-bottom:7px;">COLOR</div>
+                <div style="display:flex;gap:8px;margin-bottom:14px;">
+                  <template x-for="col in spaceColorChoices" :key="'nc'+col">
+                    <button type="button" @click="newSpaceColor = col" :style="{ background: col, boxShadow: newSpaceColor === col ? '0 0 0 2px var(--bg), 0 0 0 4px ' + col : 'none' }" style="width:30px;height:30px;border-radius:50%;border:none;cursor:pointer;flex-shrink:0;"></button>
+                  </template>
+                </div>
+                <button @click="addSpace()" :disabled="!newSpaceName || !newSpaceName.trim()" style="width:100%;height:40px;border-radius:20px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:13px;font-family:inherit;border:none;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;" :style="{ opacity: (!newSpaceName || !newSpaceName.trim()) ? '0.4' : '1' }">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Crear espacio
+                </button>
+              </div>
+
+              <button @click="spaceManagerOpen = false; cancelEditSpace()" style="width:100%;height:42px;border-radius:21px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">Cerrar</button>
             </div>
           </div>
         </div>
@@ -7393,7 +7552,7 @@ function zepoApp() {
     histAll: false,
     histType: 'all',
     homeViewMode: 'expense',
-    form: { amount: '', description: '', category: '', date: '', is_income: false, is_split: false, split_persona: '', split_pct: '', split_people: [], payment_method: '' },
+    form: { amount: '', description: '', category: '', date: '', is_income: false, is_split: false, split_persona: '', split_pct: '', split_people: [], payment_method: '', space_id: null },
     paymentMethods: [],
     learnedCats: {},
     recurringTemplates: [],
@@ -7415,6 +7574,23 @@ function zepoApp() {
     editingPmName: '',
     editingPmType: 'tarjeta',
     _pmSeeding: false,
+    // ── Espacios (centros de gasto) ──
+    spaces: [],
+    activeSpaceId: null,
+    spaceViewAll: false,
+    spaceStats: {},
+    spaceSwitcherOpen: false,
+    spaceManagerOpen: false,
+    newSpaceName: '',
+    newSpaceIcon: '🏪',
+    newSpaceColor: '#BF8A2A',
+    editingSpaceId: null,
+    editSpaceName: '',
+    editSpaceIcon: '🏠',
+    editSpaceColor: '#507D5A',
+    _spaceSeeding: false,
+    spaceIconChoices: ['🏠','🏪','💻','🍔','🚗','✈️','🏢','💼','🎓','🐾','❤️','🎨','🛠️','📦'],
+    spaceColorChoices: ['#507D5A','#BF8A2A','#B8483A','#6B8CAE','#9B6B9E','#84AF72'],
     splitPickerIdx: -1,
     splitPickerQuery: '',
     pendingSplits: [],
@@ -7492,7 +7668,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v112',
+    APP_VERSION: 'v113',
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
@@ -7675,7 +7851,9 @@ function zepoApp() {
 
       history.replaceState({ zepo: true }, '');
       window.addEventListener('popstate', () => {
-        if (this.recurringManagerOpen) { this.recurringManagerOpen = false; this.cancelEditRt(); }
+        if (this.spaceManagerOpen) { this.spaceManagerOpen = false; this.cancelEditSpace(); }
+        else if (this.spaceSwitcherOpen) { this.spaceSwitcherOpen = false; }
+        else if (this.recurringManagerOpen) { this.recurringManagerOpen = false; this.cancelEditRt(); }
         else if (this.pmManagerOpen) { this.pmManagerOpen = false; this.cancelEditPm(); }
         else if (this.catManagerOpen) { this.catManagerOpen = false; this.cancelEditCategory(); }
         else if (this.budgetSheetOpen) { this.budgetSheetOpen = false; }
@@ -7703,7 +7881,7 @@ function zepoApp() {
         if (val !== old) pushBack();
       });
 
-      ['sheetOpen','catManagerOpen','pmManagerOpen','recurringManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen'].forEach(k => {
+      ['sheetOpen','catManagerOpen','pmManagerOpen','recurringManagerOpen','spaceSwitcherOpen','spaceManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen'].forEach(k => {
         this.$watch(k, v => { if (v) pushBack(); });
       });
 
@@ -7727,6 +7905,7 @@ function zepoApp() {
           this.user = session.user;
           this.userName = session.user.user_metadata?.name || session.user.user_metadata?.full_name || session.user.email.split('@')[0];
           await this.ensureUserRow();
+          await this.loadSpaces();
           await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadBudgets(), this.loadUserPlan(), this.loadFriends(), this.loadPaymentRequests(), this.loadPaymentMethods(), this.loadCategoryLearning(), this.loadRecurringTemplates()]);
           this.handlePaymentReturn();
           this.initWelcomeCarousel();
@@ -7827,6 +8006,7 @@ function zepoApp() {
           this.user = session.user;
           this.userName = session.user.user_metadata?.name || session.user.email.split('@')[0];
           await this.ensureUserRow();
+          await this.loadSpaces();
           this.loadExpenses();
           this.loadUserPlan();
           this.initWelcomeCarousel();
@@ -8132,15 +8312,15 @@ function zepoApp() {
       const end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toLocaleDateString('en-CA');
       let data = null;
       try {
-        const r = await withTimeout(
-          sb.from('expenses').select('*').eq('user_id', this.user.id).gte('date', start).lte('date', end).order('date', { ascending: false }).order('created_at', { ascending: false }),
-          2500, 'loadExpenses'
-        );
+        let q = sb.from('expenses').select('*').eq('user_id', this.user.id).gte('date', start).lte('date', end);
+        q = this._applySpaceFilter(q);
+        q = q.order('date', { ascending: false }).order('created_at', { ascending: false });
+        const r = await withTimeout(q, 2500, 'loadExpenses');
         data = r.data;
       } catch (e) {
         console.warn('[loadExpenses] fallback REST:', e.message);
         try {
-          const url = SUPABASE_URL + '/rest/v1/expenses?user_id=eq.' + encodeURIComponent(this.user.id) + '&date=gte.' + start + '&date=lte.' + end + '&order=date.desc,created_at.desc';
+          const url = SUPABASE_URL + '/rest/v1/expenses?user_id=eq.' + encodeURIComponent(this.user.id) + '&date=gte.' + start + '&date=lte.' + end + this._spaceFilterUrl() + '&order=date.desc,created_at.desc';
           const res = await fetch(url, { headers: sbAuthHeaders() });
           data = res.ok ? await res.json() : [];
         } catch (e2) { data = []; }
@@ -8165,6 +8345,8 @@ function zepoApp() {
         q = q.limit(1000);
         filterUrl += '&limit=1000';
       }
+      q = this._applySpaceFilter(q);
+      filterUrl += this._spaceFilterUrl();
       try {
         const { data } = await withTimeout(q, 2500, 'loadHistory');
         this.historyData = data || [];
@@ -8935,19 +9117,19 @@ function zepoApp() {
 
     // ── Budgets ──
     async loadBudgets() {
+      if (this.spaceViewAll || !this.activeSpaceId) { this.budgets = []; this.budgetForm = {}; return; }
       const now = new Date();
       const m = now.getMonth() + 1, y = now.getFullYear();
       let data = null;
       try {
-        const r = await withTimeout(
-          sb.from('budgets').select('*').eq('user_id', this.user.id).eq('month', m).eq('year', y),
-          2500, 'loadBudgets'
-        );
+        let q = sb.from('budgets').select('*').eq('user_id', this.user.id).eq('month', m).eq('year', y);
+        q = this._applySpaceFilter(q);
+        const r = await withTimeout(q, 2500, 'loadBudgets');
         data = r.data;
       } catch (e) {
         console.warn('[loadBudgets] fallback REST:', e.message);
         try {
-          const url = SUPABASE_URL + '/rest/v1/budgets?user_id=eq.' + encodeURIComponent(this.user.id) + '&month=eq.' + m + '&year=eq.' + y;
+          const url = SUPABASE_URL + '/rest/v1/budgets?user_id=eq.' + encodeURIComponent(this.user.id) + '&month=eq.' + m + '&year=eq.' + y + this._spaceFilterUrl();
           const res = await fetch(url, { headers: sbAuthHeaders() });
           data = res.ok ? await res.json() : [];
         } catch (e2) { data = []; }
@@ -8970,31 +9152,33 @@ function zepoApp() {
     },
 
     async saveBudgets() {
+      if (this.spaceViewAll || !this.activeSpaceId) { this.showToast('Elige un espacio para fijar presupuesto'); return; }
       this.savingBudget = true;
       const now = new Date();
       const month = now.getMonth() + 1;
       const year = now.getFullYear();
+      const sf = this.activeSpaceId;
       // Elite: total auto = sum of category budgets. Pro: total comes from manual input.
       const effectiveTotal = this.userPlan === 'elite' ? this.categoryBudgetSum : parseFloat(this.budgetForm._total || 0);
       try {
         try {
           await withTimeout(
-            sb.from('budgets').delete().eq('user_id', this.user.id).eq('month', month).eq('year', year).then(r => { if (r.error) throw r.error; return r; }),
+            sb.from('budgets').delete().eq('user_id', this.user.id).eq('month', month).eq('year', year).eq('space_id', sf).then(r => { if (r.error) throw r.error; return r; }),
             2500, 'budget-delete'
           );
         } catch (e) {
           console.warn('[saveBudgets] delete fallback REST:', e.message);
-          await sbRestDelete('budgets', { user_id: this.user.id, month, year });
+          await sbRestDelete('budgets', { user_id: this.user.id, month, year, space_id: sf });
         }
         const rows = [];
         if (effectiveTotal > 0) {
-          rows.push({ user_id: this.user.id, category: null, amount: effectiveTotal, month, year });
+          rows.push({ user_id: this.user.id, category: null, amount: effectiveTotal, month, year, space_id: sf });
         }
         if (this.userPlan === 'elite') {
           for (const [key, val] of Object.entries(this.budgetForm)) {
             if (key === '_total') continue;
             const n = parseFloat(val);
-            if (!isNaN(n) && n > 0) rows.push({ user_id: this.user.id, category: key, amount: n, month, year });
+            if (!isNaN(n) && n > 0) rows.push({ user_id: this.user.id, category: key, amount: n, month, year, space_id: sf });
           }
         }
         if (rows.length > 0) {
@@ -9131,6 +9315,155 @@ function zepoApp() {
       if (this.parsedItems.length >= 2) return; // multi-item: cada item se aprende por su cuenta
       this._learnCategory(this.form.description || (this.parsedItems[0] && this.parsedItems[0].description) || '', key);
     },
+    // ── Espacios (centros de gasto) ──
+    get activeSpace() { return this.spaces.find(s => s.id === this.activeSpaceId) || null; },
+    _currentSpaceId() {
+      if (this.activeSpaceId) return this.activeSpaceId;
+      const def = this.spaces.find(s => s.is_default) || this.spaces[0];
+      return def ? def.id : null;
+    },
+    spaceById(id) { return this.spaces.find(s => s.id === id) || null; },
+    // El espacio Personal (default) actúa como catch-all: también muestra filas sin
+    // space_id (huérfanas / creadas fuera del flujo) para que nada desaparezca de la vista.
+    _isDefaultSpaceActive() {
+      if (this.spaceViewAll || !this.activeSpaceId) return false;
+      const def = this.spaces.find(s => s.is_default);
+      return !!(def && def.id === this.activeSpaceId);
+    },
+    _applySpaceFilter(q) {
+      if (this.spaceViewAll || !this.activeSpaceId) return q;
+      if (this._isDefaultSpaceActive()) return q.or('space_id.eq.' + this.activeSpaceId + ',space_id.is.null');
+      return q.eq('space_id', this.activeSpaceId);
+    },
+    _spaceFilterUrl() {
+      if (this.spaceViewAll || !this.activeSpaceId) return '';
+      if (this._isDefaultSpaceActive()) return '&or=(space_id.eq.' + this.activeSpaceId + ',space_id.is.null)';
+      return '&space_id=eq.' + this.activeSpaceId;
+    },
+    _hexToRgba(hex, a) {
+      const h = (hex || '#507D5A').replace('#', '');
+      const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
+      return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+    },
+    spaceTint(s, a) { return this._hexToRgba(s && s.color, a == null ? 0.16 : a); },
+    async loadSpaces() {
+      if (!this.user) return;
+      let data = null;
+      try {
+        const r = await withTimeout(
+          sb.from('spaces').select('*').eq('user_id', this.user.id).order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
+          2500, 'loadSpaces'
+        );
+        data = r.data;
+      } catch (e) {
+        try {
+          const url = SUPABASE_URL + '/rest/v1/spaces?user_id=eq.' + encodeURIComponent(this.user.id) + '&order=sort_order.asc,created_at.asc';
+          const res = await fetch(url, { headers: sbAuthHeaders() });
+          data = res.ok ? await res.json() : [];
+        } catch (e2) { data = []; }
+      }
+      this.spaces = data || [];
+      if (this.spaces.length === 0 && !this._spaceSeeding) await this.seedDefaultSpace();
+      let saved = null;
+      try { saved = localStorage.getItem('zepo_active_space'); } catch {}
+      if (saved === '__all__') { this.spaceViewAll = true; this.activeSpaceId = null; }
+      else if (saved && this.spaces.some(s => s.id === saved)) { this.spaceViewAll = false; this.activeSpaceId = saved; }
+      else { const def = this.spaces.find(s => s.is_default) || this.spaces[0]; this.spaceViewAll = false; this.activeSpaceId = def ? def.id : null; }
+    },
+    async seedDefaultSpace() {
+      this._spaceSeeding = true;
+      const row = { user_id: this.user.id, name: 'Personal', icon: '🏠', color: '#507D5A', is_default: true, sort_order: 0 };
+      try {
+        const ins = await sbRestInsert('spaces', row);
+        this.spaces = (ins && ins.length) ? ins : [row];
+      } catch (e) { console.warn('[seedDefaultSpace]', e.message); }
+      this._spaceSeeding = false;
+    },
+    openSpaceSwitcher() { this.spaceSwitcherOpen = true; this.loadSpaceStats(); },
+    async loadSpaceStats() {
+      if (!this.user) return;
+      try {
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('en-CA');
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toLocaleDateString('en-CA');
+        let rows = null;
+        try {
+          const r = await withTimeout(
+            sb.from('expenses').select('amount,is_income,space_id').eq('user_id', this.user.id).gte('date', start).lte('date', end),
+            2500, 'spaceStats'
+          );
+          rows = r.data;
+        } catch (e) {
+          const url = SUPABASE_URL + '/rest/v1/expenses?select=amount,is_income,space_id&user_id=eq.' + encodeURIComponent(this.user.id) + '&date=gte.' + start + '&date=lte.' + end;
+          const res = await fetch(url, { headers: sbAuthHeaders() });
+          rows = res.ok ? await res.json() : [];
+        }
+        const stats = {};
+        (rows || []).forEach(e => {
+          const k = e.space_id || '_none';
+          if (!stats[k]) stats[k] = { spent: 0, count: 0 };
+          stats[k].count++;
+          if (!e.is_income) stats[k].spent += Number(e.amount) || 0;
+        });
+        this.spaceStats = stats;
+      } catch (e) { this.spaceStats = {}; }
+    },
+    spaceMonthLabel(id) {
+      const s = this.spaceStats[id];
+      if (!s || !s.count) return 'Sin gastos este mes';
+      return '$' + s.spent.toFixed(2) + ' · ' + s.count + (s.count === 1 ? ' gasto' : ' gastos');
+    },
+    async selectSpace(id) {
+      if (id === '__all__') { this.spaceViewAll = true; this.activeSpaceId = null; try { localStorage.setItem('zepo_active_space', '__all__'); } catch {} }
+      else { this.spaceViewAll = false; this.activeSpaceId = id; try { localStorage.setItem('zepo_active_space', id); } catch {} }
+      this.spaceSwitcherOpen = false;
+      await this.refreshForSpace();
+    },
+    async refreshForSpace() {
+      await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadBudgets(), this.loadRecurringTemplates()]);
+    },
+    openSpaceManager() { this.resetNewSpace(); this.editingSpaceId = null; this.spaceSwitcherOpen = false; this.spaceManagerOpen = true; },
+    resetNewSpace() { this.newSpaceName = ''; this.newSpaceIcon = '🏪'; this.newSpaceColor = '#BF8A2A'; },
+    async addSpace() {
+      const name = (this.newSpaceName || '').trim();
+      if (!name) { this.showToast('Ponle un nombre'); return; }
+      if (this.spaces.some(s => (s.name || '').toLowerCase() === name.toLowerCase())) { this.showToast('Ya existe ese espacio'); return; }
+      const row = { user_id: this.user.id, name, icon: this.newSpaceIcon || '🏪', color: this.newSpaceColor || '#BF8A2A', is_default: false, sort_order: this.spaces.length };
+      try {
+        const ins = await sbRestInsert('spaces', row);
+        const created = (ins && ins[0]) || row;
+        this.spaces.push(created);
+        this.resetNewSpace();
+        this.showToast('Espacio creado');
+      } catch (e) { this.showToast('Error: ' + e.message); }
+    },
+    startEditSpace(s) { this.editingSpaceId = s.id; this.editSpaceName = s.name; this.editSpaceIcon = s.icon || '🏠'; this.editSpaceColor = s.color || '#507D5A'; },
+    cancelEditSpace() { this.editingSpaceId = null; },
+    async saveEditSpace() {
+      const s = this.spaces.find(x => x.id === this.editingSpaceId);
+      if (!s) return this.cancelEditSpace();
+      const name = (this.editSpaceName || '').trim();
+      if (!name) { this.showToast('Ponle un nombre'); return; }
+      try {
+        await sbRestUpdate('spaces', 'id', s.id, { name, icon: this.editSpaceIcon, color: this.editSpaceColor });
+        s.name = name; s.icon = this.editSpaceIcon; s.color = this.editSpaceColor;
+      } catch (e) { this.showToast('Error: ' + e.message); }
+      this.cancelEditSpace();
+    },
+    async removeSpace(s) {
+      if (s.is_default) { this.showToast('No puedes borrar el espacio Personal'); return; }
+      if (this.spaces.length <= 1) { this.showToast('Deja al menos un espacio'); return; }
+      const def = this.spaces.find(x => x.is_default) || this.spaces.find(x => x.id !== s.id);
+      if (!confirm('¿Eliminar "' + s.name + '"? Sus gastos y presupuestos se moverán a "' + (def ? def.name : 'Personal') + '". Nada se borra.')) return;
+      try {
+        await sbRestUpdate('expenses', 'space_id', s.id, { space_id: def.id });
+        await sbRestUpdate('budgets', 'space_id', s.id, { space_id: def.id });
+        await sbRestUpdate('recurring_templates', 'space_id', s.id, { space_id: def.id });
+        await sbRestDelete('spaces', { id: s.id });
+        this.spaces = this.spaces.filter(x => x.id !== s.id);
+        if (this.activeSpaceId === s.id) await this.selectSpace(def.id);
+      } catch (e) { this.showToast('Error: ' + e.message); }
+    },
     // ── Gastos recurrentes (Feature 4) ──
     _catEmoji(key) { return (CAT_MAP[key] && CAT_MAP[key].emoji) || '📦'; },
     _catLabel(key) { return (CAT_MAP[key] && CAT_MAP[key].label) || key || 'Otro'; },
@@ -9138,14 +9471,13 @@ function zepoApp() {
       if (!this.user) return;
       let data = null;
       try {
-        const r = await withTimeout(
-          sb.from('recurring_templates').select('*').eq('user_id', this.user.id).order('created_at', { ascending: false }),
-          2500, 'loadRecurringTemplates'
-        );
+        let q = sb.from('recurring_templates').select('*').eq('user_id', this.user.id);
+        q = this._applySpaceFilter(q);
+        const r = await withTimeout(q.order('created_at', { ascending: false }), 2500, 'loadRecurringTemplates');
         data = r.data;
       } catch (e) {
         try {
-          const url = SUPABASE_URL + '/rest/v1/recurring_templates?user_id=eq.' + encodeURIComponent(this.user.id) + '&order=created_at.desc';
+          const url = SUPABASE_URL + '/rest/v1/recurring_templates?user_id=eq.' + encodeURIComponent(this.user.id) + this._spaceFilterUrl() + '&order=created_at.desc';
           const res = await fetch(url, { headers: sbAuthHeaders() });
           data = res.ok ? await res.json() : [];
         } catch (e2) { data = []; }
@@ -9165,6 +9497,7 @@ function zepoApp() {
         day_of_month: day,
         active: true,
         last_generated: localDate(), // este mes ya queda cubierto por el gasto que se guarda ahora
+        space_id: this.form.space_id || this._currentSpaceId(),
       };
       try {
         const ins = await sbRestInsert('recurring_templates', row);
@@ -9521,6 +9854,7 @@ function zepoApp() {
         split_pct: '',
         split_people: [],
         payment_method: this._defaultPaymentMethod(),
+        space_id: this._currentSpaceId(),
       };
       this.recurringOn = false;
       this.recurringDay = new Date().getDate();
@@ -9574,6 +9908,7 @@ function zepoApp() {
         split_pct: exp.split_pct || '',
         split_people: splitPeople,
         payment_method: exp.payment_method || this._defaultPaymentMethod(),
+        space_id: exp.space_id || this._currentSpaceId(),
       };
       this.sheetOpen = true;
     },
@@ -9634,6 +9969,7 @@ function zepoApp() {
         split_pct: batchIsSplit ? (first.split_pct || '') : '',
         split_people: splitPeople,
         payment_method: first?.payment_method || this._defaultPaymentMethod(),
+        space_id: (first && first.space_id) || this._currentSpaceId(),
       };
       this.sheetOpen = true;
     },
@@ -9766,7 +10102,8 @@ function zepoApp() {
           split_persona: isSplit ? persona : null,
           split_pending: isSplit ? pendiente : null,
           split_status: isSplit ? 'pendiente' : null,
-          payment_method: this.form.payment_method || null
+          payment_method: this.form.payment_method || null,
+          space_id: this.form.space_id || this._currentSpaceId()
         };
 
         // If extracting a single item from a batch, clear batch association
@@ -9911,6 +10248,7 @@ function zepoApp() {
             split_pending: isSplit ? pendiente : null,
             split_status: isSplit ? 'pendiente' : null,
             payment_method: this.form.payment_method || null,
+            space_id: this.form.space_id || this._currentSpaceId(),
             batch_id: validItems.length > 1 ? batchId : null,
             batch_label: validItems.length > 1 ? batchLabel : null,
           };
@@ -10045,6 +10383,7 @@ function zepoApp() {
             split_pending: isSplit ? pendiente : null,
             split_status: isSplit ? 'pendiente' : null,
             payment_method: this.form.payment_method || null,
+            space_id: this.form.space_id || this._currentSpaceId(),
             batch_id: validItems.length > 1 ? batchId : null,
             batch_label: validItems.length > 1 ? batchLabel : null,
           };
@@ -10126,13 +10465,12 @@ function zepoApp() {
     },
 
     async loadSplits() {
-      const baseRest = SUPABASE_URL + '/rest/v1/expenses?user_id=eq.' + encodeURIComponent(this.user.id) + '&is_split=eq.true';
+      const baseRest = SUPABASE_URL + '/rest/v1/expenses?user_id=eq.' + encodeURIComponent(this.user.id) + '&is_split=eq.true' + this._spaceFilterUrl();
       const loadPending = async () => {
         try {
-          const r = await withTimeout(
-            sb.from('expenses').select('*').eq('user_id', this.user.id).eq('is_split', true).eq('split_status', 'pendiente').order('date', { ascending: false }),
-            2500, 'loadSplits-pending'
-          );
+          let q = sb.from('expenses').select('*').eq('user_id', this.user.id).eq('is_split', true).eq('split_status', 'pendiente');
+          q = this._applySpaceFilter(q);
+          const r = await withTimeout(q.order('date', { ascending: false }), 2500, 'loadSplits-pending');
           this.pendingSplits = r.data || [];
         } catch (e) {
           const res = await fetch(baseRest + '&split_status=eq.pendiente&order=date.desc', { headers: sbAuthHeaders() });
@@ -10141,10 +10479,9 @@ function zepoApp() {
       };
       const loadPaid = async () => {
         try {
-          const r = await withTimeout(
-            sb.from('expenses').select('*').eq('user_id', this.user.id).eq('is_split', true).eq('split_status', 'cobrado').order('date', { ascending: false }).limit(20),
-            2500, 'loadSplits-paid'
-          );
+          let q = sb.from('expenses').select('*').eq('user_id', this.user.id).eq('is_split', true).eq('split_status', 'cobrado');
+          q = this._applySpaceFilter(q);
+          const r = await withTimeout(q.order('date', { ascending: false }).limit(20), 2500, 'loadSplits-paid');
           this.paidSplits = r.data || [];
         } catch (e) {
           const res = await fetch(baseRest + '&split_status=eq.cobrado&order=date.desc&limit=20', { headers: sbAuthHeaders() });
@@ -10740,6 +11077,7 @@ function zepoApp() {
           date: r.date,
           is_income: r.is_income,
           is_split: false,
+          space_id: this._currentSpaceId(),
         })).filter(r => r.amount > 0 && r.date);
 
         // Insertar en lotes de 50
@@ -11065,7 +11403,8 @@ function zepoApp() {
           category: null,
           amount: amount,
           month: now.getMonth() + 1,
-          year: now.getFullYear()
+          year: now.getFullYear(),
+          space_id: this._currentSpaceId()
         });
         await this.loadBudgets();
         this.showToast('Presupuesto guardado');
@@ -11934,6 +12273,7 @@ function zepoApp() {
           date:        pr.expense_date || localDate(),
           is_income:   false,
           is_split:    false,
+          space_id:    this._currentSpaceId(),
         });
         await this.loadExpenses();
       }
@@ -12052,7 +12392,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v89.js';
+  const CURRENT_SW = 'sw-v90.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
