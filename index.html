@@ -6241,13 +6241,15 @@ setTimeout(function() {
                     </div>
                     <!-- Edit row -->
                     <div x-show="editingPmId === m.id" style="padding:12px;">
-                      <div style="display:flex;gap:8px;margin-bottom:10px;align-items:stretch;">
-                        <div style="position:relative;width:46px;height:42px;flex-shrink:0;">
-                          <div style="width:100%;height:100%;border-radius:10px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;pointer-events:none;" x-text="editingPmEmoji || '💳'"></div>
-                          <input type="text" x-model="editingPmEmoji" @input="cleanEmojiInput('editingPmEmoji')" maxlength="4" style="position:absolute;inset:0;width:100%;height:100%;background:transparent;border:none;text-align:center;font-size:20px;color:transparent;caret-color:var(--cyan);font-family:inherit;outline:none;">
-                        </div>
-                        <input type="text" x-model="editingPmName" maxlength="24" style="flex:1;height:42px;border-radius:10px;background:var(--bg);border:1px solid var(--border);padding:0 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;">
+                      <div style="display:flex;gap:6px;margin-bottom:10px;">
+                        <template x-for="t in pmTypes" :key="'e'+t.key">
+                          <button type="button" @click="editingPmType = t.key" style="flex:1;height:46px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:10px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;" :style="editingPmType === t.key ? 'background:rgba(var(--c-brand-rgb),0.14);border:1px solid rgba(var(--c-brand-rgb),0.5);color:var(--text)' : 'background:var(--bg);border:1px solid var(--border);color:var(--muted)'">
+                            <span style="font-size:16px;line-height:1;" x-text="t.emoji"></span>
+                            <span x-text="t.label"></span>
+                          </button>
+                        </template>
                       </div>
+                      <input type="text" x-model="editingPmName" maxlength="24" style="width:100%;height:42px;border-radius:10px;background:var(--bg);border:1px solid var(--border);padding:0 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;margin-bottom:10px;">
                       <div style="display:flex;gap:6px;">
                         <button @click="saveEditPm()" style="flex:1;height:36px;border-radius:10px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;border:none;">Guardar</button>
                         <button @click="cancelEditPm()" style="flex:1;height:36px;border-radius:10px;background:transparent;color:var(--muted);font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;border:1px solid var(--border);">Cancelar</button>
@@ -6260,13 +6262,15 @@ setTimeout(function() {
               <!-- Agregar nuevo método -->
               <div style="padding:14px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);margin-bottom:16px;">
                 <div style="font-size:11px;color:var(--muted);letter-spacing:1px;font-weight:700;margin-bottom:10px;">NUEVO MÉTODO</div>
-                <div style="display:flex;gap:8px;margin-bottom:10px;align-items:stretch;">
-                  <div style="position:relative;width:48px;height:44px;flex-shrink:0;">
-                    <div style="width:100%;height:100%;border-radius:10px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;pointer-events:none;" x-text="newPmEmoji || '💳'"></div>
-                    <input type="text" x-model="newPmEmoji" @input="cleanEmojiInput('newPmEmoji')" maxlength="4" style="position:absolute;inset:0;width:100%;height:100%;background:transparent;border:none;text-align:center;font-size:20px;color:transparent;caret-color:var(--cyan);font-family:inherit;outline:none;">
-                  </div>
-                  <input type="text" x-model="newPmName" @keydown.enter="addPaymentMethod()" maxlength="24" placeholder="Nombre (ej: Pichincha Visa)" style="flex:1;height:44px;border-radius:10px;background:var(--bg);border:1px solid var(--border);padding:0 14px;font-size:13px;color:var(--text);font-family:inherit;outline:none;">
+                <div style="display:flex;gap:6px;margin-bottom:10px;">
+                  <template x-for="t in pmTypes" :key="t.key">
+                    <button type="button" @click="newPmType = t.key" style="flex:1;height:50px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;" :style="newPmType === t.key ? 'background:rgba(var(--c-brand-rgb),0.14);border:1px solid rgba(var(--c-brand-rgb),0.5);color:var(--text)' : 'background:var(--bg);border:1px solid var(--border);color:var(--muted)'">
+                      <span style="font-size:18px;line-height:1;" x-text="t.emoji"></span>
+                      <span x-text="t.label"></span>
+                    </button>
+                  </template>
                 </div>
+                <input type="text" x-model="newPmName" @keydown.enter="addPaymentMethod()" maxlength="24" :placeholder="newPmType === 'tarjeta' ? 'Nombre (ej: Pichincha Visa)' : newPmType === 'transferencia' ? 'Nombre (ej: Banco Pacífico)' : 'Nombre (ej: Efectivo USD)'" style="width:100%;height:44px;border-radius:10px;background:var(--bg);border:1px solid var(--border);padding:0 14px;font-size:13px;color:var(--text);font-family:inherit;outline:none;margin-bottom:10px;">
                 <button @click="addPaymentMethod()" :disabled="!newPmName || !newPmName.trim()" style="width:100%;height:40px;border-radius:20px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:13px;font-family:inherit;border:none;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;" :style="{ opacity: (!newPmName || !newPmName.trim()) ? '0.4' : '1' }">
                   <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                   Agregar
@@ -7260,12 +7264,17 @@ function zepoApp() {
     homeViewMode: 'expense',
     form: { amount: '', description: '', category: '', date: '', is_income: false, is_split: false, split_persona: '', split_pct: '', split_people: [], payment_method: '' },
     paymentMethods: [],
+    pmTypes: [
+      { key: 'efectivo', label: 'Efectivo', emoji: '💵' },
+      { key: 'tarjeta', label: 'Tarjeta', emoji: '💳' },
+      { key: 'transferencia', label: 'Transferencia', emoji: '🏦' },
+    ],
     pmManagerOpen: false,
     newPmName: '',
-    newPmEmoji: '💳',
+    newPmType: 'tarjeta',
     editingPmId: null,
     editingPmName: '',
-    editingPmEmoji: '',
+    editingPmType: 'tarjeta',
     _pmSeeding: false,
     splitPickerIdx: -1,
     splitPickerQuery: '',
@@ -7344,7 +7353,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v106',
+    APP_VERSION: 'v107',
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
@@ -8919,6 +8928,14 @@ function zepoApp() {
       const def = this.paymentMethods.find(m => m.is_default) || this.paymentMethods[0];
       return def ? def.name : '';
     },
+    _emojiForPmType(key) {
+      const t = this.pmTypes.find(x => x.key === key);
+      return t ? t.emoji : '💳';
+    },
+    _pmTypeForEmoji(emoji) {
+      const t = this.pmTypes.find(x => x.emoji === emoji);
+      return t ? t.key : 'tarjeta';
+    },
     async loadPaymentMethods() {
       if (!this.user) return;
       let data = null;
@@ -8955,20 +8972,21 @@ function zepoApp() {
     },
     openPmManager() {
       this.newPmName = '';
-      this.newPmEmoji = '💳';
+      this.newPmType = 'tarjeta';
       this.editingPmId = null;
       this.pmManagerOpen = true;
     },
     async addPaymentMethod() {
-      const name = (this.newPmName || '').trim();
+      const typeLabel = (this.pmTypes.find(t => t.key === this.newPmType) || {}).label || '';
+      const name = (this.newPmName || '').trim() || typeLabel;
       if (!name) return;
       if (this.paymentMethods.some(m => (m.name || '').toLowerCase() === name.toLowerCase())) { this.showToast('Ya existe ese método'); return; }
-      const row = { user_id: this.user.id, name, emoji: this.newPmEmoji || '💳', is_default: this.paymentMethods.length === 0, sort: this.paymentMethods.length };
+      const row = { user_id: this.user.id, name, emoji: this._emojiForPmType(this.newPmType), is_default: this.paymentMethods.length === 0, sort: this.paymentMethods.length };
       try {
         const ins = await sbRestInsert('payment_methods', row);
         const created = (ins && ins[0]) || row;
         this.paymentMethods.push(created);
-        this.newPmName = ''; this.newPmEmoji = '💳';
+        this.newPmName = ''; this.newPmType = 'tarjeta';
         if (!this.form.payment_method) this.form.payment_method = created.name;
         this.showToast('Método agregado');
       } catch (e) { this.showToast('Error: ' + e.message); }
@@ -8976,10 +8994,10 @@ function zepoApp() {
     startEditPm(m) {
       this.editingPmId = m.id;
       this.editingPmName = m.name;
-      this.editingPmEmoji = m.emoji || '💳';
+      this.editingPmType = this._pmTypeForEmoji(m.emoji || '💳');
     },
     cancelEditPm() {
-      this.editingPmId = null; this.editingPmName = ''; this.editingPmEmoji = '';
+      this.editingPmId = null; this.editingPmName = ''; this.editingPmType = 'tarjeta';
     },
     async saveEditPm() {
       const m = this.paymentMethods.find(x => x.id === this.editingPmId);
@@ -8987,9 +9005,10 @@ function zepoApp() {
       const name = (this.editingPmName || '').trim();
       if (!name) return;
       const oldName = m.name;
+      const emoji = this._emojiForPmType(this.editingPmType);
       try {
-        await sbRestUpdate('payment_methods', 'id', m.id, { name, emoji: this.editingPmEmoji || '💳' });
-        m.name = name; m.emoji = this.editingPmEmoji || '💳';
+        await sbRestUpdate('payment_methods', 'id', m.id, { name, emoji });
+        m.name = name; m.emoji = emoji;
         if (this.form.payment_method === oldName) this.form.payment_method = name;
       } catch (e) { this.showToast('Error: ' + e.message); }
       this.cancelEditPm();
@@ -11716,7 +11735,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v83.js';
+  const CURRENT_SW = 'sw-v84.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
