@@ -5449,7 +5449,7 @@ setTimeout(function() {
                             <span x-show="it.date" x-text="' · ' + (it.date || '')" style="opacity:0.7;"></span>
                           </div>
                         </div>
-                        <input type="text" inputmode="decimal" :value="it.amount" @input="it.amount = parseFloat($el.value.replace(',', '.')) || 0; form.amount = parsedItems.reduce((s, p) => s + p.amount, 0).toFixed(2)" style="width:80px;text-align:right;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;background:transparent;border:none;outline:none;color:var(--text);font-family:inherit;">
+                        <input type="text" inputmode="decimal" :value="it.amount" @input="it.amount = parseFloat($el.value.replace(',', '.')) || 0; form.amount = parsedItems.reduce((s, p) => s + p.amount, 0).toFixed(2)" @focus="$el.select()" style="width:88px;text-align:right;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;outline:none;color:var(--text);font-family:inherit;">
                         <button type="button" @click="removeParsedItem(idx)" style="width:28px;height:28px;border-radius:14px;background:transparent;border:none;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Quitar">
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
@@ -5465,11 +5465,11 @@ setTimeout(function() {
                             </button>
                           </template>
                         </div>
-                        <!-- fecha por item (como en Home) -->
+                        <!-- fecha por item (solo multi-item; en registro único la fecha de arriba manda) -->
                         <div style="margin-top:10px;display:flex;align-items:center;gap:8px;">
-                          <span style="font-size:10px;font-weight:700;letter-spacing:0.5px;color:var(--muted);flex-shrink:0;">FECHA</span>
-                          <input type="date" x-model="it.date" style="flex:1;height:38px;border-radius:10px;background:var(--bg);border:1px solid var(--border);padding:0 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;">
-                          <button type="button" @click="editingParsedCatIdx = -1" style="flex-shrink:0;height:38px;padding:0 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;">Listo</button>
+                          <span x-show="parsedItems.length > 1" style="font-size:10px;font-weight:700;letter-spacing:0.5px;color:var(--muted);flex-shrink:0;">FECHA</span>
+                          <input x-show="parsedItems.length > 1" type="date" x-model="it.date" style="flex:1;height:38px;border-radius:10px;background:var(--bg);border:1px solid var(--border);padding:0 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;">
+                          <button type="button" @click="editingParsedCatIdx = -1" style="flex-shrink:0;margin-left:auto;height:38px;padding:0 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;">Listo</button>
                         </div>
                       </div>
                     </div>
@@ -5816,7 +5816,7 @@ setTimeout(function() {
               </div>
 
               <!-- ═════════ RECURRENTE (crear, item único, no split) ═════════ -->
-              <div x-show="!editingExpense && !editingBatch && !form.is_split && parsedItems.length <= 1 && (analyzed || form.amount || parsedItems.length)" style="border-radius:14px;margin-bottom:12px;background:var(--surface);overflow:hidden;" :style="recurringOn ? 'border:1px solid var(--cyan)' : 'border:1px solid var(--border)'">
+              <div x-show="!editingExpense && !editingBatch && !form.is_split && parsedItems.length <= 1 && (analyzed || form.amount || parsedItems.length)" style="border-radius:14px;margin-bottom:12px;" :style="recurringOn ? { background: 'var(--surface)', border: '1px solid var(--cyan)', overflow: 'hidden' } : { background: 'var(--surface)', border: '1px solid var(--border)', overflow: 'hidden' }">
                 <div @click="recurringOn = !recurringOn; if (recurringOn && !recurringDay) recurringDay = new Date().getDate()" style="padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;">
                   <div style="width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;" :style="{ background: recurringOn ? 'rgba(var(--c-brand-rgb),0.12)' : 'var(--bg)' }">
                     <svg viewBox="0 0 24 24" fill="none" :stroke="recurringOn ? 'var(--cyan)' : 'var(--muted)'" stroke-width="2" width="15" height="15"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
@@ -7492,7 +7492,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v111',
+    APP_VERSION: 'v112',
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
@@ -12052,7 +12052,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v88.js';
+  const CURRENT_SW = 'sw-v89.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
