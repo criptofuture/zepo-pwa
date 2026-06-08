@@ -5794,11 +5794,13 @@ setTimeout(function() {
                     Gestionar
                   </button>
                 </div>
-                <div style="display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;-webkit-overflow-scrolling:touch;">
+                <div class="cd-cat-grid">
                   <template x-for="m in paymentMethods" :key="m.id || m.name">
-                    <button type="button" @click="form.payment_method = m.name" style="display:flex;align-items:center;gap:7px;padding:9px 13px;border-radius:var(--radius-pill);background:var(--surface);cursor:pointer;font-family:inherit;flex-shrink:0;white-space:nowrap;" :style="form.payment_method === m.name ? 'border:1px solid var(--cyan);background:rgba(var(--c-brand-rgb),0.10)' : 'border:1px solid var(--border)'">
-                      <span style="font-size:15px;line-height:1;" x-text="m.emoji || '💳'"></span>
-                      <span style="font-size:13px;font-weight:600;color:var(--text);" x-text="m.name"></span>
+                    <button type="button" @click="form.payment_method = m.name" class="cd-cat-tile" :class="{ 'cd-cat-tile-active': form.payment_method === m.name }" :style="form.payment_method === m.name ? 'border-color:var(--cyan);background:rgba(var(--c-brand-rgb),0.08)' : ''">
+                      <div class="cd-cat-tile-icon" style="background:rgba(var(--c-brand-rgb),0.12);border:1px solid rgba(var(--c-brand-rgb),0.25);">
+                        <span x-text="m.emoji || '💳'"></span>
+                      </div>
+                      <span class="cd-cat-tile-label" x-text="m.name"></span>
                     </button>
                   </template>
                 </div>
@@ -6241,11 +6243,13 @@ setTimeout(function() {
                     </div>
                     <!-- Edit row -->
                     <div x-show="editingPmId === m.id" style="padding:12px;">
-                      <div style="display:flex;gap:6px;margin-bottom:10px;">
+                      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;">
                         <template x-for="t in pmTypes" :key="'e'+t.key">
-                          <button type="button" @click="editingPmType = t.key" style="flex:1;height:46px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:10px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;" :style="editingPmType === t.key ? 'background:rgba(var(--c-brand-rgb),0.14);border:1px solid rgba(var(--c-brand-rgb),0.5);color:var(--text)' : 'background:var(--bg);border:1px solid var(--border);color:var(--muted)'">
-                            <span style="font-size:16px;line-height:1;" x-text="t.emoji"></span>
-                            <span x-text="t.label"></span>
+                          <button type="button" @click="editingPmType = t.key" class="cd-cat-tile" :class="{ 'cd-cat-tile-active': editingPmType === t.key }" :style="editingPmType === t.key ? 'border-color:var(--cyan);background:rgba(var(--c-brand-rgb),0.08)' : ''">
+                            <div class="cd-cat-tile-icon" style="background:rgba(var(--c-brand-rgb),0.12);border:1px solid rgba(var(--c-brand-rgb),0.25);">
+                              <span x-text="t.emoji"></span>
+                            </div>
+                            <span class="cd-cat-tile-label" x-text="t.label"></span>
                           </button>
                         </template>
                       </div>
@@ -6262,11 +6266,13 @@ setTimeout(function() {
               <!-- Agregar nuevo método -->
               <div style="padding:14px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);margin-bottom:16px;">
                 <div style="font-size:11px;color:var(--muted);letter-spacing:1px;font-weight:700;margin-bottom:10px;">NUEVO MÉTODO</div>
-                <div style="display:flex;gap:6px;margin-bottom:10px;">
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;">
                   <template x-for="t in pmTypes" :key="t.key">
-                    <button type="button" @click="newPmType = t.key" style="flex:1;height:50px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;" :style="newPmType === t.key ? 'background:rgba(var(--c-brand-rgb),0.14);border:1px solid rgba(var(--c-brand-rgb),0.5);color:var(--text)' : 'background:var(--bg);border:1px solid var(--border);color:var(--muted)'">
-                      <span style="font-size:18px;line-height:1;" x-text="t.emoji"></span>
-                      <span x-text="t.label"></span>
+                    <button type="button" @click="newPmType = t.key" class="cd-cat-tile" :class="{ 'cd-cat-tile-active': newPmType === t.key }" :style="newPmType === t.key ? 'border-color:var(--cyan);background:rgba(var(--c-brand-rgb),0.08)' : ''">
+                      <div class="cd-cat-tile-icon" style="background:rgba(var(--c-brand-rgb),0.12);border:1px solid rgba(var(--c-brand-rgb),0.25);">
+                        <span x-text="t.emoji"></span>
+                      </div>
+                      <span class="cd-cat-tile-label" x-text="t.label"></span>
                     </button>
                   </template>
                 </div>
@@ -7376,7 +7382,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v108',
+    APP_VERSION: 'v109',
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
@@ -11775,7 +11781,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v85.js';
+  const CURRENT_SW = 'sw-v86.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
