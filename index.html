@@ -7085,19 +7085,42 @@ async function sbFreshToken(force = false) {
       }),
       new Promise((_, rej) => setTimeout(() => rej(new Error('refresh timeout')), 6000)),
     ]);
-    if (!resp.ok) return j.access_token;
-    const data = await resp.json();
-    if (data && data.access_token) {
-      j.access_token = data.access_token;
-      j.refresh_token = data.refresh_token || j.refresh_token;
-      if (data.expires_at) j.expires_at = data.expires_at;
-      if (data.expires_in) j.expires_in = data.expires_in;
-      localStorage.setItem(RAW_KEY, JSON.stringify(j));
-      return data.access_token;
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data && data.access_token) {
+        j.access_token = data.access_token;
+        j.refresh_token = data.refresh_token || j.refresh_token;
+        if (data.expires_at) j.expires_at = data.expires_at;
+        if (data.expires_in) j.expires_in = data.expires_in;
+        localStorage.setItem(RAW_KEY, JSON.stringify(j));
+        return data.access_token;
+      }
     }
-  } catch { /* timeout o red caída — devolvemos el viejo, edge function dirá 401 si pasa */ }
+  } catch { /* timeout o red caída */ }
+  // El refresh manual falló (caso típico: "refresh token already used" porque supabase-js
+  // rotó el token en paralelo). Re-leer localStorage: la librería pudo haber escrito un token
+  // MÁS NUEVO. Si está vigente, usar ese en vez del viejo vencido. Resuelve el 401 por carrera.
+  try {
+    const raw2 = localStorage.getItem(RAW_KEY);
+    if (raw2) {
+      const j2 = JSON.parse(raw2);
+      if (j2 && j2.access_token && j2.access_token !== j.access_token) {
+        const p2 = JSON.parse(atob(j2.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+        if ((p2.exp || 0) - Math.floor(Date.now() / 1000) > 5) return j2.access_token;
+      }
+    }
+  } catch {}
   return j.access_token;
 }
+
+// Refresco proactivo al volver a la app. En móvil, al pasar a segundo plano se suspende el
+// timer de auto-refresh de supabase-js; al reanudar, el token puede estar vencido. getSession
+// refresca con bloqueo interno (sin carrera). Así el token llega fresco antes de que apruebes.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    try { sb.auth.getSession(); } catch {}
+  }
+});
 
 const CATEGORIES = [
   { key: 'food', emoji: '🍽', label: 'Comida', color: '#C2553F' },
@@ -7353,7 +7376,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v107',
+    APP_VERSION: 'v108',
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
@@ -9396,6 +9419,14 @@ function zepoApp() {
       }
     },
 
+    async ensureFreshSession() {
+      // Refresca la sesión ANTES de escribir, usando el refresco con bloqueo interno de
+      // supabase-js (getSession refresca solo si el token está vencido). Evita el 401
+      // "JWT expired" al aprobar tras tener la app abierta/en segundo plano un buen rato.
+      // Si getSession se cuelga en webview, el fallback REST (sbFreshToken) cubre igual.
+      try { await withTimeout(sb.auth.getSession(), 5000, 'ensureFreshSession'); } catch (e) {}
+    },
+
     async saveExpense() {
       // Flush split picker if still open (race condition: user taps Save while input focused)
       if (this.splitPickerIdx >= 0) this.closeSplitPicker();
@@ -9429,6 +9460,7 @@ function zepoApp() {
       }
       this.saving = true;
       try {
+        await this.ensureFreshSession();
         const totalAmount = parseFloat(this.form.amount);
         // Map multi-person split (split_people) → legacy split_persona/split_pct for backwards compat
         let isSplit = false, pct = 0, persona = '';
@@ -9566,6 +9598,7 @@ function zepoApp() {
       }
       this.saving = true;
       try {
+        await this.ensureFreshSession();
         const date = this.form.date || localDate();
         const batchId = crypto.randomUUID();
         const validItems = this.parsedItems.filter(it => it.amount > 0 && it.category);
@@ -9687,6 +9720,7 @@ function zepoApp() {
     async saveBatchEdit() {
       this.saving = true;
       try {
+        await this.ensureFreshSession();
         const batchId = this.editingBatch;
         const date = this.form.date || localDate();
         const validItems = this.parsedItems.filter(it => it.amount > 0 && it.category);
@@ -10785,6 +10819,12 @@ function zepoApp() {
     analyzeTextInput() {
       let text = this.form.description || '';
       if (!text || text.length < 2) return;
+      // Doble Enter: tras el 1er análisis de un ítem único despojamos el número del texto
+      // (queda "almuerzo" en vez de "almuerzo 15"). Si das Enter otra vez, ese texto ya no
+      // tiene número → la app creería que no hay monto y saltaría a la vista "sin monto",
+      // descuadrando el emoji y mostrando el monto como casilla. Si ya hay un monto válido
+      // y el texto quedó sin número, no re-analizar.
+      if (this.analyzed && !/\d/.test(text) && parseFloat(this.form.amount) > 0) return;
       text = this.normalizeSpokenNumbers(text); // voz: "cinco de pollo" → "5 de pollo"
       this.analyzing = true;
       this.parsedItems = [];
@@ -11735,7 +11775,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v84.js';
+  const CURRENT_SW = 'sw-v85.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
