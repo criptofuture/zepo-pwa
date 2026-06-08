@@ -5754,7 +5754,7 @@ setTimeout(function() {
                 <div class="cd-section-label"><span>CATEGORÍA</span></div>
                 <div class="cd-cat-grid">
                   <template x-for="c in (form.is_income ? incomeCategories : categories)" :key="c.key">
-                    <button type="button" @click="form.category = c.key" class="cd-cat-tile" :class="{ 'cd-cat-tile-active': form.category === c.key }" :style="form.category === c.key ? 'border-color:' + c.color + ';background:' + c.color + '15' : ''">
+                    <button type="button" @click="form.category = c.key; _learnFromFormCat(c.key)" class="cd-cat-tile" :class="{ 'cd-cat-tile-active': form.category === c.key }" :style="form.category === c.key ? 'border-color:' + c.color + ';background:' + c.color + '15' : ''">
                       <div class="cd-cat-tile-icon" :style="'background:' + c.color + '20;border:1px solid ' + c.color + '40'">
                         <span x-text="c.emoji"></span>
                       </div>
@@ -7293,6 +7293,7 @@ function zepoApp() {
     homeViewMode: 'expense',
     form: { amount: '', description: '', category: '', date: '', is_income: false, is_split: false, split_persona: '', split_pct: '', split_people: [], payment_method: '' },
     paymentMethods: [],
+    learnedCats: {},
     pmTypes: [
       { key: 'efectivo', label: 'Efectivo', emoji: '💵' },
       { key: 'tarjeta', label: 'Tarjeta', emoji: '💳' },
@@ -7382,7 +7383,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v109',
+    APP_VERSION: 'v110',
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
@@ -7407,6 +7408,7 @@ function zepoApp() {
         it.color = cat.color;
         it.label = cat.label;
         it.is_income = this.incomeCategories.some(c => c.key === cat.key);
+        this._learnCategory(it.description, cat.key);
       }
       this.catPickerItem = null;
     },
@@ -7615,7 +7617,7 @@ function zepoApp() {
           this.user = session.user;
           this.userName = session.user.user_metadata?.name || session.user.user_metadata?.full_name || session.user.email.split('@')[0];
           await this.ensureUserRow();
-          await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadBudgets(), this.loadUserPlan(), this.loadFriends(), this.loadPaymentRequests(), this.loadPaymentMethods()]);
+          await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadBudgets(), this.loadUserPlan(), this.loadFriends(), this.loadPaymentRequests(), this.loadPaymentMethods(), this.loadCategoryLearning()]);
           this.handlePaymentReturn();
           this.initWelcomeCarousel();
           this.loadNotifSettings();
@@ -8505,6 +8507,9 @@ function zepoApp() {
           const hit = this.MERCHANT_RULES.find(r => r.re.test(d));
           if (hit) { t.category = hit.cat; t.is_income = false; }
         }
+        // Feature 2: si el usuario ya corrigio este producto antes, su categoria manda.
+        const learnedCat = this._learnedCategory(t.description, !!t.is_income);
+        if (learnedCat) t.category = learnedCat;
         // Fecha por ítem: respeta la fecha de la FACTURA cuando es válida, pero la sanea.
         // (1) año fuera de rango → año actual. (2) NUNCA una fecha futura: una factura no
         // puede ser de mañana. Esto fue la causa del bug 2026-12-06 (el OCR devolvía una
@@ -8951,6 +8956,70 @@ function zepoApp() {
         }
       });
       try { localStorage.setItem('zepo:cat-overrides', JSON.stringify(overrides)); } catch {}
+    },
+    // ── Aprender de categorizaciones (Feature 2) ──
+    // Token = nombre del producto normalizado (sin numeros/unidades/tildes), max 4 palabras.
+    // Es por PRODUCTO, no por comercio: asi una factura de super no fuerza todo a una categoria.
+    _normToken(desc) {
+      const t = (desc || '')
+        .toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/\d+([.,]\d+)?/g, ' ')
+        .replace(/\b(gr?|kgs?|ml|lt?|oz|cc|un|uds?|pack|x|c\/u)\b/g, ' ')
+        .replace(/[^a-z\s]/g, ' ')
+        .replace(/\s+/g, ' ').trim();
+      return t.split(' ').slice(0, 4).join(' ');
+    },
+    _isIncomeCat(key) {
+      return this.incomeCategories.some(c => c.key === key) || key === 'other_income';
+    },
+    _learnedCategory(desc, wantIncome) {
+      const tok = this._normToken(desc);
+      if (!tok || tok.length < 3) return '';
+      const hit = this.learnedCats[tok];
+      if (!hit) return '';
+      if (wantIncome !== undefined && this._isIncomeCat(hit.category) !== wantIncome) return '';
+      return hit.category;
+    },
+    async loadCategoryLearning() {
+      if (!this.user) return;
+      let data = null;
+      try {
+        const r = await withTimeout(
+          sb.from('category_learning').select('token,category,hits').eq('user_id', this.user.id),
+          2500, 'loadCategoryLearning'
+        );
+        data = r.data;
+      } catch (e) {
+        try {
+          const url = SUPABASE_URL + '/rest/v1/category_learning?select=token,category,hits&user_id=eq.' + encodeURIComponent(this.user.id);
+          const res = await fetch(url, { headers: sbAuthHeaders() });
+          data = res.ok ? await res.json() : [];
+        } catch (e2) { data = []; }
+      }
+      const map = {};
+      (data || []).forEach(row => { if (row.token) map[row.token] = { category: row.category, hits: row.hits || 1 }; });
+      this.learnedCats = map;
+    },
+    // Refuerza lo aprendido: guarda token->categoria, sumando hits si ya existia.
+    async _learnCategory(desc, category) {
+      if (!this.user || !category || category === 'other' || category === 'other_income') return;
+      const tok = this._normToken(desc);
+      if (!tok || tok.length < 3) return;
+      const prev = this.learnedCats[tok];
+      const hits = (prev && prev.category === category) ? (prev.hits || 1) + 1 : 1;
+      this.learnedCats[tok] = { category, hits };
+      try {
+        await sbRestFetch(SUPABASE_URL + '/rest/v1/category_learning?on_conflict=user_id,token', {
+          method: 'POST',
+          headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+          body: JSON.stringify({ user_id: this.user.id, token: tok, category, hits, updated_at: new Date().toISOString() }),
+        });
+      } catch (e) { console.warn('[_learnCategory]', e.message); }
+    },
+    _learnFromFormCat(key) {
+      if (this.parsedItems.length >= 2) return; // multi-item: cada item se aprende por su cuenta
+      this._learnCategory(this.form.description || (this.parsedItems[0] && this.parsedItems[0].description) || '', key);
     },
     // ── Métodos de pago (Feature 1) ──
     _defaultPaymentMethod() {
@@ -10948,10 +11017,11 @@ function zepoApp() {
         rental: ['arriendo','alquiler','renta'],
         investment: ['dividendo','interes','interés','inversion','inversión'],
       };
-      let category = '';
       const is_income = forceIsIncome !== undefined ? forceIsIncome : /(ingreso|cobr|recibi|me pag|deposit|transfer|sueldo|salario|venta|vendi|freelance|reembolso|devolucion|devolución|dividendo|aguinaldo)/i.test(text);
+      // Feature 2: lo aprendido del usuario gana ANTES de las reglas estaticas.
+      let category = this._learnedCategory(description, is_income);
       const map = is_income ? incCats : expCats;
-      for (const [key, words] of Object.entries(map)) {
+      if (!category) for (const [key, words] of Object.entries(map)) {
         if (words.some(w => lower.includes(w))) { category = key; break; }
       }
       // Layer 1: Fuzzy match (Levenshtein) for typos when exact match fails
@@ -11010,6 +11080,7 @@ function zepoApp() {
       it.emoji = cat.emoji;
       it.label = cat.label;
       it.color = cat.color;
+      this._learnCategory(it.description, key);
     },
 
     async finishOnboarding() {
@@ -11781,7 +11852,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v86.js';
+  const CURRENT_SW = 'sw-v87.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
