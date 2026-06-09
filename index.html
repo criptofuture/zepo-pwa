@@ -342,10 +342,9 @@
          transform. left:50%+translateX centra igual que #app (max-width 430). */
       position: fixed;
       bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
-      max-width: 430px;
+      left: 0;
+      right: 0;
+      width: auto;
       background: var(--surface);
       border-top: 1px solid var(--border);
       display: flex;
@@ -4326,7 +4325,7 @@ setTimeout(function() {
         <div style="display:flex;gap:4px;padding:0 20px 8px;">
           <button @click="dashViewMode = 'expense'" style="flex:1;padding:7px 0;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;border:none;" :style="{ background: dashViewMode === 'expense' ? 'rgba(var(--c-brand-rgb),0.10)' : 'var(--surface)', color: dashViewMode === 'expense' ? 'var(--cyan)' : 'var(--muted)', border: dashViewMode === 'expense' ? '1px solid var(--cyan)' : '1px solid var(--border)' }">Gastos</button>
           <button @click="dashViewMode = 'income'" style="flex:1;padding:7px 0;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;border:none;" :style="{ background: dashViewMode === 'income' ? 'rgba(var(--c-income-rgb),0.10)' : 'var(--surface)', color: dashViewMode === 'income' ? 'var(--success)' : 'var(--muted)', border: dashViewMode === 'income' ? '1px solid var(--success)' : '1px solid var(--border)' }">Ingresos</button>
-          <button @click="dashViewMode = 'balance'" style="flex:1;padding:7px 0;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;border:none;" :style="{ background: dashViewMode === 'balance' ? 'rgba(var(--c-accent-rgb),0.10)' : 'var(--surface)', color: dashViewMode === 'balance' ? 'var(--purple)' : 'var(--muted)', border: dashViewMode === 'balance' ? '1px solid var(--purple)' : '1px solid var(--border)' }">Balance</button>
+          <button @click="dashViewMode = 'balance'" style="flex:1;padding:7px 0;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.15s;border:none;" :style="{ background: dashViewMode === 'balance' ? 'rgba(var(--c-accent-rgb),0.14)' : 'var(--surface)', color: dashViewMode === 'balance' ? 'var(--c-accent-soft)' : 'var(--muted)', border: dashViewMode === 'balance' ? '1px solid var(--c-accent-soft)' : '1px solid var(--border)' }">Balance</button>
         </div>
 
         <!-- Period selector -->
@@ -7702,7 +7701,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v115',
+    APP_VERSION: 'v116',
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
@@ -12426,7 +12425,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v92.js';
+  const CURRENT_SW = 'sw-v93.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {

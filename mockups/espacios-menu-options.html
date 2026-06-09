@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zepo · Espacios — ícono junto a "Hola" (3 opciones)</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EFEADB; --surface:#FFFFFF; --surface2:#F4EFE2;
+    --ink:#1A2418; --ink-soft:rgba(26,36,24,.62); --ink-faint:rgba(26,36,24,.40);
+    --border:rgba(26,36,24,.14); --border2:rgba(26,36,24,.30);
+    --sage:#507D5A; --sage-rgb:80,125,90; --lima:#D6D864; --gold:#BF8A2A;
+    --income:#84AF72; --expense:#B8483A;
+    --grad:linear-gradient(135deg,#507D5A,#84AF72);
+    --r:16px; --r-sm:10px; --pill:50px;
+    --font-d:'Bricolage Grotesque',sans-serif; --font-b:'Geist',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#E2DBC8;font-family:var(--font-b);color:var(--ink);padding:30px 16px 70px;}
+  .intro{max-width:980px;margin:0 auto 30px;text-align:center;}
+  .intro h1{font-family:var(--font-d);font-size:28px;font-weight:700;margin-bottom:8px;}
+  .intro p{color:var(--ink-soft);font-size:14.5px;max-width:680px;margin:0 auto;line-height:1.55;}
+  .intro .tip{margin-top:10px;font-size:13px;color:var(--sage);font-weight:600;}
+  .row{display:flex;gap:30px;justify-content:center;flex-wrap:wrap;max-width:1240px;margin:0 auto;}
+  .phone{width:330px;}
+  .frame{background:var(--bg);border-radius:34px;padding:13px;
+    box-shadow:0 24px 60px rgba(26,36,24,.22);border:1px solid rgba(26,36,24,.08);}
+  .screen{background:var(--bg);border-radius:24px;overflow:hidden;position:relative;height:620px;display:flex;flex-direction:column;}
+  .cap{text-align:center;margin-top:14px;}
+  .cap .t{font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--sage);}
+  .cap .d{font-size:12.5px;color:var(--ink-soft);margin-top:3px;line-height:1.4;}
+
+  /* ---- top bar: ICON + Hola ---- */
+  .topbar{display:flex;align-items:center;gap:11px;padding:18px 18px 8px;position:relative;z-index:5;}
+  .sbtn{position:relative;width:42px;height:42px;border-radius:13px;display:grid;place-items:center;
+    font-size:19px;flex-shrink:0;border:1px solid var(--border);cursor:pointer;
+    background:rgba(var(--sage-rgb),.14);}
+  .sbtn .car{position:absolute;right:-3px;bottom:-3px;width:17px;height:17px;border-radius:50%;
+    background:var(--surface);border:1px solid var(--border);display:grid;place-items:center;}
+  .sbtn .car svg{width:9px;height:9px;}
+  .sbtn.dots .car{width:auto;height:14px;padding:0 3px;border-radius:8px;gap:1.5px;}
+  .sbtn.dots .car i{width:2.5px;height:2.5px;border-radius:50%;background:var(--ink-soft);display:block;}
+  .hola{flex:1;min-width:0;}
+  .hola .h{font-family:var(--font-d);font-size:21px;font-weight:800;letter-spacing:-.4px;line-height:1.1;}
+  .hola .sub{font-size:12px;color:var(--ink-soft);margin-top:2px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .hola .sub b{color:var(--sage);font-weight:600;}
+  .tact{display:flex;gap:7px;flex-shrink:0;}
+  .tact .ic{width:34px;height:34px;border-radius:10px;background:var(--surface);border:1px solid var(--border);
+    display:grid;place-items:center;color:var(--ink-soft);}
+  .tact .ic svg{width:17px;height:17px;}
+
+  /* ---- home body (shared) ---- */
+  .hero{margin:8px 18px 0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:17px;}
+  .hero .lbl{font-size:12px;color:var(--ink-soft);margin-bottom:6px;}
+  .hero .big{font-family:var(--font-d);font-size:36px;font-weight:700;letter-spacing:-.02em;}
+  .hero .sub{font-size:12px;color:var(--ink-soft);margin-top:6px;}
+  .hero .sub .up{color:var(--expense);font-weight:600;}
+  .mini{display:flex;gap:10px;margin:12px 18px 0;}
+  .mini .b{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px;}
+  .mini .b .t{font-size:11px;color:var(--ink-soft);}
+  .mini .b .v{font-family:var(--font-d);font-weight:700;font-size:16px;margin-top:3px;}
+  .mini .b .v.in{color:var(--income);} .mini .b .v.ex{color:var(--expense);}
+  .list{margin:15px 18px 0;}
+  .li{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--border);}
+  .li .em{width:34px;height:34px;border-radius:11px;background:var(--surface2);display:grid;place-items:center;font-size:15px;}
+  .li .mid{flex:1;} .li .mid .d{font-weight:600;font-size:13.5px;} .li .mid .c{font-size:11.5px;color:var(--ink-soft);}
+  .li .amt{font-family:var(--font-d);font-weight:700;font-size:14.5px;color:var(--expense);}
+  .tabbar{margin-top:auto;display:flex;justify-content:space-around;padding:11px 0 15px;
+    background:var(--surface);border-top:1px solid var(--border);}
+  .tabbar span{font-size:19px;opacity:.45;} .tabbar span.on{opacity:1;}
+  .fab{position:absolute;right:20px;bottom:74px;width:52px;height:52px;border-radius:50%;
+    background:var(--grad);color:#fff;display:grid;place-items:center;font-size:25px;font-weight:300;
+    box-shadow:0 8px 20px rgba(var(--sage-rgb),.4);z-index:4;}
+
+  /* ---- shared overlay bits ---- */
+  .scrim{position:absolute;inset:0;background:rgba(26,36,24,.35);opacity:0;pointer-events:none;
+    transition:opacity .22s;z-index:8;}
+  .open .scrim{opacity:1;pointer-events:auto;}
+  .sp{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--r-sm);padding:11px;margin-bottom:8px;cursor:pointer;}
+  .sp.active{border-color:var(--sage);box-shadow:0 0 0 2px rgba(var(--sage-rgb),.15);}
+  .sp .ico{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:18px;flex-shrink:0;}
+  .sp .info{flex:1;min-width:0;} .sp .info .n{font-family:var(--font-d);font-weight:700;font-size:14.5px;}
+  .sp .info .m{font-size:11.5px;color:var(--ink-soft);margin-top:1px;}
+  .sp .chk{color:var(--sage);font-size:17px;font-weight:700;}
+  .sp.glob{background:var(--surface2);border-style:dashed;}
+  .sp.glob .ico{background:var(--surface);}
+  .mng{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;
+    background:var(--grad);color:#fff;border:none;border-radius:var(--pill);padding:12px;
+    font-family:var(--font-b);font-weight:700;font-size:13.5px;cursor:pointer;}
+  .mng svg{width:14px;height:14px;}
+
+  /* ===== A · DROPDOWN ===== */
+  .dropdown{position:absolute;top:62px;left:14px;width:262px;background:var(--bg);
+    border:1px solid var(--border);border-radius:18px;padding:9px;z-index:9;
+    box-shadow:0 18px 44px rgba(26,36,24,.26);transform-origin:top left;
+    transform:scale(.92) translateY(-6px);opacity:0;pointer-events:none;transition:.18s;}
+  .open .dropdown{transform:scale(1) translateY(0);opacity:1;pointer-events:auto;}
+  .dropdown .tip{position:absolute;top:-7px;left:24px;width:14px;height:14px;background:var(--bg);
+    border-left:1px solid var(--border);border-top:1px solid var(--border);transform:rotate(45deg);}
+  .dropdown .hd{font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-faint);padding:4px 8px 8px;}
+
+  /* ===== B · LATERAL DRAWER ===== */
+  .drawer{position:absolute;top:0;left:0;bottom:0;width:268px;background:var(--bg);z-index:9;
+    border-right:1px solid var(--border);box-shadow:14px 0 40px rgba(26,36,24,.2);
+    transform:translateX(-100%);transition:transform .24s cubic-bezier(.4,0,.2,1);
+    display:flex;flex-direction:column;padding:20px 16px 16px;}
+  .open .drawer{transform:translateX(0);}
+  .drawer h3{font-family:var(--font-d);font-size:18px;font-weight:700;margin-bottom:3px;}
+  .drawer .hint{font-size:11.5px;color:var(--ink-soft);margin-bottom:16px;}
+  .drawer .scroll{flex:1;overflow:auto;}
+
+  /* ===== C · BOTTOM SHEET ===== */
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--bg);z-index:9;
+    border-radius:24px 24px 0 0;padding:8px 18px 22px;box-shadow:0 -10px 40px rgba(26,36,24,.2);
+    transform:translateY(100%);transition:transform .26s cubic-bezier(.4,0,.2,1);}
+  .open .sheet{transform:translateY(0);}
+  .grab{width:42px;height:5px;border-radius:3px;background:var(--border2);margin:6px auto 14px;}
+  .sheet h3{font-family:var(--font-d);font-size:18px;font-weight:700;margin-bottom:3px;}
+  .sheet .hint{font-size:11.5px;color:var(--ink-soft);margin-bottom:14px;}
+</style>
+</head>
+<body>
+  <div class="intro">
+    <h1>Espacios · ícono junto a "Hola, Alvaro"</h1>
+    <p>El chip largo de abajo desaparece y se libera espacio. El espacio activo vive como un ícono a la izquierda del saludo, con una pista de que abre un menú. "Todos los espacios" ahora se llama <b>Global</b>.</p>
+    <p class="tip">👆 Toca el ícono de cada teléfono para abrir / cerrar y comparar.</p>
+  </div>
+
+  <div class="row">
+
+    <!-- ============ OPCIÓN A · DROPDOWN ============ -->
+    <div class="phone">
+      <div class="frame">
+        <div class="screen" id="pA">
+          <div class="topbar">
+            <button class="sbtn" onclick="tog('pA')">🏠<span class="car">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1A2418" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
+            </span></button>
+            <div class="hola">
+              <div class="h">Hola, Alvaro</div>
+              <div class="sub">Estás en <b>Personal</b> · jue 8 jun</div>
+            </div>
+            <div class="tact">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82M4.6 9a1.65 1.65 0 00-.33-1.82"/></svg></div>
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div>
+            </div>
+          </div>
+          <div class="hero"><div class="lbl">Gastado este mes</div><div class="big">$842.50</div>
+            <div class="sub"><span class="up">▲ 12%</span> vs. mayo</div></div>
+          <div class="mini">
+            <div class="b"><div class="t">Ingresos</div><div class="v in">$2.100</div></div>
+            <div class="b"><div class="t">Balance</div><div class="v">$1.257</div></div>
+          </div>
+          <div class="list">
+            <div class="li"><div class="em">🍔</div><div class="mid"><div class="d">Almuerzo</div><div class="c">Comida</div></div><div class="amt">-$8,50</div></div>
+            <div class="li"><div class="em">🚗</div><div class="mid"><div class="d">Uber</div><div class="c">Transporte</div></div><div class="amt">-$4,20</div></div>
+            <div class="li"><div class="em">🛒</div><div class="mid"><div class="d">Supermaxi</div><div class="c">Mercado</div></div><div class="amt">-$54,00</div></div>
+          </div>
+          <div class="tabbar"><span class="on">🏠</span><span>📊</span><span>👥</span><span>⚙️</span></div>
+          <div class="fab">+</div>
+
+          <div class="scrim" onclick="tog('pA')"></div>
+          <div class="dropdown">
+            <div class="tip"></div>
+            <div class="hd">Cambiar de espacio</div>
+            <div class="sp active"><div class="ico" style="background:rgba(80,125,90,.16)">🏠</div><div class="info"><div class="n">Personal</div><div class="m">$842 este mes</div></div><div class="chk">✓</div></div>
+            <div class="sp"><div class="ico" style="background:rgba(191,138,42,.16)">🏪</div><div class="info"><div class="n">Mi tienda</div><div class="m">$1.910 este mes</div></div></div>
+            <div class="sp"><div class="ico" style="background:rgba(107,140,174,.16)">💻</div><div class="info"><div class="n">Freelance</div><div class="m">$320 este mes</div></div></div>
+            <div class="sp glob"><div class="ico">🌐</div><div class="info"><div class="n">Global</div><div class="m">Todo junto</div></div></div>
+            <button class="mng"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Crear o editar</button>
+          </div>
+        </div>
+      </div>
+      <div class="cap"><div class="t">A · Dropdown</div><div class="d">Menú anclado bajo el ícono. Rápido y no tapa la pantalla.</div></div>
+    </div>
+
+    <!-- ============ OPCIÓN B · LATERAL ============ -->
+    <div class="phone">
+      <div class="frame">
+        <div class="screen" id="pB">
+          <div class="topbar">
+            <button class="sbtn dots" onclick="tog('pB')">🏪<span class="car"><i></i><i></i><i></i></span></button>
+            <div class="hola">
+              <div class="h">Hola, Alvaro</div>
+              <div class="sub">Estás en <b>Mi tienda</b> · jue 8 jun</div>
+            </div>
+            <div class="tact">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82M4.6 9a1.65 1.65 0 00-.33-1.82"/></svg></div>
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div>
+            </div>
+          </div>
+          <div class="hero"><div class="lbl">Gastado este mes</div><div class="big">$1.910</div>
+            <div class="sub"><span class="up">▲ 4%</span> vs. mayo</div></div>
+          <div class="mini">
+            <div class="b"><div class="t">Ingresos</div><div class="v in">$3.400</div></div>
+            <div class="b"><div class="t">Balance</div><div class="v">$1.490</div></div>
+          </div>
+          <div class="list">
+            <div class="li"><div class="em">📦</div><div class="mid"><div class="d">Proveedor</div><div class="c">Inventario</div></div><div class="amt">-$420,00</div></div>
+            <div class="li"><div class="em">💡</div><div class="mid"><div class="d">Luz local</div><div class="c">Servicios</div></div><div class="amt">-$78,00</div></div>
+            <div class="li"><div class="em">🧾</div><div class="mid"><div class="d">Contador</div><div class="c">Servicios</div></div><div class="amt">-$120,00</div></div>
+          </div>
+          <div class="tabbar"><span class="on">🏠</span><span>📊</span><span>👥</span><span>⚙️</span></div>
+          <div class="fab">+</div>
+
+          <div class="scrim" onclick="tog('pB')"></div>
+          <div class="drawer">
+            <h3>Espacios</h3>
+            <div class="hint">Cada uno separa sus gastos.</div>
+            <div class="scroll">
+              <div class="sp"><div class="ico" style="background:rgba(80,125,90,.16)">🏠</div><div class="info"><div class="n">Personal</div><div class="m">$842 este mes</div></div></div>
+              <div class="sp active"><div class="ico" style="background:rgba(191,138,42,.16)">🏪</div><div class="info"><div class="n">Mi tienda</div><div class="m">$1.910 este mes</div></div><div class="chk">✓</div></div>
+              <div class="sp"><div class="ico" style="background:rgba(107,140,174,.16)">💻</div><div class="info"><div class="n">Freelance</div><div class="m">$320 este mes</div></div></div>
+              <div class="sp glob"><div class="ico">🌐</div><div class="info"><div class="n">Global</div><div class="m">Todo junto</div></div></div>
+            </div>
+            <button class="mng"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Crear o editar</button>
+          </div>
+        </div>
+      </div>
+      <div class="cap"><div class="t">B · Panel lateral</div><div class="d">Drawer desde la izquierda. Cabe lista larga + botón crear.</div></div>
+    </div>
+
+    <!-- ============ OPCIÓN C · BOTTOM SHEET ============ -->
+    <div class="phone">
+      <div class="frame">
+        <div class="screen" id="pC">
+          <div class="topbar">
+            <button class="sbtn" onclick="tog('pC')">💻<span class="car">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1A2418" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
+            </span></button>
+            <div class="hola">
+              <div class="h">Hola, Alvaro</div>
+              <div class="sub">Estás en <b>Freelance</b> · jue 8 jun</div>
+            </div>
+            <div class="tact">
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82M4.6 9a1.65 1.65 0 00-.33-1.82"/></svg></div>
+              <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div>
+            </div>
+          </div>
+          <div class="hero"><div class="lbl">Gastado este mes</div><div class="big">$320.00</div>
+            <div class="sub"><span class="up">▲ 8%</span> vs. mayo</div></div>
+          <div class="mini">
+            <div class="b"><div class="t">Ingresos</div><div class="v in">$1.800</div></div>
+            <div class="b"><div class="t">Balance</div><div class="v">$1.480</div></div>
+          </div>
+          <div class="list">
+            <div class="li"><div class="em">☁️</div><div class="mid"><div class="d">Hosting</div><div class="c">Software</div></div><div class="amt">-$22,00</div></div>
+            <div class="li"><div class="em">🎨</div><div class="mid"><div class="d">Figma</div><div class="c">Software</div></div><div class="amt">-$15,00</div></div>
+            <div class="li"><div class="em">📱</div><div class="mid"><div class="d">Datos</div><div class="c">Servicios</div></div><div class="amt">-$30,00</div></div>
+          </div>
+          <div class="tabbar"><span class="on">🏠</span><span>📊</span><span>👥</span><span>⚙️</span></div>
+          <div class="fab">+</div>
+
+          <div class="scrim" onclick="tog('pC')"></div>
+          <div class="sheet">
+            <div class="grab"></div>
+            <h3>Cambiar de espacio</h3>
+            <div class="hint">Cada espacio separa gastos, presupuestos y recurrentes.</div>
+            <div class="sp"><div class="ico" style="background:rgba(80,125,90,.16)">🏠</div><div class="info"><div class="n">Personal</div><div class="m">$842 este mes</div></div></div>
+            <div class="sp"><div class="ico" style="background:rgba(191,138,42,.16)">🏪</div><div class="info"><div class="n">Mi tienda</div><div class="m">$1.910 este mes</div></div></div>
+            <div class="sp active"><div class="ico" style="background:rgba(107,140,174,.16)">💻</div><div class="info"><div class="n">Freelance</div><div class="m">$320 este mes</div></div><div class="chk">✓</div></div>
+            <div class="sp glob"><div class="ico">🌐</div><div class="info"><div class="n">Global</div><div class="m">Todo junto</div></div></div>
+            <button class="mng"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Crear o editar</button>
+          </div>
+        </div>
+      </div>
+      <div class="cap"><div class="t">C · Hoja inferior</div><div class="d">Sube desde abajo. El pulgar la alcanza fácil (como hoy).</div></div>
+    </div>
+
+  </div>
+
+<script>
+  function tog(id){ document.getElementById(id).classList.toggle('open'); }
+</script>
+</body>
+</html>
