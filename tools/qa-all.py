@@ -44,6 +44,7 @@ CHECKS = [
     ("E2E onboarding (primer gasto/presupuesto/finalizar)", ["python", os.path.join(TOOLS, "qa-e2e-onboarding.py")]),
     ("E2E nombres de contacto (anti-UUID)", ["python", os.path.join(TOOLS, "qa-e2e-names.py")]),
     ("E2E Contactos/Amigos (saldo neto + apodo)", ["python", os.path.join(TOOLS, "qa-e2e-contactos.py")]),
+    ("E2E gating de planes (free/pro/elite/max)", ["python", os.path.join(TOOLS, "qa-e2e-plan-gating.py")]),
 ]
 
 def main():
