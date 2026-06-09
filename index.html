@@ -4831,7 +4831,7 @@ setTimeout(function() {
             <span class="si-label">Cambiar contraseña</span>
             <svg class="si-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 18l6-6-6-6"/></svg>
           </button>
-          <button class="settings-item" @click="localStorage.removeItem('zepo_onboarded_v1'); localStorage.removeItem('zepo_coach_photo_v1'); welcomeSlide = 0; showWelcomeCarousel = true;">
+          <button class="settings-item" @click="resetTutorial()">
             <div class="si-icon" style="background:rgba(var(--c-brand-rgb),0.1);">
               <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             </div>
@@ -7223,6 +7223,17 @@ setTimeout(function() {
     </div>
   </div>
 
+  <!-- ══ COACH CONTEXTUAL (motor reutilizable Capa B) ══ -->
+  <div class="coach-overlay" x-show="coach.open" x-transition.opacity x-cloak style="display:none;" @click.self="coachClose()">
+    <div class="coach-card">
+      <div class="coach-tag" x-text="coach.tag"></div>
+      <div class="coach-title"><span x-text="coach.emoji"></span> <span x-text="coach.title"></span></div>
+      <div class="coach-sub" x-html="coach.sub"></div>
+      <button class="coach-btn" @click="coachCta()" x-text="coach.cta"></button>
+      <button class="coach-btn-ghost" @click="coachClose()">Más tarde</button>
+    </div>
+  </div>
+
   <!-- ══ MODAL: REPORTAR PROBLEMA ══ -->
   <div x-show="bugReportOpen" x-cloak
     class="modal-overlay"
@@ -8008,6 +8019,22 @@ function zepoApp() {
     onbV2Step: 0,
     onbV2Goal: '',
     onbV2Saving: false,
+    /* Coach contextual — motor reutilizable (Capa B) */
+    coach: { open: false, tag: '', emoji: '', title: '', sub: '', cta: '', locked: false },
+    coachDefs: {
+      text:   { tag: 'TIP',     emoji: '⌨️', title: 'Escribe natural',        sub: 'Anota así: <b>café 3 · taxi 8</b> y dale <b>Enter ↵</b>. Zepo saca el monto y la categoría.' },
+      learn:  { tag: 'APRENDE', emoji: '🧠', title: 'Zepo aprende de ti',     sub: 'Cuando ajustas una categoría, Zepo la <b>recordará</b> la próxima vez. 🎉' },
+      multi:  { tag: 'TIP',     emoji: '🧾', title: 'Varios de una',          sub: 'Separa con <b>·</b> o coma y anotas varias compras juntas, cada una con su categoría.' },
+      income: { tag: 'TIP',     emoji: '↕️', title: 'Ingresos también',       sub: 'No solo gastos: también registras lo que entra.' },
+      edit:   { tag: 'TIP',     emoji: '✏️', title: 'Editar o borrar',        sub: 'Toca cualquier gasto para editarlo o borrarlo.' },
+      home:   { tag: 'TIP',     emoji: '📊', title: 'Tu mes de un vistazo',   sub: 'Aquí ves tu disponible, lo gastado y los días que quedan.' },
+      paym:   { tag: 'PRO',     emoji: '💳', plan: 'pro',   title: 'Método de pago',        sub: 'Marca con qué pagaste: efectivo, tarjeta o transferencia.', teaser: 'Lleva con qué pagas cada gasto (efectivo, tarjeta…). Disponible en <b>Pro</b>.' },
+      split:  { tag: 'PRO',     emoji: '🤝', plan: 'pro',   title: 'Dividir gasto',         sub: 'Reparte un gasto y lleva quién te debe.', teaser: 'Reparte un gasto y lleva quién te debe. Disponible en <b>Pro</b>.' },
+      voice:  { tag: 'PRO',     emoji: '🎤', plan: 'pro',   title: 'Dicta tu gasto',        sub: 'Di: <b>cinco de pollo y un taxi de ocho</b> y Zepo lo registra.', teaser: 'Registra hablando: dictas tu gasto y listo. Disponible en <b>Pro</b>.' },
+      recur:  { tag: 'ELITE',   emoji: '🔁', plan: 'elite', title: 'Gastos que se repiten', sub: 'Se crea solo cada mes. Lo gestionas en Ajustes.', teaser: 'Tus gastos fijos se crean solos cada mes. Disponible en <b>Elite</b>.' },
+      budget: { tag: 'TIP',     emoji: '🎯', title: 'Pon topes',              sub: 'Define topes por mes o por categoría y te avisamos antes de pasarte.' },
+      spaces: { tag: 'MAX',     emoji: '🗂️', plan: 'max',   title: 'Espacios',              sub: 'Separa tus gastos: Personal, Negocio, Casa…', teaser: 'Separa Personal / Negocio / Casa en cuentas aparte. Disponible en <b>Max</b>.' },
+    },
 
     initWelcomeCarousel() {
       if (!localStorage.getItem('zepo_onboarded_v1')) {
@@ -8064,6 +8091,47 @@ function zepoApp() {
         this.onbV2Saving = false;
         setTimeout(() => { this.showOnbV2 = false; }, 1100);
       }
+    },
+
+    /* === COACH CONTEXTUAL (motor reutilizable Capa B) === */
+    // Muestra UNA burbuja la 1ª vez que el usuario toca cada función (flag por clave).
+    // Si la función es de pago y no tiene el plan → muestra teaser de upgrade.
+    coachTip(key) {
+      const d = this.coachDefs[key];
+      if (!d) return;
+      const flag = 'zepo_coach_' + key + '_v1';
+      try { if (localStorage.getItem(flag)) return; } catch (e) {}
+      const locked = !!(d.plan && !this.hasPlan(d.plan));
+      this.coach = {
+        open: true,
+        tag: d.tag,
+        emoji: d.emoji || '💡',
+        title: d.title,
+        sub: locked ? (d.teaser || d.sub) : d.sub,
+        cta: locked ? 'Ver planes →' : 'Entendido',
+        locked: locked,
+      };
+      try { localStorage.setItem(flag, '1'); } catch (e) {}
+    },
+    coachClose() { this.coach.open = false; },
+    coachCta() {
+      const wasLocked = this.coach.locked;
+      this.coach.open = false;
+      if (wasLocked) { this.sheetOpen = false; this.tab = 'plans'; }
+    },
+    // Borra todos los flags de coach + onboarding y reabre el tour de bienvenida.
+    resetTutorial() {
+      try {
+        const del = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && (k.indexOf('zepo_coach_') === 0 || k === 'zepo_onboarded_v1')) del.push(k);
+        }
+        del.forEach(k => localStorage.removeItem(k));
+      } catch (e) {}
+      this.coach.open = false;
+      this.welcomeSlide = 0;
+      this.showWelcomeCarousel = true;
     },
 
     async init() {
@@ -9551,6 +9619,7 @@ function zepoApp() {
     _learnFromFormCat(key) {
       if (this.parsedItems.length >= 2) return; // multi-item: cada item se aprende por su cuenta
       this._learnCategory(this.form.description || (this.parsedItems[0] && this.parsedItems[0].description) || '', key);
+      this.coachTip('learn');
     },
     // ── Espacios (centros de gasto) ──
     get activeSpace() { return this.spaces.find(s => s.id === this.activeSpaceId) || null; },
@@ -10100,6 +10169,7 @@ function zepoApp() {
       this.recurringDay = new Date().getDate();
       this.removeReceipt();
       this.sheetOpen = true;
+      this.coachTip('text');
     },
 
     openEdit(exp) {
