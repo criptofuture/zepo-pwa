@@ -18,6 +18,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <!-- driver.js vendorizado local (tour guiado del primer gasto, A7) -->
+  <link rel="stylesheet" href="vendor/driver.css">
+  <script src="vendor/driver.iife.js"></script>
   <script src="https://accounts.google.com/gsi/client" async></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
   <style>
@@ -3044,7 +3047,7 @@ setTimeout(function() {
           </button>
         </div>
 
-        <div style="margin-top:14px;padding:10px 14px;border-radius:10px;background:rgba(var(--c-income-rgb),0.06);border:1px solid rgba(var(--c-income-rgb),0.2);font-size:11px;color:var(--success);line-height:1.45;text-align:center;">
+        <div x-show="false" style="margin-top:14px;padding:10px 14px;border-radius:10px;background:rgba(var(--c-income-rgb),0.06);border:1px solid rgba(var(--c-income-rgb),0.2);font-size:11px;color:var(--success);line-height:1.45;text-align:center;">
           🎁 50% OFF para siempre si contratas antes del 31 dic 2026
         </div>
 
@@ -3466,7 +3469,7 @@ setTimeout(function() {
               <div class="empty-title" style="margin-top:22px;">Registra tu <span class="gradient-text">primer gasto</span></div>
               <div class="empty-desc">Toca el botón <span style="color:var(--cyan);font-weight:700;">+</span> de abajo. Escribe, dicta o toma foto — la IA hace el resto.</div>
               <div class="es-cta-arrow">
-                <div class="es-cta-pill">Empieza aquí</div>
+                <div class="es-cta-pill" @click="startFirstExpenseTour()" style="cursor:pointer;">Empieza aquí</div>
                 <svg width="18" height="34" viewBox="0 0 18 34" fill="none"><path d="M9 2v26M3 24l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </div>
             </div>
@@ -4848,6 +4851,13 @@ setTimeout(function() {
             <span class="si-label">Probar onboarding nuevo (beta)</span>
             <svg class="si-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 18l6-6-6-6"/></svg>
           </button>
+          <button class="settings-item" @click="startFirstExpenseTour()">
+            <div class="si-icon" style="background:rgba(var(--c-brand-rgb),0.1);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+            </div>
+            <span class="si-label">Probar tour del primer gasto (beta)</span>
+            <svg class="si-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
           <button class="settings-item" @click="bugReportOpen = true; bugReportText = ''">
             <div class="si-icon" style="background:rgba(var(--c-warning-rgb),0.10);">
               <svg viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -5852,7 +5862,7 @@ setTimeout(function() {
               </template>
 
               <!-- ═════════ CATEGORY GRID (solo cuando no hay items en lista; los items tienen su propio selector) ═════════ -->
-              <div x-show="parsedItems.length === 0 && (editingExpense || analyzed || form.amount)" style="margin-bottom:12px;">
+              <div id="a7-cat" x-show="parsedItems.length === 0 && (editingExpense || analyzed || form.amount)" style="margin-bottom:12px;">
                 <div class="cd-section-label"><span>CATEGORÍA</span></div>
                 <div class="cd-cat-grid">
                   <template x-for="c in (form.is_income ? incomeCategories : categories)" :key="c.key">
@@ -6081,7 +6091,7 @@ setTimeout(function() {
 
               <!-- APPROVE BUTTON (green) -->
               <div style="margin-top:20px;">
-                <button class="approve-btn" @click="saveExpense" :disabled="saving || (parsedItems.length >= 1 && !form.is_split ? parsedItems.filter(i => i.amount > 0 && i.category).length < 1 : (!form.amount || !form.category))">
+                <button id="a7-save" class="approve-btn" @click="saveExpense" :disabled="saving || (parsedItems.length >= 1 && !form.is_split ? parsedItems.filter(i => i.amount > 0 && i.category).length < 1 : (!form.amount || !form.category))">
                   <template x-if="!saving">
                     <span style="display:flex;align-items:center;gap:8px;">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><polyline points="20 6 9 17 4 12"/></svg>
@@ -6109,7 +6119,7 @@ setTimeout(function() {
               </div>
 
               <div class="cd-describe-card">
-                <textarea x-model="form.description" maxlength="500" rows="3" @keydown.enter.prevent="analyzeTextInput()" :placeholder="form.is_income ? 'sueldo octubre 1200 · freelance diseño 350' : 'almuerzo 15 · taxi 8.50 · café 3.20'"></textarea>
+                <textarea id="a7-desc" x-model="form.description" maxlength="500" rows="3" @keydown.enter.prevent="analyzeTextInput()" :placeholder="form.is_income ? 'sueldo octubre 1200 · freelance diseño 350' : 'almuerzo 15 · taxi 8.50 · café 3.20'"></textarea>
                 <div class="cd-describe-footer">
                   <div style="display:flex;gap:6px;align-items:center;">
                     <!-- Foto (camara) -->
@@ -7874,7 +7884,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v119',
+    APP_VERSION: 'v120',
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -8023,6 +8033,10 @@ function zepoApp() {
     onbV2Step: 0,
     onbV2Goal: '',
     onbV2Saving: false,
+    /* A7: primer gasto guiado (reflector driver.js) */
+    a7Active: false,
+    a7Step: 0,
+    _a7: null,
     /* Coach contextual — motor reutilizable (Capa B) */
     coach: { open: false, tag: '', emoji: '', title: '', sub: '', cta: '', locked: false },
     coachDefs: {
@@ -8093,7 +8107,7 @@ function zepoApp() {
         try { localStorage.setItem('zepo_onboarded_v1', '1'); } catch (e) {}
       } finally {
         this.onbV2Saving = false;
-        setTimeout(() => { this.showOnbV2 = false; }, 1100);
+        setTimeout(() => { this.showOnbV2 = false; setTimeout(() => this.startFirstExpenseTour(), 450); }, 1100);
       }
     },
 
@@ -8103,6 +8117,7 @@ function zepoApp() {
     coachTip(key) {
       const d = this.coachDefs[key];
       if (!d) return false;
+      if (this.a7Active) return false;                   // no molestar durante el tour A7
       if (this.coach && this.coach.open) return false;   // una burbuja a la vez
       const flag = 'zepo_coach_' + key + '_v1';
       try { if (localStorage.getItem(flag)) return false; } catch (e) {}
@@ -8140,6 +8155,33 @@ function zepoApp() {
       this.showWelcomeCarousel = true;
     },
 
+    /* === A7: primer gasto guiado (reflector driver.js) === */
+    startFirstExpenseTour() {
+      const mk = (window.driver && window.driver.js && window.driver.js.driver) ? window.driver.js.driver : null;
+      if (!mk) { this.openNew(); return; }          // sin driver.js: al menos abre el sheet
+      if (this.a7Active) return;
+      this.coach.open = false;
+      this.tab = 'home';                            // el reflector arranca sobre el boton + del home
+      this.a7Active = true;
+      this.a7Step = 1;
+      this._a7 = mk({
+        allowClose: true,
+        overlayColor: 'rgba(11,11,12,0.74)',
+        stagePadding: 6,
+        stageRadius: 14,
+        showButtons: ['close'],
+        onCloseClick: () => this._a7done(),
+        onDestroyed: () => { this.a7Active = false; this.a7Step = 0; this._a7 = null; },
+      });
+      this.$nextTick(() => { try { this._a7.highlight({ element: '.fab', popover: { title: '👆 Tu primer gasto', description: 'Toca el botón + para registrarlo. Te guío paso a paso.', side: 'top', align: 'center' } }); } catch (e) {} });
+    },
+    _a7done() { try { if (this._a7) this._a7.destroy(); } catch (e) {} this.a7Active = false; this.a7Step = 0; this._a7 = null; },
+    _a7go(step, sel, pop) {
+      if (!this.a7Active || !this._a7) return;
+      this.a7Step = step;
+      this.$nextTick(() => setTimeout(() => { try { if (this.a7Active && this._a7) this._a7.highlight({ element: sel, popover: pop }); } catch (e) {} }, 160));
+    },
+
     async init() {
       this._dlog('init() URL=' + location.href.slice(0, 150));
       window.addEventListener('online', () => this.offline = false);
@@ -8152,6 +8194,22 @@ function zepoApp() {
       this.$watch('budgetSheetOpen', v => { if (v) this.coachTip('budget'); });
       this.$watch('parsedItems', items => { if (items && items.length >= 2) this.coachTip('multi'); });
       this.$watch('tab', v => { if (v === 'home' && this.expenses.length >= 1) this.coachTip('home'); });
+
+      // A7: avanzar el tour del primer gasto segun las acciones reales del usuario.
+      this.$watch('sheetOpen', v => {
+        if (!this.a7Active) return;
+        if (v && this.a7Step === 1) {
+          this._a7go(2, '#a7-desc', { title: '⌨️ Escribe natural', description: 'Ej: almuerzo 12.50 — y dale Enter ↵. Zepo saca el monto y la categoría solos.', side: 'bottom', align: 'start' });
+        } else if (!v && this.a7Step >= 2) {
+          this._a7done();
+        }
+      });
+      this.$watch('analyzed', v => {
+        if (this.a7Active && v && this.a7Step === 2) {
+          this._a7go(3, '#a7-cat', { title: '✨ ¡Lo entendió!', description: 'Zepo sacó el monto y la categoría solos. Si la ajustas, la recordará la próxima vez.', side: 'top', align: 'center' });
+          setTimeout(() => { if (this.a7Active && this.a7Step === 3) this._a7go(4, '#a7-save', { title: '🎉 ¡Guárdalo!', description: 'Toca para guardar tu primer gasto. ¡Listo, ya usas Zepo!', side: 'top', align: 'center' }); }, 3800);
+        }
+      });
 
       // Teclado: el sheet fullscreen (.approve-screen) se ajusta a la altura VISIBLE
       // (visualViewport) para que el composer quede sobre el teclado sin scrollear
@@ -12735,7 +12793,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v96.js';
+  const CURRENT_SW = 'sw-v97.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
