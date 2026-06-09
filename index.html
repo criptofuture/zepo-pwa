@@ -6126,7 +6126,7 @@ setTimeout(function() {
                   <div style="display:flex;align-items:center;gap:10px;">
                     <div class="cd-char-count"><span x-text="(form.description || '').length"></span>/500</div>
                     <!-- Mic (voz) -->
-                    <button type="button" class="cd-inline-action" @click="if (!hasPlan('pro')) { tab = 'plans'; sheetOpen = false; return } toggleVoice()" :style="voiceRecording ? 'background:rgba(255,77,109,0.15);border-color:var(--danger)' : ''" title="Voz">
+                    <button type="button" class="cd-inline-action" @click="if (!hasPlan('pro')) { if (!coachTip('voice')) { tab = 'plans'; sheetOpen = false; } return } toggleVoice()" :style="voiceRecording ? 'background:rgba(255,77,109,0.15);border-color:var(--danger)' : ''" title="Voz">
                       <template x-if="!voiceRecording">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
                       </template>
@@ -8098,9 +8098,10 @@ function zepoApp() {
     // Si la función es de pago y no tiene el plan → muestra teaser de upgrade.
     coachTip(key) {
       const d = this.coachDefs[key];
-      if (!d) return;
+      if (!d) return false;
+      if (this.coach && this.coach.open) return false;   // una burbuja a la vez
       const flag = 'zepo_coach_' + key + '_v1';
-      try { if (localStorage.getItem(flag)) return; } catch (e) {}
+      try { if (localStorage.getItem(flag)) return false; } catch (e) {}
       const locked = !!(d.plan && !this.hasPlan(d.plan));
       this.coach = {
         open: true,
@@ -8112,6 +8113,7 @@ function zepoApp() {
         locked: locked,
       };
       try { localStorage.setItem(flag, '1'); } catch (e) {}
+      return true;
     },
     coachClose() { this.coach.open = false; },
     coachCta() {
@@ -8139,6 +8141,13 @@ function zepoApp() {
       window.addEventListener('online', () => this.offline = false);
       window.addEventListener('offline', () => this.offline = true);
       window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); this.installPrompt = e; });
+
+      // Coach contextual (Capa B): disparadores por cambio de estado, no invasivos.
+      this.$watch('form.is_income', v => { if (v) this.coachTip('income'); });
+      this.$watch('recurringOn', v => { if (v) this.coachTip('recur'); });
+      this.$watch('budgetSheetOpen', v => { if (v) this.coachTip('budget'); });
+      this.$watch('parsedItems', items => { if (items && items.length >= 2) this.coachTip('multi'); });
+      this.$watch('tab', v => { if (v === 'home' && this.expenses.length >= 1) this.coachTip('home'); });
 
       // Teclado: el sheet fullscreen (.approve-screen) se ajusta a la altura VISIBLE
       // (visualViewport) para que el composer quede sobre el teclado sin scrollear
@@ -9685,7 +9694,7 @@ function zepoApp() {
       } catch (e) { console.warn('[seedDefaultSpace]', e.message); }
       this._spaceSeeding = false;
     },
-    openSpaceSwitcher() { this.spaceSwitcherOpen = true; this.loadSpaceStats(); },
+    openSpaceSwitcher() { this.spaceSwitcherOpen = true; this.loadSpaceStats(); this.coachTip('spaces'); },
     async loadSpaceStats() {
       if (!this.user) return;
       try {
@@ -10187,6 +10196,7 @@ function zepoApp() {
 
     _doOpenEdit(exp) {
       this.editingExpense = exp;
+      this.coachTip('edit');
       // Editar 1 elemento = UI individual: limpia el estado de grupo (si no, queda
       // "Editar grupo" / "Guardar N registros" pegado y se oculta el grid de categoria).
       this.editingBatch = null;
