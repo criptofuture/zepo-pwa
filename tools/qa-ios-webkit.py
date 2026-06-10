@@ -62,13 +62,15 @@ CHECKS = """
     if (r.width > 0 && r.right > widest) { widest = Math.round(r.right); if (r.right > vw + 1) culprit = el.className || el.tagName; }
   });
   out.push(['sin overflow horizontal', widest <= vw + 1, `derecha max ${widest} vs ancho ${vw}` + (culprit?` (${culprit})`:'')]);
-  // 2. Barra inferior pegada al borde físico (si está visible)
+  // 2. Barra inferior: pegada al borde físico + labels densos (sin franja muerta).
+  //    position:fixed -> offsetParent es null por spec; chequear visibilidad por display+rect.
   const bar = document.querySelector('.tab-bar');
-  if (bar && bar.offsetParent !== null) {
+  const barVisible = bar && getComputedStyle(bar).display !== 'none' && bar.getBoundingClientRect().height > 0;
+  if (barVisible) {
     const b = bar.getBoundingClientRect();
     out.push(['tab-bar flush al borde', Math.abs(vh - b.bottom) <= 1, `fondo barra a ${Math.round(vh-b.bottom)}px del borde`]);
     const label = bar.querySelector('.tab-item');
-    if (label) { const lr = label.getBoundingClientRect(); out.push(['labels barra no pegados al borde', (vh-lr.bottom) >= 8, `label a ${Math.round(vh-lr.bottom)}px`]); }
+    if (label) { const lr = label.getBoundingClientRect(); const gap = Math.round(vh-lr.bottom); out.push(['label barra denso (8-22px del borde)', gap >= 8 && gap <= 22, `label a ${gap}px`]); }
   }
   // 3. Botón Saltar (carrusel viejo o onbV2) por debajo del notch
   const skip = document.querySelector('.ov2-skip, .wc-skip');
@@ -125,43 +127,32 @@ def run(url):
             print("  [onboarding v2]")
             if not run_checks(page, "onbv2"): failures += 1
 
-            # Tour del primer gasto: barra FIJA en el sheet (reemplaza el globito).
-            page.evaluate("()=>{const c=window.Alpine.$data(document.querySelector('#app')); c.showOnbV2=false; c.startFirstExpenseTour && c.startFirstExpenseTour();}")
-            page.wait_for_timeout(500)
+            # Tour del primer gasto: GLOBITO FLOTANTE (estilo Android) sobre el textarea.
+            # Robusto en iOS porque se crea con el sheet ya asentado (anti-parpadeo) y se
+            # RETIRA al empezar a escribir, antes de que suba el teclado.
+            page.evaluate("()=>{const c=window.Alpine.$data(document.querySelector('#app')); c.showOnbV2=false; c._a7done(); c.a7Active=true; c.a7Step=1;}")
             page.evaluate("()=>{const c=window.Alpine.$data(document.querySelector('#app')); c.openNew && c.openNew();}")
-            page.wait_for_timeout(700)
+            page.wait_for_timeout(1100)  # cubre el delay anti-parpadeo de 360ms + creacion + refresh
             cap(page, f"tour-write-{theme}")
             tour = page.evaluate("""()=>{
-              const bar=document.querySelector('.a7-bar');
-              const hdr=document.querySelector('.approve-header');
+              const pop=document.querySelector('.driver-popover');
               const ta=document.querySelector('#a7-desc');
-              if(!bar||bar.offsetParent===null) return {shown:false};
-              const b=bar.getBoundingClientRect(), h=hdr.getBoundingClientRect(), t=ta?ta.getBoundingClientRect():null;
-              return {shown:true, underHeader: b.top>=h.bottom-2, overlapsTextarea: t? (b.bottom>t.top+2 && b.top<t.bottom-2) : false, barTop:Math.round(b.top), hdrBottom:Math.round(h.bottom)};
+              if(!pop||!ta) return {shown:false};
+              const p=pop.getBoundingClientRect(), a=ta.getBoundingClientRect();
+              return {shown:true, above: p.bottom <= a.top + 8, overlaps: (p.bottom>a.top+8 && p.top<a.bottom-8),
+                      popBottom:Math.round(p.bottom), taTop:Math.round(a.top)};
             }""")
-            print("  [tour: barra fija en sheet]")
-            ok = tour.get("shown") and tour.get("underHeader") and not tour.get("overlapsTextarea")
-            print(f"    [{'PASS' if ok else 'FALLA'}] barra bajo el header y sin pisar el textarea — {tour}")
+            print("  [tour: globito flotante sobre textarea]")
+            ok = tour.get("shown") and tour.get("above") and not tour.get("overlaps")
+            print(f"    [{'PASS' if ok else 'FALLA'}] globito ARRIBA del textarea, sin pisarlo — {tour}")
             if not ok: failures += 1
-            # Simular TECLADO iOS: visualViewport encoge -> --vvh menor. La barra NO debe moverse.
-            page.evaluate("()=>{document.documentElement.style.setProperty('--vvh','420px'); document.documentElement.style.setProperty('--vvt','0px');}")
-            page.wait_for_timeout(400)
-            cap(page, f"tour-keyboard-{theme}")
-            kb = page.evaluate("""()=>{
-              const bar=document.querySelector('.a7-bar'); const hdr=document.querySelector('.approve-header');
-              if(!bar||bar.offsetParent===null) return {shown:false};
-              const b=bar.getBoundingClientRect(), h=hdr.getBoundingClientRect();
-              return {shown:true, underHeader: b.top>=h.bottom-2, barTop:Math.round(b.top)};
-            }""")
-            okk = kb.get("shown") and kb.get("underHeader")
-            print(f"    [{'PASS' if okk else 'FALLA'}] con teclado: barra sigue bajo el header — {kb}")
-            if not okk: failures += 1
-            page.evaluate("()=>{document.documentElement.style.removeProperty('--vvh'); document.documentElement.style.removeProperty('--vvt');}")
-            # Fase 'review' (Zepo analizó)
-            page.evaluate("()=>{const c=window.Alpine.$data(document.querySelector('#app')); c.parsedItems=[{description:'almuerzo',amount:12.5,category:'food'}]; c.analyzed=true;}")
-            page.wait_for_timeout(400)
-            cap(page, f"tour-review-{theme}")
-            page.evaluate("()=>{const c=window.Alpine.$data(document.querySelector('#app')); c.sheetOpen=false; c.a7Active=false; c.parsedItems=[];}")
+            # Al empezar a escribir, el globito se RETIRA (antes de que suba el teclado iOS).
+            page.evaluate("()=>{const c=window.Alpine.$data(document.querySelector('#app')); c._a7onWrite();}")
+            page.wait_for_timeout(300)
+            gone = page.evaluate("()=>!document.querySelector('.driver-popover')")
+            print(f"    [{'PASS' if gone else 'FALLA'}] se retira al empezar a escribir (sin teclado encima) — gone={gone}")
+            if not gone: failures += 1
+            page.evaluate("()=>{const c=window.Alpine.$data(document.querySelector('#app')); c._a7done && c._a7done(); c.sheetOpen=false; c.a7Active=false; c.parsedItems=[];}")
             page.wait_for_timeout(300)
 
         ctx.close(); wk.close()

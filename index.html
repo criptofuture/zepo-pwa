@@ -128,12 +128,12 @@
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       /* ── Layout tokens (single source of truth for safe-area math) ── */
-      --tab-height: 66px;
-      /* iOS: la barra NO suma el inset completo (34px) — lo solapa 20px para que
-         los iconos queden cerca del borde como en Android. En Android (inset 0)
-         max() devuelve 0px y nada cambia. Solo para tab-bar/FAB; los sheets
-         siguen usando --safe-bottom completo. */
-      --safe-bottom-bar: max(calc(var(--safe-bottom) - 20px), 0px);
+      --tab-height: 52px;
+      /* iOS desperdiciaba ~29px bajo los iconos (Alvaro lo marcó en rojo). Ahora los
+         iconos van PEGADOS abajo (.tab-bar align-items:flex-end) y el reserve deja solo
+         ~16px en iOS (despeja el home-indicator) y ~14px en Android — denso como Android,
+         sin franja muerta. Solo para tab-bar/FAB; los sheets usan --safe-bottom completo. */
+      --safe-bottom-bar: max(calc(var(--safe-bottom) - 18px), 14px);
       --tab-total: calc(var(--tab-height) + var(--safe-bottom-bar));
       --content-pad-bottom: calc(var(--tab-height) + 16px + var(--safe-bottom-bar));
       --overlay-pad-top: calc(var(--safe-top) + 16px);
@@ -357,7 +357,7 @@
       border-top: 1px solid var(--border);
       display: flex;
       justify-content: space-around;
-      align-items: center;
+      align-items: flex-end;
       padding-top: 0;
       padding-bottom: var(--safe-bottom-bar);
       z-index: 50;
@@ -968,23 +968,6 @@
       padding: 14px 20px 12px;
       padding-top: var(--overlay-pad-top);
       background: var(--bg); flex-shrink: 0;
-    }
-    /* Barra coach del primer gasto (tour A7). Hermano flex entre header y body =>
-       siempre visible, no se descoloca con el teclado (no ancla a nada que se mueva). */
-    .a7-bar {
-      display: flex; align-items: center; gap: 12px;
-      flex-shrink: 0; margin: 0 16px 6px; padding: 12px 14px;
-      background: linear-gradient(135deg, rgba(var(--c-brand-rgb),0.13), rgba(var(--c-accent-rgb),0.13));
-      border: 1px solid var(--cyan); border-radius: 14px;
-    }
-    .a7-bar-emoji { font-size: 22px; flex: none; line-height: 1; }
-    .a7-bar-text { flex: 1; min-width: 0; }
-    .a7-bar-title { font-weight: 800; font-size: 14px; color: var(--text); letter-spacing: -0.2px; }
-    .a7-bar-sub { font-size: 12.5px; color: var(--muted); line-height: 1.35; margin-top: 2px; }
-    .a7-bar-x {
-      flex: none; width: 26px; height: 26px; border-radius: 13px;
-      background: rgba(var(--c-ink-rgb),0.06); color: var(--muted);
-      font-size: 13px; display: flex; align-items: center; justify-content: center;
     }
     .approve-back {
       width: 36px; height: 36px; border-radius: 18px;
@@ -5542,18 +5525,6 @@ setTimeout(function() {
               </button>
             </div>
 
-            <!-- Coach del primer gasto: barra FIJA bajo el header. No mide elementos que
-                 se mueven (textarea, teclado) -> inmune al reflow de iOS. Reemplaza el
-                 globito flotante driver.js que se descolocaba en iPhone. -->
-            <div class="a7-bar" x-show="a7Active && sheetOpen" x-cloak>
-              <span class="a7-bar-emoji" x-text="a7Phase === 'review' ? '🎉' : '✍️'"></span>
-              <div class="a7-bar-text">
-                <div class="a7-bar-title" x-text="a7Phase === 'review' ? '¡Lo entendió!' : 'Escríbelo natural'"></div>
-                <div class="a7-bar-sub" x-text="a7Phase === 'review' ? 'Zepo sacó el monto y la categoría solos. Si ajustas algo, va aprendiendo. Toca Aprobar para guardar.' : 'Ej: “almuerzo 12.50”. Escríbelo abajo y toca la flecha verde — la IA lo categoriza.'"></div>
-              </div>
-              <button type="button" class="a7-bar-x" @click="_a7done()" aria-label="Cerrar guía">✕</button>
-            </div>
-
             <!-- Main content area -->
             <div class="approve-body">
 
@@ -6194,7 +6165,7 @@ setTimeout(function() {
               </div>
 
               <div class="cd-describe-card">
-                <textarea id="a7-desc" x-model="form.description" maxlength="500" rows="3" @keydown.enter.prevent="analyzeTextInput()" :placeholder="form.is_income ? 'sueldo octubre 1200 · freelance diseño 350' : 'almuerzo 15 · taxi 8.50 · café 3.20'"></textarea>
+                <textarea id="a7-desc" x-model="form.description" maxlength="500" rows="3" @focus="_a7onWrite()" @keydown.enter.prevent="analyzeTextInput()" :placeholder="form.is_income ? 'sueldo octubre 1200 · freelance diseño 350' : 'almuerzo 15 · taxi 8.50 · café 3.20'"></textarea>
                 <div class="cd-describe-footer">
                   <div style="display:flex;gap:6px;align-items:center;">
                     <!-- Foto (camara) -->
@@ -7959,7 +7930,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v125',
+    APP_VERSION: 'v126',
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -8111,7 +8082,6 @@ function zepoApp() {
     /* A7: primer gasto guiado (reflector driver.js) */
     a7Active: false,
     a7Step: 0,
-    a7Phase: 'fab',        // fab | write | review — dirige la barra coach FIJA del sheet
     _a7: null,
     _a7destroying: false,
     /* Coach contextual — motor reutilizable (Capa B) */
@@ -8152,7 +8122,7 @@ function zepoApp() {
       this.showWelcomeCarousel = false;
       // El onboarding manda en pantalla: nada de coach/tour encima (lo vi colisionar).
       if (this.coach) this.coach.open = false;
-      if (this.a7Active) { this.a7Active = false; this.a7Step = 0; this.a7Phase = 'fab'; this._a7killDriver(); }
+      if (this.a7Active) { this.a7Active = false; this.a7Step = 0; this._a7killDriver(); }
       this.onbV2Step = 0;
       this.onbV2Goal = '';
       if (!this.onboardingName) this.onboardingName = this.userName || '';
@@ -8246,17 +8216,28 @@ function zepoApp() {
       this.tab = 'home';                            // el reflector arranca sobre el boton + del home
       this.a7Active = true;
       this.a7Step = 1;
-      this.a7Phase = 'fab';
       // Paso 1: resalta el boton +. Avanza solo cuando el usuario lo toca (abre el sheet).
       this._a7mk('.fab', { title: '👆 Empieza aquí', description: 'Toca el botón + para registrar tu primer gasto. Te guío paso a paso.', side: 'top', align: 'center' });
     },
-    // Apaga SOLO el reflector driver (sin terminar el tour). Al entrar al sheet pasamos
-    // del globito flotante a la barra fija, que no se puede descolocar en iOS.
+    // Retira SOLO el globito driver (sin terminar el tour). Lo usamos cuando el usuario
+    // empieza a escribir: quitamos el popover ANTES de que suba el teclado, así no hay
+    // nada flotante que el reflow de iOS pueda descolocar. El tour sigue vivo.
     _a7killDriver() {
       this._a7destroying = true;
       try { if (this._a7) this._a7.destroy(); } catch (e) {}
       this._a7destroying = false;
       this._a7 = null;
+    },
+    // El usuario tocó el textarea para escribir -> retira el globito del paso "escribe".
+    _a7onWrite() {
+      if (this.a7Active && this.a7Step === 2 && this._a7) this._a7killDriver();
+    },
+    // Avanza a un paso flotante: fija el paso y, tras un respiro para que el layout
+    // (sheet/teclado) se asiente, crea el globito sobre el nuevo objetivo.
+    _a7go(step, sel, pop, nextCfg) {
+      if (!this.a7Active) return;
+      this.a7Step = step;
+      this.$nextTick(() => setTimeout(() => this._a7mk(sel, pop, 0, nextCfg), 180));
     },
     // Arranca el tour solo si el home está vacío y nunca se hizo (primer uso real).
     _maybeAutoStartA7() {
@@ -8324,7 +8305,7 @@ function zepoApp() {
       this._a7destroying = true;
       try { if (this._a7) this._a7.destroy(); } catch (e) {}
       this._a7destroying = false;
-      this.a7Active = false; this.a7Step = 0; this.a7Phase = 'fab'; this._a7 = null;
+      this.a7Active = false; this.a7Step = 0; this._a7 = null;
     },
 
     async init() {
@@ -8345,22 +8326,33 @@ function zepoApp() {
       // boton ("Listo"/"Entendido") cuando no hay una accion natural que dispare.
       // Al ABRIR el sheet: apaga el globito driver y pasa a la barra fija (fase 'write').
       // Al CERRARLO (guardó/canceló) tras haber entrado: termina el tour.
+      // Al ABRIR el sheet (paso 1 -> 2): retira el globito del + y, cuando el sheet
+      // TERMINA de abrir (~360ms; si no, driver mide a mitad de la animación y el popover
+      // PISA el textarea un instante — el bug iOS que viste), crea el globito flotante
+      // ARRIBA del textarea. Se retira solo al tocar a escribir (@focus="_a7onWrite()"),
+      // antes de que suba el teclado, así nunca se descoloca con el reflow.
       this.$watch('sheetOpen', v => {
         if (!this.a7Active) return;
         if (v && this.a7Step === 1) {
           this._a7killDriver();
           this.a7Step = 2;
-          this.a7Phase = 'write';
+          setTimeout(() => {
+            if (this.a7Active && this.sheetOpen && this.a7Step === 2)
+              this._a7mk('#a7-desc', { title: '⌨️ Escríbelo natural', description: 'Anótalo como hablas: “almuerzo 12.50”. Luego toca la flecha verde y la IA saca el monto y la categoría.', side: 'top', align: 'center' });
+          }, 360);
         } else if (!v && this.a7Step >= 2) {
           this._a7done();
         }
       });
-      // Cuando Zepo analiza el texto: la barra pasa a 'review' (revisa y aprueba).
+      // Zepo analizó: globito sobre el resultado -> "Entendido" -> guardar. Aquí el teclado
+      // ya está cerrado (el usuario tocó enviar), así que el popover sale estable.
       this.$watch('analyzed', v => {
-        if (this.a7Active && this.sheetOpen && v) this.a7Phase = 'review';
-      });
-      this.$watch('parsedItems', items => {
-        if (this.a7Active && this.sheetOpen && items && items.length >= 1) this.a7Phase = 'review';
+        if (this.a7Active && this.sheetOpen && v && this.a7Step === 2) {
+          const tgt = (this.parsedItems && this.parsedItems.length >= 1) ? '#a7-detected' : '#a7-cat';
+          this._a7go(4, tgt,
+            { title: '✨ ¡Lo entendió!', description: 'Zepo sacó el monto y la categoría solos. Si lo ajustas, irá aprendiendo de tus registros.', side: 'bottom', align: 'center' },
+            { text: 'Entendido', fn: () => this._a7go(5, '#a7-save', { title: '🎉 ¡Guárdalo!', description: 'Toca Aprobar para guardar tu primer gasto. ¡Listo, ya usas Zepo!', side: 'top', align: 'center' }) });
+        }
       });
       // Primer uso: si el home queda vacío y nunca hizo el tour, arráncalo en el +.
       this.$watch('expenses', () => this._maybeAutoStartA7());
@@ -8376,6 +8368,9 @@ function zepoApp() {
         const syncVV = () => {
           document.documentElement.style.setProperty('--vvh', vv.height + 'px');
           document.documentElement.style.setProperty('--vvt', vv.offsetTop + 'px');
+          // Red de seguridad: si quedara un globito vivo durante el reflow del teclado,
+          // que se reubique en vez de descolocarse (el caso normal lo retira _a7onWrite).
+          if (this.a7Active && this._a7) { try { this._a7.refresh(); } catch (e) {} }
         };
         vv.addEventListener('resize', syncVV);
         vv.addEventListener('scroll', syncVV);
@@ -13024,7 +13019,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v102.js';
+  const CURRENT_SW = 'sw-v103.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
