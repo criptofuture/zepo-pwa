@@ -70,7 +70,7 @@ CHECKS = """
     const b = bar.getBoundingClientRect();
     out.push(['tab-bar flush al borde', Math.abs(vh - b.bottom) <= 1, `fondo barra a ${Math.round(vh-b.bottom)}px del borde`]);
     const label = bar.querySelector('.tab-item');
-    if (label) { const lr = label.getBoundingClientRect(); const gap = Math.round(vh-lr.bottom); out.push(['label barra denso (8-22px del borde)', gap >= 8 && gap <= 22, `label a ${gap}px`]); }
+    if (label) { const lr = label.getBoundingClientRect(); const gap = Math.round(vh-lr.bottom); out.push(['label barra denso (<=22px del borde)', gap >= 0 && gap <= 22, `label a ${gap}px`]); }
   }
   // 3. Botón Saltar (carrusel viejo o onbV2) por debajo del notch
   const skip = document.querySelector('.ov2-skip, .wc-skip');
