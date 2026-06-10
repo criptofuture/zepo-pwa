@@ -41,7 +41,12 @@
     :root[data-theme="dark"] input[type=date]::-webkit-calendar-picker-indicator {
       filter: invert(1) opacity(0.6);
     }
-    html { color-scheme: light; } /* el bloque dark de tokens fija color-scheme:dark */
+    /* El fondo del HTML se propaga al "lienzo" del viewport. En iOS instalado la pantalla
+       física es ~safe-bottom px más alta que innerHeight: esa franja inferior (home-indicator)
+       SOLO la pinta el fondo raíz — ningún elemento fixed/absolute llega ahí (bottom:0 ancla
+       al viewport de layout, no a la pantalla física). Pintarlo del color de la BARRA = sin
+       franja, pase lo que pase. (Diagnosticado con Alvaro en iPhone real vía /lab/.) */
+    html { color-scheme: light; background: var(--surface); } /* el bloque dark de tokens fija color-scheme:dark */
     body {
       font-family: var(--font-body), -apple-system, system-ui, sans-serif;
       letter-spacing: var(--tracking-body);
@@ -7932,7 +7937,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v130',
+    APP_VERSION: 'v131',
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -8265,15 +8270,6 @@ function zepoApp() {
         onDestroyed: () => { if (!this._a7destroying) { try { localStorage.setItem('zepo_a7_done_v1', '1'); } catch (e) {} this.a7Active = false; this.a7Step = 0; this._a7 = null; } },
       });
       try { this._a7.highlight({ element: el, popover: pop }); } catch (e) {}
-      // El rect del target (textarea sticky en flex + reflow de visualViewport en iOS) aun no
-      // esta estable al primer paint -> driver mide mal y el popover PISA el input. refresh()
-      // re-lee y reubica (lo mismo que ocurre al tocar). Tras 2 frames y otra vez pasado el
-      // reflow del teclado/viewport, para acertar a la PRIMERA sin que el usuario toque nada.
-      const _a7refresh = () => { try { if (this._a7 && this.a7Active) this._a7.refresh(); } catch (e) {} };
-      requestAnimationFrame(() => requestAnimationFrame(_a7refresh));
-      // Escalonados: cubren el fin de la animacion del sheet, el coach que se inserta
-      // despues y el reflow del teclado iOS (--vvh), que llegan a tiempos distintos.
-      [300, 650, 1100].forEach(ms => setTimeout(_a7refresh, ms));
       if (nextCfg) {
         setTimeout(() => {
           const popEl = document.querySelector('.driver-popover');
@@ -12993,7 +12989,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v107.js';
+  const CURRENT_SW = 'sw-v108.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
