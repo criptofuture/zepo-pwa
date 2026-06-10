@@ -74,7 +74,10 @@ def run_device(name, osv, user, key, hub, url):
         safe = drv.execute_script(REMOVE_GATE)
         print(f"  safe-bottom REAL (env) = {safe!r}")
         if not wait_alpine(drv):
-            print("  [FALLA] Alpine no cargó a tiempo"); return
+            print("  (Alpine lento; recargo y reintento)")
+            drv.get(url); time.sleep(4); drv.execute_script(REMOVE_GATE)
+            if not wait_alpine(drv):
+                print("  [FALLA] Alpine no cargó a tiempo (2 intentos)"); return
         err = drv.execute_async_script(LOGIN, DEMO_EMAIL, DEMO_PASS)
         if err:
             print("  [FALLA] login:", err); return

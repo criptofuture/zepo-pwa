@@ -7932,7 +7932,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v127',
+    APP_VERSION: 'v128',
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -8350,12 +8350,16 @@ function zepoApp() {
       // ya está cerrado (el usuario tocó enviar), así que el popover sale estable.
       this.$watch('analyzed', v => {
         if (this.a7Active && this.sheetOpen && v && this.a7Step === 2) {
+          // Cierra el teclado antes del globito final: con teclado abierto el sheet se
+          // comprime y el popover (sobre el resultado) rozaba el textarea. Cerrado = sheet
+          // completo, hay aire de sobra entre el resultado (arriba) y el composer (abajo).
+          try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
           const tgt = (this.parsedItems && this.parsedItems.length >= 1) ? '#a7-detected' : '#a7-cat';
           // Globito final sobre el RESULTADO (arriba del sheet). Antes había un paso 5
           // sobre el botón Aprobar, que queda pegado al composer -> el popover tapaba el
           // textarea (lo reportó Alvaro). El tour termina solo cuando guarda (cierra sheet).
           this._a7go(4, tgt,
-            { title: '✨ ¡Lo entendió!', description: 'Zepo sacó el monto y la categoría solos. Revisa y toca Aprobar para guardar — ¡listo, ya usas Zepo!', side: 'bottom', align: 'center' });
+            { title: '✨ ¡Lo entendió!', description: 'Sacó el monto y la categoría. Toca Aprobar para guardar.', side: 'bottom', align: 'center' });
         }
       });
       // Primer uso: si el home queda vacío y nunca hizo el tour, arráncalo en el +.
@@ -13023,7 +13027,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v104.js';
+  const CURRENT_SW = 'sw-v105.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {

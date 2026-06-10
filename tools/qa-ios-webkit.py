@@ -152,6 +152,21 @@ def run(url):
             gone = page.evaluate("()=>!document.querySelector('.driver-popover')")
             print(f"    [{'PASS' if gone else 'FALLA'}] se retira al empezar a escribir (sin teclado encima) — gone={gone}")
             if not gone: failures += 1
+            # Paso REVISAR/GUARDAR: el globito final va sobre el RESULTADO y NO debe pisar el
+            # textarea (Alvaro vio el de 'Guardar' encima del box). En revisar el teclado está
+            # CERRADO (la app hace blur) -> sheet completo, hay aire entre resultado y composer.
+            page.evaluate("()=>{const c=window.Alpine.$data(document.querySelector('#app')); c._a7done(); c.a7Active=true; c.a7Step=2; c.sheetOpen=true; c.parsedItems=[{description:'sopa',amount:5,category:'food'}]; c.analyzed=true;}")
+            page.wait_for_timeout(700)
+            cap(page, f"tour-review-{theme}")
+            rv = page.evaluate("""()=>{
+              const pop=document.querySelector('.driver-popover'); const ta=document.querySelector('#a7-desc');
+              if(!pop||!ta) return {shown:false};
+              const p=pop.getBoundingClientRect(), a=ta.getBoundingClientRect();
+              return {shown:true, overlaps:(p.bottom>a.top+6 && p.top<a.bottom-6), popBottom:Math.round(p.bottom), taTop:Math.round(a.top)};
+            }""")
+            okr = rv.get("shown") and not rv.get("overlaps")
+            print(f"    [{'PASS' if okr else 'FALLA'}] globito 'revisar' sobre el resultado, sin pisar el textarea — {rv}")
+            if not okr: failures += 1
             page.evaluate("()=>{const c=window.Alpine.$data(document.querySelector('#app')); c._a7done && c._a7done(); c.sheetOpen=false; c.a7Active=false; c.parsedItems=[];}")
             page.wait_for_timeout(300)
 
