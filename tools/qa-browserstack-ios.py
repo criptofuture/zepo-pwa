@@ -80,7 +80,10 @@ def run_device(name, osv, user, key, hub, url):
                 print("  [FALLA] Alpine no cargó a tiempo (2 intentos)"); return
         err = drv.execute_async_script(LOGIN, DEMO_EMAIL, DEMO_PASS)
         if err:
-            print("  [FALLA] login:", err); return
+            print("  (login lento, reintento):", err); time.sleep(5)
+            err = drv.execute_async_script(LOGIN, DEMO_EMAIL, DEMO_PASS)
+            if err:
+                print("  [FALLA] login:", err); return
         time.sleep(5)
         for theme in ("light", "dark"):
             drv.execute_script(

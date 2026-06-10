@@ -152,9 +152,10 @@ def run(url):
             gone = page.evaluate("()=>!document.querySelector('.driver-popover')")
             print(f"    [{'PASS' if gone else 'FALLA'}] se retira al empezar a escribir (sin teclado encima) — gone={gone}")
             if not gone: failures += 1
-            # Paso REVISAR/GUARDAR: el globito final va sobre el RESULTADO y NO debe pisar el
-            # textarea (Alvaro vio el de 'Guardar' encima del box). En revisar el teclado está
-            # CERRADO (la app hace blur) -> sheet completo, hay aire entre resultado y composer.
+            # Paso REVISAR/GUARDAR: el globito final va ARRIBA del RESULTADO y NO debe pisar el
+            # textarea (Alvaro vio el de 'Guardar' encima del box). Se prueba a ALTURA CORTA
+            # (--vvh 640 ~ Safari navegador) para garantizar que aguanta cualquier pantalla.
+            page.evaluate("()=>{document.documentElement.style.setProperty('--vvh','640px');}")
             page.evaluate("()=>{const c=window.Alpine.$data(document.querySelector('#app')); c._a7done(); c.a7Active=true; c.a7Step=2; c.sheetOpen=true; c.parsedItems=[{description:'sopa',amount:5,category:'food'}]; c.analyzed=true;}")
             page.wait_for_timeout(700)
             cap(page, f"tour-review-{theme}")
@@ -167,6 +168,7 @@ def run(url):
             okr = rv.get("shown") and not rv.get("overlaps")
             print(f"    [{'PASS' if okr else 'FALLA'}] globito 'revisar' sobre el resultado, sin pisar el textarea — {rv}")
             if not okr: failures += 1
+            page.evaluate("()=>{document.documentElement.style.removeProperty('--vvh');}")
             page.evaluate("()=>{const c=window.Alpine.$data(document.querySelector('#app')); c._a7done && c._a7done(); c.sheetOpen=false; c.a7Active=false; c.parsedItems=[];}")
             page.wait_for_timeout(300)
 
