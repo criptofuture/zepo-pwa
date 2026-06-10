@@ -93,6 +93,7 @@ async (tag) => {
 DELETE_JS = """
 async (expId) => {
   const c = window.Alpine.$data(document.querySelector('#app'));
+  c.askConfirm = () => Promise.resolve(true);
   const exp = (c.expenses||[]).find(x=>x.id===expId);
   if (!exp) return { error:'no encontrado para borrar' };
   c.editingExpense = exp; c.sheetOpen = true;

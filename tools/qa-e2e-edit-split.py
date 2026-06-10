@@ -107,6 +107,7 @@ VERIFY_JS = """
 CLEANUP_JS = """
 async (expId) => {
   const c = window.Alpine.$data(document.querySelector('#app'));
+  c.askConfirm = () => Promise.resolve(true);
   const exp = (c.pendingSplits || []).find(e => e.id === expId)
            || (c.expenses || []).find(e => e.id === expId);
   if (!exp) return 'ya no existe';

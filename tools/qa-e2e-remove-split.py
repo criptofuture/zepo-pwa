@@ -80,6 +80,7 @@ VERIFY_JS = """
 CLEANUP_JS = """
 async (tag) => {
   const c = window.Alpine.$data(document.querySelector('#app'));
+  c.askConfirm = () => Promise.resolve(true);
   const targets = [...(c.expenses||[]), ...(c.pendingSplits||[])]
     .filter(e => (e.description||'').startsWith(tag));
   const seen = new Set(); let n=0;

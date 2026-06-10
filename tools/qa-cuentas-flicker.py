@@ -94,6 +94,7 @@ DOM_COUNT_JS = """
 CLEANUP_JS = """
 async (tag) => {
   const c = window.Alpine.$data(document.querySelector('#app'));
+  c.askConfirm = () => Promise.resolve(true);
   const targets = (c.pendingSplits||[]).filter(e => (e.description||'').startsWith(tag));
   let n=0;
   for (const exp of targets) { c.editingExpense=exp; c.sheetOpen=true; await c.deleteExpense(); n++; }

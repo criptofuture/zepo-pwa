@@ -59,6 +59,7 @@ VERIFY_CREATE_JS = """
 DELETE_JS = """
 async (batchId) => {
   const c = window.Alpine.$data(document.querySelector('#app'));
+  c.askConfirm = () => Promise.resolve(true);
   c.editingBatch = batchId; c.sheetOpen = true;
   await c.deleteBatch();
   return true;

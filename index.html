@@ -357,6 +357,17 @@
       padding-bottom: var(--safe-bottom);
       z-index: 50;
     }
+    /* Red de seguridad iOS: pinta el color de la barra en la franja del home-indicator
+       hasta el borde fisico, por si el fondo border-box deja un hairline visible debajo. */
+    .tab-bar::after {
+      content: '';
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      height: var(--safe-bottom);
+      background: var(--surface);
+      z-index: -1;
+      pointer-events: none;
+    }
     .tab-item {
       display: flex;
       flex-direction: column;
@@ -4319,6 +4330,11 @@ setTimeout(function() {
                       <div style="font-size:11px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums;" x-text="'$' + fmtMoney(b.spent) + ' de $' + fmtMoney(b.budget)"></div>
                     </div>
                     <div :style="'font-size:16px;font-weight:800;letter-spacing:-0.4px;font-variant-numeric:tabular-nums;color:' + (b.pct >= 100 ? 'var(--danger)' : b.pct >= 80 ? 'var(--warning)' : 'var(--success)')" x-text="b.pct + '%'"></div>
+                    <template x-if="b.orphan">
+                      <button @click.stop="deleteBudgetRow(b.cat)" title="Eliminar presupuesto huérfano" style="width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--danger);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                      </button>
+                    </template>
                   </div>
                   <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;">
                     <div :style="'height:100%;border-radius:3px;transition:width 0.4s;width:' + Math.min(b.pct, 100) + '%;background:' + (b.pct >= 100 ? 'var(--danger)' : b.pct >= 80 ? 'var(--warning)' : b.color || 'var(--cyan)')"></div>
@@ -5382,6 +5398,23 @@ setTimeout(function() {
         </div>
       </template>
 
+      <!-- ══ CONFIRM MODAL (reemplaza el confirm() nativo) ══ -->
+      <template x-if="confirmState">
+        <div class="modal-overlay" @click.self="_confirmResolve(false)">
+          <div class="modal-card" :style="confirmState.danger ? 'box-shadow:0 20px 80px rgba(var(--c-expense-rgb),0.18), 0 0 0 1px rgba(var(--c-expense-rgb),0.15);' : ''">
+            <template x-if="confirmState.danger">
+              <div style="width:56px;height:56px;border-radius:16px;margin:0 auto 16px;background:linear-gradient(135deg, rgba(var(--c-expense-rgb),0.18), rgba(var(--c-warning-rgb),0.10));border:1px solid var(--danger);display:flex;align-items:center;justify-content:center;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="1.8" width="26" height="26"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              </div>
+            </template>
+            <div style="font-size:20px;font-weight:700;letter-spacing:-0.4px;text-align:center;margin-bottom:10px;" x-text="confirmState.title"></div>
+            <div x-show="confirmState.body" style="font-size:13px;color:var(--muted);line-height:1.55;text-align:center;margin-bottom:20px;" x-text="confirmState.body"></div>
+            <button @click="_confirmResolve(true)" :style="confirmState.danger ? 'width:100%;height:50px;border-radius:25px;background:rgba(var(--c-expense-rgb),0.15);border:1px solid rgba(var(--c-expense-rgb),0.3);color:var(--danger);font-weight:700;font-size:15px;' : 'width:100%;height:50px;border-radius:25px;background:var(--grad-brand);color:var(--c-brand-contrast);border:none;font-weight:700;font-size:15px;'" x-text="confirmState.confirmLabel"></button>
+            <button @click="_confirmResolve(false)" style="margin-top:8px;width:100%;height:46px;border-radius:23px;color:var(--muted);font-weight:600;font-size:14px;" x-text="confirmState.cancelLabel"></button>
+          </div>
+        </div>
+      </template>
+
       <!-- ══ NOTIFICATIONS ══ -->
       <div class="main-content" x-show="tab === 'notifications'" x-cloak>
         <div class="page-header">
@@ -6246,7 +6279,7 @@ setTimeout(function() {
             </button>
             <div style="flex:1;min-width:0;">
               <div style="font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px;">
-                <span x-text="(CAT_MAP[catDrillKey]?.emoji || '') + ' ' + (CAT_MAP[catDrillKey]?.label || catDrillKey)"></span>
+                <span x-text="(CAT_MAP[catDrillKey]?.emoji || '') + ' ' + (CAT_MAP[catDrillKey]?.label || (String(catDrillKey).startsWith('custom_') ? 'Categoría eliminada' : catDrillKey))"></span>
               </div>
               <div style="font-size:12px;color:var(--muted);margin-top:2px;" x-text="catDrillExpenses.length + ' registro' + (catDrillExpenses.length !== 1 ? 's' : '') + ' · ' + periodLabel"></div>
             </div>
@@ -7892,7 +7925,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v122',
+    APP_VERSION: 'v123',
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -8200,7 +8233,9 @@ function zepoApp() {
       const el = document.querySelector(sel);
       const sized = el && el.getBoundingClientRect().width > 2;
       if (!sized && tries < 12) { setTimeout(() => this._a7mk(sel, pop, tries + 1, nextCfg), 120); return; }
-      if (!el) return;
+      // Si el target nunca aparecio (p.ej. arranco en una pantalla sin el boton +),
+      // soltar el tour SIN marcarlo hecho: a7Active atascado bloqueaba re-arranques.
+      if (!el || !sized) { this.a7Active = false; this.a7Step = 0; return; }
       this._a7destroying = true;
       try { if (this._a7) this._a7.destroy(); } catch (e) {}
       this._a7destroying = false;
@@ -8216,6 +8251,15 @@ function zepoApp() {
         onDestroyed: () => { if (!this._a7destroying) { try { localStorage.setItem('zepo_a7_done_v1', '1'); } catch (e) {} this.a7Active = false; this.a7Step = 0; this._a7 = null; } },
       });
       try { this._a7.highlight({ element: el, popover: pop }); } catch (e) {}
+      // El rect del target (textarea sticky en flex + reflow de visualViewport en iOS) aun no
+      // esta estable al primer paint -> driver mide mal y el popover PISA el input. refresh()
+      // re-lee y reubica (lo mismo que ocurre al tocar). Tras 2 frames y otra vez pasado el
+      // reflow del teclado/viewport, para acertar a la PRIMERA sin que el usuario toque nada.
+      const _a7refresh = () => { try { if (this._a7 && this.a7Active) this._a7.refresh(); } catch (e) {} };
+      requestAnimationFrame(() => requestAnimationFrame(_a7refresh));
+      // Escalonados: cubren el fin de la animacion del sheet, el coach que se inserta
+      // despues y el reflow del teclado iOS (--vvh), que llegan a tiempos distintos.
+      [300, 650, 1100].forEach(ms => setTimeout(_a7refresh, ms));
       if (nextCfg) {
         setTimeout(() => {
           const popEl = document.querySelector('.driver-popover');
@@ -8730,8 +8774,7 @@ function zepoApp() {
     },
 
     async deleteAccount() {
-      if (!confirm('¿Estás seguro? Se eliminarán TODOS tus datos (gastos, presupuestos, recibos). Esta acción no se puede deshacer.')) return;
-      if (!confirm('Última confirmación: ¿Eliminar tu cuenta y todos tus datos permanentemente?')) return;
+      // El modal styled (showDeleteModal + escribir ELIMINAR) ya confirma; no duplicar con confirm() nativo.
       try {
         const uid = this.user.id;
         // Borrar via REST directo (más confiable que el cliente JS)
@@ -8749,10 +8792,10 @@ function zepoApp() {
         this.user = null;
         this.expenses = [];
         this.tab = 'home';
-        alert('Cuenta eliminada correctamente.');
+        this.showToast('Cuenta eliminada');
         location.reload();
       } catch (e) {
-        alert('Error al eliminar cuenta: ' + e.message);
+        this.showToast('Error al eliminar cuenta: ' + e.message);
       }
     },
 
@@ -8776,6 +8819,7 @@ function zepoApp() {
         } catch (e2) { data = []; }
       }
       this.expenses = data || [];
+      this.dataVer++;
       try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
     },
 
@@ -8815,6 +8859,8 @@ function zepoApp() {
 
     historyData: [],
     historyVer: 0,
+    dataVer: 0,
+    confirmState: null,
 
     get historyExpenses() {
       let data = this.historyData;
@@ -9104,8 +9150,17 @@ function zepoApp() {
     // quedan detrás del overlay = invisibles) o cuando su tab no está activo. Devuelve el
     // último valor cacheado. Al cerrar el editor / cambiar de tab vuelve a calcular fresco.
     _memo(key, activeTab, compute) {
-      if ((this._busyEditing || (activeTab && this.tab !== activeTab)) && (key in _ZCACHE)) return _ZCACHE[key];
-      return (_ZCACHE[key] = compute());
+      // dataVer se LEE siempre -> queda como dependencia reactiva de TODOS los getters.
+      // Cuando muta cualquier dato (dataVer++), Alpine re-evalua el binding aunque el
+      // editor este abierto y la version del cache cambia -> recalcula fresco. Arregla
+      // iOS: antes, con el editor abierto se devolvia cache SIN leer el dato, Alpine
+      // perdia la dependencia y WebKit no re-renderizaba hasta cambiar de tab.
+      const v = this.dataVer;
+      const hit = _ZCACHE[key];
+      if (hit && hit.v === v && (this._busyEditing || (activeTab && this.tab !== activeTab))) return hit.val;
+      const val = compute();
+      _ZCACHE[key] = { v: v, val: val };
+      return val;
     },
     get recentExpensesGrouped() {
       return this._memo('recentGrouped', 'home', () => this.groupByBatch(this.expenses).slice(0, 8));
@@ -9567,7 +9622,7 @@ function zepoApp() {
 
     // ── Budgets ──
     async loadBudgets() {
-      if (this.spaceViewAll || !this.activeSpaceId) { this.budgets = []; this.budgetForm = {}; return; }
+      if (this.spaceViewAll || !this.activeSpaceId) { this.budgets = []; this.budgetForm = {}; this.dataVer++; return; }
       const now = new Date();
       const m = now.getMonth() + 1, y = now.getFullYear();
       let data = null;
@@ -9589,6 +9644,7 @@ function zepoApp() {
       this.budgets.forEach(b => {
         this.budgetForm[b.category || '_total'] = b.amount;
       });
+      this.dataVer++;
     },
 
     get categoryBudgetSum() {
@@ -9647,6 +9703,28 @@ function zepoApp() {
         this.showToast(rows.length > 0 ? 'Presupuestos guardados' : 'Presupuestos limpiados');
       } catch (e) { this.showToast('Error: ' + e.message); }
       this.savingBudget = false;
+    },
+    // Borra UNA fila de presupuesto (p.ej. una categoria huerfana custom_ sin nombre que
+    // no se puede quitar desde el gestor de categorias). Es la unica via para limpiarla.
+    async deleteBudgetRow(category) {
+      if (!category) return;
+      const now = new Date();
+      const month = now.getMonth() + 1;
+      const year = now.getFullYear();
+      const sf = this.activeSpaceId;
+      try {
+        try {
+          await withTimeout(
+            sb.from('budgets').delete().eq('user_id', this.user.id).eq('category', category).eq('month', month).eq('year', year).eq('space_id', sf).then(r => { if (r.error) throw r.error; return r; }),
+            2500, 'budget-row-delete'
+          );
+        } catch (e) {
+          await sbRestDelete('budgets', { user_id: this.user.id, category: category, month: month, year: year, space_id: sf });
+        }
+        delete this.budgetForm[category];
+        await this.loadBudgets();
+        this.showToast('Presupuesto eliminado');
+      } catch (e) { this.showToast('Error: ' + e.message); }
     },
 
     // ── Gestionar categorias (agregar/eliminar) ──
@@ -9906,7 +9984,7 @@ function zepoApp() {
       if (s.is_default) { this.showToast('No puedes borrar el espacio Personal'); return; }
       if (this.spaces.length <= 1) { this.showToast('Deja al menos un espacio'); return; }
       const def = this.spaces.find(x => x.is_default) || this.spaces.find(x => x.id !== s.id);
-      if (!confirm('¿Eliminar "' + s.name + '"? Sus gastos y presupuestos se moverán a "' + (def ? def.name : 'Personal') + '". Nada se borra.')) return;
+      if (!await this.askConfirm({ title: '¿Eliminar "' + s.name + '"?', body: 'Sus gastos y presupuestos se moverán a "' + (def ? def.name : 'Personal') + '". Nada se borra.' })) return;
       try {
         await sbRestUpdate('expenses', 'space_id', s.id, { space_id: def.id });
         await sbRestUpdate('budgets', 'space_id', s.id, { space_id: def.id });
@@ -9969,7 +10047,7 @@ function zepoApp() {
       catch (e) { t.active = !next; this.showToast('Error: ' + e.message); }
     },
     async removeRecurringTemplate(t) {
-      if (!confirm('¿Eliminar el recurrente "' + (t.description || this._catLabel(t.category)) + '"? Los gastos ya creados NO se borran.')) return;
+      if (!await this.askConfirm({ title: '¿Eliminar recurrente?', body: '"' + (t.description || this._catLabel(t.category)) + '". Los gastos ya creados NO se borran.' })) return;
       try {
         await sbRestDelete('recurring_templates', { id: t.id });
         this.recurringTemplates = this.recurringTemplates.filter(x => x.id !== t.id);
@@ -10086,7 +10164,7 @@ function zepoApp() {
     },
     async removePaymentMethod(m) {
       if (this.paymentMethods.length <= 1) { this.showToast('Deja al menos un método'); return; }
-      if (!confirm('¿Eliminar el método "' + m.name + '"? Los gastos ya guardados no cambian.')) return;
+      if (!await this.askConfirm({ title: '¿Eliminar método?', body: '"' + m.name + '". Los gastos ya guardados no cambian.' })) return;
       try {
         await sbRestDelete('payment_methods', { id: m.id });
         this.paymentMethods = this.paymentMethods.filter(x => x.id !== m.id);
@@ -10231,8 +10309,12 @@ function zepoApp() {
     get budgetBars() {
       return this._memo('budgetBars', null, () => this.budgets.filter(b => b.category).map(b => {
         const spent = this.monthExpenses.filter(e => e.category === b.category).reduce((s, e) => s + e.amount, 0);
-        const cat = CAT_MAP[b.category] || {};
-        return { cat: b.category, label: cat.label || b.category, emoji: cat.emoji || '✨', color: cat.color || '#948E80', budget: b.amount, spent, pct: Math.round(spent / b.amount * 100) };
+        const cat = CAT_MAP[b.category];
+        const orphan = !cat;
+        // Nunca mostrar el slug crudo (custom_xxx): la categoria propia se borro o no
+        // sincronizo desde otro equipo -> nombre legible + se podra borrar (boton huerfano).
+        const label = (cat && cat.label) || (String(b.category).startsWith('custom_') ? 'Categoría eliminada' : b.category);
+        return { cat: b.category, label: label, emoji: (cat && cat.emoji) || (orphan ? '🗂️' : '✨'), color: (cat && cat.color) || '#948E80', budget: b.amount, spent, pct: Math.round(spent / b.amount * 100), orphan: orphan };
       }));
     },
 
@@ -10450,7 +10532,7 @@ function zepoApp() {
       if (!this.editingBatch) return;
       const batchItems = this.expenses.filter(e => e.batch_id === this.editingBatch);
       if (!batchItems.length) return;
-      if (!confirm('¿Eliminar los ' + batchItems.length + ' registros de este grupo? No se puede deshacer.')) return;
+      if (!await this.askConfirm({ title: '¿Eliminar grupo?', body: 'Se eliminarán los ' + batchItems.length + ' registros. No se puede deshacer.' })) return;
       try {
         const ids = batchItems.map(e => e.id).filter(id => !String(id).startsWith('temp_'));
         if (ids.length > 0) {
@@ -10462,6 +10544,7 @@ function zepoApp() {
           }
         }
         this.expenses = this.expenses.filter(e => e.batch_id !== this.editingBatch);
+        this.dataVer++;
         try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
         this.sheetOpen = false;
         this.editingBatch = null;
@@ -10616,6 +10699,7 @@ function zepoApp() {
         if (!this.editingExpense && inserted) {
           const optimistic = { ...payload, id: inserted.id, created_at: new Date().toISOString() };
           this.expenses.unshift(optimistic);
+          this.dataVer++;
           try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
         }
         // Limpiar estado de edición tras guardar (antes no se hacía aquí → editingExpense quedaba
@@ -10852,6 +10936,7 @@ function zepoApp() {
         }
         // Optimistic update
         this.expenses = this.expenses.filter(e => e.batch_id !== batchId);
+        this.dataVer++;
         const now = new Date().toISOString();
         rows.forEach((r, i) => this.expenses.unshift({ ...r, id: 'temp_batch_' + Date.now() + '_' + i, created_at: now }));
         try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
@@ -10896,7 +10981,7 @@ function zepoApp() {
 
     async deleteExpense() {
       if (!this.editingExpense) return;
-      if (!confirm('¿Eliminar este gasto? Esta acción no se puede deshacer.')) return;
+      if (!await this.askConfirm({ title: '¿Eliminar este gasto?', body: 'Esta acción no se puede deshacer.' })) return;
       const id = this.editingExpense.id;
       try {
         try {
@@ -10907,6 +10992,7 @@ function zepoApp() {
         }
         // Optimistic: remove from local array immediately
         this.expenses = this.expenses.filter(e => e.id !== id);
+        this.dataVer++;
         try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
         this.sheetOpen = false;
         this.editingExpense = null;
@@ -11739,6 +11825,26 @@ function zepoApp() {
       this.toast = msg;
       setTimeout(() => this.toast = '', 2500);
     },
+    // Confirmacion con la marca (reemplaza el confirm() nativo, el feo "la pagina dice...").
+    // Uso: const ok = await this.askConfirm({ title, body, confirmLabel, danger }); if (!ok) return;
+    askConfirm(opts) {
+      opts = opts || {};
+      return new Promise(resolve => {
+        this.confirmState = {
+          title: opts.title || '¿Confirmar?',
+          body: opts.body || '',
+          confirmLabel: opts.confirmLabel || 'Eliminar',
+          cancelLabel: opts.cancelLabel || 'Cancelar',
+          danger: opts.danger !== false,
+          _resolve: resolve,
+        };
+      });
+    },
+    _confirmResolve(val) {
+      const r = this.confirmState && this.confirmState._resolve;
+      this.confirmState = null;
+      if (r) r(val);
+    },
 
     fmtMoney(n) {
       return (n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -12377,7 +12483,7 @@ function zepoApp() {
 
     async deleteSavedCard() {
       if (!this.user || !this.savedCard) return;
-      if (!confirm('¿Eliminar tarjeta guardada? La renovacion automatica se desactivara.')) return;
+      if (!await this.askConfirm({ title: '¿Eliminar tarjeta guardada?', body: 'La renovación automática se desactivará.' })) return;
       await sb.from('saved_cards').delete().eq('user_id', this.user.id);
       this.savedCard = null;
       this.showToast('Tarjeta eliminada');
@@ -12867,7 +12973,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v99.js';
+  const CURRENT_SW = 'sw-v100.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
