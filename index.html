@@ -6167,7 +6167,7 @@ setTimeout(function() {
               </div>
 
               <div class="cd-describe-card">
-                <textarea id="a7-desc" x-model="form.description" maxlength="500" rows="3" @focus="_a7onWrite()" @keydown.enter.prevent="analyzeTextInput()" :placeholder="form.is_income ? 'sueldo octubre 1200 · freelance diseño 350' : 'almuerzo 15 · taxi 8.50 · café 3.20'"></textarea>
+                <textarea id="a7-desc" x-model="form.description" maxlength="500" rows="3" @keydown.enter.prevent="analyzeTextInput()" :placeholder="form.is_income ? 'sueldo octubre 1200 · freelance diseño 350' : 'almuerzo 15 · taxi 8.50 · café 3.20'"></textarea>
                 <div class="cd-describe-footer">
                   <div style="display:flex;gap:6px;align-items:center;">
                     <!-- Foto (camara) -->
@@ -7932,7 +7932,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v129',
+    APP_VERSION: 'v130',
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -8124,7 +8124,7 @@ function zepoApp() {
       this.showWelcomeCarousel = false;
       // El onboarding manda en pantalla: nada de coach/tour encima (lo vi colisionar).
       if (this.coach) this.coach.open = false;
-      if (this.a7Active) { this.a7Active = false; this.a7Step = 0; this._a7killDriver(); }
+      if (this.a7Active) { this.a7Active = false; this.a7Step = 0; this._a7destroying = true; try { if (this._a7) this._a7.destroy(); } catch (e) {} this._a7destroying = false; this._a7 = null; }
       this.onbV2Step = 0;
       this.onbV2Goal = '';
       if (!this.onboardingName) this.onboardingName = this.userName || '';
@@ -8221,21 +8221,6 @@ function zepoApp() {
       // Paso 1: resalta el boton +. Avanza solo cuando el usuario lo toca (abre el sheet).
       this._a7mk('.fab', { title: '👆 Empieza aquí', description: 'Toca el botón + para registrar tu primer gasto. Te guío paso a paso.', side: 'top', align: 'center' });
     },
-    // Retira SOLO el globito driver (sin terminar el tour). Lo usamos cuando el usuario
-    // empieza a escribir: quitamos el popover ANTES de que suba el teclado, así no hay
-    // nada flotante que el reflow de iOS pueda descolocar. El tour sigue vivo.
-    _a7killDriver() {
-      this._a7destroying = true;
-      try { if (this._a7) this._a7.destroy(); } catch (e) {}
-      this._a7destroying = false;
-      this._a7 = null;
-    },
-    // El usuario tocó el textarea para escribir -> retira el globito del paso "escribe".
-    _a7onWrite() {
-      if (this.a7Active && this.a7Step === 2 && this._a7) this._a7killDriver();
-    },
-    // Avanza a un paso flotante: fija el paso y, tras un respiro para que el layout
-    // (sheet/teclado) se asiente, crea el globito sobre el nuevo objetivo.
     _a7go(step, sel, pop, nextCfg) {
       if (!this.a7Active) return;
       this.a7Step = step;
@@ -8326,43 +8311,24 @@ function zepoApp() {
       // A7: tour del primer gasto. Pasos: 1=boton + · 2=textarea · 3=flecha enviar
       // · 4=resultado · 5=guardar. Avanza con la accion REAL del usuario o con un
       // boton ("Listo"/"Entendido") cuando no hay una accion natural que dispare.
-      // Al ABRIR el sheet: apaga el globito driver y pasa a la barra fija (fase 'write').
-      // Al CERRARLO (guardó/canceló) tras haber entrado: termina el tour.
-      // Al ABRIR el sheet (paso 1 -> 2): retira el globito del + y, cuando el sheet
-      // TERMINA de abrir (~360ms; si no, driver mide a mitad de la animación y el popover
-      // PISA el textarea un instante — el bug iOS que viste), crea el globito flotante
-      // ARRIBA del textarea. Se retira solo al tocar a escribir (@focus="_a7onWrite()"),
-      // antes de que suba el teclado, así nunca se descoloca con el reflow.
       this.$watch('sheetOpen', v => {
         if (!this.a7Active) return;
         if (v && this.a7Step === 1) {
-          this._a7killDriver();
-          this.a7Step = 2;
-          setTimeout(() => {
-            if (this.a7Active && this.sheetOpen && this.a7Step === 2)
-              this._a7mk('#a7-desc', { title: '⌨️ Escríbelo natural', description: 'Anótalo como hablas: “almuerzo 12.50”. Luego toca la flecha verde y la IA saca el monto y la categoría.', side: 'top', align: 'center' });
-          }, 360);
+          // Paso 2: textarea. Boton "Listo" -> paso 3 (flecha de enviar).
+          this._a7go(2, '#a7-desc',
+            { title: '⌨️ Escríbelo natural', description: 'Escribe tu gasto como hablas. Ej: “almuerzo 12.50”.', side: 'top', align: 'center' },
+            { text: 'Listo →', fn: () => this._a7go(3, '.cd-send-btn', { title: '➡️ Toca la flecha', description: 'Pulsa la flecha verde para que Zepo lea tu gasto.', side: 'top', align: 'end' }) });
         } else if (!v && this.a7Step >= 2) {
           this._a7done();
         }
       });
-      // Zepo analizó: globito sobre el resultado -> "Entendido" -> guardar. Aquí el teclado
-      // ya está cerrado (el usuario tocó enviar), así que el popover sale estable.
       this.$watch('analyzed', v => {
-        if (this.a7Active && this.sheetOpen && v && this.a7Step === 2) {
-          // Cierra el teclado antes del globito final: con teclado abierto el sheet se
-          // comprime y el popover (sobre el resultado) rozaba el textarea. Cerrado = sheet
-          // completo, hay aire de sobra entre el resultado (arriba) y el composer (abajo).
-          try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
+        if (this.a7Active && v && (this.a7Step === 2 || this.a7Step === 3)) {
           const tgt = (this.parsedItems && this.parsedItems.length >= 1) ? '#a7-detected' : '#a7-cat';
-          // Globito final sobre el RESULTADO (arriba del sheet). Antes había un paso 5
-          // sobre el botón Aprobar, que queda pegado al composer -> el popover tapaba el
-          // textarea (lo reportó Alvaro). El tour termina solo cuando guarda (cierra sheet).
-          // side:'top' -> el globito va ARRIBA del resultado (zona header/toggle), lejos del
-          // textarea pase lo que pase con la altura. Antes side:'bottom' lo bajaba hacia el
-          // composer y en pantalla corta lo rozaba.
+          // Paso 4: resultado. Boton "Entendido" -> paso 5 (guardar).
           this._a7go(4, tgt,
-            { title: '✨ ¡Lo entendió!', description: 'Sacó el monto y la categoría. Toca Aprobar para guardar.', side: 'top', align: 'center' });
+            { title: '✨ ¡Lo entendió!', description: 'Zepo sacó el monto y la categoría solos. Si lo ajustas, Zepo irá aprendiendo de tus registros.', side: 'bottom', align: 'center' },
+            { text: 'Entendido', fn: () => this._a7go(5, '#a7-save', { title: '🎉 ¡Guárdalo!', description: 'Toca para guardar tu primer gasto. ¡Listo, ya usas Zepo!', side: 'top', align: 'center' }) });
         }
       });
       // Primer uso: si el home queda vacío y nunca hizo el tour, arráncalo en el +.
@@ -8379,9 +8345,6 @@ function zepoApp() {
         const syncVV = () => {
           document.documentElement.style.setProperty('--vvh', vv.height + 'px');
           document.documentElement.style.setProperty('--vvt', vv.offsetTop + 'px');
-          // Red de seguridad: si quedara un globito vivo durante el reflow del teclado,
-          // que se reubique en vez de descolocarse (el caso normal lo retira _a7onWrite).
-          if (this.a7Active && this._a7) { try { this._a7.refresh(); } catch (e) {} }
         };
         vv.addEventListener('resize', syncVV);
         vv.addEventListener('scroll', syncVV);
@@ -13030,7 +12993,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v106.js';
+  const CURRENT_SW = 'sw-v107.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
