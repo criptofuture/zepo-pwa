@@ -12,6 +12,7 @@ on:
       - 'icons/**'
       - 'vendor/**'
       - 'supabase/**'
+      - 'lab/**'
       - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
@@ -80,6 +81,8 @@ jobs:
           # reset.html at root (outside SW scope) — lets stuck users clear old SW + cache.
           # Copied to BOTH root and /pwa/ so neither URL guess 404s (CF strips .html → /reset, /pwa/reset).
           [ -f reset.html ] && cp reset.html _deploy/reset.html && cp reset.html _deploy/pwa/reset.html
+          # Laboratorio aislado para certificar la barra inferior en device real (/lab/). Fuera del scope del SW (/pwa/).
+          [ -d lab ] && mkdir -p _deploy/lab && cp -r lab/* _deploy/lab/
           # Generate _headers — applies to physical /pwa/ paths.
           cat > _deploy/_headers <<'HEADERS'
           /pwa/sw-v107.js
