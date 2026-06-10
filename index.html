@@ -969,6 +969,23 @@
       padding-top: var(--overlay-pad-top);
       background: var(--bg); flex-shrink: 0;
     }
+    /* Barra coach del primer gasto (tour A7). Hermano flex entre header y body =>
+       siempre visible, no se descoloca con el teclado (no ancla a nada que se mueva). */
+    .a7-bar {
+      display: flex; align-items: center; gap: 12px;
+      flex-shrink: 0; margin: 0 16px 6px; padding: 12px 14px;
+      background: linear-gradient(135deg, rgba(var(--c-brand-rgb),0.13), rgba(var(--c-accent-rgb),0.13));
+      border: 1px solid var(--cyan); border-radius: 14px;
+    }
+    .a7-bar-emoji { font-size: 22px; flex: none; line-height: 1; }
+    .a7-bar-text { flex: 1; min-width: 0; }
+    .a7-bar-title { font-weight: 800; font-size: 14px; color: var(--text); letter-spacing: -0.2px; }
+    .a7-bar-sub { font-size: 12.5px; color: var(--muted); line-height: 1.35; margin-top: 2px; }
+    .a7-bar-x {
+      flex: none; width: 26px; height: 26px; border-radius: 13px;
+      background: rgba(var(--c-ink-rgb),0.06); color: var(--muted);
+      font-size: 13px; display: flex; align-items: center; justify-content: center;
+    }
     .approve-back {
       width: 36px; height: 36px; border-radius: 18px;
       background: var(--surface); border: 1px solid var(--border);
@@ -5525,6 +5542,18 @@ setTimeout(function() {
               </button>
             </div>
 
+            <!-- Coach del primer gasto: barra FIJA bajo el header. No mide elementos que
+                 se mueven (textarea, teclado) -> inmune al reflow de iOS. Reemplaza el
+                 globito flotante driver.js que se descolocaba en iPhone. -->
+            <div class="a7-bar" x-show="a7Active && sheetOpen" x-cloak>
+              <span class="a7-bar-emoji" x-text="a7Phase === 'review' ? '🎉' : '✍️'"></span>
+              <div class="a7-bar-text">
+                <div class="a7-bar-title" x-text="a7Phase === 'review' ? '¡Lo entendió!' : 'Escríbelo natural'"></div>
+                <div class="a7-bar-sub" x-text="a7Phase === 'review' ? 'Zepo sacó el monto y la categoría solos. Si ajustas algo, va aprendiendo. Toca Aprobar para guardar.' : 'Ej: “almuerzo 12.50”. Escríbelo abajo y toca la flecha verde — la IA lo categoriza.'"></div>
+              </div>
+              <button type="button" class="a7-bar-x" @click="_a7done()" aria-label="Cerrar guía">✕</button>
+            </div>
+
             <!-- Main content area -->
             <div class="approve-body">
 
@@ -7930,7 +7959,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v124',
+    APP_VERSION: 'v125',
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -8082,6 +8111,7 @@ function zepoApp() {
     /* A7: primer gasto guiado (reflector driver.js) */
     a7Active: false,
     a7Step: 0,
+    a7Phase: 'fab',        // fab | write | review — dirige la barra coach FIJA del sheet
     _a7: null,
     _a7destroying: false,
     /* Coach contextual — motor reutilizable (Capa B) */
@@ -8102,10 +8132,9 @@ function zepoApp() {
     },
 
     initWelcomeCarousel() {
-      if (!localStorage.getItem('zepo_onboarded_v1')) {
-        this.welcomeSlide = 0;
-        this.showWelcomeCarousel = true;
-      }
+      // Carrusel viejo RETIRADO (dark card sin contraste + Saltar bajo el notch).
+      // El primer uso ahora abre el onboarding v2 (cuestionario, ya iOS-limpio).
+      if (!localStorage.getItem('zepo_onboarded_v1')) this.openOnbV2();
     },
     finishWelcomeCarousel() {
       localStorage.setItem('zepo_onboarded_v1', '1');
@@ -8121,6 +8150,9 @@ function zepoApp() {
     /* === ONBOARDING V2 (cuestionario) === */
     openOnbV2() {
       this.showWelcomeCarousel = false;
+      // El onboarding manda en pantalla: nada de coach/tour encima (lo vi colisionar).
+      if (this.coach) this.coach.open = false;
+      if (this.a7Active) { this.a7Active = false; this.a7Step = 0; this.a7Phase = 'fab'; this._a7killDriver(); }
       this.onbV2Step = 0;
       this.onbV2Goal = '';
       if (!this.onboardingName) this.onboardingName = this.userName || '';
@@ -8193,13 +8225,13 @@ function zepoApp() {
         const del = [];
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i);
-          if (k && (k.indexOf('zepo_coach_') === 0 || k === 'zepo_onboarded_v1')) del.push(k);
+          if (k && (k.indexOf('zepo_coach_') === 0 || k === 'zepo_onboarded_v1' || k === 'zepo_a7_done_v1')) del.push(k);
         }
         del.forEach(k => localStorage.removeItem(k));
       } catch (e) {}
       this.coach.open = false;
-      this.welcomeSlide = 0;
-      this.showWelcomeCarousel = true;
+      this.showWelcomeCarousel = false;
+      this.openOnbV2();
     },
 
     /* === A7: primer gasto guiado (reflector driver.js) ===
@@ -8214,8 +8246,17 @@ function zepoApp() {
       this.tab = 'home';                            // el reflector arranca sobre el boton + del home
       this.a7Active = true;
       this.a7Step = 1;
+      this.a7Phase = 'fab';
       // Paso 1: resalta el boton +. Avanza solo cuando el usuario lo toca (abre el sheet).
       this._a7mk('.fab', { title: '👆 Empieza aquí', description: 'Toca el botón + para registrar tu primer gasto. Te guío paso a paso.', side: 'top', align: 'center' });
+    },
+    // Apaga SOLO el reflector driver (sin terminar el tour). Al entrar al sheet pasamos
+    // del globito flotante a la barra fija, que no se puede descolocar en iOS.
+    _a7killDriver() {
+      this._a7destroying = true;
+      try { if (this._a7) this._a7.destroy(); } catch (e) {}
+      this._a7destroying = false;
+      this._a7 = null;
     },
     // Arranca el tour solo si el home está vacío y nunca se hizo (primer uso real).
     _maybeAutoStartA7() {
@@ -8283,12 +8324,7 @@ function zepoApp() {
       this._a7destroying = true;
       try { if (this._a7) this._a7.destroy(); } catch (e) {}
       this._a7destroying = false;
-      this.a7Active = false; this.a7Step = 0; this._a7 = null;
-    },
-    _a7go(step, sel, pop, nextCfg) {
-      if (!this.a7Active) return;
-      this.a7Step = step;
-      this.$nextTick(() => setTimeout(() => this._a7mk(sel, pop, 0, nextCfg), 180));
+      this.a7Active = false; this.a7Step = 0; this.a7Phase = 'fab'; this._a7 = null;
     },
 
     async init() {
@@ -8307,25 +8343,24 @@ function zepoApp() {
       // A7: tour del primer gasto. Pasos: 1=boton + · 2=textarea · 3=flecha enviar
       // · 4=resultado · 5=guardar. Avanza con la accion REAL del usuario o con un
       // boton ("Listo"/"Entendido") cuando no hay una accion natural que dispare.
+      // Al ABRIR el sheet: apaga el globito driver y pasa a la barra fija (fase 'write').
+      // Al CERRARLO (guardó/canceló) tras haber entrado: termina el tour.
       this.$watch('sheetOpen', v => {
         if (!this.a7Active) return;
         if (v && this.a7Step === 1) {
-          // Paso 2: textarea. Boton "Listo" -> paso 3 (flecha de enviar).
-          this._a7go(2, '#a7-desc',
-            { title: '⌨️ Escríbelo natural', description: 'Escribe tu gasto como hablas. Ej: “almuerzo 12.50”.', side: 'top', align: 'center' },
-            { text: 'Listo →', fn: () => this._a7go(3, '.cd-send-btn', { title: '➡️ Toca la flecha', description: 'Pulsa la flecha verde para que Zepo lea tu gasto.', side: 'top', align: 'end' }) });
+          this._a7killDriver();
+          this.a7Step = 2;
+          this.a7Phase = 'write';
         } else if (!v && this.a7Step >= 2) {
           this._a7done();
         }
       });
+      // Cuando Zepo analiza el texto: la barra pasa a 'review' (revisa y aprueba).
       this.$watch('analyzed', v => {
-        if (this.a7Active && v && (this.a7Step === 2 || this.a7Step === 3)) {
-          const tgt = (this.parsedItems && this.parsedItems.length >= 1) ? '#a7-detected' : '#a7-cat';
-          // Paso 4: resultado. Boton "Entendido" -> paso 5 (guardar).
-          this._a7go(4, tgt,
-            { title: '✨ ¡Lo entendió!', description: 'Zepo sacó el monto y la categoría solos. Si lo ajustas, Zepo irá aprendiendo de tus registros.', side: 'bottom', align: 'center' },
-            { text: 'Entendido', fn: () => this._a7go(5, '#a7-save', { title: '🎉 ¡Guárdalo!', description: 'Toca para guardar tu primer gasto. ¡Listo, ya usas Zepo!', side: 'top', align: 'center' }) });
-        }
+        if (this.a7Active && this.sheetOpen && v) this.a7Phase = 'review';
+      });
+      this.$watch('parsedItems', items => {
+        if (this.a7Active && this.sheetOpen && items && items.length >= 1) this.a7Phase = 'review';
       });
       // Primer uso: si el home queda vacío y nunca hizo el tour, arráncalo en el +.
       this.$watch('expenses', () => this._maybeAutoStartA7());
@@ -12989,7 +13024,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v101.js';
+  const CURRENT_SW = 'sw-v102.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
