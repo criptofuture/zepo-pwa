@@ -129,10 +129,15 @@
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       /* ── Layout tokens (single source of truth for safe-area math) ── */
       --tab-height: 66px;
-      --tab-total: calc(var(--tab-height) + var(--safe-bottom));
-      --content-pad-bottom: calc(var(--tab-height) + 16px + var(--safe-bottom));
+      /* iOS: la barra NO suma el inset completo (34px) — lo solapa 20px para que
+         los iconos queden cerca del borde como en Android. En Android (inset 0)
+         max() devuelve 0px y nada cambia. Solo para tab-bar/FAB; los sheets
+         siguen usando --safe-bottom completo. */
+      --safe-bottom-bar: max(calc(var(--safe-bottom) - 20px), 0px);
+      --tab-total: calc(var(--tab-height) + var(--safe-bottom-bar));
+      --content-pad-bottom: calc(var(--tab-height) + 16px + var(--safe-bottom-bar));
       --overlay-pad-top: calc(var(--safe-top) + 16px);
-      --fab-bottom: calc(22px + var(--safe-bottom));
+      --fab-bottom: calc(22px + var(--safe-bottom-bar));
     }
 
     /* ═══ DARK THEME — variante Bricolage dark del brand book (valores exactos).
@@ -354,7 +359,7 @@
       justify-content: space-around;
       align-items: center;
       padding-top: 0;
-      padding-bottom: var(--safe-bottom);
+      padding-bottom: var(--safe-bottom-bar);
       z-index: 50;
     }
     /* Red de seguridad iOS: pinta el color de la barra en la franja del home-indicator
@@ -1818,7 +1823,7 @@
     /* ═══ INSTALL PROMPT ═══ */
     .install-prompt {
       position: fixed;
-      bottom: calc(80px + var(--safe-bottom)); left: 20px; right: 20px;
+      bottom: calc(80px + var(--safe-bottom-bar)); left: 20px; right: 20px;
       max-width: 390px;
       margin: 0 auto;
       background: var(--surface);
@@ -7925,7 +7930,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v123',
+    APP_VERSION: 'v124',
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -8509,6 +8514,7 @@ function zepoApp() {
         if (event === 'SIGNED_OUT') {
           this.user = null;
           this.expenses = [];
+          this.dataVer++;
         }
       });
     },
@@ -8769,6 +8775,7 @@ function zepoApp() {
       this.expenses = [];
       this.pendingSplits = [];
       this.paidSplits = [];
+      this.dataVer++;
       this.tab = 'home';
       this.showToast('Sesión cerrada');
     },
@@ -8791,6 +8798,7 @@ function zepoApp() {
         try { localStorage.removeItem('sb-vchaxqisbypwwtyjjnjr-auth-token'); } catch {}
         this.user = null;
         this.expenses = [];
+        this.dataVer++;
         this.tab = 'home';
         this.showToast('Cuenta eliminada');
         location.reload();
@@ -10832,6 +10840,7 @@ function zepoApp() {
         // Optimistic: add items to local array immediately
         const now = new Date().toISOString();
         rows.forEach((r, i) => this.expenses.unshift({ ...r, id: insertedRows?.[i]?.id || ('temp_' + Date.now() + '_' + i), created_at: now }));
+        this.dataVer++;
         try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
         // Background: reload + create payment_requests for splits
         const bgTasks = [this.loadExpenses()];
@@ -11031,6 +11040,8 @@ function zepoApp() {
         }
       };
       await Promise.all([loadPending(), loadPaid()]);
+      // dataVer: pendingSplits alimenta los memos de Cuentas; sin bump, iOS sirve cache viejo
+      this.dataVer++;
     },
 
     relativeTime(dateStr) {
@@ -12818,6 +12829,8 @@ function zepoApp() {
       }
       this.payReqs     = (received || []).map(p => ({ ...p, from_name: namesMap[p.from_user_id] || '?' }));
       this.payReqsSent = (sent     || []).map(p => ({ ...p, to_name:   namesMap[p.to_user_id]   || '?' }));
+      // dataVer: payReqs alimenta 4 memos de Cuentas (solicitudes/deudas/pagados)
+      this.dataVer++;
     },
 
     async sendPaymentRequest() {
@@ -12860,6 +12873,7 @@ function zepoApp() {
       }
       const found = this.payReqs.find(p => p.id === pr_id);
       if (found) found.status = 'accepted';
+      this.dataVer++;
       this.showToast('Deuda confirmada' + (addExpense ? ' y gasto registrado' : ''));
       this.loadFriends();
     },
@@ -12867,6 +12881,7 @@ function zepoApp() {
     async declinePaymentRequest(pr_id) {
       await sb.from('payment_requests').update({ status: 'declined' }).eq('id', pr_id);
       this.payReqs = this.payReqs.filter(p => p.id !== pr_id);
+      this.dataVer++;
       this.showToast('Solicitud ignorada');
     },
 
@@ -12875,6 +12890,7 @@ function zepoApp() {
       if (error) { this.showToast('Error al marcar pago'); return; }
       const found = this.payReqs.find(p => p.id === pr_id);
       if (found) found.status = 'paid';
+      this.dataVer++;
       this.showToast('Pago marcado — esperando confirmacion');
     },
 
@@ -12973,7 +12989,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v100.js';
+  const CURRENT_SW = 'sw-v101.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
