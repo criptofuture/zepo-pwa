@@ -61,14 +61,20 @@ MEASURE_JS = r"""
   const body  = document.querySelector('.approve-body');
   const kids   = [...body.children];
   const split = kids.find(d => d.textContent.includes('Dividir este gasto'));
-  const apr   = kids.find(d => d.querySelector && d.querySelector('.approve-btn'));
+  // Boton de guardar PRIMARIO *visible*: en el flujo normal vive ANCLADO en el header
+  // del composer (.cd-save-inline); en edicion/recibo es el grande (.approve-btn).
+  // offsetParent === null => display:none, lo saltamos (no es el visible).
+  const apr   = [...body.querySelectorAll('.cd-save-inline, .approve-btn')]
+                  .find(b => b.offsetParent !== null);
   const r = e => { const x = e.getBoundingClientRect();
                    return { t: Math.round(x.top), b: Math.round(x.bottom) }; };
   return {
     splitClipped: split.scrollHeight > split.clientHeight + 1,
-    aprOverlapsDividir: r(apr).t < r(split).b,
+    aprOverlapsDividir: apr ? (r(apr).t < r(split).b) : false,
     splitNatural: split.scrollHeight,
     splitShown: split.clientHeight,
+    aprTop: apr ? r(apr).t : null,
+    splitBottom: r(split).b,
   };
 }
 """
@@ -98,8 +104,9 @@ def run(url):
             tag = "PASS" if passed else "FALLA"
             print(f"[{tag}] {name:<22} vvh={str(vvh):<5}  "
                   f"split recortado={m['splitClipped']}  "
-                  f"Aprobar tapa Dividir={m['aprOverlapsDividir']}  "
-                  f"(split {m['splitShown']}/{m['splitNatural']}px)")
+                  f"Guardar tapa Dividir={m['aprOverlapsDividir']}  "
+                  f"(split {m['splitShown']}/{m['splitNatural']}px · "
+                  f"btnTop={m['aprTop']} splitBottom={m['splitBottom']})")
             page.context.close()
         browser.close()
     return ok

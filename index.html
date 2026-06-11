@@ -1075,6 +1075,17 @@
     }
     .approve-btn:disabled { opacity: 0.4; }
     .approve-btn:active { opacity: 0.8; }
+    /* Guardar compacto ANCLADO en el header del composer (mitad derecha) — no vive en el scroll */
+    .cd-save-inline {
+      width: 50%; height: 42px; border-radius: 21px;
+      background: var(--success); border: none; color: var(--c-brand-contrast);
+      font-weight: 700; font-size: 14px; font-family: inherit; letter-spacing: -0.2px;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      box-shadow: 0 5px 14px rgba(var(--c-income-rgb),0.30);
+      cursor: pointer; flex-shrink: 0;
+    }
+    .cd-save-inline:disabled { opacity: 0.4; }
+    .cd-save-inline:active { opacity: 0.8; }
     .cancel-btn {
       margin-top: 8px; width: 100%; height: 46px; border-radius: 23px;
       background: transparent; border: none;
@@ -6170,13 +6181,10 @@ setTimeout(function() {
                 </template>
               </div>
 
-              <!-- APPROVE BUTTON (green) -->
-              <div style="margin-top:20px;">
-                <div class="a7-hint" x-show="a7Active && a7Step === 4" x-cloak>
-                  <span class="a7-hint-emoji">🎉</span>
-                  <span>¡Lo entendí! Toca <b>Aprobar</b> para guardar tu primer gasto.</span>
-                </div>
-                <button id="a7-save" class="approve-btn" :class="{ 'a7-glow': a7Active && a7Step === 4 }" @click="saveExpense" :disabled="saving || (parsedItems.length >= 1 && !form.is_split ? parsedItems.filter(i => i.amount > 0 && i.category).length < 1 : (!form.amount || !form.category))">
+              <!-- APPROVE BUTTON (green) — solo en modos SIN composer (edición / recibo / importado).
+                   En el flujo normal el guardar vive ANCLADO en el header del composer (.cd-save-inline). -->
+              <div style="margin-top:20px;" x-show="editingExpense || editingBatch || receiptPreview || importedFile">
+                <button class="approve-btn" @click="saveExpense" :disabled="saving || (parsedItems.length >= 1 && !form.is_split ? parsedItems.filter(i => i.amount > 0 && i.category).length < 1 : (!form.amount || !form.category))">
                   <template x-if="!saving">
                     <span style="display:flex;align-items:center;gap:8px;">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><polyline points="20 6 9 17 4 12"/></svg>
@@ -6198,14 +6206,25 @@ setTimeout(function() {
             <!-- COMPOSER: dentro del scroll. Normalmente sticky al fondo; con el split
                  abierto pasa al flujo (cd-describe-flow) para no tapar el dropdown. -->
             <div class="cd-describe-block" :class="form.is_split && 'cd-describe-flow'" x-show="!editingExpense && !editingBatch && !receiptPreview && !importedFile">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                <div style="font-size:14px;font-weight:700;letter-spacing:-0.2px;">Describe el registro</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
+                <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  <div style="font-size:14px;font-weight:700;letter-spacing:-0.2px;">Describe el registro</div>
+                </div>
+                <button id="a7-save" class="cd-save-inline" :class="{ 'a7-glow': a7Active && a7Step === 4 }" x-show="analyzed" x-cloak @click="saveExpense" :disabled="saving || (parsedItems.length >= 1 && !form.is_split ? parsedItems.filter(i => i.amount > 0 && i.category).length < 1 : (!form.amount || !form.category))">
+                  <svg x-show="!saving" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span x-show="!saving" x-text="parsedItems.length >= 2 ? ('Guardar ' + parsedItems.length) : 'Guardar'"></span>
+                  <span x-show="saving">...</span>
+                </button>
               </div>
 
               <div class="a7-hint" x-show="a7Active && a7Step === 2" x-cloak>
                 <span class="a7-hint-emoji">✍️</span>
                 <span>Escribe tu gasto como hablas — ej. <b>almuerzo 12.50</b> — y toca la flecha <b>→</b>.</span>
+              </div>
+              <div class="a7-hint" x-show="a7Active && a7Step === 4" x-cloak>
+                <span class="a7-hint-emoji">🎉</span>
+                <span>¡Lo entendí! Toca <b>Guardar</b> para guardar tu primer gasto.</span>
               </div>
 
               <div class="cd-describe-card" :class="{ 'a7-glow': a7Active && a7Step === 2 }">
@@ -7974,7 +7993,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v138',
+    APP_VERSION: 'v139',
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -13025,7 +13044,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v115.js';
+  const CURRENT_SW = 'sw-v116.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
