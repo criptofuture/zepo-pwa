@@ -103,6 +103,10 @@ jobs:
             Cache-Control: no-cache, no-store, must-revalidate
           /pwa/icons/*
             Cache-Control: public, max-age=3600
+          /lab/
+            Cache-Control: no-cache, no-store, must-revalidate
+          /lab/index.html
+            Cache-Control: no-cache, no-store, must-revalidate
           HEADERS
           # Generate _redirects — only root → /pwa/, no rewrites.
           printf '/ /pwa/ 302\n' > _deploy/_redirects

@@ -74,6 +74,7 @@
     body.v1 .tab-bar { height: calc(52px + 0px);  padding-bottom: 0px; }   /* Pegados al borde */
     body.v2 .tab-bar { height: calc(52px + 8px);  padding-bottom: 8px; }   /* Equilibrio (lo de dev) */
     body.v3 .tab-bar { height: calc(52px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); } /* Con aire */
+    body.v4 .tab-bar { bottom: calc(-1 * env(safe-area-inset-bottom)); height: calc(52px + env(safe-area-inset-bottom)); padding-bottom: 0; } /* Al fondo: DENTRO del área del home */
 
     /* Tapa de respaldo del color de la barra sobre el área segura (refuerza el fix). */
     #scrim-bottom {
@@ -91,11 +92,12 @@
   <div id="app">
     <div class="topbar">
       <h1>🧪 Barra · ¿qué tan abajo?</h1>
-      <p>La franja ya NO aparece en ninguna ✅. Ahora elige <b>qué tan abajo</b> quieres los botones. Toca cada opción y dime cuál. (Añádelo a tu inicio para verlo real.)</p>
+      <p>La franja ya NO aparece en ninguna ✅. Elige <b>qué tan abajo</b> quieres los botones. <b>D</b> los baja al máximo, DENTRO de la zona del home (mira si choca con la rayita). Toca cada una y dime cuál. (Añádelo a tu inicio para verlo real.)</p>
       <div class="switch">
         <button data-v="v1">A · Pegados</button>
         <button data-v="v2" class="on">B · Equilibrio</button>
         <button data-v="v3">C · Con aire</button>
+        <button data-v="v4">D · Al fondo</button>
       </div>
     </div>
 
@@ -122,7 +124,7 @@
     const readout = document.getElementById('readout');
     const probe = document.getElementById('probe');
     const bar = document.querySelector('.tab-bar');
-    const NAMES = { v1: 'Pegados', v2: 'Equilibrio', v3: 'Con aire' };
+    const NAMES = { v1: 'Pegados', v2: 'Equilibrio', v3: 'Con aire', v4: 'Al fondo (−34)' };
 
     document.querySelectorAll('.switch button').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -139,11 +141,12 @@
       const barRect = bar.getBoundingClientRect();
       const barH = Math.round(barRect.height);
       const reserve = Math.max(0, barH - 52);
-      const variant = (body.className.match(/v[123]/) || ['v2'])[0];
+      const variant = (body.className.match(/v[1234]/) || ['v2'])[0];
+      const warn = variant === 'v4' ? '<br><span style="color:#FFD27A">⚠ botones dentro de la zona del home (la rayita y el gesto de subir pueden chocar)</span>' : '';
       readout.innerHTML =
         '<div class="verdict">✓ Sin franja · opción ' + NAMES[variant] + '</div>' +
         'reserva bajo los botones <code>' + reserve + 'px</code><br>' +
-        'área segura del iPhone <code>' + safe + 'px</code> · alto barra <code>' + barH + '</code>';
+        'área segura del iPhone <code>' + safe + 'px</code> · alto barra <code>' + barH + '</code>' + warn;
     }
 
     measure();
