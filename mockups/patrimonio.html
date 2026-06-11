@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
+<title>Zepo · Patrimonio (mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ─── Tokens reales de Zepo (copiados de index.html) ─── */
+  :root {
+    --c-bg:#E9E2CF; --c-surface:#FFFFFF; --c-surface-2:#F3EEDE;
+    --c-ink:#13201A; --c-ink-rgb:19,32,26;
+    --c-ink-soft:rgba(19,32,26,.62); --c-ink-faint:rgba(19,32,26,.40);
+    --c-border:rgba(19,32,26,.10); --c-border-strong:rgba(19,32,26,.20);
+    --c-brand:#3F7150; --c-brand-rgb:63,113,80; --c-brand-deep:#2B5238; --c-brand-soft:#C2D6B8;
+    --c-accent:#D6D864; --c-accent-rgb:214,216,100; --c-accent-soft:#A8761A;
+    --c-brand-contrast:#F4F1E3;
+    --c-income:#6FA15C; --c-expense:#C0392B; --c-warning:#C47F1A;
+    --c-income-rgb:111,161,92; --c-expense-rgb:192,57,43;
+    --grad-brand:linear-gradient(135deg,#3F7150 0%,#6FA15C 100%);
+    --c-hero-bg:linear-gradient(150deg,#3F7150,#274D35); --c-hero-ink:#F4F1E3;
+    --font-display:'Bricolage Grotesque',sans-serif;
+    --font-body:'Geist',system-ui,sans-serif;
+    --radius:16px; --radius-sm:10px; --radius-pill:50px;
+    --safe-top:env(safe-area-inset-top,0px); --safe-bottom:env(safe-area-inset-bottom,0px);
+    --bg:var(--c-bg); --surface:var(--c-surface); --surface2:var(--c-surface-2);
+    --border:var(--c-border); --border2:var(--c-border-strong);
+    --brand:var(--c-brand); --text:var(--c-ink); --muted:var(--c-ink-soft); --dim:var(--c-ink-faint);
+    --success:var(--c-income); --warning:var(--c-warning); --danger:var(--c-expense);
+  }
+  :root[data-theme="dark"] {
+    --c-bg:#0B0B0C; --c-surface:#161618; --c-surface-2:#1C1C1F;
+    --c-ink:#ECECEA; --c-ink-rgb:236,236,234;
+    --c-ink-soft:rgba(236,236,234,.62); --c-ink-faint:rgba(236,236,234,.40);
+    --c-border:rgba(255,255,255,.09); --c-border-strong:rgba(255,255,255,.18);
+    --c-brand:#8FD08A; --c-brand-rgb:143,208,138; --c-brand-deep:#507D5A; --c-brand-soft:#2A3A28;
+    --c-accent:#D6D864; --c-accent-rgb:214,216,100; --c-accent-soft:#E0B65A;
+    --c-brand-contrast:#0B0B0C;
+    --c-income:#8FD08A; --c-expense:#E2796B; --c-warning:#E0B65A;
+    --c-income-rgb:143,208,138; --c-expense-rgb:226,121,107;
+    --grad-brand:linear-gradient(135deg,#6FA15C 0%,#9ED98F 100%);
+    --c-hero-bg:linear-gradient(150deg,#2F6B43,#173524); --c-hero-ink:#EAF3E6;
+    color-scheme:dark;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html { color-scheme:light; }
+  html[data-theme="dark"] { background:var(--c-bg); }
+  body { background:var(--bg); color:var(--text); font-family:var(--font-body); letter-spacing:-.01em; }
+  .mono, .num { font-family:var(--font-display); font-variant-numeric:tabular-nums; }
+
+  #app { height:100dvh; display:flex; flex-direction:column; max-width:430px; margin:0 auto; position:relative; overflow:hidden; background:var(--bg); }
+
+  /* ─── Top bar ─── */
+  .topbar { padding:calc(var(--safe-top) + 16px) 20px 8px; display:flex; align-items:center; justify-content:space-between; }
+  .topbar h1 { font-family:var(--font-display); font-size:26px; font-weight:800; letter-spacing:-1px; }
+  .topbar .sub { font-size:12px; color:var(--muted); margin-top:1px; }
+  .tb-btns { display:flex; gap:8px; }
+  .tb-btn { width:38px; height:38px; border-radius:12px; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:16px; color:var(--text); cursor:pointer; }
+
+  .main { flex:1; overflow-y:auto; padding-bottom:120px; }
+
+  /* ─── Hero: patrimonio neto ─── */
+  .hero { margin:8px 20px 18px; padding:22px 22px 20px; background:var(--c-hero-bg); color:var(--c-hero-ink); border-radius:20px; position:relative; overflow:hidden; }
+  .hero-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .hero-label { font-size:11px; opacity:.74; font-weight:600; letter-spacing:1.2px; text-transform:uppercase; }
+  .hero-delta { display:flex; align-items:center; gap:4px; font-size:12px; font-weight:700; color:var(--c-accent); }
+  .hero-amt-row { display:flex; align-items:baseline; gap:5px; margin-bottom:16px; }
+  .hero-cur { font-size:22px; opacity:.7; font-weight:600; }
+  .hero-amt { font-family:var(--font-display); font-size:46px; font-weight:800; letter-spacing:-2.2px; line-height:1; font-variant-numeric:tabular-nums; }
+  /* barra composición activos vs deudas */
+  .comp-bar { display:flex; height:8px; border-radius:4px; overflow:hidden; background:rgba(255,255,255,.18); margin-bottom:8px; }
+  .comp-assets { background:var(--c-accent); }
+  .comp-debt { background:rgba(226,121,107,.9); }
+  .comp-legend { display:flex; justify-content:space-between; font-size:11px; opacity:.8; }
+
+  /* ─── Tiles ─── */
+  .tiles { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:0 20px; margin-bottom:20px; }
+  .tile { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:13px 12px; }
+  .tile .t-ico { font-size:16px; margin-bottom:6px; }
+  .tile .t-lab { font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; font-weight:600; }
+  .tile .t-val { font-family:var(--font-display); font-size:17px; font-weight:700; margin-top:3px; font-variant-numeric:tabular-nums; }
+  .tile.debt .t-val { color:var(--danger); }
+
+  /* ─── Section ─── */
+  .sec { padding:0 20px; margin-bottom:22px; }
+  .sec-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .sec-title { font-family:var(--font-display); font-size:15px; font-weight:700; display:flex; align-items:center; gap:7px; }
+  .sec-sum { font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums; }
+
+  /* ─── Vencimientos ─── */
+  .venc { margin:0 20px 22px; background:rgba(var(--c-accent-rgb),.16); border:1px solid rgba(var(--c-accent-rgb),.35); border-radius:var(--radius); padding:14px 16px; }
+  .venc-head { font-size:12px; font-weight:700; color:var(--c-accent-soft); text-transform:uppercase; letter-spacing:.6px; display:flex; align-items:center; gap:6px; margin-bottom:10px; }
+  .venc-row { display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-top:1px solid var(--border); }
+  .venc-row:first-of-type { border-top:none; }
+  .venc-name { font-size:13.5px; font-weight:600; }
+  .venc-when { font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .venc-amt { font-family:var(--font-display); font-size:15px; font-weight:700; color:var(--success); font-variant-numeric:tabular-nums; }
+
+  /* ─── Item card ─── */
+  .item { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; margin-bottom:10px; cursor:pointer; }
+  .item-top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+  .item-name { font-size:15px; font-weight:700; }
+  .item-meta { font-size:12px; color:var(--muted); margin-top:2px; }
+  .item-val { font-family:var(--font-display); font-size:18px; font-weight:800; font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
+  .item.debt .item-val { color:var(--danger); }
+  .item-foot { display:flex; align-items:center; gap:8px; margin-top:11px; flex-wrap:wrap; }
+  .chip { font-size:11px; font-weight:600; padding:4px 9px; border-radius:var(--radius-pill); }
+  .chip.rend { background:rgba(var(--c-income-rgb),.16); color:var(--success); }
+  .chip.plazo { background:var(--surface2); color:var(--muted); border:1px solid var(--border); }
+  .chip.gain { background:rgba(var(--c-income-rgb),.16); color:var(--success); }
+  .item-bar { height:5px; border-radius:3px; background:var(--surface2); margin-top:11px; position:relative; overflow:hidden; }
+  .item-bar-fill { position:absolute; left:0; top:0; bottom:0; border-radius:3px; background:var(--grad-brand); }
+  .item-bar-cap { display:flex; justify-content:space-between; font-size:10.5px; color:var(--dim); margin-top:5px; }
+
+  /* ─── FAB ─── */
+  .fab { position:absolute; right:20px; bottom:calc(78px + var(--safe-bottom)); width:56px; height:56px; border-radius:50%; background:var(--grad-brand); color:var(--c-brand-contrast); border:none; font-size:28px; font-weight:300; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 24px rgba(var(--c-brand-rgb),.4); cursor:pointer; z-index:30; }
+
+  /* ─── Tab bar ─── */
+  .tabbar { position:absolute; left:0; right:0; bottom:0; height:calc(58px + var(--safe-bottom)); padding-bottom:var(--safe-bottom); background:var(--surface); border-top:1px solid var(--border); display:flex; align-items:flex-end; z-index:20; }
+  .tab { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 0 10px; color:var(--dim); font-size:10px; font-weight:600; cursor:pointer; }
+  .tab.active { color:var(--brand); }
+  .tab svg { width:22px; height:22px; }
+
+  /* ─── Add sheet ─── */
+  .scrim { position:absolute; inset:0; background:rgba(0,0,0,.4); z-index:40; opacity:0; pointer-events:none; transition:opacity .25s; }
+  .scrim.open { opacity:1; pointer-events:auto; }
+  .sheet { position:absolute; left:0; right:0; bottom:0; background:var(--surface); border-radius:24px 24px 0 0; z-index:41; transform:translateY(100%); transition:transform .3s cubic-bezier(.2,.8,.2,1); padding:8px 20px calc(20px + var(--safe-bottom)); max-height:90%; overflow-y:auto; }
+  .sheet.open { transform:translateY(0); }
+  .grab { width:40px; height:4px; border-radius:2px; background:var(--border2); margin:8px auto 16px; }
+  .sheet h2 { font-family:var(--font-display); font-size:20px; font-weight:800; margin-bottom:4px; }
+  .sheet .sh-sub { font-size:13px; color:var(--muted); margin-bottom:18px; }
+  .seg { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:18px; }
+  .seg-opt { border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 8px; text-align:center; cursor:pointer; background:var(--surface); }
+  .seg-opt.on { border-color:var(--brand); background:rgba(var(--c-brand-rgb),.08); }
+  .seg-opt .so-ico { font-size:20px; }
+  .seg-opt .so-lab { font-size:12px; font-weight:600; margin-top:4px; }
+  .field { margin-bottom:14px; }
+  .field label { display:block; font-size:12px; font-weight:600; color:var(--muted); margin-bottom:6px; }
+  .field input { width:100%; height:50px; padding:0 16px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:15px; color:var(--text); font-family:var(--font-body); outline:none; }
+  .field input:focus { border-color:var(--brand); }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .rend-only { transition:opacity .2s; }
+  .save-btn { width:100%; height:54px; border-radius:var(--radius-pill); background:var(--grad-brand); color:var(--c-brand-contrast); border:none; font-size:16px; font-weight:700; font-family:var(--font-body); cursor:pointer; margin-top:6px; }
+  .note { font-size:11.5px; color:var(--dim); text-align:center; margin-top:12px; line-height:1.4; }
+
+  .mock-flag { text-align:center; font-size:10px; color:var(--dim); padding:6px; letter-spacing:.5px; text-transform:uppercase; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="topbar">
+    <div>
+      <h1>Patrimonio</h1>
+      <div class="sub">Tu foto completa · junio 2026</div>
+    </div>
+    <div class="tb-btns">
+      <div class="tb-btn" onclick="toggleData()" title="Ver vacío/lleno">↺</div>
+      <div class="tb-btn" onclick="toggleTheme()" title="Claro/oscuro">◐</div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- HERO -->
+    <div class="hero" data-full>
+      <div class="hero-top">
+        <div class="hero-label">Patrimonio neto</div>
+        <div class="hero-delta">▲ +3,1% este mes</div>
+      </div>
+      <div class="hero-amt-row">
+        <span class="hero-cur">$</span><span class="hero-amt">82.400</span>
+      </div>
+      <div class="comp-bar">
+        <div class="comp-assets" style="width:74%"></div>
+        <div class="comp-debt" style="width:26%"></div>
+      </div>
+      <div class="comp-legend">
+        <span>● Activos $125.600</span>
+        <span>● Deudas $43.200</span>
+      </div>
+    </div>
+
+    <!-- TILES -->
+    <div class="tiles" data-full>
+      <div class="tile">
+        <div class="t-ico">💰</div>
+        <div class="t-lab">Inversiones</div>
+        <div class="t-val">$18.100</div>
+      </div>
+      <div class="tile">
+        <div class="t-ico">🏠</div>
+        <div class="t-lab">Bienes</div>
+        <div class="t-val">$107.500</div>
+      </div>
+      <div class="tile debt">
+        <div class="t-ico">🔻</div>
+        <div class="t-lab">Deudas</div>
+        <div class="t-val">$43.200</div>
+      </div>
+    </div>
+
+    <!-- VENCIMIENTOS -->
+    <div class="venc" data-full>
+      <div class="venc-head">🔔 Próximos vencimientos</div>
+      <div class="venc-row">
+        <div>
+          <div class="venc-name">Préstamo a Juan</div>
+          <div class="venc-when">Vence dic 2026 · capital + 10%</div>
+        </div>
+        <div class="venc-amt">+$2.200</div>
+      </div>
+      <div class="venc-row">
+        <div>
+          <div class="venc-name">Depósito a plazo · Pichincha</div>
+          <div class="venc-when">Vence mar 2027 · 8% anual</div>
+        </div>
+        <div class="venc-amt">+$10.800</div>
+      </div>
+    </div>
+
+    <!-- INVERSIONES -->
+    <div class="sec" data-full>
+      <div class="sec-head">
+        <div class="sec-title">💰 Inversiones</div>
+        <div class="sec-sum">$18.100</div>
+      </div>
+
+      <div class="item">
+        <div class="item-top">
+          <div>
+            <div class="item-name">Depósito a plazo · Pichincha</div>
+            <div class="item-meta">Capital $10.000 · inicio mar 2026</div>
+          </div>
+          <div class="item-val">$10.300</div>
+        </div>
+        <div class="item-foot">
+          <span class="chip rend">8% anual</span>
+          <span class="chip plazo">Vence mar 2027</span>
+          <span class="chip gain">▲ +$300</span>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-top">
+          <div>
+            <div class="item-name">Fondo de acciones</div>
+            <div class="item-meta">Capital $5.000 · inicio ene 2026</div>
+          </div>
+          <div class="item-val">$5.800</div>
+        </div>
+        <div class="item-foot">
+          <span class="chip rend">~12% esperado</span>
+          <span class="chip plazo">Sin plazo fijo</span>
+          <span class="chip gain">▲ +$800</span>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-top">
+          <div>
+            <div class="item-name">Préstamo a Juan</div>
+            <div class="item-meta">Capital $2.000 · inicio jun 2026</div>
+          </div>
+          <div class="item-val">$2.000</div>
+        </div>
+        <div class="item-foot">
+          <span class="chip rend">10% al cobro</span>
+          <span class="chip plazo">Vence dic 2026</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- BIENES -->
+    <div class="sec" data-full>
+      <div class="sec-head">
+        <div class="sec-title">🏠 Bienes</div>
+        <div class="sec-sum">$107.500</div>
+      </div>
+
+      <div class="item">
+        <div class="item-top">
+          <div>
+            <div class="item-name">Departamento</div>
+            <div class="item-meta">Valor actualizado may 2026</div>
+          </div>
+          <div class="item-val">$85.000</div>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-top">
+          <div>
+            <div class="item-name">Carro</div>
+            <div class="item-meta">Valor actualizado ene 2026</div>
+          </div>
+          <div class="item-val">$18.000</div>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="item-top">
+          <div>
+            <div class="item-name">Ahorros (cuenta)</div>
+            <div class="item-meta">Disponible</div>
+          </div>
+          <div class="item-val">$4.500</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEUDAS -->
+    <div class="sec" data-full>
+      <div class="sec-head">
+        <div class="sec-title">🔻 Deudas</div>
+        <div class="sec-sum" style="color:var(--danger)">−$43.200</div>
+      </div>
+
+      <div class="item debt">
+        <div class="item-top">
+          <div>
+            <div class="item-name">Préstamo hipotecario</div>
+            <div class="item-meta">Saldo pendiente</div>
+          </div>
+          <div class="item-val">−$42.000</div>
+        </div>
+        <div class="item-bar"><div class="item-bar-fill" style="width:30%"></div></div>
+        <div class="item-bar-cap"><span>Pagado 30%</span><span>de $60.000</span></div>
+      </div>
+
+      <div class="item debt">
+        <div class="item-top">
+          <div>
+            <div class="item-name">Tarjeta de crédito</div>
+            <div class="item-meta">Saldo por pagar</div>
+          </div>
+          <div class="item-val">−$1.200</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div data-empty style="display:none; padding:60px 32px; text-align:center;">
+      <div style="font-size:52px; margin-bottom:14px;">📊</div>
+      <div style="font-family:var(--font-display); font-size:20px; font-weight:800; margin-bottom:8px;">Construye tu patrimonio</div>
+      <div style="font-size:14px; color:var(--muted); line-height:1.5; margin-bottom:24px;">Registra tus inversiones, bienes y deudas para ver cuánto vales de verdad — y cómo crece con el tiempo.</div>
+      <button class="save-btn" style="max-width:240px; margin:0 auto;" onclick="openSheet()">+ Agregar el primero</button>
+    </div>
+
+    <div class="mock-flag">— mockup · datos de ejemplo —</div>
+  </div>
+
+  <button class="fab" onclick="openSheet()">+</button>
+
+  <!-- TAB BAR -->
+  <div class="tabbar">
+    <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10l9-7 9 7v10a1 1 0 01-1 1H4a1 1 0 01-1-1z"/></svg>Inicio</div>
+    <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Historial</div>
+    <div class="tab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-3M20 16v-7"/></svg>Patrimonio</div>
+    <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 00-.1-1l2-1.5-2-3.5-2.4 1a7 7 0 00-1.7-1L14.5 2h-5l-.3 2.5a7 7 0 00-1.7 1l-2.4-1-2 3.5 2 1.5a7 7 0 000 2l-2 1.5 2 3.5 2.4-1a7 7 0 001.7 1l.3 2.5h5l.3-2.5a7 7 0 001.7-1l2.4 1 2-3.5-2-1.5a7 7 0 00.1-1z"/></svg>Ajustes</div>
+  </div>
+
+  <!-- ADD SHEET -->
+  <div class="scrim" id="scrim" onclick="closeSheet()"></div>
+  <div class="sheet" id="sheet">
+    <div class="grab"></div>
+    <h2>Agregar a patrimonio</h2>
+    <div class="sh-sub">¿Qué quieres registrar?</div>
+
+    <div class="seg">
+      <div class="seg-opt on" data-kind="investment" onclick="pickKind(this)"><div class="so-ico">💰</div><div class="so-lab">Inversión</div></div>
+      <div class="seg-opt" data-kind="asset" onclick="pickKind(this)"><div class="so-ico">🏠</div><div class="so-lab">Bien</div></div>
+      <div class="seg-opt" data-kind="debt" onclick="pickKind(this)"><div class="so-ico">🔻</div><div class="so-lab">Deuda</div></div>
+    </div>
+
+    <div class="field">
+      <label id="lblName">Nombre</label>
+      <input type="text" placeholder="Ej: Depósito a plazo Pichincha">
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label id="lblCap">Capital invertido</label>
+        <input type="text" inputmode="decimal" placeholder="$10.000">
+      </div>
+      <div class="field">
+        <label id="lblVal">Valor actual</label>
+        <input type="text" inputmode="decimal" placeholder="$10.300">
+      </div>
+    </div>
+
+    <div class="rend-only" id="rendBlock">
+      <div class="row2">
+        <div class="field">
+          <label>Rendimiento esperado</label>
+          <input type="text" placeholder="8% anual">
+        </div>
+        <div class="field">
+          <label>Vence / sale</label>
+          <input type="text" placeholder="mar 2027">
+        </div>
+      </div>
+    </div>
+
+    <button class="save-btn" onclick="closeSheet()">Guardar</button>
+    <div class="note">El dinero invertido <b>no afecta</b> tus gastos del mes.<br>Vive aquí, en tu patrimonio.</div>
+  </div>
+
+</div>
+
+<script>
+  function toggleTheme(){
+    const r = document.documentElement;
+    r.setAttribute('data-theme', r.getAttribute('data-theme')==='dark' ? 'light' : 'dark');
+  }
+  let full = true;
+  function toggleData(){
+    full = !full;
+    document.querySelectorAll('[data-full]').forEach(e=> e.style.display = full ? '' : 'none');
+    document.querySelector('[data-empty]').style.display = full ? 'none' : 'block';
+  }
+  function openSheet(){ document.getElementById('scrim').classList.add('open'); document.getElementById('sheet').classList.add('open'); }
+  function closeSheet(){ document.getElementById('scrim').classList.remove('open'); document.getElementById('sheet').classList.remove('open'); }
+  function pickKind(el){
+    document.querySelectorAll('.seg-opt').forEach(o=>o.classList.remove('on'));
+    el.classList.add('on');
+    const kind = el.dataset.kind;
+    const rend = document.getElementById('rendBlock');
+    const lblName = document.getElementById('lblName');
+    const lblCap = document.getElementById('lblCap');
+    const lblVal = document.getElementById('lblVal');
+    if(kind==='investment'){ rend.style.display='block'; lblName.textContent='Nombre'; lblCap.textContent='Capital invertido'; lblVal.textContent='Valor actual'; }
+    if(kind==='asset'){ rend.style.display='none'; lblName.textContent='Nombre del bien'; lblCap.textContent='Lo que costó (opc.)'; lblVal.textContent='Valor actual'; }
+    if(kind==='debt'){ rend.style.display='none'; lblName.textContent='Nombre de la deuda'; lblCap.textContent='Monto original (opc.)'; lblVal.textContent='Saldo que debes'; }
+  }
+</script>
+</body>
+</html>

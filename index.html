@@ -717,6 +717,70 @@
     .hero-stat-label { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; }
     .hero-stat-value { font-size: 16px; font-weight: 700; margin-top: 2px; }
 
+    /* ═══ PATRIMONIO (Max) ═══ */
+    .pat-home-card { margin: 0 20px 16px; padding: 15px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .pat-home-l { min-width: 0; }
+    .pat-home-label { font-size: 10.5px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 7px; }
+    .pat-home-amt { font-family: var(--font-display); font-size: 29px; font-weight: 800; letter-spacing: -1.4px; font-variant-numeric: tabular-nums; line-height: 1.05; margin-top: 3px; }
+    .pat-home-amt.neg { color: var(--danger); }
+    .pat-home-sub { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+    .pat-home-go { color: var(--cyan); flex-shrink: 0; }
+    .pat-lock-pill { font-size: 9.5px; font-weight: 800; padding: 3px 8px; border-radius: var(--radius-pill); background: rgba(var(--c-accent-rgb),.22); color: var(--c-accent-soft); letter-spacing: .5px; }
+    .pat-home-card.locked .pat-home-amt { filter: blur(7px); opacity: .55; user-select: none; }
+
+    .pat-hero { margin: 6px 20px 18px; padding: 20px 22px; background: var(--c-hero-bg); color: var(--c-hero-ink); border-radius: 20px; }
+    .pat-hero-label { font-size: 11px; opacity: .74; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; }
+    .pat-hero-amt { font-family: var(--font-display); font-size: 44px; font-weight: 800; letter-spacing: -2px; line-height: 1; font-variant-numeric: tabular-nums; margin: 9px 0 16px; }
+    .pat-hero-amt .cur { font-size: 22px; opacity: .7; margin-right: 3px; }
+    .pat-comp { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: rgba(255,255,255,.18); margin-bottom: 8px; }
+    .pat-comp-a { background: var(--c-accent); } .pat-comp-d { background: rgba(var(--c-expense-rgb),.9); }
+    .pat-comp-legend { display: flex; justify-content: space-between; font-size: 11px; opacity: .85; }
+    .pat-tiles { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; padding: 0 20px; margin-bottom: 20px; }
+    .pat-tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }
+    .pat-tile-ico { font-size: 15px; margin-bottom: 5px; }
+    .pat-tile-lab { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; font-weight: 600; }
+    .pat-tile-val { font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-top: 3px; font-variant-numeric: tabular-nums; }
+    .pat-tile.debt .pat-tile-val { color: var(--danger); }
+    .pat-venc { margin: 0 20px 22px; background: rgba(var(--c-accent-rgb),.16); border: 1px solid rgba(var(--c-accent-rgb),.35); border-radius: var(--radius); padding: 13px 16px; }
+    .pat-venc-head { font-size: 12px; font-weight: 700; color: var(--c-accent-soft); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
+    .pat-venc-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--border); }
+    .pat-venc-row:first-of-type { border-top: none; }
+    .pat-venc-name { font-size: 13.5px; font-weight: 600; }
+    .pat-venc-when { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+    .pat-venc-amt { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--success); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .pat-sec { padding: 0 20px; margin-bottom: 18px; }
+    .pat-sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .pat-sec-title { font-family: var(--font-display); font-size: 15px; font-weight: 700; }
+    .pat-sec-sum { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .pat-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 13px 16px; margin-bottom: 10px; cursor: pointer; }
+    .pat-item-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .pat-item-name { font-size: 15px; font-weight: 700; }
+    .pat-item-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .pat-item-val { font-family: var(--font-display); font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+    .pat-item.debt .pat-item-val { color: var(--danger); }
+    .pat-item-foot { margin-top: 9px; }
+    .pat-chip { font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: var(--radius-pill); display: inline-block; margin-right: 6px; }
+    .pat-chip.rend { background: rgba(var(--c-income-rgb),.16); color: var(--success); }
+    .pat-chip.plazo { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+    .pat-empty { padding: 48px 32px; text-align: center; }
+    .pat-empty-ico { font-size: 46px; margin-bottom: 12px; }
+    .pat-empty-title { font-family: var(--font-display); font-size: 19px; font-weight: 800; margin-bottom: 8px; }
+    .pat-empty-desc { font-size: 14px; color: var(--muted); line-height: 1.5; margin-bottom: 22px; }
+    .pat-seg { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 16px; }
+    .pat-seg-opt { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 11px 8px; text-align: center; cursor: pointer; background: var(--surface); }
+    .pat-seg-opt.on { border-color: var(--cyan); background: rgba(var(--c-brand-rgb),.08); }
+    .pat-seg-ico { font-size: 20px; } .pat-seg-lab { font-size: 12px; font-weight: 600; margin-top: 4px; }
+    .pat-scrim { position: absolute; inset: 0; background: rgba(0,0,0,.45); z-index: 90; }
+    .pat-sheet { position: absolute; left: 0; right: 0; bottom: 0; max-width: 430px; margin: 0 auto; background: var(--surface); border-radius: 24px 24px 0 0; z-index: 91; padding: 6px 20px calc(20px + var(--safe-bottom)); max-height: 92%; overflow-y: auto; }
+    .pat-grab { width: 40px; height: 4px; border-radius: 2px; background: var(--border2); margin: 8px auto 14px; }
+    .pat-sheet-title { font-family: var(--font-display); font-size: 20px; font-weight: 800; margin-bottom: 3px; }
+    .pat-sheet-sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+    .pat-flabel { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin: 0 0 6px 2px; }
+    .pat-field { margin-bottom: 13px; }
+    .pat-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .pat-note { font-size: 11.5px; color: var(--dim); text-align: center; margin-top: 12px; line-height: 1.45; }
+    .pat-del { width: 100%; height: 46px; border-radius: var(--radius-pill); background: transparent; border: 1px solid var(--border); color: var(--danger); font-weight: 700; font-size: 14px; font-family: inherit; cursor: pointer; margin-top: 10px; }
+
     /* ═══ STAT CARDS ROW ═══ */
     .stat-row {
       display: flex; gap: 8px;
@@ -3349,6 +3413,20 @@ setTimeout(function() {
           </div>
         </div>
 
+        <!-- Patrimonio (Max) -->
+        <div class="pat-home-card" :class="{ locked: !hasPlan('max') }" @click="openPatrimonio()">
+          <div class="pat-home-l">
+            <div class="pat-home-label">
+              <span>📊 Patrimonio neto</span>
+              <span x-show="!hasPlan('max')" class="pat-lock-pill">MAX</span>
+            </div>
+            <div class="pat-home-amt" :class="{ neg: patNetWorth < 0 }" x-text="(patNetWorth < 0 ? '-$' : '$') + fmtMoney(Math.abs(patNetWorth))"></div>
+            <div class="pat-home-sub" x-show="hasPlan('max')" x-text="patItemCount > 0 ? ('Inversiones $' + fmtMoney(patTotalInvestments) + ' · Bienes $' + fmtMoney(patTotalAssets) + ' · Deudas $' + fmtMoney(patTotalDebts)) : 'Toca para registrar tu primer activo'"></div>
+            <div class="pat-home-sub" x-show="!hasPlan('max')">Inversiones, bienes y deudas · desbloquéalo con Max</div>
+          </div>
+          <svg class="pat-home-go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+
         <!-- Budget alerts -->
         <template x-for="alert in budgetAlerts" :key="alert.cat">
           <div class="budget-alert" :class="{ danger: alert.pct >= 100 }" @click="tab = 'budgets'" style="cursor:pointer;margin:0 20px 8px;">
@@ -3441,6 +3519,173 @@ setTimeout(function() {
           </template>
         </div>
       </div>
+
+      <!-- ══ PATRIMONIO (Max) ══ -->
+      <div class="main-content" x-show="tab === 'patrimonio'" x-cloak>
+        <div class="page-header">
+          <button @click="tab = 'home'" style="width:36px;height:36px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--text)" stroke-width="2" width="18" height="18"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div class="ph-left" style="margin-left:4px;">
+            <div class="ph-title" style="font-size:20px;">Patrimonio</div>
+          </div>
+          <button @click="openPatNew()" class="ph-icon-btn" style="margin-left:auto;" title="Agregar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
+
+        <!-- Hero: patrimonio neto -->
+        <div class="pat-hero">
+          <div class="pat-hero-label">Patrimonio neto</div>
+          <div class="pat-hero-amt"><span class="cur" x-text="patNetWorth < 0 ? '-$' : '$'"></span><span x-text="fmtMoney(Math.abs(patNetWorth))"></span></div>
+          <div class="pat-comp">
+            <div class="pat-comp-a" :style="'width:' + patAssetsPct + '%'"></div>
+            <div class="pat-comp-d" :style="'width:' + (100 - patAssetsPct) + '%'"></div>
+          </div>
+          <div class="pat-comp-legend">
+            <span x-text="'● Activos $' + fmtMoney(patTotalInvestments + patTotalAssets)"></span>
+            <span x-text="'● Deudas $' + fmtMoney(patTotalDebts)"></span>
+          </div>
+        </div>
+
+        <!-- Tiles -->
+        <div class="pat-tiles">
+          <div class="pat-tile"><div class="pat-tile-ico">💰</div><div class="pat-tile-lab">Inversiones</div><div class="pat-tile-val" x-text="'$' + fmtMoney(patTotalInvestments)"></div></div>
+          <div class="pat-tile"><div class="pat-tile-ico">🏠</div><div class="pat-tile-lab">Bienes</div><div class="pat-tile-val" x-text="'$' + fmtMoney(patTotalAssets)"></div></div>
+          <div class="pat-tile debt"><div class="pat-tile-ico">🔻</div><div class="pat-tile-lab">Deudas</div><div class="pat-tile-val" x-text="'$' + fmtMoney(patTotalDebts)"></div></div>
+        </div>
+
+        <!-- Próximos vencimientos -->
+        <div class="pat-venc" x-show="patUpcoming.length > 0">
+          <div class="pat-venc-head">🔔 Próximos vencimientos</div>
+          <template x-for="it in patUpcoming" :key="it.id">
+            <div class="pat-venc-row">
+              <div>
+                <div class="pat-venc-name" x-text="it.name"></div>
+                <div class="pat-venc-when" x-text="'Vence ' + patFmtDate(it.maturity_date) + (it.return_note ? ' · ' + it.return_note : '')"></div>
+              </div>
+              <div class="pat-venc-amt" x-text="'$' + fmtMoney(Number(it.current_value) || Number(it.capital) || 0)"></div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Inversiones -->
+        <div class="pat-sec" x-show="patInvestments.length > 0">
+          <div class="pat-sec-head"><div class="pat-sec-title">💰 Inversiones</div><div class="pat-sec-sum" x-text="'$' + fmtMoney(patTotalInvestments)"></div></div>
+          <template x-for="it in patInvestments" :key="it.id">
+            <div class="pat-item" @click="openPatEdit(it)">
+              <div class="pat-item-top">
+                <div>
+                  <div class="pat-item-name" x-text="it.name"></div>
+                  <div class="pat-item-meta" x-text="(it.capital ? 'Capital $' + fmtMoney(Number(it.capital)) : '') + (it.start_date ? (it.capital ? ' · ' : '') + 'desde ' + patFmtDate(it.start_date) : '')"></div>
+                </div>
+                <div class="pat-item-val" x-text="'$' + fmtMoney(Number(it.current_value) || 0)"></div>
+              </div>
+              <div class="pat-item-foot" x-show="it.return_note || it.maturity_date">
+                <span class="pat-chip rend" x-show="it.return_note" x-text="it.return_note"></span>
+                <span class="pat-chip plazo" x-show="it.maturity_date" x-text="'Vence ' + patFmtDate(it.maturity_date)"></span>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Bienes -->
+        <div class="pat-sec" x-show="patAssets.length > 0">
+          <div class="pat-sec-head"><div class="pat-sec-title">🏠 Bienes</div><div class="pat-sec-sum" x-text="'$' + fmtMoney(patTotalAssets)"></div></div>
+          <template x-for="it in patAssets" :key="it.id">
+            <div class="pat-item" @click="openPatEdit(it)">
+              <div class="pat-item-top">
+                <div>
+                  <div class="pat-item-name" x-text="it.name"></div>
+                  <div class="pat-item-meta" x-show="it.notes" x-text="it.notes"></div>
+                </div>
+                <div class="pat-item-val" x-text="'$' + fmtMoney(Number(it.current_value) || 0)"></div>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Deudas -->
+        <div class="pat-sec" x-show="patDebts.length > 0">
+          <div class="pat-sec-head"><div class="pat-sec-title">🔻 Deudas</div><div class="pat-sec-sum" style="color:var(--danger)" x-text="'−$' + fmtMoney(patTotalDebts)"></div></div>
+          <template x-for="it in patDebts" :key="it.id">
+            <div class="pat-item debt" @click="openPatEdit(it)">
+              <div class="pat-item-top">
+                <div>
+                  <div class="pat-item-name" x-text="it.name"></div>
+                  <div class="pat-item-meta" x-show="it.notes" x-text="it.notes"></div>
+                </div>
+                <div class="pat-item-val" x-text="'−$' + fmtMoney(Number(it.current_value) || 0)"></div>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Empty state -->
+        <div class="pat-empty" x-show="patItemCount === 0">
+          <div class="pat-empty-ico">📊</div>
+          <div class="pat-empty-title">Construye tu patrimonio</div>
+          <div class="pat-empty-desc">Registra tus inversiones, bienes y deudas para ver cuánto vales de verdad — y cómo crece con el tiempo.</div>
+          <button class="save-btn" style="max-width:260px;margin:0 auto;" @click="openPatNew()">+ Agregar el primero</button>
+        </div>
+      </div>
+
+      <!-- ══ PATRIMONIO · hoja agregar/editar ══ -->
+      <template x-if="patSheetOpen">
+        <div>
+          <div class="pat-scrim" @click="patSheetOpen = false"></div>
+          <div class="pat-sheet">
+            <div class="pat-grab"></div>
+            <div class="pat-sheet-title" x-text="patForm.id ? 'Editar' : 'Agregar a patrimonio'"></div>
+            <div class="pat-sheet-sub" x-text="patForm.id ? 'Actualiza los datos' : '¿Qué quieres registrar?'"></div>
+
+            <div class="pat-seg" x-show="!patForm.id">
+              <div class="pat-seg-opt" :class="{ on: patForm.kind === 'investment' }" @click="patForm.kind = 'investment'"><div class="pat-seg-ico">💰</div><div class="pat-seg-lab">Inversión</div></div>
+              <div class="pat-seg-opt" :class="{ on: patForm.kind === 'asset' }" @click="patForm.kind = 'asset'"><div class="pat-seg-ico">🏠</div><div class="pat-seg-lab">Bien</div></div>
+              <div class="pat-seg-opt" :class="{ on: patForm.kind === 'debt' }" @click="patForm.kind = 'debt'"><div class="pat-seg-ico">🔻</div><div class="pat-seg-lab">Deuda</div></div>
+            </div>
+
+            <div class="pat-field">
+              <label class="pat-flabel" x-text="patForm.kind === 'debt' ? 'Nombre de la deuda' : (patForm.kind === 'asset' ? 'Nombre del bien' : 'Nombre')"></label>
+              <input class="auth-input" type="text" x-model="patForm.name" :placeholder="patForm.kind === 'debt' ? 'Ej: Préstamo hipotecario' : (patForm.kind === 'asset' ? 'Ej: Departamento' : 'Ej: Depósito a plazo Pichincha')">
+            </div>
+
+            <div class="pat-row2">
+              <div class="pat-field" x-show="patForm.kind === 'investment'">
+                <label class="pat-flabel">Capital invertido</label>
+                <input class="auth-input" type="text" inputmode="decimal" x-model="patForm.capital" placeholder="$10.000">
+              </div>
+              <div class="pat-field" x-show="patForm.kind === 'asset'">
+                <label class="pat-flabel">Lo que costó (opc.)</label>
+                <input class="auth-input" type="text" inputmode="decimal" x-model="patForm.capital" placeholder="opcional">
+              </div>
+              <div class="pat-field" x-show="patForm.kind === 'debt'">
+                <label class="pat-flabel">Monto original (opc.)</label>
+                <input class="auth-input" type="text" inputmode="decimal" x-model="patForm.capital" placeholder="opcional">
+              </div>
+              <div class="pat-field">
+                <label class="pat-flabel" x-text="patForm.kind === 'debt' ? 'Saldo que debes' : 'Valor actual'"></label>
+                <input class="auth-input" type="text" inputmode="decimal" x-model="patForm.current_value" placeholder="$10.300">
+              </div>
+            </div>
+
+            <div class="pat-row2" x-show="patForm.kind === 'investment'">
+              <div class="pat-field">
+                <label class="pat-flabel">Rendimiento esperado</label>
+                <input class="auth-input" type="text" x-model="patForm.return_note" placeholder="8% anual">
+              </div>
+              <div class="pat-field">
+                <label class="pat-flabel">Vence / sale (opc.)</label>
+                <input class="auth-input" type="date" x-model="patForm.maturity_date">
+              </div>
+            </div>
+
+            <button class="save-btn" style="width:100%;" @click="savePatItem()" x-text="patForm.id ? 'Guardar cambios' : 'Guardar'"></button>
+            <button class="pat-del" x-show="patForm.id" @click="deletePatItem()">Eliminar</button>
+            <div class="pat-note" x-show="!patForm.id">El dinero invertido <b>no afecta</b> tus gastos del mes.<br>Vive aquí, en tu patrimonio.</div>
+          </div>
+        </div>
+      </template>
 
       <!-- ══ HISTORY ══ -->
       <div class="main-content" x-show="tab === 'history'" x-cloak>
@@ -7717,7 +7962,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v117',
+    APP_VERSION: 'v118',
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
@@ -7955,7 +8200,7 @@ function zepoApp() {
           this.userName = session.user.user_metadata?.name || session.user.user_metadata?.full_name || session.user.email.split('@')[0];
           await this.ensureUserRow();
           await this.loadSpaces();
-          await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadBudgets(), this.loadUserPlan(), this.loadFriends(), this.loadPaymentRequests(), this.loadPaymentMethods(), this.loadCategoryLearning(), this.loadRecurringTemplates()]);
+          await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadBudgets(), this.loadUserPlan(), this.loadFriends(), this.loadPaymentRequests(), this.loadPaymentMethods(), this.loadCategoryLearning(), this.loadRecurringTemplates(), this.loadPatrimony()]);
           this.handlePaymentReturn();
           this.initWelcomeCarousel();
           this.loadNotifSettings();
@@ -8058,6 +8303,7 @@ function zepoApp() {
           await this.loadSpaces();
           this.loadExpenses();
           this.loadUserPlan();
+          this.loadPatrimony();
           this.initWelcomeCarousel();
           this.loadNotifSettings();
           this.initPushIfNeeded();
@@ -9514,6 +9760,114 @@ function zepoApp() {
         if (this.activeSpaceId === s.id) await this.selectSpace(def.id);
       } catch (e) { this.showToast('Error: ' + e.message); }
     },
+    // ── Patrimonio (Max) ──
+    patrimonyItems: [],
+    patSheetOpen: false,
+    patForm: { id: null, kind: 'investment', name: '', capital: '', current_value: '', return_note: '', maturity_date: '' },
+    get _patActive() { return (this.patrimonyItems || []).filter(i => (i.status || 'active') !== 'closed'); },
+    get patInvestments() { return this._patActive.filter(i => i.kind === 'investment'); },
+    get patAssets() { return this._patActive.filter(i => i.kind === 'asset'); },
+    get patDebts() { return this._patActive.filter(i => i.kind === 'debt'); },
+    get patTotalInvestments() { return this.patInvestments.reduce((s, i) => s + (Number(i.current_value) || 0), 0); },
+    get patTotalAssets() { return this.patAssets.reduce((s, i) => s + (Number(i.current_value) || 0), 0); },
+    get patTotalDebts() { return this.patDebts.reduce((s, i) => s + (Number(i.current_value) || 0), 0); },
+    get patNetWorth() { return this.patTotalInvestments + this.patTotalAssets - this.patTotalDebts; },
+    get patItemCount() { return this._patActive.length; },
+    get patAssetsPct() { const a = this.patTotalInvestments + this.patTotalAssets, t = a + this.patTotalDebts; return t > 0 ? Math.round(a / t * 100) : 100; },
+    get patUpcoming() {
+      const today = new Date().toLocaleDateString('en-CA');
+      return this.patInvestments
+        .filter(i => i.maturity_date && i.maturity_date >= today)
+        .sort((a, b) => (a.maturity_date < b.maturity_date ? -1 : 1))
+        .slice(0, 3);
+    },
+    patFmtDate(d) {
+      if (!d) return '';
+      try {
+        const dt = new Date(d + 'T00:00:00');
+        return dt.toLocaleDateString('es-EC', { month: 'short', year: 'numeric' }).replace('.', '');
+      } catch (e) { return d; }
+    },
+    _patNum(v) { const n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, '')); return isNaN(n) ? null : n; },
+    openPatrimonio() {
+      if (!this.hasPlan('max')) { this.tab = 'plans'; return this.showToast('Patrimonio está en Max'); }
+      this.tab = 'patrimonio';
+    },
+    openPatNew(kind) {
+      if (!this.hasPlan('max')) { this.tab = 'plans'; return this.showToast('Patrimonio está en Max'); }
+      this.patForm = { id: null, kind: kind || 'investment', name: '', capital: '', current_value: '', return_note: '', maturity_date: '' };
+      this.patSheetOpen = true;
+    },
+    openPatEdit(it) {
+      this.patForm = {
+        id: it.id, kind: it.kind, name: it.name || '',
+        capital: it.capital != null ? String(it.capital) : '',
+        current_value: it.current_value != null ? String(it.current_value) : '',
+        return_note: it.return_note || '', maturity_date: it.maturity_date || ''
+      };
+      this.patSheetOpen = true;
+    },
+    async loadPatrimony() {
+      if (!this.user) return;
+      let data = null;
+      try {
+        const q = sb.from('patrimony_items').select('*').eq('user_id', this.user.id)
+          .order('sort_order', { ascending: true }).order('created_at', { ascending: false });
+        const r = await withTimeout(q, 2500, 'loadPatrimony');
+        data = r.data;
+      } catch (e) {
+        try {
+          const url = SUPABASE_URL + '/rest/v1/patrimony_items?user_id=eq.' + encodeURIComponent(this.user.id) + '&order=sort_order.asc,created_at.desc';
+          const res = await fetch(url, { headers: sbAuthHeaders() });
+          data = res.ok ? await res.json() : [];
+        } catch (e2) { data = []; }
+      }
+      this.patrimonyItems = data || [];
+    },
+    async savePatItem() {
+      if (!this.hasPlan('max')) { this.patSheetOpen = false; this.tab = 'plans'; return this.showToast('Patrimonio está en Max'); }
+      const f = this.patForm;
+      const name = (f.name || '').trim();
+      if (!name) return this.showToast('Ponle un nombre');
+      const cur = this._patNum(f.current_value);
+      if (cur == null) return this.showToast(f.kind === 'debt' ? 'Pon el saldo que debes' : 'Pon el valor actual');
+      const row = {
+        kind: f.kind,
+        name,
+        capital: this._patNum(f.capital),
+        current_value: cur,
+        return_note: f.kind === 'investment' ? ((f.return_note || '').trim() || null) : null,
+        maturity_date: (f.kind === 'investment' && f.maturity_date) ? f.maturity_date : null
+      };
+      try {
+        if (f.id) {
+          await sbRestUpdate('patrimony_items', 'id', f.id, row);
+          const i = this.patrimonyItems.findIndex(x => x.id === f.id);
+          if (i >= 0) this.patrimonyItems[i] = { ...this.patrimonyItems[i], ...row };
+          this.showToast('Actualizado');
+        } else {
+          row.user_id = this.user.id;
+          row.sort_order = this.patrimonyItems.length;
+          const ins = await sbRestInsert('patrimony_items', row);
+          const created = (ins && ins[0]) || row;
+          this.patrimonyItems.push(created);
+          this.showToast('Guardado');
+        }
+        this.patSheetOpen = false;
+      } catch (e) { this.showToast('Error: ' + (e.message || e)); }
+    },
+    async deletePatItem() {
+      const id = this.patForm.id;
+      if (!id) return;
+      if (!confirm('¿Eliminar "' + this.patForm.name + '" de tu patrimonio?')) return;
+      try {
+        await sbRestDelete('patrimony_items', { id });
+        this.patrimonyItems = this.patrimonyItems.filter(x => x.id !== id);
+        this.patSheetOpen = false;
+        this.showToast('Eliminado');
+      } catch (e) { this.showToast('Error: ' + (e.message || e)); }
+    },
+
     // ── Gastos recurrentes (Feature 4) ──
     _catEmoji(key) { return (CAT_MAP[key] && CAT_MAP[key].emoji) || '📦'; },
     _catLabel(key) { return (CAT_MAP[key] && CAT_MAP[key].label) || key || 'Otro'; },
@@ -12463,7 +12817,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v94.js';
+  const CURRENT_SW = 'sw-v95.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
