@@ -134,21 +134,17 @@
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       /* ── Layout tokens (single source of truth for safe-area math) ── */
       --tab-height: 52px;
-      /* Iconos PEGADOS abajo (.tab-bar align-items:flex-end). La barra ya NO reserva
-         padding interno propio: todo el descenso lo hace --into-safe. Se mantiene el token
-         en 0px por compatibilidad con --tab-total y el toast (línea ~1838). */
-      --safe-bottom-bar: 0px;
-      /* Cuánto BAJA la barra+FAB metiéndose en el área segura, como los apps nativos.
-         = safe-bottom - 5px → en iPhone (safe=34) baja 29px y deja la base de los labels
-         a 5px EXACTOS del borde físico (valor que Alvaro certificó en /lab/, 2026-06-11).
-         0 en navegador/sin notch (no hay franja). Bar y FAB se desplazan JUNTOS (traslación
-         rígida) → conservan su relación. Bajar de 5px = los botones se cortan / chocan con
-         el gesto de inicio del iPhone: 5px es el piso real de una PWA (no de una app nativa). */
-      --into-safe: max(calc(var(--safe-bottom) - 5px), 0px);
+      /* Iconos PEGADOS abajo (.tab-bar align-items:flex-end). Reserve = SOLO despejar el
+         home-indicator, denso como Android. Medido en iPhone real (BrowserStack): el PWA
+         instalado reporta safe-bottom=34 -> reserve 8px; Safari/contextos que reportan 0
+         -> reserve 0 (labels al borde). El home-indicator va CENTRADO (bajo el FAB), los
+         labels lo flanquean, así que 8px no colisiona. NUNCA piso >0: añadía franja muerta
+         donde no hace falta (Alvaro la vio "ahora"). Solo tab-bar/FAB; sheets usan --safe-bottom. */
+      --safe-bottom-bar: max(calc(var(--safe-bottom) - 26px), 0px);
       --tab-total: calc(var(--tab-height) + var(--safe-bottom-bar));
-      --content-pad-bottom: calc(var(--tab-height) + 16px + var(--safe-bottom-bar) - var(--into-safe));
+      --content-pad-bottom: calc(var(--tab-height) + 16px + var(--safe-bottom-bar));
       --overlay-pad-top: calc(var(--safe-top) + 16px);
-      --fab-bottom: calc(22px + var(--safe-bottom-bar) - var(--into-safe));
+      --fab-bottom: calc(22px + var(--safe-bottom-bar));
     }
 
     /* ═══ DARK THEME — variante Bricolage dark del brand book (valores exactos).
@@ -360,7 +356,7 @@
          que 100dvh != viewport en iOS. Funciona porque ningún ancestro tiene
          transform. left:50%+translateX centra igual que #app (max-width 430). */
       position: fixed;
-      bottom: calc(-1 * var(--into-safe));
+      bottom: 0;
       left: 0;
       right: 0;
       width: auto;
@@ -7941,7 +7937,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v133',
+    APP_VERSION: 'v134',
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -12993,7 +12989,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v110.js';
+  const CURRENT_SW = 'sw-v111.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
