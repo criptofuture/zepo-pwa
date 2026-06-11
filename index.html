@@ -7948,7 +7948,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v136',
+    APP_VERSION: 'v137',
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -8102,6 +8102,7 @@ function zepoApp() {
     a7Step: 0,
     _a7: null,
     _a7destroying: false,
+    _isIOS: false,
     /* Coach contextual — motor reutilizable (Capa B) */
     coach: { open: false, tag: '', emoji: '', title: '', sub: '', cta: '', locked: false },
     coachDefs: {
@@ -8280,7 +8281,17 @@ function zepoApp() {
         onCloseClick: () => this._a7done(),
         onDestroyed: () => { if (!this._a7destroying) { try { localStorage.setItem('zepo_a7_done_v1', '1'); } catch (e) {} this.a7Active = false; this.a7Step = 0; this._a7 = null; } },
       });
+      // iOS: el elemento puede estar fuera de vista (hoja con scroll) -> traerlo antes de resaltar.
+      if (this._isIOS) { try { el.scrollIntoView({ block: 'center' }); } catch (e) {} }
       try { this._a7.highlight({ element: el, popover: pop }); } catch (e) {}
+      // iOS: la hoja anima y el teclado reacomoda DESPUES de resaltar -> driver mide la
+      // posicion vieja y el globito queda descuadrado. Re-alineamos en varios tiempos hasta
+      // que asiente. SOLO iOS: en Android el highlight unico ya cae bien (no tocarlo).
+      if (this._isIOS) {
+        [160, 420, 820].forEach(t => setTimeout(() => {
+          if (this.a7Active && this._a7) { try { this._a7.refresh(); } catch (e) {} }
+        }, t));
+      }
       if (nextCfg) {
         setTimeout(() => {
           const popEl = document.querySelector('.driver-popover');
@@ -8304,6 +8315,7 @@ function zepoApp() {
 
     async init() {
       this._dlog('init() URL=' + location.href.slice(0, 150));
+      this._isIOS = /iP(hone|od|ad)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       window.addEventListener('online', () => this.offline = false);
       window.addEventListener('offline', () => this.offline = true);
       window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); this.installPrompt = e; });
@@ -8352,6 +8364,11 @@ function zepoApp() {
         const syncVV = () => {
           document.documentElement.style.setProperty('--vvh', vv.height + 'px');
           document.documentElement.style.setProperty('--vvt', vv.offsetTop + 'px');
+          // iOS: al subir/bajar el teclado o hacer scroll, el globito del tour se descuadra
+          // (driver no re-mide). Lo re-alineamos. SOLO iOS y SOLO con tour activo (Android intacto).
+          if (this._isIOS && this.a7Active && this._a7) {
+            requestAnimationFrame(() => { if (this.a7Active && this._a7) { try { this._a7.refresh(); } catch (e) {} } });
+          }
         };
         vv.addEventListener('resize', syncVV);
         vv.addEventListener('scroll', syncVV);
@@ -13000,7 +13017,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v113.js';
+  const CURRENT_SW = 'sw-v114.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
