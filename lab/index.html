@@ -128,7 +128,7 @@
 
     document.querySelectorAll('.switch button').forEach(btn => {
       btn.addEventListener('click', () => {
-        body.classList.remove('v1', 'v2', 'v3');
+        body.classList.remove('v1', 'v2', 'v3', 'v4');
         body.classList.add(btn.dataset.v);
         document.querySelectorAll('.switch button').forEach(b => b.classList.toggle('on', b === btn));
         requestAnimationFrame(measure);
