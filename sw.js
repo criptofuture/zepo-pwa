@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zepo-v117';
+const CACHE_NAME = 'zepo-v118';
 // Only cache external CDN scripts. Don't pre-cache HTML/manifest — let them be network-first
 // so the user always gets the latest version when online.
 const ASSETS = [

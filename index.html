@@ -3669,13 +3669,13 @@ setTimeout(function() {
               </div>
             </div>
 
-            <div class="pat-row2" x-show="patForm.kind === 'investment'">
+            <div class="pat-row2" x-show="patForm.kind === 'investment' || patForm.kind === 'debt'">
               <div class="pat-field">
-                <label class="pat-flabel">Rendimiento esperado</label>
-                <input class="auth-input" type="text" x-model="patForm.return_note" placeholder="8% anual">
+                <label class="pat-flabel" x-text="patForm.kind === 'debt' ? 'Tasa de interés (opc.)' : 'Rendimiento esperado'"></label>
+                <input class="auth-input" type="text" x-model="patForm.return_note" :placeholder="patForm.kind === 'debt' ? '12% anual' : '8% anual'">
               </div>
               <div class="pat-field">
-                <label class="pat-flabel">Vence / sale (opc.)</label>
+                <label class="pat-flabel" x-text="patForm.kind === 'debt' ? 'Plazo / vence (opc.)' : 'Vence / sale (opc.)'"></label>
                 <input class="auth-input" type="date" x-model="patForm.maturity_date">
               </div>
             </div>
@@ -7962,7 +7962,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v118',
+    APP_VERSION: 'v119',
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
     // Diccionario de comercios → categoría. Corrige los "other" de la IA.
@@ -9654,11 +9654,13 @@ function zepoApp() {
         try {
           const url = SUPABASE_URL + '/rest/v1/spaces?user_id=eq.' + encodeURIComponent(this.user.id) + '&order=sort_order.asc,created_at.asc';
           const res = await fetch(url, { headers: sbAuthHeaders() });
-          data = res.ok ? await res.json() : [];
-        } catch (e2) { data = []; }
+          data = res.ok ? await res.json() : null;
+        } catch (e2) { data = null; }
       }
       this.spaces = data || [];
-      if (this.spaces.length === 0 && !this._spaceSeeding) await this.seedDefaultSpace();
+      // Solo sembrar si la carga REALMENTE devolvió cero filas (array vacío). Si falló
+      // (timeout/red → data=null) NO sembrar: leer 0 por error creaba un "Personal" duplicado.
+      if (Array.isArray(data) && data.length === 0 && !this._spaceSeeding) await this.seedDefaultSpace();
       let saved = null;
       try { saved = localStorage.getItem('zepo_active_space'); } catch {}
       if (saved === '__all__') { this.spaceViewAll = true; this.activeSpaceId = null; }
@@ -9836,8 +9838,8 @@ function zepoApp() {
         name,
         capital: this._patNum(f.capital),
         current_value: cur,
-        return_note: f.kind === 'investment' ? ((f.return_note || '').trim() || null) : null,
-        maturity_date: (f.kind === 'investment' && f.maturity_date) ? f.maturity_date : null
+        return_note: f.kind === 'asset' ? null : ((f.return_note || '').trim() || null),
+        maturity_date: (f.kind !== 'asset' && f.maturity_date) ? f.maturity_date : null
       };
       try {
         if (f.id) {
@@ -12817,7 +12819,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v95.js';
+  const CURRENT_SW = 'sw-v96.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
