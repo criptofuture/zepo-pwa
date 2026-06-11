@@ -142,7 +142,9 @@
          donde no hace falta (Alvaro la vio "ahora"). Solo tab-bar/FAB; sheets usan --safe-bottom. */
       --safe-bottom-bar: max(calc(var(--safe-bottom) - 26px), 0px);
       --tab-total: calc(var(--tab-height) + var(--safe-bottom-bar));
-      --content-pad-bottom: calc(var(--tab-height) + 16px + var(--safe-bottom-bar));
+      /* Debe despejar el FAB (que sobresale sobre la tab-bar), no solo la barra: fab-bottom + alto FAB (64) + respiro.
+         Si no, el último elemento centrado (p.ej. el CTA "Empieza aquí" del estado vacío) queda bajo el FAB. */
+      --content-pad-bottom: calc(var(--fab-bottom) + 64px + 16px);
       --overlay-pad-top: calc(var(--safe-top) + 16px);
       --fab-bottom: calc(22px + var(--safe-bottom-bar));
     }
@@ -8238,7 +8240,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v140',
+    APP_VERSION: 'v141',
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -13400,7 +13402,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v117.js';
+  const CURRENT_SW = 'sw-v118.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
