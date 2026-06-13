@@ -796,6 +796,8 @@
     .pat-item-val { font-family: var(--font-display); font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
     .pat-item.debt .pat-item-val { color: var(--danger); }
     .pat-item-foot { margin-top: 9px; }
+    .pat-flow-badge { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:700; padding:3px 9px; border-radius:var(--radius-pill); background:var(--surface2); color:var(--success); }
+    .pat-flow-badge.out { color:var(--danger); }
     .pat-chip { font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: var(--radius-pill); display: inline-block; margin-right: 6px; }
     .pat-chip.rend { background: rgba(var(--c-income-rgb),.16); color: var(--success); }
     .pat-chip.plazo { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
@@ -3751,9 +3753,10 @@ setTimeout(function() {
                 </div>
                 <div class="pat-item-val" x-text="'$' + fmtMoney(Number(it.current_value) || 0)"></div>
               </div>
-              <div class="pat-item-foot" x-show="it.return_note || it.maturity_date">
+              <div class="pat-item-foot" x-show="it.return_note || it.maturity_date || patLinkedFlow(it.id)">
                 <span class="pat-chip rend" x-show="it.return_note" x-text="it.return_note"></span>
                 <span class="pat-chip plazo" x-show="it.maturity_date" x-text="'Vence ' + patFmtDate(it.maturity_date)"></span>
+                <span class="pat-flow-badge" x-show="patLinkedFlow(it.id)" x-text="'↑ genera $' + fmtMoney(Number((patLinkedFlow(it.id) || {}).amount) || 0) + '/mes'"></span>
               </div>
             </div>
           </template>
@@ -3786,6 +3789,9 @@ setTimeout(function() {
                   <div class="pat-item-meta" x-show="it.notes" x-text="it.notes"></div>
                 </div>
                 <div class="pat-item-val" x-text="'−$' + fmtMoney(Number(it.current_value) || 0)"></div>
+              </div>
+              <div class="pat-item-foot" x-show="patLinkedFlow(it.id)">
+                <span class="pat-flow-badge out" x-text="'↓ cuota $' + fmtMoney(Number((patLinkedFlow(it.id) || {}).amount) || 0) + '/mes'"></span>
               </div>
             </div>
           </template>
@@ -3872,6 +3878,30 @@ setTimeout(function() {
                 <input class="auth-input" type="date" x-model="patForm.maturity_date">
               </div>
             </div>
+
+            <div class="pat-field" x-show="patForm.kind === 'investment' && !patForm.is_crypto">
+              <label class="pat-flabel" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+                <span>💵 Genera ingreso mensual</span>
+                <input type="checkbox" x-model="patForm.gen_flow" style="width:20px;height:20px;accent-color:var(--c-brand);cursor:pointer;">
+              </label>
+            </div>
+            <div class="pat-field" x-show="patForm.kind === 'debt'">
+              <label class="pat-flabel" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+                <span>💳 Tiene cuota mensual</span>
+                <input type="checkbox" x-model="patForm.gen_flow" style="width:20px;height:20px;accent-color:var(--c-brand);cursor:pointer;">
+              </label>
+            </div>
+            <div class="pat-row2" x-show="patForm.gen_flow && ((patForm.kind === 'investment' && !patForm.is_crypto) || patForm.kind === 'debt')">
+              <div class="pat-field">
+                <label class="pat-flabel" x-text="patForm.kind === 'debt' ? 'Cuota mensual' : 'Ingreso mensual'"></label>
+                <input class="auth-input" type="text" inputmode="decimal" x-model="patForm.flow_amount" placeholder="$400">
+              </div>
+              <div class="pat-field">
+                <label class="pat-flabel">Día del mes</label>
+                <input class="auth-input" type="text" inputmode="numeric" x-model="patForm.flow_day" placeholder="5">
+              </div>
+            </div>
+            <div class="pat-note" x-show="patForm.gen_flow && ((patForm.kind === 'investment' && !patForm.is_crypto) || patForm.kind === 'debt')" style="margin-top:2px;" x-text="patForm.kind === 'debt' ? 'Cada mes entrará como gasto en tu flujo.' : 'Cada mes entrará como ingreso en tu flujo.'"></div>
 
             <button class="save-btn" style="width:100%;" @click="savePatItem()" x-text="patForm.id ? 'Guardar cambios' : 'Guardar'"></button>
             <button class="pat-del" x-show="patForm.id" @click="deletePatItem()">Eliminar</button>
@@ -6915,6 +6945,7 @@ setTimeout(function() {
                           <span x-show="!t.active"> · en pausa</span>
                         </div>
                         <div x-show="t.is_split" x-cloak style="font-size:10px;color:var(--cyan);margin-top:2px;font-weight:600;" x-text="'Dividido · ' + (t.split_persona || '')"></div>
+                        <div x-show="t.patrimony_item_id" x-cloak style="font-size:10px;color:var(--c-brand);margin-top:2px;font-weight:600;" x-text="'↳ de ' + ((patrimonyItems.find(i => i.id === t.patrimony_item_id) || {}).name || 'tu patrimonio')"></div>
                       </div>
                       <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">
                         <button @click="toggleRecurringActive(t)" style="width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;" :style="t.active ? 'color:var(--success)' : 'color:var(--dim)'" :title="t.active ? 'Pausar' : 'Reanudar'">
@@ -8367,7 +8398,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v146',
+    APP_VERSION: 'v147',
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -10468,7 +10499,7 @@ function zepoApp() {
     patSheetOpen: false,
     cryptoCoins: CRYPTO_COINS,
     cryptoPricesAt: 0,
-    patForm: { id: null, kind: 'investment', name: '', capital: '', current_value: '', return_note: '', maturity_date: '', is_crypto: false, coingecko_id: '', symbol: '', quantity: '' },
+    patForm: { id: null, kind: 'investment', name: '', capital: '', current_value: '', return_note: '', maturity_date: '', is_crypto: false, coingecko_id: '', symbol: '', quantity: '', gen_flow: false, flow_amount: '', flow_day: '' },
     get _patActive() { return (this.patrimonyItems || []).filter(i => (i.status || 'active') !== 'closed'); },
     get patInvestments() { return this._patActive.filter(i => i.kind === 'investment'); },
     get patAssets() { return this._patActive.filter(i => i.kind === 'asset'); },
@@ -10478,6 +10509,7 @@ function zepoApp() {
     get patTotalDebts() { return this.patDebts.reduce((s, i) => s + (Number(i.current_value) || 0), 0); },
     get patNetWorth() { return this.patTotalInvestments + this.patTotalAssets - this.patTotalDebts; },
     get patItemCount() { return this._patActive.length; },
+    patLinkedFlow(id) { return (this.recurringTemplates || []).find(t => t.patrimony_item_id === id && t.active); },
     get patHasCrypto() { return (this.patrimonyItems || []).some(i => i.coingecko_id && Number(i.quantity) > 0 && (i.status || 'active') !== 'closed'); },
     get cryptoFreshLabel() {
       if (!this.cryptoPricesAt) return '';
@@ -10577,17 +10609,19 @@ function zepoApp() {
     },
     openPatNew(kind) {
       if (!this.hasPlan('max')) { this.tab = 'plans'; return this.showToast('Patrimonio está en Max'); }
-      this.patForm = { id: null, kind: kind || 'investment', name: '', capital: '', current_value: '', return_note: '', maturity_date: '', is_crypto: false, coingecko_id: '', symbol: '', quantity: '' };
+      this.patForm = { id: null, kind: kind || 'investment', name: '', capital: '', current_value: '', return_note: '', maturity_date: '', is_crypto: false, coingecko_id: '', symbol: '', quantity: '', gen_flow: false, flow_amount: '', flow_day: '' };
       this.patSheetOpen = true;
     },
     openPatEdit(it) {
+      const lk = (this.recurringTemplates || []).find(t => t.patrimony_item_id === it.id);
       this.patForm = {
         id: it.id, kind: it.kind, name: it.name || '',
         capital: it.capital != null ? String(it.capital) : '',
         current_value: it.current_value != null ? String(it.current_value) : '',
         return_note: it.return_note || '', maturity_date: it.maturity_date || '',
         is_crypto: !!it.coingecko_id, coingecko_id: it.coingecko_id || '', symbol: it.symbol || '',
-        quantity: it.quantity != null ? String(it.quantity) : ''
+        quantity: it.quantity != null ? String(it.quantity) : '',
+        gen_flow: !!lk, flow_amount: lk ? String(lk.amount) : '', flow_day: lk ? String(lk.day_of_month) : ''
       };
       this.patSheetOpen = true;
     },
@@ -10700,6 +10734,7 @@ function zepoApp() {
           await sbRestUpdate('patrimony_items', 'id', f.id, row);
           const i = this.patrimonyItems.findIndex(x => x.id === f.id);
           if (i >= 0) this.patrimonyItems[i] = { ...this.patrimonyItems[i], ...row };
+          await this._syncPatFlow(f.id);
           this.showToast('Actualizado');
         } else {
           row.user_id = this.user.id;
@@ -10707,6 +10742,7 @@ function zepoApp() {
           const ins = await sbRestInsert('patrimony_items', row);
           const created = (ins && ins[0]) || row;
           this.patrimonyItems.push(created);
+          if (created.id) await this._syncPatFlow(created.id);
           this.showToast('Guardado');
         }
         this.patSheetOpen = false;
@@ -10720,9 +10756,41 @@ function zepoApp() {
       try {
         await sbRestDelete('patrimony_items', { id });
         this.patrimonyItems = this.patrimonyItems.filter(x => x.id !== id);
+        this.recurringTemplates = (this.recurringTemplates || []).filter(x => x.patrimony_item_id !== id);
         this.patSheetOpen = false;
         this.showToast('Eliminado');
       } catch (e) { this.showToast('Error: ' + (e.message || e)); }
+    },
+    // Sincroniza la plantilla recurrente ligada a un item (inversion->ingreso / deuda->gasto).
+    // Crea / actualiza / borra segun el toggle gen_flow. El cron mensual la procesa como cualquier recurrente.
+    async _syncPatFlow(itemId) {
+      if (!itemId) return;
+      const f = this.patForm;
+      const eligible = (f.kind === 'investment' && !f.is_crypto) || f.kind === 'debt';
+      const existing = (this.recurringTemplates || []).find(t => t.patrimony_item_id === itemId);
+      const amt = this._patNum(f.flow_amount);
+      const want = eligible && f.gen_flow && amt && amt > 0;
+      try {
+        if (want) {
+          const isIncome = f.kind === 'investment';
+          const base = {
+            description: (isIncome ? 'Rendimiento · ' : 'Cuota · ') + (f.name || '').trim(),
+            amount: amt,
+            category: isIncome ? 'investment' : 'other',
+            is_income: isIncome,
+            day_of_month: Math.min(31, Math.max(1, parseInt(f.flow_day) || 1)),
+            active: true,
+          };
+          if (existing) await sbRestUpdate('recurring_templates', 'id', existing.id, base);
+          else await sbRestInsert('recurring_templates', {
+            user_id: this.user.id, patrimony_item_id: itemId, last_generated: localDate(),
+            space_id: (this._currentSpaceId && this._currentSpaceId()) || null, ...base,
+          });
+        } else if (existing) {
+          await sbRestDelete('recurring_templates', { id: existing.id });
+        }
+        await this.loadRecurringTemplates();
+      } catch (e) { console.warn('[_syncPatFlow]', e.message || e); }
     },
 
     // ── Gastos recurrentes (Feature 4) ──
@@ -13731,7 +13799,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v123.js';
+  const CURRENT_SW = 'sw-v124.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
