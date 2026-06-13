@@ -763,6 +763,15 @@
     .pat-comp { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: rgba(255,255,255,.18); margin-bottom: 8px; }
     .pat-comp-a { background: var(--c-accent); } .pat-comp-d { background: rgba(var(--c-expense-rgb),.9); }
     .pat-comp-legend { display: flex; justify-content: space-between; font-size: 11px; opacity: .85; }
+    .pat-chart { margin: 0 20px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 15px 16px 12px; }
+    .pat-chart-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+    .pat-chart-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
+    .pat-chart-delta { font-family: var(--font-display); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .pat-chart-delta.up { color: var(--success); }
+    .pat-chart-delta.down { color: var(--danger); }
+    .pat-chart svg { display: block; width: 100%; height: auto; }
+    .pat-chart-axis { display: flex; justify-content: space-between; font-size: 10px; color: var(--dim); margin-top: 4px; text-transform: capitalize; }
+    .pat-chart-soon { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
     .pat-tiles { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; padding: 0 20px; margin-bottom: 20px; }
     .pat-tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }
     .pat-tile-ico { font-size: 15px; margin-bottom: 5px; }
@@ -3681,6 +3690,33 @@ setTimeout(function() {
           <span style="width:7px;height:7px;border-radius:50%;background:var(--c-income);display:inline-block;"></span>
           <span x-text="cryptoFreshLabel || 'cripto · precio en vivo'"></span>
         </div>
+
+        <!-- Evolución del patrimonio neto (histórico mensual) -->
+        <template x-if="patHistory.length >= 2">
+          <div class="pat-chart">
+            <div class="pat-chart-head">
+              <div class="pat-chart-title">Evolución</div>
+              <div class="pat-chart-delta" :class="patHistoryDelta.up ? 'up' : 'down'" x-text="(patHistoryDelta.up ? '▲ +$' : '▼ -$') + fmtMoney(Math.abs(patHistoryDelta.abs))"></div>
+            </div>
+            <svg viewBox="0 0 320 90" preserveAspectRatio="xMidYMid meet">
+              <path :d="patChart ? patChart.area : ''" style="fill:rgba(var(--c-brand-rgb),0.12);stroke:none;"></path>
+              <polyline :points="patChart ? patChart.line : ''" style="fill:none;stroke:var(--c-brand);stroke-width:2;" stroke-linejoin="round" stroke-linecap="round"></polyline>
+              <circle :cx="patChart ? patChart.lastX : 0" :cy="patChart ? patChart.lastY : 0" r="3.2" style="fill:var(--c-brand);"></circle>
+            </svg>
+            <div class="pat-chart-axis">
+              <span x-text="patChart ? patChart.firstLabel : ''"></span>
+              <span x-text="patChart ? patChart.lastLabel : ''"></span>
+            </div>
+          </div>
+        </template>
+
+        <!-- Primer punto: aún no hay con qué comparar -->
+        <template x-if="patHistory.length === 1">
+          <div class="pat-chart">
+            <div class="pat-chart-title" style="margin-bottom:8px;">Evolución</div>
+            <div class="pat-chart-soon">📈 Este es tu punto de partida. Vuelve el próximo mes para ver cómo evoluciona tu patrimonio.</div>
+          </div>
+        </template>
 
         <!-- Tiles -->
         <div class="pat-tiles">
@@ -7914,6 +7950,15 @@ async function sbRestInsert(table, payload) {
   if (!res.ok) throw new Error('REST insert ' + res.status + ': ' + (await res.text()));
   return res.json();
 }
+async function sbRestUpsert(table, payload, onConflict) {
+  let url = SUPABASE_URL + '/rest/v1/' + table;
+  if (onConflict) url += '?on_conflict=' + encodeURIComponent(onConflict);
+  const res = await sbRestFetch(url, {
+    method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('REST upsert ' + res.status + ': ' + (await res.text()));
+  return true;
+}
 async function sbRestUpdate(table, idKey, idVal, payload) {
   const url = SUPABASE_URL + '/rest/v1/' + table + '?' + idKey + '=eq.' + encodeURIComponent(idVal);
   const res = await sbRestFetch(url, {
@@ -8322,7 +8367,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v145',
+    APP_VERSION: 'v146',
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -10419,6 +10464,7 @@ function zepoApp() {
     },
     // ── Patrimonio (Max) ──
     patrimonyItems: [],
+    patSnapshots: [],
     patSheetOpen: false,
     cryptoCoins: CRYPTO_COINS,
     cryptoPricesAt: 0,
@@ -10441,6 +10487,50 @@ function zepoApp() {
       if (mins < 60) return 'en vivo · hace ' + mins + ' min';
       return 'en vivo · hace ' + Math.floor(mins / 60) + ' h';
     },
+    // Histórico: snapshots mensuales (ascendente) + el mes actual con el neto EN VIVO.
+    get patHistory() {
+      const d = new Date();
+      const cur = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01';
+      const arr = (this.patSnapshots || [])
+        .map(s => ({ month: s.snapshot_month, value: Number(s.net_worth) || 0 }))
+        .sort((a, b) => (a.month < b.month ? -1 : 1));
+      const live = Math.round(this.patNetWorth * 100) / 100;
+      const idx = arr.findIndex(p => p.month === cur);
+      if (idx >= 0) arr[idx] = { month: cur, value: live };
+      else if (this.patItemCount > 0) arr.push({ month: cur, value: live });
+      return arr;
+    },
+    get patHistoryDelta() {
+      const h = this.patHistory;
+      if (h.length < 2) return null;
+      const abs = h[h.length - 1].value - h[0].value;
+      return { abs, up: abs >= 0 };
+    },
+    // Geometría del gráfico SVG (polyline + área). null si <2 puntos.
+    get patChart() {
+      const h = this.patHistory;
+      if (h.length < 2) return null;
+      const W = 320, H = 90, pad = 8, baseY = H - pad, n = h.length;
+      const vals = h.map(p => p.value);
+      let min = Math.min(...vals), max = Math.max(...vals);
+      if (min === max) { min -= 1; max += 1; }
+      const range = max - min;
+      const px = i => pad + (i * (W - 2 * pad)) / (n - 1);
+      const py = v => pad + (baseY - pad) * (1 - (v - min) / range);
+      const line = h.map((p, i) => px(i).toFixed(1) + ',' + py(p.value).toFixed(1)).join(' ');
+      let area = 'M' + px(0).toFixed(1) + ',' + baseY;
+      h.forEach((p, i) => { area += ' L' + px(i).toFixed(1) + ',' + py(p.value).toFixed(1); });
+      area += ' L' + px(n - 1).toFixed(1) + ',' + baseY + ' Z';
+      return {
+        W, H, line, area,
+        lastX: px(n - 1).toFixed(1), lastY: py(h[n - 1].value).toFixed(1),
+        firstLabel: this._patMonthShort(h[0].month), lastLabel: this._patMonthShort(h[n - 1].month)
+      };
+    },
+    _patMonthShort(m) {
+      try { return new Date(m + 'T00:00:00').toLocaleDateString('es-EC', { month: 'short' }).replace('.', ''); }
+      catch (e) { return ''; }
+    },
     get patAssetsPct() { const a = this.patTotalInvestments + this.patTotalAssets, t = a + this.patTotalDebts; return t > 0 ? Math.round(a / t * 100) : 100; },
     get patUpcoming() {
       const today = new Date().toLocaleDateString('en-CA');
@@ -10457,10 +10547,33 @@ function zepoApp() {
       } catch (e) { return d; }
     },
     _patNum(v) { const n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, '')); return isNaN(n) ? null : n; },
-    openPatrimonio() {
+    async openPatrimonio() {
       if (!this.hasPlan('max')) { this.tab = 'plans'; return this.showToast('Patrimonio está en Max'); }
       this.tab = 'patrimonio';
-      this.loadCryptoPrices();
+      await this.loadCryptoPrices();   // primero precios frescos…
+      this.ensurePatSnapshot();        // …luego fotografía el neto del mes
+    },
+    // Guarda/actualiza el punto del MES ACTUAL (no espera al cron mensual).
+    // Falla suave: si el usuario no es Max, RLS rechaza el upsert → se ignora.
+    async ensurePatSnapshot() {
+      if (!this.user || !this.hasPlan('max') || this.patItemCount === 0) return;
+      const d = new Date();
+      const month = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01';
+      const r2 = v => Math.round((Number(v) || 0) * 100) / 100;
+      const payload = {
+        user_id: this.user.id,
+        snapshot_month: month,
+        net_worth: r2(this.patNetWorth),
+        total_investments: r2(this.patTotalInvestments),
+        total_assets: r2(this.patTotalAssets),
+        total_debts: r2(this.patTotalDebts),
+      };
+      try {
+        await sbRestUpsert('patrimony_snapshots', payload, 'user_id,snapshot_month');
+        const i = (this.patSnapshots || []).findIndex(s => s.snapshot_month === month);
+        if (i >= 0) this.patSnapshots[i] = { ...this.patSnapshots[i], ...payload };
+        else this.patSnapshots.push(payload);
+      } catch (e) { /* no-Max / RLS / red: ignorar, el gráfico usa el neto en vivo */ }
     },
     openPatNew(kind) {
       if (!this.hasPlan('max')) { this.tab = 'plans'; return this.showToast('Patrimonio está en Max'); }
@@ -10494,6 +10607,19 @@ function zepoApp() {
         } catch (e2) { data = []; }
       }
       this.patrimonyItems = data || [];
+      // Histórico mensual (Fase 3): últimos 12 snapshots.
+      try {
+        const sq = sb.from('patrimony_snapshots').select('*').eq('user_id', this.user.id)
+          .order('snapshot_month', { ascending: false }).limit(12);
+        const sr = await withTimeout(sq, 2500, 'loadPatSnapshots');
+        this.patSnapshots = sr.data || [];
+      } catch (e) {
+        try {
+          const url = SUPABASE_URL + '/rest/v1/patrimony_snapshots?user_id=eq.' + encodeURIComponent(this.user.id) + '&order=snapshot_month.desc&limit=12';
+          const res = await fetch(url, { headers: sbAuthHeaders() });
+          this.patSnapshots = res.ok ? await res.json() : [];
+        } catch (e2) { this.patSnapshots = []; }
+      }
       if (this.tab === 'patrimonio') this.loadCryptoPrices();
     },
     _cryptoCachedPrice(id) {
@@ -13605,7 +13731,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v122.js';
+  const CURRENT_SW = 'sw-v123.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
