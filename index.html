@@ -3507,6 +3507,21 @@ setTimeout(function() {
           </div>
         </div>
 
+        <!-- Safe-to-spend — disponible para gastar (flujo de caja) -->
+        <div x-show="monthIncome > 0" x-cloak style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;">Disponible para gastar</div>
+            <div style="font-size:11px;color:var(--dim);" x-text="daysLeftInMonth + (daysLeftInMonth === 1 ? ' día restante' : ' días restantes')"></div>
+          </div>
+          <div style="margin-top:6px;">
+            <span class="mono" :style="'font-size:30px;font-weight:700;line-height:1.1;' + (safeToSpend < 0 ? 'color:var(--danger)' : 'color:var(--success)')" x-text="(safeToSpend < 0 ? '-$' : '$') + fmtMoney(Math.abs(safeToSpend))"></span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px;" x-text="safeToSpend < 0 ? ('Te pasaste por $' + fmtMoney(Math.abs(safeToSpend))) : ('≈ $' + fmtMoney(Math.max(0, safeToSpendPerDay)) + '/día el resto del mes')"></div>
+          <template x-if="totalBudgetObj">
+            <div style="font-size:11px;color:var(--dim);margin-top:8px;border-top:1px solid var(--border);padding-top:8px;" x-text="'Presupuesto: $' + fmtMoney(monthTotal) + ' de $' + fmtMoney(Number(totalBudgetObj.amount) || 0)"></div>
+          </template>
+        </div>
+
         <!-- Stat cards -->
         <div class="stat-row">
           <div class="stat-card tint-inc">
@@ -8247,7 +8262,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v143',
+    APP_VERSION: 'v144',
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -9263,6 +9278,34 @@ function zepoApp() {
     get monthTotal() { return this.monthExpenses.reduce((s, e) => s + e.amount, 0); },
     get monthIncome() { return this.expenses.filter(e => e.is_income && e.date >= this.currentMonthStart).reduce((s, e) => s + e.amount, 0); },
     get monthBalance() { return this.monthIncome - this.monthTotal; },
+
+    // Recurrentes que aun NO han caido este mes (mismo criterio que el cron zepo_generate_recurring_expenses).
+    // Nota: el cron usa zona America/Guayaquil; el cliente usa la hora local del device -> es una estimacion, no contable.
+    get pendingRecurringThisMonth() {
+      const now = new Date();
+      const today = now.getDate();
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      const monthStart = this.currentMonthStart;
+      let expenses = 0, income = 0;
+      for (const t of (this.recurringTemplates || [])) {
+        if (!t.active) continue;
+        const eff = Math.min(Number(t.day_of_month) || 1, lastDay);
+        const notYet = !t.last_generated || t.last_generated < monthStart;
+        if (eff >= today && notYet) {
+          const amt = Number(t.amount) || 0;
+          if (t.is_income) income += amt; else expenses += amt;
+        }
+      }
+      return { expenses, income };
+    },
+    // "Disponible para gastar" (flujo de caja): ingresos del mes - gastado - recurrentes (gasto) que faltan por caer.
+    get safeToSpend() { return this.monthIncome - this.monthTotal - this.pendingRecurringThisMonth.expenses; },
+    get daysLeftInMonth() {
+      const now = new Date();
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      return Math.max(1, lastDay - now.getDate() + 1);
+    },
+    get safeToSpendPerDay() { return this.safeToSpend / this.daysLeftInMonth; },
 
     BANK_FEE_PATTERNS: /\b(ISD|IVASD|IMPUESTO ISD|IVA COBRADO|IVA TVCB|IVA TRF|IVA CONSUMO|IVA COMPRA|IVA SERV|IVA INT|COM TVCB|COM TRF|COM INTERBANC|COMISION|RETENCION|RET\.?\s*FTE|REG EN CTA|IMPUESTO SALIDA|IMP\.\s*SALIDA|RET\.\s*IVA|SOL\.\s*DIVISA|COSTO TRANSAC|TARIFA USO POS|MANTENIMIENTO CUENTA|NOTA DE DEBITO POR IMPUESTO|NOTA DEBITO POR IMP|S\.?\s*O\.?\s*L\.?\s*DIVISA)\b/i,
 
@@ -13428,7 +13471,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v120.js';
+  const CURRENT_SW = 'sw-v121.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
