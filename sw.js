@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zepo-v143';
+const CACHE_NAME = 'zepo-v144';
 // Only cache external CDN scripts. Don't pre-cache HTML/manifest — let them be network-first
 // so the user always gets the latest version when online.
 const ASSETS = [
@@ -25,6 +25,7 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (url.origin === 'https://vchaxqisbypwwtyjjnjr.supabase.co') return;
   if (url.hostname.endsWith('.google.com') || url.hostname.endsWith('.googleapis.com')) return;
+  if (url.hostname === 'api.coingecko.com') return;
 
   // Network-first for HTML and SW-related files (always get fresh)
   const isHTML = e.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname === '/pwa/' || url.pathname === '/pwa/index.html';

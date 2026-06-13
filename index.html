@@ -3676,6 +3676,12 @@ setTimeout(function() {
           </div>
         </div>
 
+        <!-- Badge cripto en vivo -->
+        <div x-show="patHasCrypto" x-cloak style="display:flex;align-items:center;gap:6px;margin:-2px 2px 12px;font-size:11px;color:var(--muted);">
+          <span style="width:7px;height:7px;border-radius:50%;background:var(--c-income);display:inline-block;"></span>
+          <span x-text="cryptoFreshLabel || 'cripto · precio en vivo'"></span>
+        </div>
+
         <!-- Tiles -->
         <div class="pat-tiles">
           <div class="pat-tile"><div class="pat-tile-ico">💰</div><div class="pat-tile-lab">Inversiones</div><div class="pat-tile-val" x-text="'$' + fmtMoney(patTotalInvestments)"></div></div>
@@ -3705,7 +3711,7 @@ setTimeout(function() {
               <div class="pat-item-top">
                 <div>
                   <div class="pat-item-name" x-text="it.name"></div>
-                  <div class="pat-item-meta" x-text="(it.capital ? 'Capital $' + fmtMoney(Number(it.capital)) : '') + (it.start_date ? (it.capital ? ' · ' : '') + 'desde ' + patFmtDate(it.start_date) : '')"></div>
+                  <div class="pat-item-meta" x-text="it.coingecko_id ? ((Number(it.quantity) || 0) + ' ' + (it.symbol || '').toUpperCase() + ' · precio en vivo') : ((it.capital ? 'Capital $' + fmtMoney(Number(it.capital)) : '') + (it.start_date ? (it.capital ? ' · ' : '') + 'desde ' + patFmtDate(it.start_date) : ''))"></div>
                 </div>
                 <div class="pat-item-val" x-text="'$' + fmtMoney(Number(it.current_value) || 0)"></div>
               </div>
@@ -3778,7 +3784,30 @@ setTimeout(function() {
               <input class="auth-input" type="text" x-model="patForm.name" :placeholder="patForm.kind === 'debt' ? 'Ej: Préstamo hipotecario' : (patForm.kind === 'asset' ? 'Ej: Departamento' : 'Ej: Depósito a plazo Pichincha')">
             </div>
 
-            <div class="pat-row2">
+            <div class="pat-field" x-show="patForm.kind === 'investment'">
+              <label class="pat-flabel" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+                <span>📈 Cripto — precio en vivo</span>
+                <input type="checkbox" x-model="patForm.is_crypto" style="width:20px;height:20px;accent-color:var(--c-brand);cursor:pointer;">
+              </label>
+            </div>
+
+            <div class="pat-row2" x-show="patForm.kind === 'investment' && patForm.is_crypto">
+              <div class="pat-field">
+                <label class="pat-flabel">Moneda</label>
+                <select class="auth-input" x-model="patForm.coingecko_id">
+                  <option value="">Elige…</option>
+                  <template x-for="c in cryptoCoins" :key="c.id">
+                    <option :value="c.id" x-text="c.symbol + ' · ' + c.name"></option>
+                  </template>
+                </select>
+              </div>
+              <div class="pat-field">
+                <label class="pat-flabel">Cantidad</label>
+                <input class="auth-input" type="text" inputmode="decimal" x-model="patForm.quantity" placeholder="0.5">
+              </div>
+            </div>
+
+            <div class="pat-row2" x-show="!(patForm.kind === 'investment' && patForm.is_crypto)">
               <div class="pat-field" x-show="patForm.kind === 'investment'">
                 <label class="pat-flabel">Capital invertido</label>
                 <input class="auth-input" type="text" inputmode="decimal" x-model="patForm.capital" placeholder="$10.000">
@@ -3797,7 +3826,7 @@ setTimeout(function() {
               </div>
             </div>
 
-            <div class="pat-row2" x-show="patForm.kind === 'investment' || patForm.kind === 'debt'">
+            <div class="pat-row2" x-show="(patForm.kind === 'investment' && !patForm.is_crypto) || patForm.kind === 'debt'">
               <div class="pat-field">
                 <label class="pat-flabel" x-text="patForm.kind === 'debt' ? 'Tasa de interés (opc.)' : 'Rendimiento esperado'"></label>
                 <input class="auth-input" type="text" x-model="patForm.return_note" :placeholder="patForm.kind === 'debt' ? '12% anual' : '8% anual'">
@@ -8007,6 +8036,37 @@ const LEGACY_CATEGORIES = [
   { key: 'taxi', emoji: '🚖', label: 'Transporte', color: '#4F8A99' },
 ];
 const CAT_MAP = Object.fromEntries([...CATEGORIES, ...INCOME_CATEGORIES, ...LEGACY_CATEGORIES].map(c => [c.key, c]));
+
+// Cripto soportadas para precio en vivo (id = identificador CoinGecko). Lista curada: evita
+// tickers ambiguos. Si falta una, el usuario usa una inversion manual normal.
+const CRYPTO_COINS = [
+  { symbol: 'BTC', id: 'bitcoin', name: 'Bitcoin' },
+  { symbol: 'ETH', id: 'ethereum', name: 'Ethereum' },
+  { symbol: 'USDT', id: 'tether', name: 'Tether' },
+  { symbol: 'USDC', id: 'usd-coin', name: 'USD Coin' },
+  { symbol: 'BNB', id: 'binancecoin', name: 'BNB' },
+  { symbol: 'SOL', id: 'solana', name: 'Solana' },
+  { symbol: 'XRP', id: 'ripple', name: 'XRP' },
+  { symbol: 'ADA', id: 'cardano', name: 'Cardano' },
+  { symbol: 'DOGE', id: 'dogecoin', name: 'Dogecoin' },
+  { symbol: 'TRX', id: 'tron', name: 'TRON' },
+  { symbol: 'TON', id: 'the-open-network', name: 'Toncoin' },
+  { symbol: 'AVAX', id: 'avalanche-2', name: 'Avalanche' },
+  { symbol: 'SHIB', id: 'shiba-inu', name: 'Shiba Inu' },
+  { symbol: 'DOT', id: 'polkadot', name: 'Polkadot' },
+  { symbol: 'LINK', id: 'chainlink', name: 'Chainlink' },
+  { symbol: 'MATIC', id: 'matic-network', name: 'Polygon' },
+  { symbol: 'LTC', id: 'litecoin', name: 'Litecoin' },
+  { symbol: 'BCH', id: 'bitcoin-cash', name: 'Bitcoin Cash' },
+  { symbol: 'DAI', id: 'dai', name: 'Dai' },
+  { symbol: 'UNI', id: 'uniswap', name: 'Uniswap' },
+  { symbol: 'ATOM', id: 'cosmos', name: 'Cosmos' },
+  { symbol: 'XLM', id: 'stellar', name: 'Stellar' },
+  { symbol: 'ETC', id: 'ethereum-classic', name: 'Ethereum Classic' },
+  { symbol: 'NEAR', id: 'near', name: 'NEAR Protocol' },
+  { symbol: 'APT', id: 'aptos', name: 'Aptos' },
+];
+const CRYPTO_BY_ID = Object.fromEntries(CRYPTO_COINS.map(c => [c.id, c]));
 const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
 // ── Importador: mapeo de categorías externas → keys de Zepo ──────────────────
@@ -8262,7 +8322,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v144',
+    APP_VERSION: 'v145',
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -10360,7 +10420,9 @@ function zepoApp() {
     // ── Patrimonio (Max) ──
     patrimonyItems: [],
     patSheetOpen: false,
-    patForm: { id: null, kind: 'investment', name: '', capital: '', current_value: '', return_note: '', maturity_date: '' },
+    cryptoCoins: CRYPTO_COINS,
+    cryptoPricesAt: 0,
+    patForm: { id: null, kind: 'investment', name: '', capital: '', current_value: '', return_note: '', maturity_date: '', is_crypto: false, coingecko_id: '', symbol: '', quantity: '' },
     get _patActive() { return (this.patrimonyItems || []).filter(i => (i.status || 'active') !== 'closed'); },
     get patInvestments() { return this._patActive.filter(i => i.kind === 'investment'); },
     get patAssets() { return this._patActive.filter(i => i.kind === 'asset'); },
@@ -10370,6 +10432,15 @@ function zepoApp() {
     get patTotalDebts() { return this.patDebts.reduce((s, i) => s + (Number(i.current_value) || 0), 0); },
     get patNetWorth() { return this.patTotalInvestments + this.patTotalAssets - this.patTotalDebts; },
     get patItemCount() { return this._patActive.length; },
+    get patHasCrypto() { return (this.patrimonyItems || []).some(i => i.coingecko_id && Number(i.quantity) > 0 && (i.status || 'active') !== 'closed'); },
+    get cryptoFreshLabel() {
+      if (!this.cryptoPricesAt) return '';
+      const mins = Math.floor((Date.now() - this.cryptoPricesAt) / 60000);
+      if (mins <= 0) return 'en vivo · ahora';
+      if (mins === 1) return 'en vivo · hace 1 min';
+      if (mins < 60) return 'en vivo · hace ' + mins + ' min';
+      return 'en vivo · hace ' + Math.floor(mins / 60) + ' h';
+    },
     get patAssetsPct() { const a = this.patTotalInvestments + this.patTotalAssets, t = a + this.patTotalDebts; return t > 0 ? Math.round(a / t * 100) : 100; },
     get patUpcoming() {
       const today = new Date().toLocaleDateString('en-CA');
@@ -10389,10 +10460,11 @@ function zepoApp() {
     openPatrimonio() {
       if (!this.hasPlan('max')) { this.tab = 'plans'; return this.showToast('Patrimonio está en Max'); }
       this.tab = 'patrimonio';
+      this.loadCryptoPrices();
     },
     openPatNew(kind) {
       if (!this.hasPlan('max')) { this.tab = 'plans'; return this.showToast('Patrimonio está en Max'); }
-      this.patForm = { id: null, kind: kind || 'investment', name: '', capital: '', current_value: '', return_note: '', maturity_date: '' };
+      this.patForm = { id: null, kind: kind || 'investment', name: '', capital: '', current_value: '', return_note: '', maturity_date: '', is_crypto: false, coingecko_id: '', symbol: '', quantity: '' };
       this.patSheetOpen = true;
     },
     openPatEdit(it) {
@@ -10400,7 +10472,9 @@ function zepoApp() {
         id: it.id, kind: it.kind, name: it.name || '',
         capital: it.capital != null ? String(it.capital) : '',
         current_value: it.current_value != null ? String(it.current_value) : '',
-        return_note: it.return_note || '', maturity_date: it.maturity_date || ''
+        return_note: it.return_note || '', maturity_date: it.maturity_date || '',
+        is_crypto: !!it.coingecko_id, coingecko_id: it.coingecko_id || '', symbol: it.symbol || '',
+        quantity: it.quantity != null ? String(it.quantity) : ''
       };
       this.patSheetOpen = true;
     },
@@ -10420,21 +10494,80 @@ function zepoApp() {
         } catch (e2) { data = []; }
       }
       this.patrimonyItems = data || [];
+      if (this.tab === 'patrimonio') this.loadCryptoPrices();
+    },
+    _cryptoCachedPrice(id) {
+      try {
+        const c = JSON.parse(localStorage.getItem('zepo_crypto_prices') || 'null');
+        if (c && c.prices && typeof c.prices[id] === 'number') return c.prices[id];
+      } catch (e) {}
+      return null;
+    },
+    // Precio en vivo de cripto via CoinGecko. 1 fetch agrupado, cache 10min, persiste current_value.
+    // Falla suave: si la API no responde, mantiene los valores previos (nunca pone $0).
+    async loadCryptoPrices(force) {
+      const items = (this.patrimonyItems || []).filter(i => i.coingecko_id && Number(i.quantity) > 0 && (i.status || 'active') !== 'closed');
+      if (!items.length) return;
+      const ids = [...new Set(items.map(i => i.coingecko_id))];
+      let prices = null;
+      try {
+        const c = JSON.parse(localStorage.getItem('zepo_crypto_prices') || 'null');
+        if (!force && c && c.at && (Date.now() - c.at) < 600000) prices = c.prices;
+      } catch (e) {}
+      if (!prices || ids.some(id => typeof prices[id] !== 'number')) {
+        try {
+          const url = 'https://api.coingecko.com/api/v3/simple/price?ids=' + encodeURIComponent(ids.join(',')) + '&vs_currencies=usd';
+          const res = await fetch(url, { cache: 'no-store' });
+          if (!res.ok) throw new Error('coingecko ' + res.status);
+          const data = await res.json();
+          const fresh = (prices && typeof prices === 'object') ? { ...prices } : {};
+          for (const id of ids) { if (data[id] && typeof data[id].usd === 'number') fresh[id] = data[id].usd; }
+          prices = fresh;
+          try { localStorage.setItem('zepo_crypto_prices', JSON.stringify({ at: Date.now(), prices })); } catch (e) {}
+        } catch (e) {
+          if (!prices) return; // sin nada que aplicar: no rompemos
+        }
+      }
+      for (const it of items) {
+        const px = prices[it.coingecko_id];
+        if (typeof px !== 'number') continue;
+        const newVal = Math.round(Number(it.quantity) * px * 100) / 100;
+        const prev = Number(it.current_value) || 0;
+        it.current_value = newVal;
+        if (prev <= 0 || Math.abs(newVal - prev) / Math.max(prev, 1) > 0.005) {
+          sbRestUpdate('patrimony_items', 'id', it.id, { current_value: newVal }).catch(() => {});
+        }
+      }
+      this.cryptoPricesAt = Date.now();
     },
     async savePatItem() {
       if (!this.hasPlan('max')) { this.patSheetOpen = false; this.tab = 'plans'; return this.showToast('Patrimonio está en Max'); }
       const f = this.patForm;
       const name = (f.name || '').trim();
       if (!name) return this.showToast('Ponle un nombre');
-      const cur = this._patNum(f.current_value);
-      if (cur == null) return this.showToast(f.kind === 'debt' ? 'Pon el saldo que debes' : 'Pon el valor actual');
+      const isCrypto = f.kind === 'investment' && !!f.is_crypto;
+      let cur, qty = null, coin = null;
+      if (isCrypto) {
+        if (!f.coingecko_id) return this.showToast('Elige la moneda');
+        qty = this._patNum(f.quantity);
+        if (qty == null || qty <= 0) return this.showToast('Pon la cantidad');
+        coin = CRYPTO_BY_ID[f.coingecko_id] || null;
+        const px = this._cryptoCachedPrice(f.coingecko_id);
+        cur = px != null ? Math.round(qty * px * 100) / 100 : 0; // loadCryptoPrices(true) lo refresca al instante
+      } else {
+        cur = this._patNum(f.current_value);
+        if (cur == null) return this.showToast(f.kind === 'debt' ? 'Pon el saldo que debes' : 'Pon el valor actual');
+      }
       const row = {
         kind: f.kind,
         name,
-        capital: this._patNum(f.capital),
+        capital: isCrypto ? null : this._patNum(f.capital),
         current_value: cur,
-        return_note: f.kind === 'asset' ? null : ((f.return_note || '').trim() || null),
-        maturity_date: (f.kind !== 'asset' && f.maturity_date) ? f.maturity_date : null
+        return_note: (f.kind === 'asset' || isCrypto) ? null : ((f.return_note || '').trim() || null),
+        maturity_date: (f.kind !== 'asset' && !isCrypto && f.maturity_date) ? f.maturity_date : null,
+        symbol: isCrypto && coin ? coin.symbol : null,
+        coingecko_id: isCrypto ? f.coingecko_id : null,
+        quantity: isCrypto ? qty : null
       };
       try {
         if (f.id) {
@@ -10451,6 +10584,7 @@ function zepoApp() {
           this.showToast('Guardado');
         }
         this.patSheetOpen = false;
+        if (isCrypto) this.loadCryptoPrices(true);
       } catch (e) { this.showToast('Error: ' + (e.message || e)); }
     },
     async deletePatItem() {
@@ -13471,7 +13605,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v121.js';
+  const CURRENT_SW = 'sw-v122.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
