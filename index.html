@@ -29,7 +29,13 @@
     /* Hide ALL scrollbars (PWA-grade) */
     * { scrollbar-width: none; -ms-overflow-style: none; }
     *::-webkit-scrollbar { display: none; width: 0; height: 0; background: transparent; }
-    html, body { height: 100%; overflow: hidden; }
+    html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+    /* iOS PWA: anclar el body al viewport mata el rubber-band del documento. Sin esto,
+       arrastrar en una pantalla de contenido corto rebota TODO el viewport (incluidos los
+       position:fixed como la tab-bar) → se cortan los labels / se asoma el home detrás.
+       El scroll real vive en .main-content / overlays. NO rompe el teclado (se maneja
+       aparte con visualViewport sobre .approve-screen). */
+    body { position: fixed; top: 0; left: 0; width: 100%; }
     /* Hide number input spinners (Chrome, Safari, Edge, Firefox) */
     input[type=number]::-webkit-inner-spin-button,
     input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -46,7 +52,7 @@
        SOLO la pinta el fondo raíz — ningún elemento fixed/absolute llega ahí (bottom:0 ancla
        al viewport de layout, no a la pantalla física). Pintarlo del color de la BARRA = sin
        franja, pase lo que pase. (Diagnosticado con Alvaro en iPhone real vía /lab/.) */
-    html { color-scheme: light; background: var(--surface); } /* el bloque dark de tokens fija color-scheme:dark */
+    html { color-scheme: light; background: var(--c-bg); } /* crema = mismo lienzo que la app; bajo un overlay crema la franja del home-indicator queda coherente. La tab-bar pinta su propia franja blanca con ::after cuando está visible. */
     body {
       font-family: var(--font-body), -apple-system, system-ui, sans-serif;
       letter-spacing: var(--tracking-body);
@@ -189,7 +195,6 @@
     }
 
     /* ═══ UTILITY ═══ */
-    html { background: var(--c-bg); }
     /* Safe-area overlay: fullscreen fixed, centered, respects notch */
     .safe-overlay {
       position: fixed; inset: 0;
@@ -8405,7 +8410,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v149',
+    APP_VERSION: 'v150',
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -13807,7 +13812,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v126.js';
+  const CURRENT_SW = 'sw-v127.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
