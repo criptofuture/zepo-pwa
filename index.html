@@ -189,6 +189,7 @@
     }
 
     /* ═══ UTILITY ═══ */
+    html { background: var(--c-bg); }
     /* Safe-area overlay: fullscreen fixed, centered, respects notch */
     .safe-overlay {
       position: fixed; inset: 0;
@@ -809,8 +810,8 @@
     .pat-seg-opt { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 11px 8px; text-align: center; cursor: pointer; background: var(--surface); }
     .pat-seg-opt.on { border-color: var(--cyan); background: rgba(var(--c-brand-rgb),.08); }
     .pat-seg-ico { font-size: 20px; } .pat-seg-lab { font-size: 12px; font-weight: 600; margin-top: 4px; }
-    .pat-scrim { position: absolute; inset: 0; background: rgba(0,0,0,.45); z-index: 90; }
-    .pat-sheet { position: absolute; left: 0; right: 0; bottom: 0; max-width: 430px; margin: 0 auto; background: var(--surface); border-radius: 24px 24px 0 0; z-index: 91; padding: 6px 20px calc(20px + var(--safe-bottom)); max-height: 92%; overflow-y: auto; }
+    .pat-scrim { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 90; }
+    .pat-sheet { position: fixed; left: 0; right: 0; bottom: 0; max-width: 430px; margin: 0 auto; background: var(--surface); border-radius: 24px 24px 0 0; z-index: 91; padding: 6px 20px calc(20px + var(--safe-bottom)); max-height: 92dvh; overflow-y: auto; overscroll-behavior: contain; }
     .pat-grab { width: 40px; height: 4px; border-radius: 2px; background: var(--border2); margin: 8px auto 14px; }
     .pat-sheet-title { font-family: var(--font-display); font-size: 20px; font-weight: 800; margin-bottom: 3px; }
     .pat-sheet-sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
@@ -1024,6 +1025,7 @@
       min-height: 0;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
       display: flex;
       flex-direction: column;
       padding: 0 20px 20px;
@@ -8398,7 +8400,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v147',
+    APP_VERSION: 'v148',
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -8822,6 +8824,7 @@ function zepoApp() {
         else if (this.cobroDetailOpen) { this.cobroDetailOpen = false; }
         else if (this.bugReportOpen) { this.bugReportOpen = false; }
         else if (this.batchEditPromptExp) { this.batchEditPromptExp = null; this.batchEditPromptItems = []; }
+        else if (this.patSheetOpen) { this.patSheetOpen = false; }
         else if (this.sheetOpen) { this.sheetOpen = false; }
         else if (['changepass','plans','checkout','pay-processing','pay-success','pay-failed','forgotpw','notifications'].includes(this.tab)) { this.tab = 'settings'; }
         else if (this.tab === 'history') { this.tab = 'home'; }
@@ -8839,7 +8842,7 @@ function zepoApp() {
         if (val !== old) pushBack();
       });
 
-      ['sheetOpen','catManagerOpen','pmManagerOpen','recurringManagerOpen','spaceSwitcherOpen','spaceManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen'].forEach(k => {
+      ['sheetOpen','patSheetOpen','catManagerOpen','pmManagerOpen','recurringManagerOpen','spaceSwitcherOpen','spaceManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen'].forEach(k => {
         this.$watch(k, v => { if (v) pushBack(); });
       });
 
@@ -13799,7 +13802,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v124.js';
+  const CURRENT_SW = 'sw-v125.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
