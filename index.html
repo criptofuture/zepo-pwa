@@ -335,6 +335,7 @@
       overflow-y: auto;
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
       padding-bottom: var(--content-pad-bottom);
     }
     /* PATRÓN x-show + flex: Alpine v3 al mostrar ejecuta style.removeProperty('display'),
@@ -811,7 +812,7 @@
     .pat-seg-opt.on { border-color: var(--cyan); background: rgba(var(--c-brand-rgb),.08); }
     .pat-seg-ico { font-size: 20px; } .pat-seg-lab { font-size: 12px; font-weight: 600; margin-top: 4px; }
     .pat-scrim { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 90; }
-    .pat-sheet { position: fixed; left: 0; right: 0; bottom: 0; max-width: 430px; margin: 0 auto; background: var(--surface); border-radius: 24px 24px 0 0; z-index: 91; padding: 6px 20px calc(20px + var(--safe-bottom)); max-height: 92dvh; overflow-y: auto; overscroll-behavior: contain; }
+    .pat-sheet { position: fixed; left: 0; right: 0; bottom: 0; max-width: 430px; margin: 0 auto; background: var(--bg); border-radius: 24px 24px 0 0; z-index: 91; padding: 6px 20px calc(20px + var(--safe-bottom)); max-height: 92dvh; overflow-y: auto; overscroll-behavior: contain; }
     .pat-grab { width: 40px; height: 4px; border-radius: 2px; background: var(--border2); margin: 8px auto 14px; }
     .pat-sheet-title { font-family: var(--font-display); font-size: 20px; font-weight: 800; margin-bottom: 3px; }
     .pat-sheet-sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
@@ -1014,6 +1015,7 @@
       background: var(--bg);
       z-index: 101;
       overflow: hidden;
+      overscroll-behavior: contain;
       display: flex;
       flex-direction: column;
     }
@@ -3812,7 +3814,10 @@ setTimeout(function() {
       <template x-if="patSheetOpen">
         <div>
           <div class="pat-scrim" @click="patSheetOpen = false"></div>
-          <div class="pat-sheet">
+          <div class="pat-sheet"
+            @touchstart.passive="_ptY = $event.touches[0].clientY"
+            @touchmove.passive="if ($el.scrollTop === 0 && ($event.touches[0].clientY - _ptY) > 72) patSheetOpen = false"
+          >
             <div class="pat-grab"></div>
             <div class="pat-sheet-title" x-text="patForm.id ? 'Editar' : 'Agregar a patrimonio'"></div>
             <div class="pat-sheet-sub" x-text="patForm.id ? 'Actualiza los datos' : '¿Qué quieres registrar?'"></div>
@@ -8400,7 +8405,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v148',
+    APP_VERSION: 'v149',
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -10499,7 +10504,7 @@ function zepoApp() {
     // ── Patrimonio (Max) ──
     patrimonyItems: [],
     patSnapshots: [],
-    patSheetOpen: false,
+    patSheetOpen: false, _ptY: 0,
     cryptoCoins: CRYPTO_COINS,
     cryptoPricesAt: 0,
     patForm: { id: null, kind: 'investment', name: '', capital: '', current_value: '', return_note: '', maturity_date: '', is_crypto: false, coingecko_id: '', symbol: '', quantity: '', gen_flow: false, flow_amount: '', flow_day: '' },
@@ -13802,7 +13807,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v125.js';
+  const CURRENT_SW = 'sw-v126.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
