@@ -1491,6 +1491,21 @@
       color: var(--text); font-variant-numeric: tabular-nums;
       outline: none; font-family: inherit;
     }
+    .cd-split-amt-box {
+      width: 76px; height: 40px; flex-shrink: 0; border-radius: 10px;
+      background: var(--bg); border: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: center; gap: 1px;
+    }
+    .cd-split-amt-input {
+      width: 50px; border: none; background: transparent;
+      font-size: 12px; font-weight: 700; color: var(--cyan);
+      font-variant-numeric: tabular-nums; outline: none;
+      text-align: center; font-family: inherit; -moz-appearance: textfield;
+    }
+    .cd-split-pct-input::-webkit-inner-spin-button,
+    .cd-split-pct-input::-webkit-outer-spin-button,
+    .cd-split-amt-input::-webkit-inner-spin-button,
+    .cd-split-amt-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
     /* Toggle pill (reusable, replaces ad-hoc Alpine :style toggles) */
     .cd-toggle {
@@ -3516,9 +3531,15 @@ setTimeout(function() {
         <div class="hero-card">
           <div class="hero-top-row">
             <div class="hero-label" x-text="'BALANCE EN ' + currentMonthName.toUpperCase()"></div>
-            <div class="hero-delta" :class="monthDelta >= 0 ? 'up' : 'down'">
-              <span x-text="monthDelta >= 0 ? '↗' : '↘'" style="font-size:13px;"></span>
-              <span x-text="(monthDelta >= 0 ? '+$' : '-$') + fmtMoney(Math.abs(monthDelta)) + ' vs mes anterior'"></span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="hero-delta" x-show="!hideAmounts" :class="monthDelta >= 0 ? 'up' : 'down'">
+                <span x-text="monthDelta >= 0 ? '↗' : '↘'" style="font-size:13px;"></span>
+                <span x-text="(monthDelta >= 0 ? '+$' : '-$') + fmtMoney(Math.abs(monthDelta)) + ' vs mes anterior'"></span>
+              </div>
+              <button @click="toggleHideAmounts()" :aria-label="hideAmounts ? 'Mostrar montos' : 'Ocultar montos'" style="background:none;border:none;padding:4px;margin:-4px;cursor:pointer;display:flex;align-items:center;color:inherit;opacity:0.8;flex-shrink:0;">
+                <svg x-show="!hideAmounts" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg x-show="hideAmounts" x-cloak viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
             </div>
           </div>
           <div class="hero-amount-row">
@@ -4254,47 +4275,47 @@ setTimeout(function() {
                   SOLICITUDES · <span x-text="deboSolicitudes.length"></span>
                 </div>
                 <div style="background:var(--surface);border-radius:14px;border:1px solid rgba(var(--c-brand-rgb),0.2);overflow:hidden;">
-                  <template x-for="entry in deboSolicitudesGrouped" :key="entry._isBatch ? entry.batch_id : entry.id">
+                  <template x-for="g in deboSolicitudesByPerson" :key="g._personKey">
                     <div>
-                      <template x-if="entry._isBatch">
-                        <div>
-                          <div class="batch-row" @click="toggleBatch(entry.batch_id)" style="padding:14px 16px;">
-                            <div class="batch-icon">📦</div>
-                            <div class="batch-info">
-                              <div class="batch-label" x-text="entry.batch_label"></div>
-                              <div class="batch-meta" x-text="entry.items.length + ' solicitudes · $' + entry.total.toFixed(2)"></div>
+                      <!-- Persona con UNA sola solicitud → fila directa -->
+                      <template x-if="g.items.length === 1">
+                        <div @click="activeDebo = g.items[0]; activeDeboType = 'solicitud'; deboDetailOpen = true" style="padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;">
+                          <div style="display:flex;align-items:center;gap:12px;">
+                            <div style="width:38px;height:38px;border-radius:19px;background:linear-gradient(135deg,rgba(var(--c-brand-rgb),0.15),rgba(var(--c-accent-rgb),0.1));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--cyan);flex-shrink:0;" x-text="(g.from_name || '?').charAt(0).toUpperCase()"></div>
+                            <div style="flex:1;min-width:0;">
+                              <div style="font-size:14px;font-weight:600;color:var(--text);" x-text="g.from_name"></div>
+                              <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="(g.items[0].description || 'Gasto compartido') + ' · ' + (g.items[0].expense_date || '')"></div>
                             </div>
-                            <div class="batch-right">
-                              <svg class="batch-chevron" :class="{ open: isBatchExpanded(entry.batch_id) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                              <div class="mono" style="font-size:16px;font-weight:700;color:var(--text);" x-text="'$' + fmtMoney(g.total)"></div>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
                             </div>
-                          </div>
-                          <div class="batch-subitems" x-show="isBatchExpanded(entry.batch_id)" x-transition.duration.200ms>
-                            <template x-for="pr in entry.items" :key="pr.id">
-                              <div @click="activeDebo = pr; activeDeboType = 'solicitud'; deboDetailOpen = true" style="padding:10px 16px;border-bottom:1px solid var(--border);cursor:pointer;">
-                                <div style="display:flex;align-items:center;gap:12px;">
-                                  <div style="width:32px;height:32px;border-radius:16px;background:linear-gradient(135deg,rgba(var(--c-brand-rgb),0.15),rgba(var(--c-accent-rgb),0.1));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--cyan);flex-shrink:0;" x-text="(pr.from_name || '?').charAt(0).toUpperCase()"></div>
-                                  <div style="flex:1;min-width:0;">
-                                    <div style="font-size:13px;font-weight:600;color:var(--text);" x-text="pr.from_name || 'Contacto'"></div>
-                                  </div>
-                                  <div class="mono" style="font-size:14px;font-weight:700;color:var(--text);" x-text="'$' + Number(pr.amount).toFixed(2)"></div>
-                                </div>
-                              </div>
-                            </template>
                           </div>
                         </div>
                       </template>
-                      <template x-if="!entry._isBatch">
-                        <div @click="activeDebo = entry; activeDeboType = 'solicitud'; deboDetailOpen = true" style="padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;">
-                          <div style="display:flex;align-items:center;gap:12px;">
-                            <div style="width:38px;height:38px;border-radius:19px;background:linear-gradient(135deg,rgba(var(--c-brand-rgb),0.15),rgba(var(--c-accent-rgb),0.1));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--cyan);flex-shrink:0;" x-text="(entry.from_name || '?').charAt(0).toUpperCase()"></div>
-                            <div style="flex:1;min-width:0;">
-                              <div style="font-size:14px;font-weight:600;color:var(--text);" x-text="entry.from_name || 'Contacto'"></div>
-                              <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="(entry.description || 'Gasto compartido') + ' · ' + (entry.expense_date || '')"></div>
+                      <!-- Persona con VARIAS solicitudes → cabecera con total + aceptar todas + desplegar -->
+                      <template x-if="g.items.length > 1">
+                        <div>
+                          <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+                            <div @click="toggleBatch(g._personKey)" style="width:38px;height:38px;border-radius:19px;background:linear-gradient(135deg,rgba(var(--c-brand-rgb),0.15),rgba(var(--c-accent-rgb),0.1));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--cyan);flex-shrink:0;cursor:pointer;" x-text="(g.from_name || '?').charAt(0).toUpperCase()"></div>
+                            <div @click="toggleBatch(g._personKey)" style="flex:1;min-width:0;cursor:pointer;">
+                              <div style="font-size:14px;font-weight:600;color:var(--text);" x-text="g.from_name"></div>
+                              <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="g.items.length + ' solicitudes · $' + fmtMoney(g.total)"></div>
                             </div>
-                            <div style="display:flex;align-items:center;gap:8px;">
-                              <div class="mono" style="font-size:16px;font-weight:700;color:var(--text);" x-text="'$' + Number(entry.amount).toFixed(2)"></div>
-                              <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
-                            </div>
+                            <button class="btn-accept" @click.stop="acceptAllFromPerson(g)" style="padding:8px 12px;font-size:12px;flex-shrink:0;">Aceptar todas</button>
+                            <svg @click="toggleBatch(g._personKey)" class="batch-chevron" :class="{ open: isBatchExpanded(g._personKey) }" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="14" height="14" style="cursor:pointer;flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+                          </div>
+                          <div class="batch-subitems" x-show="isBatchExpanded(g._personKey)" x-transition.duration.200ms>
+                            <template x-for="pr in g.items" :key="pr.id">
+                              <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+                                <div @click="activeDebo = pr; activeDeboType = 'solicitud'; deboDetailOpen = true" style="flex:1;min-width:0;cursor:pointer;">
+                                  <div style="font-size:13px;font-weight:600;color:var(--text);" x-text="pr.description || 'Gasto compartido'"></div>
+                                  <div style="font-size:10px;color:var(--muted);margin-top:1px;" x-text="pr.expense_date || ''"></div>
+                                </div>
+                                <div class="mono" style="font-size:14px;font-weight:700;color:var(--text);flex-shrink:0;" x-text="'$' + fmtMoney(Number(pr.amount))"></div>
+                                <button class="btn-accept" @click.stop="acceptPrModal = pr" style="padding:6px 10px;font-size:11px;flex-shrink:0;">Aceptar</button>
+                              </div>
+                            </template>
                           </div>
                         </div>
                       </template>
@@ -4717,6 +4738,31 @@ setTimeout(function() {
           </div>
         </div>
 
+        <!-- Selector de espacio (igual que Inicio): Global = suma de todos -->
+        <template x-if="spaces.length > 1">
+          <div class="space-tabs" style="margin-bottom:6px;">
+            <button type="button" @click="selectSpace('__all__')" class="space-tab"
+              :style="spaceViewAll ? { background: 'var(--gradient)', color: 'var(--c-brand-contrast)', border: '1px solid transparent', boxShadow: '0 4px 12px rgba(var(--c-brand-rgb),0.3)' } : {}"
+              :class="spaceViewAll ? '' : 'space-tab-dim'">
+              <span>🌐</span><span>Global</span>
+            </button>
+            <template x-for="s in spaces" :key="s.id">
+              <button type="button" @click="selectSpace(s.id)" class="space-tab"
+                :style="(!spaceViewAll && activeSpaceId === s.id) ? { background: 'var(--gradient)', color: 'var(--c-brand-contrast)', border: '1px solid transparent', boxShadow: '0 4px 12px rgba(var(--c-brand-rgb),0.3)' } : {}">
+                <span class="space-tab-icon" :style="(!spaceViewAll && activeSpaceId === s.id) ? { background: 'rgba(255,255,255,0.22)' } : { background: spaceTint(s, 0.16) }" x-text="s.icon || '🏠'"></span>
+                <span x-text="s.name"></span>
+              </button>
+            </template>
+          </div>
+        </template>
+
+        <!-- En Global: aviso de que es la suma de todos los espacios -->
+        <template x-if="spaceViewAll && spaces.length > 1 && budgets.length > 0">
+          <div style="padding:0 20px;margin-bottom:10px;">
+            <div style="font-size:11px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 12px;">🌐 Suma de presupuestos de todos los espacios</div>
+          </div>
+        </template>
+
         <!-- Global budget — CD layout -->
         <template x-if="budgets.length > 0">
           <div style="padding:0 20px;">
@@ -4756,7 +4802,7 @@ setTimeout(function() {
                       <div style="font-size:11px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums;" x-text="'$' + fmtMoney(b.spent) + ' de $' + fmtMoney(b.budget)"></div>
                     </div>
                     <div :style="'font-size:16px;font-weight:800;letter-spacing:-0.4px;font-variant-numeric:tabular-nums;color:' + (b.pct >= 100 ? 'var(--danger)' : b.pct >= 80 ? 'var(--warning)' : 'var(--success)')" x-text="b.pct + '%'"></div>
-                    <template x-if="b.orphan">
+                    <template x-if="b.orphan && !spaceViewAll">
                       <button @click.stop="deleteBudgetRow(b.cat)" title="Eliminar presupuesto huérfano" style="width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--danger);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                       </button>
@@ -4996,6 +5042,27 @@ setTimeout(function() {
               Solo aceptar (sin registrar)
             </button>
             <button style="padding:10px;font-size:13px;color:var(--muted);" @click="acceptPrModal=null">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal: Aceptar TODAS las solicitudes de una persona -->
+      <div x-show="acceptAllModal" x-cloak
+        class="modal-overlay"
+        @click.self="acceptAllModal=null">
+        <div style="background:var(--surface);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:500px;" @click.stop>
+          <div style="font-size:17px;font-weight:700;margin-bottom:6px;">Aceptar todas de <span x-text="acceptAllModal?.from_name"></span></div>
+          <div style="font-size:28px;font-weight:800;margin-bottom:4px;" x-text="'$' + Number(acceptAllModal?.total || 0).toFixed(2)"></div>
+          <div style="font-size:14px;color:var(--muted);margin-bottom:20px;"><span x-text="acceptAllModal?.items.length"></span> solicitudes</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:16px;">¿Registrar como gastos en tu cuenta?</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <button class="btn-primary" style="justify-content:center;padding:14px;" @click="confirmAcceptAll(true)">
+              Aceptar todas y registrar gastos
+            </button>
+            <button style="padding:14px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);font-weight:600;font-size:14px;" @click="confirmAcceptAll(false)">
+              Solo aceptar (sin registrar)
+            </button>
+            <button style="padding:10px;font-size:13px;color:var(--muted);" @click="acceptAllModal=null">Cancelar</button>
           </div>
         </div>
       </div>
@@ -6302,7 +6369,7 @@ setTimeout(function() {
                     <div class="amount-row">
                       <span class="amount-dollar">$</span>
                       <div class="amount-value">
-                        <input type="text" inputmode="decimal" placeholder="0.00" x-model="form.amount" @input="form.amount = $el.value.replace(',', '.')" @keydown.enter.prevent="$el.blur()">
+                        <input type="text" inputmode="decimal" placeholder="0.00" x-model="form.amount" @input="form.amount = $el.value.replace(',', '.'); if (form.is_split) _syncSplitAmts()" @keydown.enter.prevent="$el.blur()">
                       </div>
                     </div>
                     <div class="amount-hint">USD · toca para editar</div>
@@ -6493,7 +6560,10 @@ setTimeout(function() {
                             </div>
                           </div>
                           <input type="number" min="0" max="100" x-model.number="p.pct" @input="onSplitPctChange()" class="cd-split-pct-input" style="flex-shrink:0;">
-                          <div style="width:70px;height:40px;flex-shrink:0;border-radius:10px;background:var(--bg);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--cyan);font-variant-numeric:tabular-nums;" x-text="'$' + (parseFloat(form.amount || 0) * (p.pct || 0) / 100).toFixed(2)"></div>
+                          <div class="cd-split-amt-box">
+                            <span style="font-size:12px;font-weight:700;color:var(--cyan);">$</span>
+                            <input type="number" min="0" step="0.01" inputmode="decimal" x-model.number="p.amt" x-init="p.amt = Math.round((parseFloat(form.amount)||0) * (p.pct||0) / 100 * 100) / 100" @input="onSplitAmtChange(pi)" @focus="$event.target.select()" class="cd-split-amt-input">
+                          </div>
                           <template x-if="!p.you">
                             <button @click="removeSplitPerson(pi)" style="width:30px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;">
                               <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -7347,6 +7417,21 @@ setTimeout(function() {
               <div x-show="hasPlan('pro')">
             <div class="sheet-title">Presupuestos mensuales</div>
             <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Define límites por categoría. Deja vacío para no limitar.</p>
+
+            <!-- Selector de espacio destino (cada espacio tiene su propio presupuesto) -->
+            <div x-show="spaces.length > 1" style="margin-bottom:16px;">
+              <div class="cd-section-label" style="margin-bottom:8px;">ESPACIO</div>
+              <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;">
+                <template x-for="s in spaces" :key="s.id">
+                  <button type="button" @click="loadBudgetFormForSpace(s.id)"
+                    style="display:flex;align-items:center;gap:6px;padding:9px 13px;border-radius:var(--radius-pill);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;flex-shrink:0;"
+                    :style="budgetForm._targetSpace === s.id ? { background:'var(--gradient)', color:'var(--c-brand-contrast)', border:'1px solid transparent' } : { background:'var(--surface2)', color:'var(--muted)', border:'1px solid var(--border)' }">
+                    <span x-text="s.icon || '🏠'"></span>
+                    <span x-text="s.name"></span>
+                  </button>
+                </template>
+              </div>
+            </div>
 
             <!-- Total mensual SIEMPRE arriba -->
             <div class="budget-grid-item" style="margin-bottom:14px;background:linear-gradient(135deg, rgba(var(--c-brand-rgb),0.06), rgba(var(--c-accent-rgb),0.06));border-color:rgba(var(--c-brand-rgb),0.3);">
@@ -8410,7 +8495,8 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v150',
+    APP_VERSION: 'v151',
+    hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -8548,6 +8634,7 @@ function zepoApp() {
     sendPrTo: null,
     prForm: { amount: '', description: '', category: 'food', date: '' },
     acceptPrModal: null,
+    acceptAllModal: null,
     acceptPrAddExpense: true,
 
     /* === ONBOARDING WELCOME === */
@@ -8773,7 +8860,7 @@ function zepoApp() {
       // Coach contextual (Capa B): disparadores por cambio de estado, no invasivos.
       this.$watch('form.is_income', v => { if (v) this.coachTip('income'); });
       this.$watch('recurringOn', v => { if (v) this.coachTip('recur'); });
-      this.$watch('budgetSheetOpen', v => { if (v) this.coachTip('budget'); });
+      this.$watch('budgetSheetOpen', v => { if (v) { this.coachTip('budget'); this._initBudgetForm(); } });
       this.$watch('parsedItems', items => { if (items && items.length >= 2) this.coachTip('multi'); });
       this.$watch('tab', v => { if (v === 'home' && this.expenses.length >= 1) this.coachTip('home'); });
 
@@ -10064,6 +10151,7 @@ function zepoApp() {
       const equal = Math.floor(100 / (n + 1));
       this.form.split_people.forEach(p => p.pct = equal);
       this.form.split_people.push({ name: '', pct: 100 - equal * n, color: nextColor });
+      this._syncSplitAmts();
       // Auto-open picker on new row
       this.$nextTick(() => { this.splitPickerIdx = n; this.splitPickerQuery = ''; });
     },
@@ -10083,12 +10171,32 @@ function zepoApp() {
       const base = Math.floor(100 / n);
       const remainder = 100 - base * n;
       this.form.split_people.forEach((p, i) => p.pct = base + (i === n - 1 ? remainder : 0));
+      this._syncSplitAmts();
     },
 
     onSplitPctChange() {
+      const total = parseFloat(this.form.amount) || 0;
       this.form.split_people.forEach(p => {
         const v = parseFloat(p.pct);
         p.pct = isNaN(v) ? 0 : Math.max(0, Math.min(100, v));
+        p.amt = Math.round(total * p.pct / 100 * 100) / 100;
+      });
+    },
+
+    // Editar el MONTO de una persona → recalcula su % (inverso de onSplitPctChange).
+    onSplitAmtChange(pi) {
+      const total = parseFloat(this.form.amount) || 0;
+      const p = this.form.split_people[pi];
+      if (!p) return;
+      const amt = Math.max(0, parseFloat(p.amt) || 0);
+      if (total > 0) p.pct = Math.round(Math.max(0, Math.min(100, amt / total * 100)) * 100) / 100;
+    },
+
+    // Recalcula todos los montos desde el % cuando cambia el total del gasto.
+    _syncSplitAmts() {
+      const total = parseFloat(this.form.amount) || 0;
+      (this.form.split_people || []).forEach(p => {
+        p.amt = Math.round(total * (parseFloat(p.pct) || 0) / 100 * 100) / 100;
       });
     },
 
@@ -10132,9 +10240,33 @@ function zepoApp() {
 
     // ── Budgets ──
     async loadBudgets() {
-      if (this.spaceViewAll || !this.activeSpaceId) { this.budgets = []; this.budgetForm = {}; this.dataVer++; return; }
       const now = new Date();
       const m = now.getMonth() + 1, y = now.getFullYear();
+      // Modo "Global": suma los presupuestos de TODOS los espacios por categoría.
+      if (this.spaceViewAll) {
+        let all = null;
+        try {
+          const r = await withTimeout(sb.from('budgets').select('*').eq('user_id', this.user.id).eq('month', m).eq('year', y), 2500, 'loadBudgets-all');
+          all = r.data;
+        } catch (e) {
+          try {
+            const url = SUPABASE_URL + '/rest/v1/budgets?user_id=eq.' + encodeURIComponent(this.user.id) + '&month=eq.' + m + '&year=eq.' + y;
+            const res = await fetch(url, { headers: sbAuthHeaders() });
+            all = res.ok ? await res.json() : [];
+          } catch (e2) { all = []; }
+        }
+        const merged = {};
+        (all || []).forEach(b => {
+          const key = b.category || '__total__';
+          if (!merged[key]) merged[key] = { category: b.category || null, amount: 0, month: m, year: y, _aggregated: true };
+          merged[key].amount += Number(b.amount) || 0;
+        });
+        this.budgets = Object.values(merged);
+        this.budgetForm = {};
+        this.dataVer++;
+        return;
+      }
+      if (!this.activeSpaceId) { this.budgets = []; this.budgetForm = {}; this.dataVer++; return; }
       let data = null;
       try {
         let q = sb.from('budgets').select('*').eq('user_id', this.user.id).eq('month', m).eq('year', y);
@@ -10154,13 +10286,44 @@ function zepoApp() {
       this.budgets.forEach(b => {
         this.budgetForm[b.category || '_total'] = b.amount;
       });
+      this.budgetForm._targetSpace = this.activeSpaceId;
       this.dataVer++;
+    },
+
+    // Carga el form con los presupuestos de UN espacio (para el selector del sheet,
+    // sin cambiar el espacio activo global).
+    async loadBudgetFormForSpace(spaceId) {
+      if (!spaceId) { this.budgetForm = { _targetSpace: null }; this.dataVer++; return; }
+      const now = new Date();
+      const m = now.getMonth() + 1, y = now.getFullYear();
+      let data = [];
+      try {
+        const r = await withTimeout(sb.from('budgets').select('*').eq('user_id', this.user.id).eq('month', m).eq('year', y).eq('space_id', spaceId), 2500, 'budgetForm-space');
+        data = r.data || [];
+      } catch (e) {
+        try {
+          const url = SUPABASE_URL + '/rest/v1/budgets?user_id=eq.' + encodeURIComponent(this.user.id) + '&month=eq.' + m + '&year=eq.' + y + '&space_id=eq.' + spaceId;
+          const res = await fetch(url, { headers: sbAuthHeaders() });
+          data = res.ok ? await res.json() : [];
+        } catch (e2) { data = []; }
+      }
+      const form = { _targetSpace: spaceId };
+      data.forEach(b => { form[b.category || '_total'] = b.amount; });
+      this.budgetForm = form;
+      this.dataVer++;
+    },
+
+    _initBudgetForm() {
+      const def = (!this.spaceViewAll && this.activeSpaceId)
+        ? this.activeSpaceId
+        : ((this.spaces.find(s => s.is_default) || this.spaces[0] || {}).id || null);
+      this.loadBudgetFormForSpace(def);
     },
 
     get categoryBudgetSum() {
       let sum = 0;
       for (const [key, val] of Object.entries(this.budgetForm)) {
-        if (key === '_total') continue;
+        if (key === '_total' || key === '_targetSpace') continue;
         const n = parseFloat(val);
         if (!isNaN(n) && n > 0) sum += n;
       }
@@ -10168,12 +10331,12 @@ function zepoApp() {
     },
 
     async saveBudgets() {
-      if (this.spaceViewAll || !this.activeSpaceId) { this.showToast('Elige un espacio para fijar presupuesto'); return; }
+      const sf = this.budgetForm._targetSpace || (this.spaceViewAll ? null : this.activeSpaceId);
+      if (!sf) { this.showToast('Elige un espacio para fijar presupuesto'); return; }
       this.savingBudget = true;
       const now = new Date();
       const month = now.getMonth() + 1;
       const year = now.getFullYear();
-      const sf = this.activeSpaceId;
       // Elite: total auto = sum of category budgets. Pro: total comes from manual input.
       const effectiveTotal = this.hasPlan('elite') ? this.categoryBudgetSum : parseFloat(this.budgetForm._total || 0);
       try {
@@ -10192,7 +10355,7 @@ function zepoApp() {
         }
         if (this.hasPlan('elite')) {
           for (const [key, val] of Object.entries(this.budgetForm)) {
-            if (key === '_total') continue;
+            if (key === '_total' || key === '_targetSpace') continue;
             const n = parseFloat(val);
             if (!isNaN(n) && n > 0) rows.push({ user_id: this.user.id, category: key, amount: n, month, year, space_id: sf });
           }
@@ -11951,6 +12114,19 @@ function zepoApp() {
     get deboSolicitudesGrouped() {
       return this._memo('deboSolicitudesGrouped', 'cuentas', () => this.groupDeboByExpense(this.deboSolicitudes));
     },
+    // Agrupa las solicitudes pendientes por PERSONA (no por gasto). Persona con 1 sola → grupo de 1.
+    get deboSolicitudesByPerson() {
+      return this._memo('deboSolicitudesByPerson', 'cuentas', () => {
+        const groups = {}, order = [];
+        this.deboSolicitudes.forEach(pr => {
+          const key = 'p:' + (pr.from_user_id || ('n:' + (pr.from_name || 'Contacto')));
+          if (!groups[key]) { groups[key] = { _personKey: key, from_name: pr.from_name || 'Contacto', from_user_id: pr.from_user_id || null, items: [], total: 0 }; order.push(key); }
+          groups[key].items.push(pr);
+          groups[key].total += Number(pr.amount) || 0;
+        });
+        return order.map(k => groups[k]).sort((a, b) => b.total - a.total);
+      });
+    },
     get deboDeudasGrouped() {
       return this._memo('deboDeudasGrouped', 'cuentas', () => this.groupDeboByExpense(this.deboDeudas, this.incomeSplitDebts));
     },
@@ -12681,7 +12857,13 @@ function zepoApp() {
     },
 
     fmtMoney(n) {
+      if (this.hideAmounts) return '••••';
       return (n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    },
+
+    toggleHideAmounts() {
+      this.hideAmounts = !this.hideAmounts;
+      try { localStorage.setItem('zepo_hide_amounts', this.hideAmounts ? '1' : '0'); } catch (e) {}
     },
 
     getCatEmoji(key) { return CAT_MAP[key]?.emoji || '✨'; },
@@ -13676,12 +13858,13 @@ function zepoApp() {
       this.loadFriends();
     },
 
-    async acceptPaymentRequest(pr_id, addExpense) {
-      const pr = this.acceptPrModal;
-      this.acceptPrModal = null;
-      const { error } = await sb.from('payment_requests').update({ status: 'accepted' }).eq('id', pr_id);
-      if (error) { this.showToast('Error al aceptar'); return; }
-      if (addExpense && pr) {
+    // Núcleo de aceptar una solicitud (sin UI). opts.silent omite toast de error; opts.deferReload no recarga gastos.
+    async _doAcceptPr(pr, addExpense, opts) {
+      opts = opts || {};
+      if (!pr) return false;
+      const { error } = await sb.from('payment_requests').update({ status: 'accepted' }).eq('id', pr.id);
+      if (error) { if (!opts.silent) this.showToast('Error al aceptar'); return false; }
+      if (addExpense) {
         await sb.from('expenses').insert({
           user_id:     this.user.id,
           amount:      Number(pr.amount),
@@ -13692,12 +13875,39 @@ function zepoApp() {
           is_split:    false,
           space_id:    this._currentSpaceId(),
         });
-        await this.loadExpenses();
+        if (!opts.deferReload) await this.loadExpenses();
       }
-      const found = this.payReqs.find(p => p.id === pr_id);
+      const found = this.payReqs.find(p => p.id === pr.id);
       if (found) found.status = 'accepted';
+      return true;
+    },
+
+    async acceptPaymentRequest(pr_id, addExpense) {
+      const pr = this.acceptPrModal;
+      this.acceptPrModal = null;
+      const ok = await this._doAcceptPr(pr, addExpense);
+      if (!ok) return;
       this.dataVer++;
       this.showToast('Deuda confirmada' + (addExpense ? ' y gasto registrado' : ''));
+      this.loadFriends();
+    },
+
+    // Aceptar TODAS las solicitudes de una persona → abre modal de confirmación.
+    acceptAllFromPerson(group) {
+      this.acceptAllModal = { from_name: group.from_name, items: group.items.slice(), total: group.total };
+    },
+
+    async confirmAcceptAll(addExpense) {
+      const grp = this.acceptAllModal;
+      this.acceptAllModal = null;
+      if (!grp) return;
+      let n = 0;
+      for (const pr of grp.items) {
+        if (await this._doAcceptPr(pr, addExpense, { silent: true, deferReload: true })) n++;
+      }
+      if (addExpense) await this.loadExpenses();
+      this.dataVer++;
+      this.showToast(n + ' deuda' + (n !== 1 ? 's' : '') + ' confirmada' + (n !== 1 ? 's' : '') + (addExpense ? ' y registradas' : ''));
       this.loadFriends();
     },
 
@@ -13812,7 +14022,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v127.js';
+  const CURRENT_SW = 'sw-v128.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
