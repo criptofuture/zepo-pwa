@@ -69,7 +69,7 @@ jobs:
           cp manifest.json _deploy/pwa/manifest.json
           # SW served under a cache-busting filename (sw-v65.js) — index.html registers this.
           # New filename each bump forces CF edge MISS (CF caches old names 7 days).
-          cp sw.js _deploy/pwa/sw-v128.js
+          cp sw.js _deploy/pwa/sw-v129.js
           # kamikaze sw.js at the legacy path auto-unregisters old SWs on update check.
           [ -f sw-kamikaze.js ] && cp sw-kamikaze.js _deploy/pwa/sw.js
           # vendored libs (driver.js para el tour del primer gasto A7)
@@ -85,7 +85,7 @@ jobs:
           [ -d lab ] && mkdir -p _deploy/lab && cp -r lab/* _deploy/lab/
           # Generate _headers — applies to physical /pwa/ paths.
           cat > _deploy/_headers <<'HEADERS'
-          /pwa/sw-v128.js
+          /pwa/sw-v129.js
             Cache-Control: no-cache, no-store, must-revalidate
             Service-Worker-Allowed: /
           /pwa/sw.js

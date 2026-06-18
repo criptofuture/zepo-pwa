@@ -3543,9 +3543,16 @@ setTimeout(function() {
             </div>
           </div>
           <div class="hero-amount-row">
-            <span class="hero-currency" :style="monthBalance < 0 ? 'color:#FFD2C9' : ''">$</span>
-            <span class="hero-amount" :style="monthBalance >= 0 ? '' : 'color:#FFD2C9'" x-text="(monthBalance < 0 ? '-' : '') + fmtMoney(Math.abs(monthBalance))"></span>
+            <span class="hero-currency" :style="monthBalanceReal < 0 ? 'color:#FFD2C9' : ''">$</span>
+            <span class="hero-amount" :style="monthBalanceReal >= 0 ? '' : 'color:#FFD2C9'" x-text="(monthBalanceReal < 0 ? '-' : '') + fmtMoney(Math.abs(monthBalanceReal))"></span>
           </div>
+          <!-- Sub-linea: cuanto de este balance es dinero que adelantaste a otros (vuelve al cobrar) -->
+          <template x-if="unsettledAdvances > 0 && !hideAmounts">
+            <div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;color:rgba(255,255,255,0.82);font-weight:500;line-height:1.4;">
+              <span style="width:8px;height:8px;border-radius:50%;background:var(--c-warning);flex-shrink:0;"></span>
+              <span x-text="'Adelantaste $' + fmtMoney(unsettledAdvances) + ' a otros · tu balance sin eso: ' + (monthBalance < 0 ? '-$' : '$') + fmtMoney(Math.abs(monthBalance))"></span>
+            </div>
+          </template>
         </div>
 
         <!-- Safe-to-spend — disponible para gastar (flujo de caja) -->
@@ -4781,10 +4788,23 @@ setTimeout(function() {
                     <div :style="'margin-top:4px;font-size:18px;font-weight:700;color:' + (totalBudgetPct >= 100 ? 'var(--danger)' : 'var(--success)')" x-text="'$' + fmtMoney(Math.max(0, totalBudgetObj.amount - monthTotal))"></div>
                   </div>
                 </div>
-                <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;">
-                  <div :style="'height:100%;border-radius:4px;transition:width 0.4s;width:' + Math.min(totalBudgetPct, 100) + '%;background:' + (totalBudgetPct >= 100 ? 'var(--danger)' : totalBudgetPct >= 80 ? 'var(--warning)' : 'var(--gradient)')"></div>
+                <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;display:flex;">
+                  <div :style="'height:100%;transition:width 0.4s;width:' + Math.min(totalBudgetPct, 100) + '%;background:' + (totalBudgetPct >= 100 ? 'var(--danger)' : totalBudgetPct >= 80 ? 'var(--warning)' : 'var(--gradient)')"></div>
+                  <div x-show="totalBudgetAdvancePct > 0" :style="'height:100%;transition:width 0.4s;width:' + Math.min(totalBudgetAdvancePct, Math.max(0, 100 - Math.min(totalBudgetPct, 100))) + '%;background:var(--c-warning)'"></div>
                 </div>
                 <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.4;" x-text="totalBudgetPct + '% usado · ' + daysRemainingInMonth + ' días restantes'"></div>
+                <template x-if="totalBudgetAdvancePct > 0">
+                  <div style="display:flex;align-items:center;gap:14px;margin-top:8px;flex-wrap:wrap;">
+                    <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);">
+                      <span style="width:9px;height:9px;border-radius:3px;background:var(--gradient);flex-shrink:0;"></span>
+                      <span x-text="'Tu gasto $' + fmtMoney(monthTotal)"></span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);">
+                      <span style="width:9px;height:9px;border-radius:3px;background:var(--c-warning);flex-shrink:0;"></span>
+                      <span x-text="'Adelantado $' + fmtMoney(unsettledAdvances)"></span>
+                    </div>
+                  </div>
+                </template>
               </div>
             </template>
 
@@ -4799,7 +4819,7 @@ setTimeout(function() {
                     </div>
                     <div style="flex:1;min-width:0;">
                       <div style="font-size:14px;font-weight:600;" x-text="b.label"></div>
-                      <div style="font-size:11px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums;" x-text="'$' + fmtMoney(b.spent) + ' de $' + fmtMoney(b.budget)"></div>
+                      <div style="font-size:11px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums;" x-text="'$' + fmtMoney(b.spent) + ' de $' + fmtMoney(b.budget) + (b.advance > 0 ? ' · +$' + fmtMoney(b.advance) + ' adelantado' : '')"></div>
                     </div>
                     <div :style="'font-size:16px;font-weight:800;letter-spacing:-0.4px;font-variant-numeric:tabular-nums;color:' + (b.pct >= 100 ? 'var(--danger)' : b.pct >= 80 ? 'var(--warning)' : 'var(--success)')" x-text="b.pct + '%'"></div>
                     <template x-if="b.orphan && !spaceViewAll">
@@ -4808,8 +4828,9 @@ setTimeout(function() {
                       </button>
                     </template>
                   </div>
-                  <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;">
-                    <div :style="'height:100%;border-radius:3px;transition:width 0.4s;width:' + Math.min(b.pct, 100) + '%;background:' + (b.pct >= 100 ? 'var(--danger)' : b.pct >= 80 ? 'var(--warning)' : b.color || 'var(--cyan)')"></div>
+                  <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;display:flex;">
+                    <div :style="'height:100%;transition:width 0.4s;width:' + Math.min(b.pct, 100) + '%;background:' + (b.pct >= 100 ? 'var(--danger)' : b.pct >= 80 ? 'var(--warning)' : b.color || 'var(--cyan)')"></div>
+                    <div x-show="b.advancePct > 0" :style="'height:100%;transition:width 0.4s;width:' + Math.min(b.advancePct, Math.max(0, 100 - Math.min(b.pct, 100))) + '%;background:var(--c-warning)'"></div>
                   </div>
                   <div style="display:flex;gap:4px;margin-top:8px;">
                     <template x-for="th in [50, 75, 90]" :key="th">
@@ -8495,7 +8516,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v151',
+    APP_VERSION: 'v152',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -9515,6 +9536,18 @@ function zepoApp() {
     get monthIncome() { return this.expenses.filter(e => e.is_income && e.date >= this.currentMonthStart).reduce((s, e) => s + e.amount, 0); },
     get monthBalance() { return this.monthIncome - this.monthTotal; },
 
+    // Adelantos no saldados: lo que pagaste por otros en splits aun "pendiente" (split_pending).
+    // Es dinero que SI salio de tu bolsillo y vuelve cuando marcas el cobro como pagado.
+    get unsettledAdvances() {
+      return this.monthExpenses
+        .filter(e => e.is_split && e.split_status === 'pendiente')
+        .reduce((s, e) => s + (Number(e.split_pending) || 0), 0);
+    },
+    // Desembolso real del mes = tu parte + lo que adelantaste a otros.
+    get monthRealOutflow() { return this.monthTotal + this.unsettledAdvances; },
+    // Balance contando el desembolso real (lo que de verdad salio de tu bolsillo).
+    get monthBalanceReal() { return this.monthIncome - this.monthRealOutflow; },
+
     // Recurrentes que aun NO han caido este mes (mismo criterio que el cron zepo_generate_recurring_expenses).
     // Nota: el cron usa zona America/Guayaquil; el cliente usa la hora local del device -> es una estimacion, no contable.
     get pendingRecurringThisMonth() {
@@ -9535,7 +9568,7 @@ function zepoApp() {
       return { expenses, income };
     },
     // "Disponible para gastar" (flujo de caja): ingresos del mes - gastado - recurrentes (gasto) que faltan por caer.
-    get safeToSpend() { return this.monthIncome - this.monthTotal - this.pendingRecurringThisMonth.expenses; },
+    get safeToSpend() { return this.monthIncome - this.monthTotal - this.unsettledAdvances - this.pendingRecurringThisMonth.expenses; },
     get daysLeftInMonth() {
       const now = new Date();
       const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
@@ -11300,13 +11333,16 @@ function zepoApp() {
 
     get budgetBars() {
       return this._memo('budgetBars', null, () => this.budgets.filter(b => b.category).map(b => {
-        const spent = this.monthExpenses.filter(e => e.category === b.category).reduce((s, e) => s + e.amount, 0);
+        const inCat = this.monthExpenses.filter(e => e.category === b.category);
+        const spent = inCat.reduce((s, e) => s + e.amount, 0);
+        // Adelantos no saldados de esta categoria (lo que pagaste por otros, aun por cobrar).
+        const advance = inCat.filter(e => e.is_split && e.split_status === 'pendiente').reduce((s, e) => s + (Number(e.split_pending) || 0), 0);
         const cat = CAT_MAP[b.category];
         const orphan = !cat;
         // Nunca mostrar el slug crudo (custom_xxx): la categoria propia se borro o no
         // sincronizo desde otro equipo -> nombre legible + se podra borrar (boton huerfano).
         const label = (cat && cat.label) || (String(b.category).startsWith('custom_') ? 'Categoría eliminada' : b.category);
-        return { cat: b.category, label: label, emoji: (cat && cat.emoji) || (orphan ? '🗂️' : '✨'), color: (cat && cat.color) || '#948E80', budget: b.amount, spent, pct: Math.round(spent / b.amount * 100), orphan: orphan };
+        return { cat: b.category, label: label, emoji: (cat && cat.emoji) || (orphan ? '🗂️' : '✨'), color: (cat && cat.color) || '#948E80', budget: b.amount, spent, advance, pct: Math.round(spent / b.amount * 100), advancePct: Math.round(advance / b.amount * 100), orphan: orphan };
       }));
     },
 
@@ -12899,6 +12935,11 @@ function zepoApp() {
       return Math.round(this.monthTotal / this.totalBudgetObj.amount * 100);
     },
 
+    get totalBudgetAdvancePct() {
+      if (!this.totalBudgetObj || !this.totalBudgetObj.amount) return 0;
+      return Math.round(this.unsettledAdvances / this.totalBudgetObj.amount * 100);
+    },
+
     get pwStrength() {
       const pw = this.pwForm.newPw || '';
       let score = 0;
@@ -14022,7 +14063,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v128.js';
+  const CURRENT_SW = 'sw-v129.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
