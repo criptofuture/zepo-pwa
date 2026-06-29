@@ -8455,6 +8455,10 @@ function zepoApp() {
     voiceRecording: false,
     voiceRecognition: null,
     voiceTimer: null,
+    voiceBaseDesc: '',
+    voiceFinal: '',
+    voiceManualStop: false,
+    voiceRestarts: 0,
     receiptFile: null,
     receiptPreview: null,
     budgets: [],
@@ -8517,7 +8521,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v154',
+    APP_VERSION: 'v155',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -9813,45 +9817,75 @@ function zepoApp() {
       let rec;
       try { rec = new SR(); } catch (e) { return this.showToast('No se pudo iniciar la voz'); }
       rec.lang = 'es-EC';
-      rec.interimResults = false;
+      rec.continuous = true;      // mantiene la sesion abierta (en iOS reduce el corte instantaneo)
+      rec.interimResults = true;  // ir escribiendo en vivo mientras hablas
       rec.maxAlternatives = 1;
+      // Texto que ya estaba en la caja ANTES de grabar: se conserva y se le suma lo dictado.
+      this.voiceBaseDesc = (this.form.description || '').trim();
+      this.voiceFinal = '';
+      this.voiceManualStop = false;
+      this.voiceRestarts = 0;
       rec.onresult = (e) => {
-        const text = e.results[0][0].transcript;
-        this.voiceTranscript = text;
-        // Continuar escribiendo (NO sobrescribir): una nueva grabación se suma a lo anterior.
-        // NO se extrae monto ni categoría aquí; eso ocurre al presionar Enter (analyzeTextInput).
-        const prev = (this.form.description || '').trim();
-        this.form.description = prev ? prev + ' ' + text : text;
-        this._cleanupVoice();
+        let interim = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const r = e.results[i];
+          const t = (r[0] && r[0].transcript) || '';
+          if (r.isFinal) this.voiceFinal += (this.voiceFinal ? ' ' : '') + t.trim();
+          else interim += t;
+        }
+        this._applyVoiceTranscript(interim);
       };
-      // 'aborted' = parada manual nuestra (.abort()); 'no-speech' = no dijo nada. Ninguno es error real.
+      // 'no-speech'/'aborted' no son errores reales. 'not-allowed'/'service-not-allowed' = sin permiso de micro.
       rec.onerror = (e) => {
         const err = e && e.error;
-        if (err !== 'aborted' && err !== 'no-speech') this.showToast('No se pudo escuchar');
+        if (err === 'not-allowed' || err === 'service-not-allowed') {
+          this.voiceManualStop = true;
+          this.showToast('Activa el permiso de microfono');
+        } else if (err && err !== 'aborted' && err !== 'no-speech') {
+          this.showToast('No se pudo escuchar');
+        }
+      };
+      // iOS/Safari suele terminar la sesion solo (a veces apenas empieza). Si el usuario NO
+      // toco "detener", la reiniciamos para que siga escuchando; el texto final se acumula.
+      rec.onend = () => {
+        if (!this.voiceManualStop && this.voiceRecording && this.voiceRestarts < 40) {
+          this.voiceRestarts++;
+          try { rec.start(); return; } catch (e) {}
+        }
         this._cleanupVoice();
       };
-      rec.onend = () => { this._cleanupVoice(); };
       try { rec.start(); } catch (e) { this._cleanupVoice(); return this.showToast('No se pudo iniciar la voz'); }
       this.voiceRecognition = rec;
       this.voiceRecording = true;
-      // Red de seguridad iOS: si Safari nunca termina solo, cortar a los 15 s.
-      this.voiceTimer = setTimeout(() => this.stopVoice(), 15000);
+      // Red de seguridad: corte automatico a los 30 s aunque el navegador no termine solo.
+      if (this.voiceTimer) clearTimeout(this.voiceTimer);
+      this.voiceTimer = setTimeout(() => this.stopVoice(), 30000);
     },
 
-    // Parada MANUAL del micro. iOS a veces IGNORA .stop() y deja el micrófono abierto
-    // ("no para de grabar"); por eso forzamos .abort() si en 400 ms no soltó el micro
-    // (onend no disparó → la referencia sigue siendo la misma).
+    // Escribe en la caja en vivo: base + (final + interino), con numeros en digitos.
+    _applyVoiceTranscript(interim) {
+      const spoken = (this.voiceFinal + ' ' + (interim || '')).trim();
+      const digits = spoken ? this.normalizeSpokenNumbers(spoken) : '';
+      this.voiceTranscript = digits;
+      this.form.description = this.voiceBaseDesc
+        ? (digits ? this.voiceBaseDesc + ' ' + digits : this.voiceBaseDesc)
+        : digits;
+    },
+
+    // Parada MANUAL del micro.
     stopVoice() {
+      this.voiceManualStop = true;
       this.voiceRecording = false;
       if (this.voiceTimer) { clearTimeout(this.voiceTimer); this.voiceTimer = null; }
+      this._applyVoiceTranscript('');  // consolida el texto final (descarta interino a medias)
       const rec = this.voiceRecognition;
       if (!rec) return;
       try { rec.stop(); } catch (e) {}
+      // iOS a veces ignora .stop(); forzamos .abort() si en 400 ms no solto el micro.
       setTimeout(() => { try { if (this.voiceRecognition === rec) rec.abort(); } catch (e) {} }, 400);
     },
 
-    // Limpieza idempotente: la llaman onresult/onend/onerror. Garantiza que el estado
-    // "grabando" nunca se quede pegado aunque iOS dispare eventos en orden raro.
+    // Limpieza idempotente cuando la sesion termina de verdad.
     _cleanupVoice() {
       this.voiceRecording = false;
       this.voiceRecognition = null;
@@ -14088,7 +14122,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v131.js';
+  const CURRENT_SW = 'sw-v132.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
