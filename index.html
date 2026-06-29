@@ -6737,6 +6737,8 @@ setTimeout(function() {
                 <div style="flex:1;font-size:12px;color:var(--text);font-weight:500;" x-text="voiceTranscript || 'Escuchando...'"></div>
                 <button @click="toggleVoice" style="font-size:11px;color:var(--danger);font-weight:700;background:transparent;border:none;cursor:pointer;">DETENER</button>
               </div>
+              <!-- Rastro de diagnostico de voz (solo aparece con ?vdebug=1) -->
+              <div x-show="voiceDebug" style="margin-top:8px;padding:8px 12px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);font-size:11px;color:var(--muted);word-break:break-word;" x-text="voiceDebug"></div>
             </div>
             </div>
           </div>
@@ -8459,6 +8461,8 @@ function zepoApp() {
     voiceFinal: '',
     voiceManualStop: false,
     voiceRestarts: 0,
+    voiceDebug: '',
+    voiceDbgOn: false,
     receiptFile: null,
     receiptPreview: null,
     budgets: [],
@@ -8521,7 +8525,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v155',
+    APP_VERSION: 'v156',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -9814,17 +9818,33 @@ function zepoApp() {
       if (this.voiceRecording) { this.stopVoice(); return; }
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SR) return this.showToast('Tu navegador no soporta voz');
-      let rec;
-      try { rec = new SR(); } catch (e) { return this.showToast('No se pudo iniciar la voz'); }
-      rec.lang = 'es-EC';
-      rec.continuous = true;      // mantiene la sesion abierta (en iOS reduce el corte instantaneo)
-      rec.interimResults = true;  // ir escribiendo en vivo mientras hablas
-      rec.maxAlternatives = 1;
       // Texto que ya estaba en la caja ANTES de grabar: se conserva y se le suma lo dictado.
       this.voiceBaseDesc = (this.form.description || '').trim();
       this.voiceFinal = '';
       this.voiceManualStop = false;
       this.voiceRestarts = 0;
+      this.voiceDbgOn = (typeof location !== 'undefined' && location.search.indexOf('vdebug') !== -1);
+      this.voiceDebug = '';
+      this.voiceRecording = true;
+      this._startVoiceSession();
+      // Red de seguridad: corte automatico a los 30 s aunque el navegador no termine solo.
+      if (this.voiceTimer) clearTimeout(this.voiceTimer);
+      this.voiceTimer = setTimeout(() => this.stopVoice(), 30000);
+    },
+
+    // Crea una instancia NUEVA de reconocimiento y arranca. En iOS, reusar la misma
+    // instancia tras un onend lanza error; por eso cada reinicio crea una nueva.
+    _startVoiceSession() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      let rec;
+      try { rec = new SR(); } catch (e) { this._vdbg('new-fail:' + (e && e.message)); return this._cleanupVoice(); }
+      rec.lang = 'es-EC';
+      rec.interimResults = true;  // ir escribiendo en vivo mientras hablas
+      rec.maxAlternatives = 1;
+      try { rec.continuous = true; } catch (e) {}  // best-effort; iOS suele ignorarlo
+      rec.onstart = () => this._vdbg('start');
+      rec.onaudiostart = () => this._vdbg('audio');
+      rec.onspeechstart = () => this._vdbg('speech');
       rec.onresult = (e) => {
         let interim = '';
         for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -9833,33 +9853,39 @@ function zepoApp() {
           if (r.isFinal) this.voiceFinal += (this.voiceFinal ? ' ' : '') + t.trim();
           else interim += t;
         }
+        this._vdbg('res');
         this._applyVoiceTranscript(interim);
       };
-      // 'no-speech'/'aborted' no son errores reales. 'not-allowed'/'service-not-allowed' = sin permiso de micro.
+      // 'not-allowed'/'service-not-allowed' = sin permiso de micro (no reintentar).
       rec.onerror = (e) => {
-        const err = e && e.error;
+        const err = (e && e.error) || '?';
+        this._vdbg('err:' + err);
         if (err === 'not-allowed' || err === 'service-not-allowed') {
           this.voiceManualStop = true;
           this.showToast('Activa el permiso de microfono');
-        } else if (err && err !== 'aborted' && err !== 'no-speech') {
-          this.showToast('No se pudo escuchar');
         }
       };
       // iOS/Safari suele terminar la sesion solo (a veces apenas empieza). Si el usuario NO
-      // toco "detener", la reiniciamos para que siga escuchando; el texto final se acumula.
+      // toco "detener", reiniciamos con una instancia NUEVA tras un breve retardo.
       rec.onend = () => {
+        this._vdbg('end');
         if (!this.voiceManualStop && this.voiceRecording && this.voiceRestarts < 40) {
           this.voiceRestarts++;
-          try { rec.start(); return; } catch (e) {}
+          setTimeout(() => { if (this.voiceRecording && !this.voiceManualStop) this._startVoiceSession(); }, 150);
+          return;
         }
         this._cleanupVoice();
       };
-      try { rec.start(); } catch (e) { this._cleanupVoice(); return this.showToast('No se pudo iniciar la voz'); }
-      this.voiceRecognition = rec;
-      this.voiceRecording = true;
-      // Red de seguridad: corte automatico a los 30 s aunque el navegador no termine solo.
-      if (this.voiceTimer) clearTimeout(this.voiceTimer);
-      this.voiceTimer = setTimeout(() => this.stopVoice(), 30000);
+      try { rec.start(); this.voiceRecognition = rec; this._vdbg('start-ok'); }
+      catch (e) { this._vdbg('start-fail:' + (e && e.message)); this._cleanupVoice(); this.showToast('No se pudo iniciar la voz'); }
+    },
+
+    // Rastro de diagnostico (solo cuando la URL trae ?vdebug=1). Tope ~400 chars para
+    // conservar el INICIO de la secuencia, que es lo que importa para el corte instantaneo.
+    _vdbg(s) {
+      if (!this.voiceDbgOn) return;
+      if (this.voiceDebug.length > 400) return;
+      this.voiceDebug = (this.voiceDebug ? this.voiceDebug + ' › ' : '') + s;
     },
 
     // Escribe en la caja en vivo: base + (final + interino), con numeros en digitos.
@@ -14122,7 +14148,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v132.js';
+  const CURRENT_SW = 'sw-v133.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
