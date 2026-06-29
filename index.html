@@ -8525,7 +8525,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v156',
+    APP_VERSION: 'v157',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -9841,7 +9841,11 @@ function zepoApp() {
       rec.lang = 'es-EC';
       rec.interimResults = true;  // ir escribiendo en vivo mientras hablas
       rec.maxAlternatives = 1;
-      try { rec.continuous = true; } catch (e) {}  // best-effort; iOS suele ignorarlo
+      // iOS: con continuous=true graba pero NO devuelve texto (bug WebKit). En iPhone usamos
+      // one-shot + reinicio (ya funciona); en Android/desktop continuous=true (probado OK).
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.userAgent));
+      try { rec.continuous = !isIOS; } catch (e) {}
+      this._vdbg(isIOS ? 'ios' : 'noios');
       rec.onstart = () => this._vdbg('start');
       rec.onaudiostart = () => this._vdbg('audio');
       rec.onspeechstart = () => this._vdbg('speech');
@@ -14148,7 +14152,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v133.js';
+  const CURRENT_SW = 'sw-v134.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
