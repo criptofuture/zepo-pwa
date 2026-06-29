@@ -3063,6 +3063,173 @@ setTimeout(function() {
     </div>
   </template>
 
+  <!-- ░░░ RECUPERAR / NUEVA CONTRASEÑA (overlay; funciona logueado o no) ░░░ -->
+  <template x-if="appReady && (tab === 'forgotpw' || tab === 'setnewpw')">
+    <div id="pwrecovery-overlay" style="position:fixed;top:0;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:120;background:var(--bg);display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+
+      <!-- ══ FORGOT PASSWORD (pedir enlace) ══ -->
+      <div class="main-content" x-show="tab === 'forgotpw'" x-cloak>
+        <div class="page-header">
+          <button @click="tab = user ? 'changepass' : 'auth'; forgotEmail = ''; forgotSent = false" style="width:36px;height:36px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--text)" stroke-width="2" width="18" height="18"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div class="ph-left" style="margin-left:4px;">
+            <div class="ph-title" style="font-size:20px;">Recuperar contraseña</div>
+          </div>
+        </div>
+
+        <div style="padding:0 20px;">
+          <!-- Form state -->
+          <div x-show="!forgotSent">
+            <!-- Hero card con gradient -->
+            <div style="padding:1.5px;border-radius:20px;background:var(--gradient);margin-bottom:18px;box-shadow:0 0 32px rgba(var(--c-brand-rgb),0.12);">
+              <div style="padding:22px 18px;border-radius:18.5px;background-color:var(--bg);background-image:linear-gradient(160deg, rgba(var(--c-brand-rgb),0.06), rgba(var(--c-accent-rgb),0.08));text-align:center;">
+                <div style="width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg, rgba(var(--c-brand-rgb),0.18), rgba(var(--c-accent-rgb),0.18));border:1px solid rgba(var(--c-brand-rgb),0.35);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.8" width="28" height="28"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/><circle cx="12" cy="16" r="1.5" fill="var(--cyan)"/></svg>
+                </div>
+                <div style="font-size:18px;font-weight:800;letter-spacing:-0.4px;margin-bottom:6px;">¿Olvidaste tu contraseña?</div>
+                <div style="font-size:13px;color:var(--muted);line-height:1.55;">Te enviamos un enlace seguro a tu email para que crees una nueva.</div>
+              </div>
+            </div>
+
+            <!-- Email input estilo field-box -->
+            <div class="field-box" style="margin-bottom:18px;">
+              <div class="field-box-label">EMAIL</div>
+              <div class="field-box-inner">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="14" height="14" style="flex-shrink:0;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                <input type="email" x-model="forgotEmail" placeholder="tu@email.com" autocomplete="email" @keydown.enter="sendPasswordReset" style="flex:1;font-family:var(--font-display);font-size:13px;letter-spacing:0.2px;">
+              </div>
+            </div>
+
+            <button @click="sendPasswordReset" :disabled="!forgotEmail || forgotLoading" style="width:100%;height:50px;border-radius:25px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 20px rgba(var(--c-brand-rgb),0.2);" :style="{ opacity: (!forgotEmail || forgotLoading) ? 0.5 : 1, cursor: (!forgotEmail || forgotLoading) ? 'not-allowed' : 'pointer' }">
+              <template x-if="!forgotLoading">
+                <span style="display:inline-flex;align-items:center;gap:8px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" width="15" height="15"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                  Enviar enlace
+                </span>
+              </template>
+              <span x-show="forgotLoading">Enviando...</span>
+            </button>
+
+            <!-- Info security pill -->
+            <div style="margin-top:14px;padding:10px 12px;border-radius:10px;background:rgba(var(--c-brand-rgb),0.04);border:1px solid rgba(var(--c-brand-rgb),0.15);display:flex;align-items:flex-start;gap:8px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="12" height="12" style="margin-top:2px;flex-shrink:0;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <div style="font-size:11px;color:var(--muted);line-height:1.5;">
+                El enlace expira en <span style="color:var(--cyan);font-weight:700;">1 hora</span> por seguridad.
+              </div>
+            </div>
+          </div>
+
+          <!-- Success state -->
+          <div x-show="forgotSent" style="text-align:center;padding:24px 0;">
+            <div style="padding:1.5px;border-radius:24px;background:linear-gradient(135deg, var(--success), var(--cyan));margin-bottom:20px;box-shadow:0 0 40px rgba(var(--c-income-rgb),0.20);">
+              <div style="padding:28px 18px;border-radius:22.5px;background-color:var(--bg);background-image:linear-gradient(160deg, rgba(var(--c-income-rgb),0.08), rgba(var(--c-brand-rgb),0.06));">
+                <div style="width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg, rgba(var(--c-income-rgb),0.22), rgba(var(--c-brand-rgb),0.18));border:1px solid rgba(var(--c-income-rgb),0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.4" width="34" height="34"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;">Revisa tu email</div>
+                <div style="font-size:13px;color:var(--muted);line-height:1.6;">
+                  Te enviamos un enlace a<br>
+                  <span style="color:var(--text);font-weight:700;font-family:var(--font-display);font-size:12px;" x-text="forgotEmail"></span>
+                </div>
+              </div>
+            </div>
+            <button @click="tab = user ? 'settings' : 'auth'; forgotEmail = ''; forgotSent = false" style="width:100%;height:50px;border-radius:25px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" width="15" height="15"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              <span x-text="user ? 'Volver a configuración' : 'Volver al login'"></span>
+            </button>
+            <button @click="sendPasswordReset" :disabled="forgotLoading" style="margin-top:8px;width:100%;height:42px;border-radius:21px;background:transparent;border:none;color:var(--cyan);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">
+              <span x-show="!forgotLoading">¿No llegó? Reenviar enlace</span>
+              <span x-show="forgotLoading">Reenviando…</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SET NEW PASSWORD (desde el enlace del email) ══ -->
+      <div class="main-content" x-show="tab === 'setnewpw'" x-cloak>
+        <div class="page-header">
+          <button @click="cancelRecovery" style="width:36px;height:36px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--text)" stroke-width="2" width="18" height="18"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div class="ph-left" style="margin-left:4px;">
+            <div class="ph-title" style="font-size:20px;">Nueva contraseña</div>
+          </div>
+        </div>
+
+        <div style="padding:0 20px;">
+          <!-- Form state -->
+          <div x-show="!recoveryDone">
+            <!-- Hero card -->
+            <div style="padding:1.5px;border-radius:20px;background:var(--gradient);margin-bottom:18px;box-shadow:0 0 32px rgba(var(--c-brand-rgb),0.12);">
+              <div style="padding:22px 18px;border-radius:18.5px;background-color:var(--bg);background-image:linear-gradient(160deg, rgba(var(--c-brand-rgb),0.06), rgba(var(--c-accent-rgb),0.08));text-align:center;">
+                <div style="width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg, rgba(var(--c-brand-rgb),0.18), rgba(var(--c-accent-rgb),0.18));border:1px solid rgba(var(--c-brand-rgb),0.35);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.8" width="28" height="28"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/><circle cx="12" cy="16" r="1.5" fill="var(--cyan)"/></svg>
+                </div>
+                <div style="font-size:18px;font-weight:800;letter-spacing:-0.4px;margin-bottom:6px;">Crea tu nueva contraseña</div>
+                <div style="font-size:13px;color:var(--muted);line-height:1.55;">
+                  <template x-if="recoveryEmail"><span>Para <span style="color:var(--text);font-weight:700;" x-text="recoveryEmail"></span>. </span></template>
+                  Escríbela dos veces para confirmar.
+                </div>
+              </div>
+            </div>
+
+            <!-- Nueva contraseña -->
+            <div class="field-box" style="margin-bottom:12px;">
+              <div class="field-box-label">NUEVA CONTRASEÑA</div>
+              <div class="field-box-inner">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="14" height="14" style="flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                <input :type="showRecoveryPw ? 'text' : 'password'" x-model="recoveryForm.newPw" placeholder="Mínimo 6 caracteres" autocomplete="new-password" style="flex:1;font-family:var(--font-display);font-size:13px;letter-spacing:0.2px;">
+                <button type="button" @click="showRecoveryPw = !showRecoveryPw" style="background:transparent;border:none;cursor:pointer;padding:2px;flex-shrink:0;color:var(--muted);">
+                  <svg x-show="!showRecoveryPw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg x-show="showRecoveryPw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-7-11-7a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 7 11 7a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Confirmar -->
+            <div class="field-box" style="margin-bottom:8px;">
+              <div class="field-box-label">CONFIRMAR CONTRASEÑA</div>
+              <div class="field-box-inner">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="14" height="14" style="flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                <input :type="showRecoveryPw ? 'text' : 'password'" x-model="recoveryForm.confirm" placeholder="Repite la contraseña" autocomplete="new-password" @keydown.enter="submitNewPassword" style="flex:1;font-family:var(--font-display);font-size:13px;letter-spacing:0.2px;">
+              </div>
+            </div>
+
+            <!-- Hint de validación -->
+            <div style="min-height:18px;margin:0 4px 12px;font-size:11px;line-height:1.4;">
+              <span x-show="recoveryForm.newPw && recoveryForm.newPw.length < 6" style="color:var(--danger);">La contraseña debe tener al menos 6 caracteres.</span>
+              <span x-show="recoveryForm.newPw.length >= 6 && recoveryForm.confirm && recoveryForm.newPw !== recoveryForm.confirm" style="color:var(--danger);">Las contraseñas no coinciden.</span>
+              <span x-show="recoveryForm.newPw.length >= 6 && recoveryForm.newPw === recoveryForm.confirm" style="color:var(--success);">✓ Las contraseñas coinciden.</span>
+            </div>
+
+            <button @click="submitNewPassword" :disabled="recoverySaving || recoveryForm.newPw.length < 6 || recoveryForm.newPw !== recoveryForm.confirm" style="width:100%;height:50px;border-radius:25px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 20px rgba(var(--c-brand-rgb),0.2);" :style="{ opacity: (recoverySaving || recoveryForm.newPw.length < 6 || recoveryForm.newPw !== recoveryForm.confirm) ? 0.5 : 1, cursor: (recoverySaving || recoveryForm.newPw.length < 6 || recoveryForm.newPw !== recoveryForm.confirm) ? 'not-allowed' : 'pointer' }">
+              <span x-show="!recoverySaving">Guardar contraseña</span>
+              <span x-show="recoverySaving">Guardando...</span>
+            </button>
+          </div>
+
+          <!-- Success state -->
+          <div x-show="recoveryDone" style="text-align:center;padding:24px 0;">
+            <div style="padding:1.5px;border-radius:24px;background:linear-gradient(135deg, var(--success), var(--cyan));margin-bottom:20px;box-shadow:0 0 40px rgba(var(--c-income-rgb),0.20);">
+              <div style="padding:28px 18px;border-radius:22.5px;background-color:var(--bg);background-image:linear-gradient(160deg, rgba(var(--c-income-rgb),0.08), rgba(var(--c-brand-rgb),0.06));">
+                <div style="width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg, rgba(var(--c-income-rgb),0.22), rgba(var(--c-brand-rgb),0.18));border:1px solid rgba(var(--c-income-rgb),0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.4" width="34" height="34"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;">¡Listo!</div>
+                <div style="font-size:13px;color:var(--muted);line-height:1.6;">Tu contraseña fue actualizada.<br>Inicia sesión con tu nueva contraseña.</div>
+              </div>
+            </div>
+            <button @click="finishRecovery" style="width:100%;height:50px;border-radius:25px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+              Iniciar sesión
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </template>
+
   <!-- ░░░ MAIN APP (authenticated) ░░░ -->
   <template x-if="appReady && user">
     <div style="display:flex;flex-direction:column;height:100%;">
@@ -5503,84 +5670,7 @@ setTimeout(function() {
         </div>
       </div>
 
-      <!-- ══ FORGOT PASSWORD ══ -->
-      <div class="main-content" x-show="tab === 'forgotpw'" x-cloak>
-        <div class="page-header">
-          <button @click="tab = user ? 'changepass' : 'auth'; forgotEmail = ''; forgotSent = false" style="width:36px;height:36px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="var(--text)" stroke-width="2" width="18" height="18"><path d="M15 18l-6-6 6-6"/></svg>
-          </button>
-          <div class="ph-left" style="margin-left:4px;">
-            <div class="ph-title" style="font-size:20px;">Recuperar contraseña</div>
-          </div>
-        </div>
-
-        <div style="padding:0 20px;">
-          <!-- Form state -->
-          <div x-show="!forgotSent">
-            <!-- Hero card con gradient -->
-            <div style="padding:1.5px;border-radius:20px;background:var(--gradient);margin-bottom:18px;box-shadow:0 0 32px rgba(var(--c-brand-rgb),0.12);">
-              <div style="padding:22px 18px;border-radius:18.5px;background-color:var(--bg);background-image:linear-gradient(160deg, rgba(var(--c-brand-rgb),0.06), rgba(var(--c-accent-rgb),0.08));text-align:center;">
-                <div style="width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg, rgba(var(--c-brand-rgb),0.18), rgba(var(--c-accent-rgb),0.18));border:1px solid rgba(var(--c-brand-rgb),0.35);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.8" width="28" height="28"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/><circle cx="12" cy="16" r="1.5" fill="var(--cyan)"/></svg>
-                </div>
-                <div style="font-size:18px;font-weight:800;letter-spacing:-0.4px;margin-bottom:6px;">¿Olvidaste tu contraseña?</div>
-                <div style="font-size:13px;color:var(--muted);line-height:1.55;">Te enviamos un enlace seguro a tu email para que crees una nueva.</div>
-              </div>
-            </div>
-
-            <!-- Email input estilo field-box -->
-            <div class="field-box" style="margin-bottom:18px;">
-              <div class="field-box-label">EMAIL</div>
-              <div class="field-box-inner">
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="14" height="14" style="flex-shrink:0;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                <input type="email" x-model="forgotEmail" placeholder="tu@email.com" autocomplete="email" style="flex:1;font-family:var(--font-display);font-size:13px;letter-spacing:0.2px;">
-              </div>
-            </div>
-
-            <button @click="sendPasswordReset" :disabled="!forgotEmail || forgotLoading" style="width:100%;height:50px;border-radius:25px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 20px rgba(var(--c-brand-rgb),0.2);" :style="{ opacity: (!forgotEmail || forgotLoading) ? 0.5 : 1, cursor: (!forgotEmail || forgotLoading) ? 'not-allowed' : 'pointer' }">
-              <template x-if="!forgotLoading">
-                <span style="display:inline-flex;align-items:center;gap:8px;">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" width="15" height="15"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-                  Enviar enlace
-                </span>
-              </template>
-              <span x-show="forgotLoading">Enviando...</span>
-            </button>
-
-            <!-- Info security pill -->
-            <div style="margin-top:14px;padding:10px 12px;border-radius:10px;background:rgba(var(--c-brand-rgb),0.04);border:1px solid rgba(var(--c-brand-rgb),0.15);display:flex;align-items:flex-start;gap:8px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="12" height="12" style="margin-top:2px;flex-shrink:0;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              <div style="font-size:11px;color:var(--muted);line-height:1.5;">
-                El enlace expira en <span style="color:var(--cyan);font-weight:700;">15 minutos</span> por seguridad.
-              </div>
-            </div>
-          </div>
-
-          <!-- Success state -->
-          <div x-show="forgotSent" style="text-align:center;padding:24px 0;">
-            <div style="padding:1.5px;border-radius:24px;background:linear-gradient(135deg, var(--success), var(--cyan));margin-bottom:20px;box-shadow:0 0 40px rgba(var(--c-income-rgb),0.20);">
-              <div style="padding:28px 18px;border-radius:22.5px;background-color:var(--bg);background-image:linear-gradient(160deg, rgba(var(--c-income-rgb),0.08), rgba(var(--c-brand-rgb),0.06));">
-                <div style="width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg, rgba(var(--c-income-rgb),0.22), rgba(var(--c-brand-rgb),0.18));border:1px solid rgba(var(--c-income-rgb),0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.4" width="34" height="34"><polyline points="20 6 9 17 4 12"/></svg>
-                </div>
-                <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;">Revisa tu email</div>
-                <div style="font-size:13px;color:var(--muted);line-height:1.6;">
-                  Te enviamos un enlace a<br>
-                  <span style="color:var(--text);font-weight:700;font-family:var(--font-display);font-size:12px;" x-text="forgotEmail"></span>
-                </div>
-              </div>
-            </div>
-            <button @click="tab = user ? 'settings' : 'auth'; forgotEmail = ''; forgotSent = false" style="width:100%;height:50px;border-radius:25px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" width="15" height="15"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-              <span x-text="user ? 'Volver a configuración' : 'Volver al login'"></span>
-            </button>
-            <button @click="sendPasswordReset" :disabled="forgotLoading" style="margin-top:8px;width:100%;height:42px;border-radius:21px;background:transparent;border:none;color:var(--cyan);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">
-              <span x-show="!forgotLoading">¿No llegó? Reenviar enlace</span>
-              <span x-show="forgotLoading">Reenviando…</span>
-            </button>
-          </div>
-        </div>
-      </div>
+      <!-- ══ FORGOT PASSWORD: movido al overlay #pwrecovery-overlay (renderiza logueado o no) ══ -->
 
       <!-- ══ PLANS ══ -->
       <div class="main-content" x-show="tab === 'plans'" x-cloak>
@@ -8525,7 +8615,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v157',
+    APP_VERSION: 'v158',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -8632,6 +8722,14 @@ function zepoApp() {
     forgotEmail: '',
     forgotSent: false,
     forgotLoading: false,
+    // Recuperación: fijar nueva contraseña al volver del enlace del email (#type=recovery)
+    recoveryMode: false,
+    recoveryToken: null,
+    recoveryEmail: '',
+    recoveryForm: { newPw: '', confirm: '' },
+    recoverySaving: false,
+    recoveryDone: false,
+    showRecoveryPw: false,
     changingPw: false,
     checkoutPlan: 'pro',
     paymentLoading: false,
@@ -9020,6 +9118,18 @@ function zepoApp() {
       const hasAccessToken = hashParams.get('access_token');
       if (hasCode) this._dlog('URL has ?code= (OAuth PKCE return)');
       if (hasAccessToken) this._dlog('URL has #access_token= (OAuth implicit return)');
+
+      // ── Recuperación de contraseña: el enlace del email vuelve con #access_token=...&type=recovery ──
+      // Captura el token ANTES de que se limpie el hash (abajo) para poder fijar la nueva contraseña.
+      const isRecovery = hashParams.get('type') === 'recovery' || urlParams.get('type') === 'recovery';
+      if (isRecovery) {
+        this.recoveryMode = true;
+        this.recoveryToken = hashParams.get('access_token') || this.recoveryToken;
+        try { if (this.recoveryToken) { const _p = JSON.parse(atob(this.recoveryToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); this.recoveryEmail = _p.email || ''; } } catch {}
+        this._dlog('Password recovery link detected -> setnewpw');
+        this.$nextTick(() => { this.tab = 'setnewpw'; });
+      }
+
       if (oauthError) {
         this._dlog('URL has ?error=' + oauthError + ' desc=' + (oauthErrorDesc||''));
         console.warn('[init] OAuth error in URL:', { oauthError, oauthErrorDesc });
@@ -9063,6 +9173,16 @@ function zepoApp() {
 
       sb.auth.onAuthStateChange(async (event, session) => {
         this._dlog('AuthEvent: ' + event + (session ? ' user=' + session.user.email + ' provider=' + (session.user.app_metadata?.provider||'?') : ' (no session)'));
+        // El SDK detecta el enlace de recuperación y emite PASSWORD_RECOVERY → pantalla para fijar nueva contraseña.
+        if (event === 'PASSWORD_RECOVERY') {
+          this.recoveryMode = true;
+          if (session?.access_token) this.recoveryToken = session.access_token;
+          if (session?.user?.email) this.recoveryEmail = session.user.email;
+          this.user = session?.user || this.user;
+          this.recoveryDone = false;
+          this.tab = 'setnewpw';
+          return;
+        }
         if (event === 'SIGNED_IN' && session) {
           // Prevent duplicate accounts: if Google sign-in email already has
           // a different account (email/password), block and redirect.
@@ -13372,6 +13492,59 @@ function zepoApp() {
       this.forgotLoading = false;
     },
 
+    // Fija la nueva contraseña usando el token del enlace de recuperación (sin pedir la actual).
+    async submitNewPassword() {
+      if (!this.recoveryForm.newPw || this.recoveryForm.newPw.length < 6) return this.showToast('Mínimo 6 caracteres');
+      if (this.recoveryForm.newPw !== this.recoveryForm.confirm) return this.showToast('Las contraseñas no coinciden');
+      this.recoverySaving = true;
+      try {
+        // Token: el del enlace (#access_token) o, en su defecto, la sesión de recovery persistida.
+        let token = this.recoveryToken;
+        if (!token) { try { token = await sbFreshToken(); } catch {} }
+        if (!token || token === SUPABASE_KEY) throw new Error('El enlace expiró o ya se usó. Pide uno nuevo.');
+        const resp = await withTimeout(
+          fetch(SUPABASE_URL + '/auth/v1/user', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + token },
+            body: JSON.stringify({ password: this.recoveryForm.newPw })
+          }),
+          8000, 'set-new-pw'
+        );
+        if (!resp.ok) {
+          let msg = 'No se pudo actualizar la contraseña';
+          try { const j = await resp.json(); msg = j.msg || j.error_description || j.error || msg; } catch {}
+          if (resp.status === 401 || resp.status === 403 || /expired|invalid|token/i.test(msg)) msg = 'El enlace expiró o ya se usó. Pide uno nuevo.';
+          throw new Error(msg);
+        }
+        // Recuerda el email para prellenar el login.
+        this.recoveryEmail = this.recoveryEmail || this.user?.email || '';
+        this.recoveryForm = { newPw: '', confirm: '' };
+        this.recoveryDone = true;
+      } catch (e) {
+        console.warn('[submitNewPassword]', e.message);
+        this.showToast('Error: ' + e.message);
+      }
+      this.recoverySaving = false;
+    },
+
+    // Cancela el flujo de recuperación: cierra la sesión de recovery y vuelve al login.
+    async cancelRecovery() {
+      this.recoveryForm = { newPw: '', confirm: '' };
+      this.recoveryMode = false; this.recoveryToken = null; this.recoveryDone = false;
+      try { await withTimeout(sb.auth.signOut(), 2500, 'signout'); } catch {}
+      try { localStorage.removeItem('sb-vchaxqisbypwwtyjjnjr-auth-token'); } catch {}
+      this.user = null; this.authMode = 'login'; this.tab = 'auth';
+    },
+
+    // Tras fijar la nueva contraseña: cierra la sesión de recovery, prellena el email y va al login.
+    async finishRecovery() {
+      const email = this.recoveryEmail || this.user?.email || '';
+      this.recoveryMode = false; this.recoveryToken = null; this.recoveryDone = false;
+      try { await withTimeout(sb.auth.signOut(), 2500, 'signout'); } catch {}
+      try { localStorage.removeItem('sb-vchaxqisbypwwtyjjnjr-auth-token'); } catch {}
+      this.user = null; this.authMode = 'login'; this.authEmail = email; this.tab = 'auth';
+    },
+
     async confirmDeleteAccount() {
       if (this.deleteConfirmText !== 'ELIMINAR') return;
       this.showDeleteModal = false;
@@ -14152,7 +14325,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v134.js';
+  const CURRENT_SW = 'sw-v135.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
