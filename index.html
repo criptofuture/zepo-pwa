@@ -8664,7 +8664,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v165',
+    APP_VERSION: 'v166',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -10969,6 +10969,7 @@ function zepoApp() {
     },
     async refreshForSpace() {
       await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadBudgets(), this.loadRecurringTemplates()]);
+      this.loadLifetimeSavings();  // el ahorro acumulado también depende del espacio activo
     },
     openSpaceManager() { if (!this.hasPlan('max')) { this.spaceSwitcherOpen = false; this.tab = 'plans'; return this.showToast('Espacios (centros de gasto) está en Max'); } this.resetNewSpace(); this.editingSpaceId = null; this.spaceSwitcherOpen = false; this.spaceManagerOpen = true; },
     resetNewSpace() { this.newSpaceName = ''; this.newSpaceIcon = '🏪'; this.newSpaceColor = '#BF8A2A'; },
@@ -11137,16 +11138,18 @@ function zepoApp() {
         this.lifetimeSavingsLoaded = true;
       };
       try {
-        const r = await withTimeout(
-          sb.from('expenses').select('amount, is_income, date').eq('user_id', this.user.id),
-          6000, 'lifetimeSavings'
-        );
+        // Respeta el espacio activo (igual que loadExpenses/el resto de la app): en un espacio
+        // concreto suma solo ese; en vista "todos" suma todo. Antes mezclaba todos los espacios
+        // → junio salía inflado. Límite alto para no truncar el histórico (default PostgREST=1000).
+        let q = sb.from('expenses').select('amount, is_income, date').eq('user_id', this.user.id).limit(100000);
+        q = this._applySpaceFilter(q);
+        const r = await withTimeout(q, 6000, 'lifetimeSavings');
         if (r.error) throw r.error;
         apply(r.data);
       } catch (e) {
         console.warn('[loadLifetimeSavings] fallback REST:', e.message);
         try {
-          const url = SUPABASE_URL + '/rest/v1/expenses?user_id=eq.' + encodeURIComponent(this.user.id) + '&select=amount,is_income,date';
+          const url = SUPABASE_URL + '/rest/v1/expenses?user_id=eq.' + encodeURIComponent(this.user.id) + '&select=amount,is_income,date&limit=100000' + this._spaceFilterUrl();
           const res = await fetch(url, { headers: await sbAuthHeadersFresh() });
           if (res.ok) apply(await res.json());
         } catch (e2) { /* red caída: deja el último valor */ }
@@ -14519,7 +14522,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v142.js';
+  const CURRENT_SW = 'sw-v143.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
