@@ -6184,7 +6184,7 @@ setTimeout(function() {
                   <template x-for="(it, idx) in parsedItems" :key="idx">
                     <div style="border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);overflow:hidden;">
                       <div style="padding:12px;display:flex;align-items:center;gap:10px;">
-                        <div @click="editingParsedCatIdx = (editingParsedCatIdx === idx ? -1 : idx)" style="position:relative;width:38px;height:38px;flex-shrink:0;cursor:pointer;">
+                        <div @click="editingParsedCatIdx = (editingParsedCatIdx === idx ? -1 : idx); gridAddingCat=false; newCatLabel=''" style="position:relative;width:38px;height:38px;flex-shrink:0;cursor:pointer;">
                           <div style="width:38px;height:38px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:18px;" :style="{ background: it.color + '20', border: '1px solid ' + it.color + '40' }" x-text="it.emoji"></div>
                           <div style="position:absolute;bottom:-2px;right:-2px;width:16px;height:16px;border-radius:8px;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.5" width="9" height="9"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -6212,12 +6212,33 @@ setTimeout(function() {
                               <span class="cd-cat-tile-label" x-text="c.label"></span>
                             </button>
                           </template>
+                          <!-- casilla para agregar categoria al item detectado (gasto o ingreso) -->
+                          <button type="button" @click="gridAddingCat = true; newCatLabel=''; newCatEmoji='✨'" class="cd-cat-tile" style="border-style:dashed;">
+                            <div class="cd-cat-tile-icon" style="background:rgba(var(--c-brand-rgb),0.10);border:1px solid var(--border2);">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.6" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            </div>
+                            <span class="cd-cat-tile-label">Nueva</span>
+                          </button>
+                        </div>
+                        <!-- alta inline de categoria desde el grid del item -->
+                        <div x-show="gridAddingCat" x-cloak style="margin-top:8px;display:flex;flex-direction:column;gap:8px;">
+                          <div style="display:flex;gap:8px;align-items:center;">
+                            <div style="position:relative;width:42px;height:42px;flex-shrink:0;">
+                              <div style="width:100%;height:100%;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;pointer-events:none;" x-text="newCatEmoji || '✨'"></div>
+                              <input type="text" x-model="newCatEmoji" @input="cleanEmojiInput('newCatEmoji')" maxlength="4" style="position:absolute;inset:0;width:100%;height:100%;background:transparent;border:none;text-align:center;font-size:18px;color:transparent;caret-color:var(--cyan);font-family:inherit;outline:none;">
+                            </div>
+                            <input type="text" x-model="newCatLabel" @keydown.enter="quickAddCatForParsedItem(idx)" maxlength="24" placeholder="Nombre (ej: Mascotas)" style="flex:1;height:42px;border-radius:10px;background:var(--surface);border:1px solid var(--border);padding:0 14px;font-size:13px;color:var(--text);font-family:inherit;outline:none;">
+                          </div>
+                          <div style="display:flex;gap:8px;">
+                            <button type="button" @click="_resetGridCat()" style="flex:0 0 auto;height:40px;padding:0 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--muted);font-weight:600;font-size:13px;font-family:inherit;cursor:pointer;">Cancelar</button>
+                            <button type="button" @click="quickAddCatForParsedItem(idx)" :disabled="!newCatLabel || !newCatLabel.trim()" :style="{ opacity: (!newCatLabel || !newCatLabel.trim()) ? '0.4' : '1' }" style="flex:1;height:40px;border-radius:var(--radius-sm);background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:13px;font-family:inherit;border:none;cursor:pointer;">Crear y elegir</button>
+                          </div>
                         </div>
                         <!-- fecha por item (solo multi-item; en registro único la fecha de arriba manda) -->
                         <div style="margin-top:10px;display:flex;align-items:center;gap:8px;">
                           <span x-show="parsedItems.length > 1" style="font-size:10px;font-weight:700;letter-spacing:0.5px;color:var(--muted);flex-shrink:0;">FECHA</span>
                           <input x-show="parsedItems.length > 1" type="date" x-model="it.date" style="flex:1;height:38px;border-radius:10px;background:var(--bg);border:1px solid var(--border);padding:0 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;">
-                          <button type="button" @click="editingParsedCatIdx = -1" style="flex-shrink:0;margin-left:auto;height:38px;padding:0 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;">Listo</button>
+                          <button type="button" @click="editingParsedCatIdx = -1; gridAddingCat=false" style="flex-shrink:0;margin-left:auto;height:38px;padding:0 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;">Listo</button>
                         </div>
                       </div>
                     </div>
@@ -8615,7 +8636,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v158',
+    APP_VERSION: 'v160',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -8695,6 +8716,28 @@ function zepoApp() {
       this.newCatLabel = '';
       this.newCatEmoji = '✨';
       this.gridAddingCat = false;
+    },
+    // Crea una categoria nueva DESDE el grid de un item detectado y la asigna a ese item.
+    // Respeta gasto/ingreso segun it.is_income (igual que quickAddCatForForm con el form).
+    quickAddCatForParsedItem(idx) {
+      const it = this.parsedItems[idx];
+      if (!it) return;
+      const label = (this.newCatLabel || '').trim();
+      if (!label) { this.showToast('Pon un nombre'); return; }
+      const emoji = (this.newCatEmoji || '').trim() || '✨';
+      const list = it.is_income ? this.incomeCategories : this.categories;
+      const dup = list.find(c => c.label.toLowerCase() === label.toLowerCase());
+      if (dup) { this.updateParsedItemCat(idx, dup.key); this._resetGridCat(); return; }
+      const key = 'custom_' + Date.now().toString(36);
+      const palette = ['#C2553F', '#4F8A99', '#5E9469', '#8A6E9C', '#C9972F', '#A98BB0', '#B0875B'];
+      const color = palette[Math.floor(Math.random() * palette.length)];
+      const cat = { key, emoji, label, color };
+      list.push(cat);
+      CAT_MAP[key] = cat;
+      this.saveCustomCategories();
+      this.updateParsedItemCat(idx, key);
+      this._resetGridCat();
+      this.showToast('✓ Categoría "' + label + '" creada');
     },
     hiddenBankFees: [],
     showHiddenFees: false,
@@ -9522,22 +9565,34 @@ function zepoApp() {
       const now = new Date();
       const start = new Date(now.getFullYear(), now.getMonth() - 1, 1).toLocaleDateString('en-CA');
       const end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toLocaleDateString('en-CA');
-      let data = null;
+      let data = null, ok = false;
       try {
         let q = sb.from('expenses').select('*').eq('user_id', this.user.id).gte('date', start).lte('date', end);
         q = this._applySpaceFilter(q);
         q = q.order('date', { ascending: false }).order('created_at', { ascending: false });
         const r = await withTimeout(q, 2500, 'loadExpenses');
-        data = r.data;
+        if (r.error) throw r.error;
+        data = r.data || []; ok = true;
       } catch (e) {
         console.warn('[loadExpenses] fallback REST:', e.message);
         try {
           const url = SUPABASE_URL + '/rest/v1/expenses?user_id=eq.' + encodeURIComponent(this.user.id) + '&date=gte.' + start + '&date=lte.' + end + this._spaceFilterUrl() + '&order=date.desc,created_at.desc';
-          const res = await fetch(url, { headers: sbAuthHeaders() });
-          data = res.ok ? await res.json() : [];
-        } catch (e2) { data = []; }
+          const res = await fetch(url, { headers: await sbAuthHeadersFresh() });
+          if (res.ok) { data = await res.json(); ok = true; }
+        } catch (e2) { /* red caída */ }
       }
-      this.expenses = data || [];
+      // Si la recarga FALLÓ (timeout + REST caído), NO borres lo que ya está en pantalla.
+      // Antes se hacía this.expenses = [] → el gasto recién guardado "desaparecía" y Alvaro
+      // lo mandaba 2 veces. Conservar el estado actual evita ese doble envío.
+      if (!ok) return;
+      // Conserva inserciones locales muy recientes (<120s) que el replica aún no devuelve
+      // (lag lectura-tras-escritura): sin esto el gasto recién insertado se esfuma al recargar.
+      const freshIds = new Set(data.map(e => e.id));
+      const nowMs = Date.now();
+      const pendingLocal = (this.expenses || []).filter(e =>
+        !freshIds.has(e.id) && !String(e.id).startsWith('temp_') && e.created_at &&
+        (nowMs - new Date(e.created_at).getTime() < 120000));
+      this.expenses = pendingLocal.length ? [...pendingLocal, ...data] : data;
       this.dataVer++;
       try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
     },
@@ -11910,7 +11965,7 @@ function zepoApp() {
           try {
             const r = await withTimeout(
               sb.from('expenses').insert(payload).select('id').single().then(r => { if (r.error) throw r.error; return r; }),
-              2500, 'insert'
+              12000, 'insert'
             );
             inserted = r.data;
           } catch (e) {
@@ -12058,7 +12113,7 @@ function zepoApp() {
         try {
           const r = await withTimeout(
             sb.from('expenses').insert(rows).select('id').then(r => { if (r.error) throw r.error; return r; }),
-            3000, 'multi-insert'
+            12000, 'multi-insert'
           );
           insertedRows = r.data;
         } catch (e) {
@@ -13255,7 +13310,10 @@ function zepoApp() {
       for (const [w, v] of Object.entries({ ...tens, ...units }))
         t = t.replace(new RegExp('\\b' + w + '\\b', 'g'), v);
       t = t.replace(/(\d+)\s+(?:con|punto|coma)\s+(\d+)/g, '$1.$2'); // decimales hablados: "ocho con cincuenta" → 8.50
-      return t.replace(/\s{2,}/g, ' ').trim();
+      // Colapsa espacios/tabs horizontales pero PRESERVA los saltos de línea como frontera de
+      // ítem (cada línea = un gasto). Antes /\s{2,}/ se tragaba "espacio final + \n" y aplanaba
+      // la lista multi-línea, mezclando gastos de líneas distintas en un solo registro.
+      return t.replace(/[^\S\n]+/g, ' ').replace(/ *\n+ */g, '\n').trim();
     },
 
     analyzeTextInput() {
@@ -13333,13 +13391,22 @@ function zepoApp() {
     },
 
     splitItems(text) {
+      // Si el texto viene en varias líneas, CADA LÍNEA = un ítem. Respeta el formato del
+      // usuario y NO parte descripciones internas ("pan y pastel", "gasolina y aceite",
+      // "tabaco, filtros y papeles"). Solo cae al separador por conectores si es 1 sola línea.
+      if (text.includes('\n')) {
+        const lines = text.split(/\n+/).map(s => s.trim()).filter(Boolean);
+        const withLineNum = lines.filter(s => /\d/.test(s));
+        if (withLineNum.length >= 2) return withLineNum;
+      }
       // Patrón hablado ecuatoriano "N de X N de Y" → un ítem por cada "N de ...".
       // Inserta separador antes de cada "<número> de " que NO esté al inicio.
       text = text.replace(/(\S\s+)(\d+[\.,]?\d*\s+de\s)/gi, '$1\n$2');
-      // Coma solo separa si va seguida de espacio (para no romper decimales como 3,50)
+      // Coma solo separa si va seguida de espacio (para no romper decimales como 3,50).
+      // El trim NO quita puntos iniciales: ".5" es un decimal válido (= 0.50), no basura.
       let segments = text
         .split(/\s*(?:,\s+|;\s*|·|\.\s+| y | e |\n)\s*/i)
-        .map(s => s.trim().replace(/^[\.\s]+|[\.\s]+$/g, ''))
+        .map(s => s.trim())
         .filter(Boolean);
       // Solo multi-item si hay 2+ segmentos Y cada uno tiene un numero
       const withNum = segments.filter(s => /\d/.test(s));
@@ -13348,11 +13415,13 @@ function zepoApp() {
 
     parseSingleItem(text, forceIsIncome) {
       const lower = text.toLowerCase();
-      const numMatch = lower.match(/(\d+[\.,]?\d*)/);
+      // \d*[.,]?\d+ captura también decimales con punto inicial: ".5" → 0.50 (antes /\d+.../
+      // ignoraba el punto y leía ".5" como 5 → error 10×).
+      const numMatch = lower.match(/(\d*[.,]?\d+)/);
       const amount = numMatch ? parseFloat(numMatch[1].replace(',', '.')) : 0;
       // Quitar de la descripción: el número Y el símbolo/palabra de moneda ($ , dólares, usd, ctvs...).
       const description = text
-        .replace(/(\d+[\.,]?\d*)/, '')
+        .replace(/(\d*[.,]?\d+)/, '')
         .replace(/\$/g, '')
         .replace(/\b(d[oó]lar(?:es)?|usd|dls?|dlrs?|centavos?|ctvs?)\b/gi, '')
         .replace(/^\s*de\s+/i, '')
@@ -14325,7 +14394,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v135.js';
+  const CURRENT_SW = 'sw-v137.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
