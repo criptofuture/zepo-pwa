@@ -36,7 +36,10 @@ MEASURE_JS = """
 async () => {
   const c = window.Alpine.$data(document.querySelector('#app'));
   await c.loadLifetimeSavings();
-  return { L: c.lifetimeSavings, N: c.patNetWorth, T: c.patTotalWithSavings, loaded: c.lifetimeSavingsLoaded };
+  const bm = c.lifetimeSavingsByMonth || [];
+  return { L: c.lifetimeSavings, N: c.patNetWorth, T: c.patTotalWithSavings, loaded: c.lifetimeSavingsLoaded,
+           byMonthSum: Math.round(bm.reduce((s,m)=>s+(m.saldo||0),0)*100)/100,
+           byMonthCount: bm.length };
 }
 """
 
@@ -108,6 +111,7 @@ def run(url):
         ("sembrados fuera de la ventana local (windowCount=0)", win.get("windowCount") == 0),
         ("lifetimeSavings AUN cuenta +100 (lee de BD, no de la ventana)", abs(delta - 100.00) < 0.02),
         ("patTotalWithSavings == patNetWorth + lifetimeSavings", abs(m1["T"] - (m1["N"] + m1["L"])) < 0.005),
+        ("desglose por mes suma al ahorro total", abs(m1.get("byMonthSum", 0) - m1["L"]) < 0.02 and m1.get("byMonthCount", 0) >= 1),
         ("cleanup: ahorro vuelve al inicial", abs(restored) < 0.02),
     ]
     ok = all(v for _, v in checks)

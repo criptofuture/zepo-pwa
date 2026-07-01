@@ -3893,11 +3893,23 @@ setTimeout(function() {
 
         <!-- Ahorro acumulado + Patrimonio total (incluye el ahorro del flujo: ingresos−gastos de todo el historial) -->
         <div x-show="hasPlan('max')" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <div @click="if (lifetimeSavingsByMonth.length) savingsBreakdownOpen = !savingsBreakdownOpen" style="display:flex;align-items:center;justify-content:space-between;gap:10px;" :style="lifetimeSavingsByMonth.length ? 'cursor:pointer' : ''">
             <div style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--muted);"><span>💵</span><span>Ahorro acumulado</span></div>
-            <div style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;" :style="lifetimeSavings < 0 ? 'color:var(--danger)' : 'color:var(--text)'" x-text="lifetimeSavingsLoaded ? ((lifetimeSavings < 0 ? '-$' : '$') + fmtMoney(Math.abs(lifetimeSavings))) : '…'"></div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;" :style="lifetimeSavings < 0 ? 'color:var(--danger)' : 'color:var(--text)'" x-text="lifetimeSavingsLoaded ? ((lifetimeSavings < 0 ? '-$' : '$') + fmtMoney(Math.abs(lifetimeSavings))) : '…'"></div>
+              <svg x-show="lifetimeSavingsByMonth.length > 0" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="13" height="13" style="flex-shrink:0;" :style="{ transform: savingsBreakdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
           </div>
-          <div style="font-size:10.5px;color:var(--dim);margin-top:3px;">Ingresos − gastos de todos tus meses</div>
+          <div style="font-size:10.5px;color:var(--dim);margin-top:3px;" x-text="lifetimeSavingsByMonth.length > 0 ? ('Ingresos − gastos · ' + lifetimeSavingsByMonth.length + (lifetimeSavingsByMonth.length === 1 ? ' mes · toca para ver' : ' meses · toca para el detalle')) : 'Ingresos − gastos de todos tus meses'"></div>
+          <!-- Desglose: qué aportó cada mes al ahorro acumulado -->
+          <div x-show="savingsBreakdownOpen" x-cloak style="margin-top:8px;">
+            <template x-for="mo in lifetimeSavingsByMonth" :key="mo.month">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--border);">
+                <span style="font-size:12px;color:var(--text);text-transform:capitalize;" x-text="_savMonthLabel(mo.month)"></span>
+                <span style="font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;" :style="mo.saldo < 0 ? 'color:var(--danger)' : 'color:var(--success)'" x-text="(mo.saldo < 0 ? '-$' : '+$') + fmtMoney(Math.abs(mo.saldo))"></span>
+              </div>
+            </template>
+          </div>
           <div style="height:1px;background:var(--border);margin:12px 0;"></div>
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
             <div style="font-size:14px;font-weight:800;color:var(--text);">Patrimonio total</div>
@@ -8652,7 +8664,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v164',
+    APP_VERSION: 'v165',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -11005,7 +11017,9 @@ function zepoApp() {
     patrimonyItems: [],
     patSnapshots: [],
     lifetimeSavings: 0,          // ingresos − gastos de TODO el historial (global, todos los espacios)
+    lifetimeSavingsByMonth: [],  // [{month:'YYYY-MM', income, expense, saldo}] desc — desglose del ahorro
     lifetimeSavingsLoaded: false,
+    savingsBreakdownOpen: false, // UI: desplegar el desglose por mes en Patrimonio
     patSheetOpen: false, _ptY: 0,
     cryptoCoins: CRYPTO_COINS,
     cryptoPricesAt: 0,
@@ -11103,27 +11117,44 @@ function zepoApp() {
     // Trae solo 2 columnas (amount, is_income); ligero. Si crece mucho, migrar a un RPC SUM.
     async loadLifetimeSavings() {
       if (!this.user || !this.hasPlan('max')) return;
-      const sum = rows => {
-        let inc = 0, exp = 0;
-        (rows || []).forEach(e => { const a = Number(e.amount) || 0; e.is_income ? (inc += a) : (exp += a); });
-        return Math.round((inc - exp) * 100) / 100;
+      const apply = rows => {
+        const byM = {}; let inc = 0, exp = 0;
+        (rows || []).forEach(e => {
+          const a = Number(e.amount) || 0;
+          if (e.is_income) inc += a; else exp += a;
+          const k = (e.date || '').slice(0, 7);   // 'YYYY-MM'
+          if (!k) return;
+          if (!byM[k]) byM[k] = { income: 0, expense: 0 };
+          if (e.is_income) byM[k].income += a; else byM[k].expense += a;
+        });
+        this.lifetimeSavings = Math.round((inc - exp) * 100) / 100;
+        this.lifetimeSavingsByMonth = Object.keys(byM).sort().reverse().map(k => ({
+          month: k,
+          income: Math.round(byM[k].income * 100) / 100,
+          expense: Math.round(byM[k].expense * 100) / 100,
+          saldo: Math.round((byM[k].income - byM[k].expense) * 100) / 100,
+        }));
+        this.lifetimeSavingsLoaded = true;
       };
       try {
         const r = await withTimeout(
-          sb.from('expenses').select('amount, is_income').eq('user_id', this.user.id),
+          sb.from('expenses').select('amount, is_income, date').eq('user_id', this.user.id),
           6000, 'lifetimeSavings'
         );
         if (r.error) throw r.error;
-        this.lifetimeSavings = sum(r.data);
-        this.lifetimeSavingsLoaded = true;
+        apply(r.data);
       } catch (e) {
         console.warn('[loadLifetimeSavings] fallback REST:', e.message);
         try {
-          const url = SUPABASE_URL + '/rest/v1/expenses?user_id=eq.' + encodeURIComponent(this.user.id) + '&select=amount,is_income';
+          const url = SUPABASE_URL + '/rest/v1/expenses?user_id=eq.' + encodeURIComponent(this.user.id) + '&select=amount,is_income,date';
           const res = await fetch(url, { headers: await sbAuthHeadersFresh() });
-          if (res.ok) { this.lifetimeSavings = sum(await res.json()); this.lifetimeSavingsLoaded = true; }
+          if (res.ok) apply(await res.json());
         } catch (e2) { /* red caída: deja el último valor */ }
       }
+    },
+    _savMonthLabel(m) {
+      try { return new Date(m + '-01T00:00:00').toLocaleDateString('es-EC', { month: 'short', year: 'numeric' }).replace('.', ''); }
+      catch (e) { return m; }
     },
     // Guarda/actualiza el punto del MES ACTUAL (no espera al cron mensual).
     // Falla suave: si el usuario no es Max, RLS rechaza el upsert → se ignora.
@@ -14488,7 +14519,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v141.js';
+  const CURRENT_SW = 'sw-v142.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
