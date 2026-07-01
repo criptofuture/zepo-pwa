@@ -6145,7 +6145,7 @@ setTimeout(function() {
               <button class="approve-back" @click="sheetOpen = false" title="Volver">
                 <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
               </button>
-              <div class="approve-title" x-text="editingBatch ? 'Editar grupo' : (editingExpense ? 'Editar gasto' : 'Añadir registro')"></div>
+              <div class="approve-title" x-text="editingBatch ? 'Editar grupo' : (editingExpense ? (form.is_income ? 'Editar ingreso' : 'Editar gasto') : 'Añadir registro')"></div>
               <button class="approve-close" @click="sheetOpen = false" title="Cancelar">
                 <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
@@ -6799,9 +6799,7 @@ setTimeout(function() {
                 </button>
 
                 <!-- Delete (edit mode only) -->
-                <button class="delete-btn" x-show="editingExpense" @click="deleteExpense" style="margin-top:8px;">
-                  Eliminar gasto
-                </button>
+                <button class="delete-btn" x-show="editingExpense" @click="deleteExpense" style="margin-top:8px;" x-text="form.is_income ? 'Eliminar ingreso' : 'Eliminar gasto'"></button>
                 <button class="delete-btn" x-show="editingBatch" @click="deleteBatch" style="margin-top:8px;">
                   Eliminar grupo completo
                 </button>
@@ -8664,7 +8662,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v166',
+    APP_VERSION: 'v167',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -11938,14 +11936,17 @@ function zepoApp() {
             for (const id of ids) { await sbRestDelete('expenses', { id }); }
           }
         }
-        this.expenses = this.expenses.filter(e => e.batch_id !== this.editingBatch);
+        const _bid = this.editingBatch;
+        this.expenses = this.expenses.filter(e => e.batch_id !== _bid);
+        this.historyData = (this.historyData || []).filter(e => e.batch_id !== _bid);
+        this.historyVer++;
         this.dataVer++;
         try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
         this.sheetOpen = false;
         this.editingBatch = null;
         this.parsedItems = [];
         this.showToast(batchItems.length + ' registros eliminados');
-        Promise.all([this.loadExpenses(), this.loadSplits()]).catch(e => console.warn('[deleteBatch] bg:', e.message));
+        Promise.all([this.loadExpenses(), this.loadSplits(), this._maybeReloadHistory()]).catch(e => console.warn('[deleteBatch] bg:', e.message));
       } catch (e) {
         console.error('deleteBatch error:', e);
         this.showToast('Error: ' + e.message);
@@ -12072,9 +12073,11 @@ function zepoApp() {
           // contando en el mes viejo hasta una recarga exitosa).
           const _eid = this.editingExpense.id;
           this.expenses = this.expenses.map(e => e.id === _eid ? { ...e, ...payload } : e);
+          this.historyData = (this.historyData || []).map(e => e.id === _eid ? { ...e, ...payload } : e);
+          this.historyVer++;
           this.dataVer++;
           try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
-          this.showToast('Gasto actualizado');
+          this.showToast(this.form.is_income ? 'Ingreso actualizado' : 'Gasto actualizado');
         } else {
           try {
             const r = await withTimeout(
@@ -12087,7 +12090,7 @@ function zepoApp() {
             const rows = await sbRestInsert('expenses', payload);
             inserted = rows && rows[0];
           }
-          this.showToast(isSplit ? '💸 Split guardado' : 'Gasto agregado');
+          this.showToast(isSplit ? '💸 Split guardado' : (this.form.is_income ? 'Ingreso agregado' : 'Gasto agregado'));
           // Receipt upload goes to background (after sheet closes)
           if (this.receiptFile && inserted) {
             const file = this.receiptFile;
@@ -12118,7 +12121,7 @@ function zepoApp() {
         // loadSplits SIEMPRE: si una edición QUITA el split (isSplit=false), pendingSplits
         // debe refrescarse para que el registro desaparezca de "Me deben"/"Debo". Antes solo
         // se recargaba cuando el nuevo estado ERA split → al quitar la división quedaba viejo.
-        const bgTasks = [this.loadExpenses(), this.loadSplits()];
+        const bgTasks = [this.loadExpenses(), this.loadSplits(), this._maybeReloadHistory()];
         if (isSplit) {
           // Un cobro por cada OTRA persona, con SU porcentaje (mismo cálculo que el
           // cron mensual de recurrentes → mes 1 y mes N idénticos). Solo a amigos.
@@ -12254,7 +12257,7 @@ function zepoApp() {
         this.dataVer++;
         try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
         // Background: reload + create payment_requests for splits
-        const bgTasks = [this.loadExpenses()];
+        const bgTasks = [this.loadExpenses(), this._maybeReloadHistory()];
         if (isSplit && insertedRows) {
           bgTasks.push(this.loadSplits());
           const names = persona.split(',').map(s => s.trim()).filter(Boolean);
@@ -12369,7 +12372,7 @@ function zepoApp() {
         this.showToast(isSplit ? '💸 Split guardado (' + rows.length + ' items)' : rows.length + ' registros actualizados');
 
         // Background reload expenses + splits + create payment_requests
-        const bgTasks = [this.loadExpenses(), this.loadSplits()];
+        const bgTasks = [this.loadExpenses(), this.loadSplits(), this._maybeReloadHistory()];
         if (isSplit) {
           const names = persona.split(',').map(s => s.trim()).filter(Boolean);
           const prInserts = [];
@@ -12402,9 +12405,15 @@ function zepoApp() {
       this.saving = false;
     },
 
+    _maybeReloadHistory() {
+      // Refresca el Historial (historyData) solo si el usuario lo tiene abierto/cargado.
+      if (this.tab === 'history' || (this.historyData && this.historyData.length)) return this.loadHistory();
+      return Promise.resolve();
+    },
     async deleteExpense() {
       if (!this.editingExpense) return;
-      if (!await this.askConfirm({ title: '¿Eliminar este gasto?', body: 'Esta acción no se puede deshacer.' })) return;
+      const wasIncome = !!this.editingExpense.is_income;
+      if (!await this.askConfirm({ title: wasIncome ? '¿Eliminar este ingreso?' : '¿Eliminar este gasto?', body: 'Esta acción no se puede deshacer.' })) return;
       const id = this.editingExpense.id;
       try {
         try {
@@ -12413,15 +12422,17 @@ function zepoApp() {
           console.warn('[deleteExpense] fallback REST:', e.message);
           await sbRestDelete('expenses', { id });
         }
-        // Optimistic: remove from local array immediately
+        // Optimistic: quita de AMBOS caches (home = expenses, Historial = historyData)
         this.expenses = this.expenses.filter(e => e.id !== id);
+        this.historyData = (this.historyData || []).filter(e => e.id !== id);
+        this.historyVer++;
         this.dataVer++;
         try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
         this.sheetOpen = false;
         this.editingExpense = null;
-        this.showToast('Gasto eliminado');
-        // Reload in background, in parallel
-        Promise.all([this.loadExpenses(), this.loadSplits()])
+        this.showToast(wasIncome ? 'Ingreso eliminado' : 'Gasto eliminado');
+        // Reload in background (incl. Historial si está en uso)
+        Promise.all([this.loadExpenses(), this.loadSplits(), this._maybeReloadHistory()])
           .catch(e => console.warn('[deleteExpense] bg reload:', e.message));
       } catch (e) {
         console.error('deleteExpense error:', e);
@@ -14522,7 +14533,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v143.js';
+  const CURRENT_SW = 'sw-v144.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
