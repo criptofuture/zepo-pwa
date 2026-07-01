@@ -3760,11 +3760,11 @@ setTimeout(function() {
         <div class="pat-home-card" :class="{ locked: !hasPlan('max') }" @click="openPatrimonio()">
           <div class="pat-home-l">
             <div class="pat-home-label">
-              <span>📊 Patrimonio neto</span>
+              <span x-text="hasPlan('max') ? '📊 Patrimonio total' : '📊 Patrimonio neto'"></span>
               <span x-show="!hasPlan('max')" class="pat-lock-pill">MAX</span>
             </div>
-            <div class="pat-home-amt" :class="{ neg: patNetWorth < 0 }" x-text="(patNetWorth < 0 ? '-$' : '$') + fmtMoney(Math.abs(patNetWorth))"></div>
-            <div class="pat-home-sub" x-show="hasPlan('max')" x-text="patItemCount > 0 ? ('Inversiones $' + fmtMoney(patTotalInvestments) + ' · Bienes $' + fmtMoney(patTotalAssets) + ' · Deudas $' + fmtMoney(patTotalDebts)) : 'Toca para registrar tu primer activo'"></div>
+            <div class="pat-home-amt" :class="{ neg: patTotalWithSavings < 0 }" x-text="(patTotalWithSavings < 0 ? '-$' : '$') + fmtMoney(Math.abs(patTotalWithSavings))"></div>
+            <div class="pat-home-sub" x-show="hasPlan('max')" x-text="lifetimeSavingsLoaded ? ('Ahorro ' + (lifetimeSavings < 0 ? '-$' : '$') + fmtMoney(Math.abs(lifetimeSavings)) + ' · Neto ' + (patNetWorth < 0 ? '-$' : '$') + fmtMoney(Math.abs(patNetWorth))) : ('Neto ' + (patNetWorth < 0 ? '-$' : '$') + fmtMoney(Math.abs(patNetWorth)))"></div>
             <div class="pat-home-sub" x-show="!hasPlan('max')">Inversiones, bienes y deudas · desbloquéalo con Max</div>
           </div>
           <svg class="pat-home-go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M9 18l6-6-6-6"/></svg>
@@ -8652,7 +8652,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v163',
+    APP_VERSION: 'v164',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -11195,6 +11195,7 @@ function zepoApp() {
         } catch (e2) { this.patSnapshots = []; }
       }
       if (this.tab === 'patrimonio') this.loadCryptoPrices();
+      this.loadLifetimeSavings();  // para el box de Patrimonio en Home (Max-only internamente)
     },
     _cryptoCachedPrice(id) {
       try {
@@ -14487,7 +14488,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v140.js';
+  const CURRENT_SW = 'sw-v141.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
