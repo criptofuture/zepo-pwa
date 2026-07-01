@@ -8662,7 +8662,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v167',
+    APP_VERSION: 'v168',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -10581,27 +10581,56 @@ function zepoApp() {
     },
 
     // ── Budgets ──
+    // Un presupuesto fijado se MANTIENE mes a mes: si el mes en curso no tiene filas
+    // propias, se hereda el último mes definido. Una fila "centinela" (category null,
+    // amount 0) marca un mes puesto en cero a propósito → no hereda (respeta el cero).
+    _isBudgetSentinel(r) { return r.category == null && (Number(r.amount) || 0) === 0; },
+    // De las filas de UN espacio, devuelve las vigentes para (m,y): las del mes actual
+    // si existen; si no, hereda las del último mes definido (marcadas _inherited).
+    _resolveBudgetRows(rows, m, y) {
+      const current = (rows || []).filter(r => r.month === m && r.year === y);
+      if (current.length > 0) return current.filter(r => !this._isBudgetSentinel(r));
+      const past = (rows || []).filter(r => r.year < y || (r.year === y && r.month <= m));
+      if (past.length === 0) return [];
+      let my = -1, mm = -1;
+      past.forEach(r => { if (r.year > my || (r.year === my && r.month > mm)) { my = r.year; mm = r.month; } });
+      const latest = past.filter(r => r.year === my && r.month === mm);
+      const real = latest.filter(r => !this._isBudgetSentinel(r));
+      if (real.length === 0) return [];  // el último mes se dejó en cero → respeta el cero
+      return real.map(r => ({ ...r, month: m, year: y, _inherited: true }));
+    },
+    // Trae TODO el historial de presupuestos (sin filtro de mes) para poder heredar.
+    async _fetchBudgetHistory(spaceScoped) {
+      try {
+        let q = sb.from('budgets').select('*').eq('user_id', this.user.id);
+        if (spaceScoped) q = this._applySpaceFilter(q);
+        const r = await withTimeout(q, 2500, 'budgetHistory');
+        if (r.error) throw r.error;
+        return r.data || [];
+      } catch (e) {
+        console.warn('[loadBudgets] fallback REST:', e.message);
+        try {
+          const url = SUPABASE_URL + '/rest/v1/budgets?user_id=eq.' + encodeURIComponent(this.user.id) + (spaceScoped ? this._spaceFilterUrl() : '');
+          const res = await fetch(url, { headers: sbAuthHeaders() });
+          return res.ok ? await res.json() : [];
+        } catch (e2) { return []; }
+      }
+    },
     async loadBudgets() {
       const now = new Date();
       const m = now.getMonth() + 1, y = now.getFullYear();
-      // Modo "Global": suma los presupuestos de TODOS los espacios por categoría.
+      // Modo "Global": suma los presupuestos vigentes de TODOS los espacios por categoría.
       if (this.spaceViewAll) {
-        let all = null;
-        try {
-          const r = await withTimeout(sb.from('budgets').select('*').eq('user_id', this.user.id).eq('month', m).eq('year', y), 2500, 'loadBudgets-all');
-          all = r.data;
-        } catch (e) {
-          try {
-            const url = SUPABASE_URL + '/rest/v1/budgets?user_id=eq.' + encodeURIComponent(this.user.id) + '&month=eq.' + m + '&year=eq.' + y;
-            const res = await fetch(url, { headers: sbAuthHeaders() });
-            all = res.ok ? await res.json() : [];
-          } catch (e2) { all = []; }
-        }
+        const all = await this._fetchBudgetHistory(false);
+        const bySpace = {};
+        all.forEach(b => { const k = b.space_id || '__null__'; (bySpace[k] || (bySpace[k] = [])).push(b); });
         const merged = {};
-        (all || []).forEach(b => {
-          const key = b.category || '__total__';
-          if (!merged[key]) merged[key] = { category: b.category || null, amount: 0, month: m, year: y, _aggregated: true };
-          merged[key].amount += Number(b.amount) || 0;
+        Object.values(bySpace).forEach(rows => {
+          this._resolveBudgetRows(rows, m, y).forEach(b => {
+            const key = b.category || '__total__';
+            if (!merged[key]) merged[key] = { category: b.category || null, amount: 0, month: m, year: y, _aggregated: true };
+            merged[key].amount += Number(b.amount) || 0;
+          });
         });
         this.budgets = Object.values(merged);
         this.budgetForm = {};
@@ -10609,25 +10638,10 @@ function zepoApp() {
         return;
       }
       if (!this.activeSpaceId) { this.budgets = []; this.budgetForm = {}; this.dataVer++; return; }
-      let data = null;
-      try {
-        let q = sb.from('budgets').select('*').eq('user_id', this.user.id).eq('month', m).eq('year', y);
-        q = this._applySpaceFilter(q);
-        const r = await withTimeout(q, 2500, 'loadBudgets');
-        data = r.data;
-      } catch (e) {
-        console.warn('[loadBudgets] fallback REST:', e.message);
-        try {
-          const url = SUPABASE_URL + '/rest/v1/budgets?user_id=eq.' + encodeURIComponent(this.user.id) + '&month=eq.' + m + '&year=eq.' + y + this._spaceFilterUrl();
-          const res = await fetch(url, { headers: sbAuthHeaders() });
-          data = res.ok ? await res.json() : [];
-        } catch (e2) { data = []; }
-      }
-      this.budgets = data || [];
+      const all = await this._fetchBudgetHistory(true);
+      this.budgets = this._resolveBudgetRows(all, m, y);
       this.budgetForm = {};
-      this.budgets.forEach(b => {
-        this.budgetForm[b.category || '_total'] = b.amount;
-      });
+      this.budgets.forEach(b => { this.budgetForm[b.category || '_total'] = b.amount; });
       this.budgetForm._targetSpace = this.activeSpaceId;
       this.dataVer++;
     },
@@ -10640,17 +10654,18 @@ function zepoApp() {
       const m = now.getMonth() + 1, y = now.getFullYear();
       let data = [];
       try {
-        const r = await withTimeout(sb.from('budgets').select('*').eq('user_id', this.user.id).eq('month', m).eq('year', y).eq('space_id', spaceId), 2500, 'budgetForm-space');
+        const r = await withTimeout(sb.from('budgets').select('*').eq('user_id', this.user.id).eq('space_id', spaceId), 2500, 'budgetForm-space');
+        if (r.error) throw r.error;
         data = r.data || [];
       } catch (e) {
         try {
-          const url = SUPABASE_URL + '/rest/v1/budgets?user_id=eq.' + encodeURIComponent(this.user.id) + '&month=eq.' + m + '&year=eq.' + y + '&space_id=eq.' + spaceId;
+          const url = SUPABASE_URL + '/rest/v1/budgets?user_id=eq.' + encodeURIComponent(this.user.id) + '&space_id=eq.' + spaceId;
           const res = await fetch(url, { headers: sbAuthHeaders() });
           data = res.ok ? await res.json() : [];
         } catch (e2) { data = []; }
       }
       const form = { _targetSpace: spaceId };
-      data.forEach(b => { form[b.category || '_total'] = b.amount; });
+      this._resolveBudgetRows(data, m, y).forEach(b => { form[b.category || '_total'] = b.amount; });
       this.budgetForm = form;
       this.dataVer++;
     },
@@ -10702,25 +10717,41 @@ function zepoApp() {
             if (!isNaN(n) && n > 0) rows.push({ user_id: this.user.id, category: key, amount: n, month, year, space_id: sf });
           }
         }
-        if (rows.length > 0) {
-          try {
-            await withTimeout(
-              sb.from('budgets').insert(rows).then(r => { if (r.error) throw r.error; return r; }),
-              2500, 'budget-insert'
-            );
-          } catch (e) {
-            console.warn('[saveBudgets] insert fallback REST:', e.message);
-            await sbRestInsert('budgets', rows);
-          }
+        // Limpiar a cero es una decisión explícita: dejar una fila centinela (amount 0)
+        // marca este mes como "puesto en cero" para que el mes siguiente NO reviva el
+        // presupuesto viejo (respeta el cero). Sin centinela sería indistinguible de "vacío".
+        const cleared = rows.length === 0;
+        if (cleared) rows.push({ user_id: this.user.id, category: null, amount: 0, month, year, space_id: sf });
+        try {
+          await withTimeout(
+            sb.from('budgets').insert(rows).then(r => { if (r.error) throw r.error; return r; }),
+            2500, 'budget-insert'
+          );
+        } catch (e) {
+          console.warn('[saveBudgets] insert fallback REST:', e.message);
+          await sbRestInsert('budgets', rows);
         }
         await this.loadBudgets();
         this.budgetSheetOpen = false;
-        this.showToast(rows.length > 0 ? 'Presupuestos guardados' : 'Presupuestos limpiados');
+        this.showToast(cleared ? 'Presupuestos limpiados' : 'Presupuestos guardados');
       } catch (e) { this.showToast('Error: ' + e.message); }
       this.savingBudget = false;
     },
     // Borra UNA fila de presupuesto (p.ej. una categoria huerfana custom_ sin nombre que
     // no se puede quitar desde el gestor de categorias). Es la unica via para limpiarla.
+    // Si el mes en curso está heredado (sin filas propias), lo materializa: copia las
+    // filas vigentes a la DB con el mes actual. Necesario antes de borrar una fila suelta,
+    // si no el borrado no persistiría (no hay fila real del mes que borrar).
+    async _materializeIfInherited(sf, m, y) {
+      const vig = (this.budgets || []).filter(b => b._inherited);
+      if (vig.length === 0) return;
+      const rows = vig.map(b => ({ user_id: this.user.id, category: b.category || null, amount: b.amount, month: m, year: y, space_id: sf }));
+      try {
+        await withTimeout(sb.from('budgets').insert(rows).then(r => { if (r.error) throw r.error; return r; }), 2500, 'budget-materialize');
+      } catch (e) {
+        try { await sbRestInsert('budgets', rows); } catch (e2) {}
+      }
+    },
     async deleteBudgetRow(category) {
       if (!category) return;
       const now = new Date();
@@ -10728,6 +10759,7 @@ function zepoApp() {
       const year = now.getFullYear();
       const sf = this.activeSpaceId;
       try {
+        await this._materializeIfInherited(sf, month, year);
         try {
           await withTimeout(
             sb.from('budgets').delete().eq('user_id', this.user.id).eq('category', category).eq('month', month).eq('year', year).eq('space_id', sf).then(r => { if (r.error) throw r.error; return r; }),
