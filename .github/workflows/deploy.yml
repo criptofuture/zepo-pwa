@@ -159,8 +159,9 @@ jobs:
           supabase functions deploy send-weekly-email \
             --project-ref vchaxqisbypwwtyjjnjr \
             --no-verify-jwt
-          supabase functions deploy find-user \
-            --project-ref vchaxqisbypwwtyjjnjr
+          # find-user NO se despliega aquí: está ACTIVE en Supabase (la usa "agregar amigo")
+          # pero su código nunca estuvo en este repo (drift). Bundlearla rompía el job y
+          # bloqueaba parse-bank-statement. NO re-agregar sin subir supabase/functions/find-user/.
           supabase functions deploy parse-bank-statement \
             --project-ref vchaxqisbypwwtyjjnjr
 
