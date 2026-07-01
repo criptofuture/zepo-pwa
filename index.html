@@ -8570,6 +8570,7 @@ function zepoApp() {
     voiceTimer: null,
     voiceBaseDesc: '',
     voiceFinal: '',
+    voiceLastInterim: '',
     voiceManualStop: false,
     voiceRestarts: 0,
     voiceDebug: '',
@@ -8636,7 +8637,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v160',
+    APP_VERSION: 'v161',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -9996,6 +9997,7 @@ function zepoApp() {
       // Texto que ya estaba en la caja ANTES de grabar: se conserva y se le suma lo dictado.
       this.voiceBaseDesc = (this.form.description || '').trim();
       this.voiceFinal = '';
+      this.voiceLastInterim = '';
       this.voiceManualStop = false;
       this.voiceRestarts = 0;
       this.voiceDbgOn = (typeof location !== 'undefined' && location.search.indexOf('vdebug') !== -1);
@@ -10025,6 +10027,9 @@ function zepoApp() {
       rec.onaudiostart = () => this._vdbg('audio');
       rec.onspeechstart = () => this._vdbg('speech');
       rec.onresult = (e) => {
+        // Tras un stop manual, iOS puede disparar un onresult tardio: lo ignoramos para no
+        // duplicar (el interino ya se consolido en voiceFinal dentro de stopVoice).
+        if (!this.voiceRecording || this.voiceManualStop) return;
         let interim = '';
         for (let i = e.resultIndex; i < e.results.length; i++) {
           const r = e.results[i];
@@ -10032,6 +10037,9 @@ function zepoApp() {
           if (r.isFinal) this.voiceFinal += (this.voiceFinal ? ' ' : '') + t.trim();
           else interim += t;
         }
+        // iOS/Safari suele NO marcar isFinal hasta el corte: guardamos el ultimo interino
+        // para consolidarlo al pausar (si no, se perderia todo lo dictado).
+        this.voiceLastInterim = interim;
         this._vdbg('res');
         this._applyVoiceTranscript(interim);
       };
@@ -10049,6 +10057,12 @@ function zepoApp() {
       rec.onend = () => {
         this._vdbg('end');
         if (!this.voiceManualStop && this.voiceRecording && this.voiceRestarts < 40) {
+          // Consolidar el interino de ESTA sesion antes de reiniciar: si iOS la corto sin
+          // marcar isFinal, el proximo onresult lo pisaria y se perderia lo dictado.
+          if (this.voiceLastInterim) {
+            this.voiceFinal += (this.voiceFinal ? ' ' : '') + this.voiceLastInterim.trim();
+            this.voiceLastInterim = '';
+          }
           this.voiceRestarts++;
           setTimeout(() => { if (this.voiceRecording && !this.voiceManualStop) this._startVoiceSession(); }, 150);
           return;
@@ -10082,7 +10096,13 @@ function zepoApp() {
       this.voiceManualStop = true;
       this.voiceRecording = false;
       if (this.voiceTimer) { clearTimeout(this.voiceTimer); this.voiceTimer = null; }
-      this._applyVoiceTranscript('');  // consolida el texto final (descarta interino a medias)
+      // iOS suele dejar todo lo dictado como interino (sin isFinal). Al pausar lo pasamos a
+      // voiceFinal para que NO se borre; si no, _applyVoiceTranscript('') lo perderia.
+      if (this.voiceLastInterim) {
+        this.voiceFinal += (this.voiceFinal ? ' ' : '') + this.voiceLastInterim.trim();
+        this.voiceLastInterim = '';
+      }
+      this._applyVoiceTranscript('');  // consolida el texto final (ya con el interino integrado)
       const rec = this.voiceRecognition;
       if (!rec) return;
       try { rec.stop(); } catch (e) {}
@@ -11309,7 +11329,8 @@ function zepoApp() {
         const others = this.form.split_people.filter(p => !p.you);
         if (tuPerson && others.length > 0) {
           row.is_split = true;
-          row.split_pct = parseFloat(tuPerson.pct) || 50;
+          const tuPctRaw = parseFloat(tuPerson.pct);
+          row.split_pct = Number.isNaN(tuPctRaw) ? 50 : tuPctRaw; // 0% (tú no pagas nada) es válido; solo NaN cae a 50
           row.split_total = data.amount;
           row.split_persona = others.map(p => p.name || 'Sin nombre').filter(Boolean).join(', ') || 'Sin nombre';
           row.split_people = others.map(p => {
@@ -11913,7 +11934,8 @@ function zepoApp() {
           const others = this.form.split_people.filter(p => !p.you);
           if (tuPerson && others.length > 0 && this.splitSum > 0) {
             isSplit = true;
-            pct = parseFloat(tuPerson.pct) || 50;
+            const tuPctRaw = parseFloat(tuPerson.pct);
+            pct = Number.isNaN(tuPctRaw) ? 50 : tuPctRaw; // 0% (tú no pagas nada) es válido; solo NaN cae a 50
             persona = others.map(p => p.name || 'Sin nombre').filter(Boolean).join(', ') || 'Sin nombre';
             this.form.split_persona = persona;
             this.form.split_pct = pct;
@@ -12028,10 +12050,20 @@ function zepoApp() {
           if (prInserts.length) bgTasks.push(Promise.all(prInserts));
         }
         Promise.all(bgTasks).catch(e => console.warn('[saveExpense] bg reload:', e.message));
+        // Dividir es decisión POR registro: no debe arrastrarse al siguiente. Los cobros
+        // ya se encolaron arriba leyendo el form, así que aquí es seguro limpiarlo.
+        this._clearSplitForm();
       } catch (e) {
         this.showToast('Error: ' + e.message);
       }
       this.saving = false;
+    },
+
+    _clearSplitForm() {
+      this.form.is_split = false;
+      this.form.split_people = [];
+      this.form.split_persona = '';
+      this.form.split_pct = '';
     },
 
     async saveMultiItems() {
@@ -12059,7 +12091,8 @@ function zepoApp() {
           const others = this.form.split_people.filter(p => !p.you);
           if (tuPerson && others.length > 0 && this.splitSum > 0) {
             isSplit = true;
-            pct = parseFloat(tuPerson.pct) || 50;
+            const tuPctRaw = parseFloat(tuPerson.pct);
+            pct = Number.isNaN(tuPctRaw) ? 50 : tuPctRaw; // 0% (tú no pagas nada) es válido; solo NaN cae a 50
             persona = others.map(p => p.name || 'Sin nombre').filter(Boolean).join(', ') || 'Sin nombre';
           }
         }
@@ -12159,6 +12192,8 @@ function zepoApp() {
           if (prInserts.length) bgTasks.push(Promise.all(prInserts).then(() => this.loadPaymentRequests()));
         }
         Promise.all(bgTasks).catch(e => console.warn('[saveMultiItems] bg reload:', e.message));
+        // Dividir es decisión POR registro: no se arrastra al siguiente (cobros ya encolados con locals).
+        this._clearSplitForm();
       } catch (e) {
         this.showToast('Error: ' + e.message);
       }
@@ -12184,7 +12219,8 @@ function zepoApp() {
           const others = this.form.split_people.filter(p => !p.you);
           if (tuPerson && others.length > 0 && this.splitSum > 0) {
             isSplit = true;
-            pct = parseFloat(tuPerson.pct) || 50;
+            const tuPctRaw = parseFloat(tuPerson.pct);
+            pct = Number.isNaN(tuPctRaw) ? 50 : tuPctRaw; // 0% (tú no pagas nada) es válido; solo NaN cae a 50
             persona = others.map(p => p.name || 'Sin nombre').filter(Boolean).join(', ') || 'Sin nombre';
           }
         }
@@ -14394,7 +14430,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v137.js';
+  const CURRENT_SW = 'sw-v138.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
