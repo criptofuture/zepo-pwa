@@ -6606,14 +6606,14 @@ setTimeout(function() {
               </div>
 
               <!-- ═════════ RECURRENTE (crear, item único; coexiste con dividir) ═════════ -->
-              <div x-show="!editingExpense && !editingBatch && parsedItems.length <= 1 && (analyzed || form.amount || parsedItems.length)" style="border-radius:14px;margin-bottom:12px;" :style="recurringOn ? { background: 'var(--surface)', border: '1px solid var(--cyan)', overflow: 'hidden' } : { background: 'var(--surface)', border: '1px solid var(--border)', overflow: 'hidden' }">
+              <div x-show="!editingExpense && !editingBatch && (analyzed || form.amount || parsedItems.length)" style="border-radius:14px;margin-bottom:12px;" :style="recurringOn ? { background: 'var(--surface)', border: '1px solid var(--cyan)', overflow: 'hidden' } : { background: 'var(--surface)', border: '1px solid var(--border)', overflow: 'hidden' }">
                 <div @click="recurringOn = !recurringOn; if (recurringOn && !recurringDay) recurringDay = new Date().getDate()" style="padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;">
                   <div style="width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;" :style="{ background: recurringOn ? 'rgba(var(--c-brand-rgb),0.12)' : 'var(--bg)' }">
                     <svg viewBox="0 0 24 24" fill="none" :stroke="recurringOn ? 'var(--cyan)' : 'var(--muted)'" stroke-width="2" width="15" height="15"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
                   </div>
                   <div style="flex:1;min-width:0;">
                     <div style="font-size:14px;font-weight:600;">Repetir cada mes</div>
-                    <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="recurringOn ? ('Se creará solo el día ' + recurringDay + ' de cada mes') : 'Para arriendo, Netflix, gym…'"></div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="recurringOn ? ((parsedItems.length > 1 ? ('Se crearán ' + parsedItems.length + ' registros') : 'Se creará') + ' el día ' + recurringDay + ' de cada mes') : 'Para arriendo, Netflix, gym…'"></div>
                   </div>
                   <div style="width:38px;height:22px;border-radius:11px;position:relative;transition:background 0.2s;flex-shrink:0;" :style="{ background: recurringOn ? 'var(--cyan)' : 'var(--border2)' }">
                     <div style="position:absolute;top:2px;width:18px;height:18px;border-radius:9px;background:#fff;transition:left 0.2s;" :style="{ left: recurringOn ? '18px' : '2px' }"></div>
@@ -6782,7 +6782,7 @@ setTimeout(function() {
 
             <!-- COMPOSER: dentro del scroll. Normalmente sticky al fondo; con el split
                  abierto pasa al flujo (cd-describe-flow) para no tapar el dropdown. -->
-            <div class="cd-describe-block" :class="form.is_split && 'cd-describe-flow'" x-show="!editingExpense && !editingBatch && !receiptPreview && !importedFile">
+            <div class="cd-describe-block" :class="(form.is_split || parsedItems.length >= 1) && 'cd-describe-flow'" x-show="!editingExpense && !editingBatch && !receiptPreview && !importedFile">
               <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
                 <div style="display:flex;align-items:center;gap:8px;min-width:0;">
                   <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -6805,7 +6805,7 @@ setTimeout(function() {
               </div>
 
               <div class="cd-describe-card" :class="{ 'a7-glow': a7Active && a7Step === 2 }">
-                <textarea id="a7-desc" x-model="form.description" maxlength="500" rows="3" @keydown.enter.prevent="analyzeTextInput()" :placeholder="form.is_income ? 'sueldo octubre 1200 · freelance diseño 350' : 'almuerzo 15 · taxi 8.50 · café 3.20'"></textarea>
+                <textarea id="a7-desc" x-model="form.description" maxlength="500" rows="3" enterkeyhint="enter" :placeholder="form.is_income ? 'sueldo octubre 1200 · freelance diseño 350' : 'almuerzo 15 · taxi 8.50 · café 3.20'"></textarea>
                 <div class="cd-describe-footer">
                   <div style="display:flex;gap:6px;align-items:center;">
                     <!-- Foto (camara) -->
@@ -8637,7 +8637,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v161',
+    APP_VERSION: 'v162',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -11881,19 +11881,22 @@ function zepoApp() {
     async saveExpense() {
       // Flush split picker if still open (race condition: user taps Save while input focused)
       if (this.splitPickerIdx >= 0) this.closeSplitPicker();
-      // Feature 4: si está marcado "Repetir cada mes" (item único), crea la PLANTILLA.
+      // Feature 4: si está marcado "Repetir cada mes", crea la PLANTILLA. Ahora funciona
+      // con 1 o VARIOS ítems: se crea una plantilla por cada ítem (mismo día del mes).
       // Coexiste con "Dividir": saveRecurringTemplate lee this.form para guardar el split
       // (mi %, personas + cobros) y el cron mensual regenera gasto dividido + cobros.
       // La copia de ESTE mes se guarda como gasto normal por el flujo de abajo.
-      if (this.recurringOn && !this.editingExpense && !this.editingBatch && this.parsedItems.length <= 1) {
-        const src = this.parsedItems[0] || {};
-        await this.saveRecurringTemplate({
-          amount: parseFloat(src.amount != null ? src.amount : this.form.amount) || 0,
-          category: src.category || this.form.category,
-          description: src.description || this.form.description || '',
-          is_income: src.is_income !== undefined ? src.is_income : this.form.is_income,
-          payment_method: this.form.payment_method || null,
-        });
+      if (this.recurringOn && !this.editingExpense && !this.editingBatch) {
+        const srcs = (this.parsedItems && this.parsedItems.length) ? this.parsedItems : [{}];
+        for (const src of srcs) {
+          await this.saveRecurringTemplate({
+            amount: parseFloat(src.amount != null ? src.amount : this.form.amount) || 0,
+            category: src.category || this.form.category,
+            description: src.description || this.form.description || '',
+            is_income: src.is_income !== undefined ? src.is_income : this.form.is_income,
+            payment_method: this.form.payment_method || null,
+          });
+        }
       }
       // Batch edit mode: delete old items, re-insert updated ones
       if (this.editingBatch && this.parsedItems && this.parsedItems.length >= 1) {
@@ -11982,6 +11985,13 @@ function zepoApp() {
             const path = await this.uploadReceipt(this.editingExpense.id);
             if (path) await sbRestUpdate('expenses', 'id', this.editingExpense.id, { receipt_image_path: path });
           }
+          // Reflejar el cambio en memoria YA: si la fecha cambió de mes, el balance debe
+          // recomputar al instante aunque loadExpenses tarde o falle (antes el gasto seguía
+          // contando en el mes viejo hasta una recarga exitosa).
+          const _eid = this.editingExpense.id;
+          this.expenses = this.expenses.map(e => e.id === _eid ? { ...e, ...payload } : e);
+          this.dataVer++;
+          try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
           this.showToast('Gasto actualizado');
         } else {
           try {
@@ -14430,7 +14440,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v138.js';
+  const CURRENT_SW = 'sw-v139.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
