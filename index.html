@@ -3891,6 +3891,21 @@ setTimeout(function() {
           </div>
         </div>
 
+        <!-- Ahorro acumulado + Patrimonio total (incluye el ahorro del flujo: ingresos−gastos de todo el historial) -->
+        <div x-show="hasPlan('max')" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <div style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--muted);"><span>💵</span><span>Ahorro acumulado</span></div>
+            <div style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;" :style="lifetimeSavings < 0 ? 'color:var(--danger)' : 'color:var(--text)'" x-text="lifetimeSavingsLoaded ? ((lifetimeSavings < 0 ? '-$' : '$') + fmtMoney(Math.abs(lifetimeSavings))) : '…'"></div>
+          </div>
+          <div style="font-size:10.5px;color:var(--dim);margin-top:3px;">Ingresos − gastos de todos tus meses</div>
+          <div style="height:1px;background:var(--border);margin:12px 0;"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <div style="font-size:14px;font-weight:800;color:var(--text);">Patrimonio total</div>
+            <div style="font-size:20px;font-weight:800;letter-spacing:-0.4px;font-variant-numeric:tabular-nums;" :style="patTotalWithSavings < 0 ? 'color:var(--danger)' : 'color:var(--c-brand)'" x-text="lifetimeSavingsLoaded ? ((patTotalWithSavings < 0 ? '-$' : '$') + fmtMoney(Math.abs(patTotalWithSavings))) : '…'"></div>
+          </div>
+          <div style="font-size:10.5px;color:var(--dim);margin-top:3px;">Ahorro + inversiones + bienes − deudas</div>
+        </div>
+
         <!-- Badge cripto en vivo -->
         <div x-show="patHasCrypto" x-cloak style="display:flex;align-items:center;gap:6px;margin:-2px 2px 12px;font-size:11px;color:var(--muted);">
           <span style="width:7px;height:7px;border-radius:50%;background:var(--c-income);display:inline-block;"></span>
@@ -8637,7 +8652,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v162',
+    APP_VERSION: 'v163',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -10989,6 +11004,8 @@ function zepoApp() {
     // ── Patrimonio (Max) ──
     patrimonyItems: [],
     patSnapshots: [],
+    lifetimeSavings: 0,          // ingresos − gastos de TODO el historial (global, todos los espacios)
+    lifetimeSavingsLoaded: false,
     patSheetOpen: false, _ptY: 0,
     cryptoCoins: CRYPTO_COINS,
     cryptoPricesAt: 0,
@@ -11001,6 +11018,8 @@ function zepoApp() {
     get patTotalAssets() { return this.patAssets.reduce((s, i) => s + (Number(i.current_value) || 0), 0); },
     get patTotalDebts() { return this.patDebts.reduce((s, i) => s + (Number(i.current_value) || 0), 0); },
     get patNetWorth() { return this.patTotalInvestments + this.patTotalAssets - this.patTotalDebts; },
+    // Patrimonio TOTAL = patrimonio neto (activos−deudas) + ahorro acumulado del flujo (ingresos−gastos histórico).
+    get patTotalWithSavings() { return this.patNetWorth + (Number(this.lifetimeSavings) || 0); },
     get patItemCount() { return this._patActive.length; },
     patLinkedFlow(id) { return (this.recurringTemplates || []).find(t => t.patrimony_item_id === id && t.active); },
     get patHasCrypto() { return (this.patrimonyItems || []).some(i => i.coingecko_id && Number(i.quantity) > 0 && (i.status || 'active') !== 'closed'); },
@@ -11077,6 +11096,34 @@ function zepoApp() {
       this.tab = 'patrimonio';
       await this.loadCryptoPrices();   // primero precios frescos…
       this.ensurePatSnapshot();        // …luego fotografía el neto del mes
+      this.loadLifetimeSavings();      // …y el ahorro acumulado de todo el historial
+    },
+    // Ahorro acumulado = ingresos − gastos de TODO el historial (todos los meses, todos los
+    // espacios → global, consistente con el patrimonio que también es global por usuario).
+    // Trae solo 2 columnas (amount, is_income); ligero. Si crece mucho, migrar a un RPC SUM.
+    async loadLifetimeSavings() {
+      if (!this.user || !this.hasPlan('max')) return;
+      const sum = rows => {
+        let inc = 0, exp = 0;
+        (rows || []).forEach(e => { const a = Number(e.amount) || 0; e.is_income ? (inc += a) : (exp += a); });
+        return Math.round((inc - exp) * 100) / 100;
+      };
+      try {
+        const r = await withTimeout(
+          sb.from('expenses').select('amount, is_income').eq('user_id', this.user.id),
+          6000, 'lifetimeSavings'
+        );
+        if (r.error) throw r.error;
+        this.lifetimeSavings = sum(r.data);
+        this.lifetimeSavingsLoaded = true;
+      } catch (e) {
+        console.warn('[loadLifetimeSavings] fallback REST:', e.message);
+        try {
+          const url = SUPABASE_URL + '/rest/v1/expenses?user_id=eq.' + encodeURIComponent(this.user.id) + '&select=amount,is_income';
+          const res = await fetch(url, { headers: await sbAuthHeadersFresh() });
+          if (res.ok) { this.lifetimeSavings = sum(await res.json()); this.lifetimeSavingsLoaded = true; }
+        } catch (e2) { /* red caída: deja el último valor */ }
+      }
     },
     // Guarda/actualiza el punto del MES ACTUAL (no espera al cron mensual).
     // Falla suave: si el usuario no es Max, RLS rechaza el upsert → se ignora.
@@ -14440,7 +14487,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v139.js';
+  const CURRENT_SW = 'sw-v140.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
