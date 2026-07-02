@@ -2501,12 +2501,15 @@
 
     .coach-overlay {
       position: fixed; inset: 0; z-index: 950;
-      background: rgba(4,4,10,0.82);
-      backdrop-filter: blur(8px) saturate(140%);
-      display: flex; align-items: center; justify-content: center;
+      display: flex; align-items: flex-end; justify-content: center;
       padding: 20px;
+      /* NO bloquea toques: el globito de ayuda es informativo, no roba el tap sobre las
+         categorias u otros controles. La tarjeta si recibe toques (sus botones). */
+      pointer-events: none;
     }
     .coach-card {
+      pointer-events: auto;
+      margin-bottom: calc(var(--safe-bottom, 0px) + 8px);
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 24px;
@@ -3689,7 +3692,7 @@ setTimeout(function() {
               </div>
             </div>
             <button @click="tab = 'plans'" style="width:100%;height:52px;border-radius:26px;background:var(--gradient);border:none;color:var(--c-brand-contrast);font-weight:700;font-size:16px;font-family:inherit;cursor:pointer;box-shadow:0 4px 24px rgba(var(--c-brand-rgb),0.2);">Mejorar a Pro · $5/mes</button>
-            <button @click="exportSheetOpen = true" style="margin-top:10px;width:100%;height:50px;border-radius:25px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:14px;font-family:inherit;cursor:pointer;">Exportar mis datos</button>
+            <button @click="exportSheetOpen = true; _preloadExportLibs()" style="margin-top:10px;width:100%;height:50px;border-radius:25px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:14px;font-family:inherit;cursor:pointer;">Exportar mis datos</button>
             <div style="margin-top:20px;font-size:11px;color:var(--dim);line-height:1.5;">Hasta el 31 dic 2026 · Plan Free expirado</div>
           </div>
         </div>
@@ -5543,7 +5546,7 @@ setTimeout(function() {
         <!-- Data -->
         <div class="settings-group-title">Datos</div>
         <div class="settings-group">
-          <button class="settings-item" @click="exportSheetOpen = true">
+          <button class="settings-item" @click="exportSheetOpen = true; _preloadExportLibs()">
             <div class="si-icon" style="background:rgba(var(--c-brand-rgb),0.1);">
               <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             </div>
@@ -8662,7 +8665,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v168',
+    APP_VERSION: 'v169',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -8710,6 +8713,7 @@ function zepoApp() {
       list.push(cat);
       CAT_MAP[key] = cat;
       this.saveCustomCategories();
+      this._customCatUpsert(cat, isInc);
       this.selectCatForItem(cat);
       this._resetQuickCat();
       this.showToast('✓ Categoría "' + label + '" creada y asignada');
@@ -8734,6 +8738,7 @@ function zepoApp() {
       list.push(cat);
       CAT_MAP[key] = cat;
       this.saveCustomCategories();
+      this._customCatUpsert(cat, this.form.is_income);
       this.form.category = key;
       this._resetGridCat();
       this.showToast('✓ Categoría "' + label + '" creada');
@@ -8761,6 +8766,7 @@ function zepoApp() {
       list.push(cat);
       CAT_MAP[key] = cat;
       this.saveCustomCategories();
+      this._customCatUpsert(cat, it.is_income);
       this.updateParsedItemCat(idx, key);
       this._resetGridCat();
       this.showToast('✓ Categoría "' + label + '" creada');
@@ -9161,7 +9167,7 @@ function zepoApp() {
           this.userName = session.user.user_metadata?.name || session.user.user_metadata?.full_name || session.user.email.split('@')[0];
           await this.ensureUserRow();
           await this.loadSpaces();
-          await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadBudgets(), this.loadUserPlan(), this.loadFriends(), this.loadPaymentRequests(), this.loadPaymentMethods(), this.loadCategoryLearning(), this.loadRecurringTemplates(), this.loadPatrimony()]);
+          await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadBudgets(), this.loadUserPlan(), this.loadFriends(), this.loadPaymentRequests(), this.loadPaymentMethods(), this.loadCategoryLearning(), this.loadRecurringTemplates(), this.loadPatrimony(), this.loadCustomCategoriesRemote()]);
           this.handlePaymentReturn();
           this.initWelcomeCarousel();
           this.loadNotifSettings();
@@ -9287,6 +9293,7 @@ function zepoApp() {
           this.loadExpenses();
           this.loadUserPlan();
           this.loadPatrimony();
+          this.loadCustomCategoriesRemote();   // baja las categorias propias en login fresco (device nuevo / tras purga de iOS)
           this.initWelcomeCarousel();
           this.loadNotifSettings();
           this.initPushIfNeeded();
@@ -10788,8 +10795,12 @@ function zepoApp() {
         const data = JSON.parse(raw);
         const seen = new Set(this.categories.map(c => c.key));
         const seenInc = new Set(this.incomeCategories.map(c => c.key));
-        (data.expense || []).forEach(c => { if (!seen.has(c.key)) this.categories.push(c); });
-        (data.income || []).forEach(c => { if (!seenInc.has(c.key)) this.incomeCategories.push(c); });
+        // Registrar SIEMPRE en CAT_MAP: sin esto, tras un reload las categorias propias
+        // quedan en el grid pero invisibles para toda la logica que usa CAT_MAP (nombres del
+        // dashboard + updateParsedItemCat), lo que se veia como "el nombre sale custom_xxx" y
+        // "toco la categoria y no se selecciona".
+        (data.expense || []).forEach(c => { if (!seen.has(c.key)) this.categories.push(c); CAT_MAP[c.key] = c; });
+        (data.income || []).forEach(c => { if (!seenInc.has(c.key)) this.incomeCategories.push(c); CAT_MAP[c.key] = c; });
       } catch {}
       // Overrides de label/emoji para builtins (cuando el usuario edita una "sugerida")
       try {
@@ -10825,6 +10836,45 @@ function zepoApp() {
         }
       });
       try { localStorage.setItem('zepo:cat-overrides', JSON.stringify(overrides)); } catch {}
+    },
+    // ── Sync de categorias propias con la nube ────────────────────────────────
+    // Antes vivian SOLO en localStorage -> se perdian al cambiar de device o cuando iOS
+    // purga el storage de la PWA (cap ~7 dias): el dashboard mostraba "custom_xxx" y no se
+    // podian re-seleccionar. Ahora tambien van a public.zepo_custom_categories (dueno-only).
+    async loadCustomCategoriesRemote() {
+      if (!this.user) return;
+      let rows;
+      try {
+        const r = await withTimeout(
+          sb.from('zepo_custom_categories').select('key,label,emoji,color,is_income').eq('user_id', this.user.id),
+          6000, 'load-custom-cats');
+        rows = r.data;
+      } catch (e) { return; }                 // offline / error: se queda con el cache local
+      if (!Array.isArray(rows)) return;
+      const dbKeys = new Set();
+      rows.forEach(row => {
+        dbKeys.add(row.key);
+        const list = row.is_income ? this.incomeCategories : this.categories;
+        const ex = list.find(c => c.key === row.key);
+        if (ex) { ex.label = row.label; ex.emoji = row.emoji || '✨'; ex.color = row.color || '#948E80'; CAT_MAP[row.key] = ex; }
+        else { const cat = { key: row.key, label: row.label, emoji: row.emoji || '✨', color: row.color || '#948E80' }; list.push(cat); CAT_MAP[row.key] = cat; }
+      });
+      this.saveCustomCategories();            // refresca el cache local con lo bajado
+      // Sube (1 vez) las que existen SOLO en este dispositivo -> migracion a la nube
+      this.categories.forEach(c => { if (c.key.startsWith('custom_') && !dbKeys.has(c.key)) this._customCatUpsert(c, false); });
+      this.incomeCategories.forEach(c => { if (c.key.startsWith('custom_') && !dbKeys.has(c.key)) this._customCatUpsert(c, true); });
+    },
+    _customCatUpsert(cat, isIncome) {
+      if (!this.user || !cat || !String(cat.key).startsWith('custom_')) return;
+      sbRestUpsert('zepo_custom_categories', {
+        user_id: this.user.id, key: cat.key, label: cat.label,
+        emoji: cat.emoji || '✨', color: cat.color || '#948E80', is_income: !!isIncome,
+        updated_at: new Date().toISOString(),
+      }, 'user_id,key').catch(() => {});      // best-effort; el cache local ya guardo
+    },
+    _customCatDelete(key) {
+      if (!this.user || !String(key).startsWith('custom_')) return;
+      sbRestDelete('zepo_custom_categories', { user_id: this.user.id, key }).catch(() => {});
     },
     // ── Aprender de categorizaciones (Feature 2) ──
     // Token = nombre del producto normalizado (sin numeros/unidades/tildes), max 4 palabras.
@@ -11671,6 +11721,7 @@ function zepoApp() {
       else this.categories.push(cat);
       CAT_MAP[key] = cat;
       this.saveCustomCategories();
+      this._customCatUpsert(cat, this.catManagerMode === 'income');
       this.newCatLabel = '';
       this.newCatEmoji = '✨';
       this._lastAutoEmoji = null;
@@ -11704,6 +11755,7 @@ function zepoApp() {
         CAT_MAP[key] = cat;
       }
       this.saveCustomCategories();
+      if (cat && key.startsWith('custom_')) this._customCatUpsert(cat, this.catManagerMode === 'income');
       this.cancelEditCategory();
       this.showToast('Categoría actualizada');
     },
@@ -11724,6 +11776,7 @@ function zepoApp() {
       delete CAT_MAP[key];
       if (this.form.category === key) this.form.category = '';
       this.saveCustomCategories();
+      this._customCatDelete(key);
       if (this.editingCatKey === key) this.cancelEditCategory();
       this.showToast('Categoría eliminada');
     },
@@ -11761,35 +11814,34 @@ function zepoApp() {
       if (!this.hasPlan('elite')) { this.tab = 'plans'; return this.showToast('Excel requiere Elite'); }
       const { data } = await sb.from('expenses').select('*').eq('user_id', this.user.id).order('date', { ascending: false });
       if (!data || !data.length) return this.showToast('No hay datos');
+      this.showToast('Generando Excel…');
       const header = ['Fecha','Categoría','Descripción','Monto','Tipo','Split','Persona','Pendiente'];
       const rows = data.map(e => [
-        e.date, CAT_MAP[e.category]?.label || e.category, e.description || '',
+        e.date, this.getCatLabel(e.category), e.description || '',
         e.amount, e.is_income ? 'Ingreso' : 'Gasto',
-        e.is_split ? 'Si' : 'No', e.split_persona || '', e.split_pending || 0
+        e.is_split ? 'Sí' : 'No', e.split_persona || '', e.split_pending || 0
       ]);
-      const xml = this.buildExcelXML(header, rows);
-      const blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'zepo-gastos.xls';
-      a.click();
-      this.showToast('Excel descargado');
-    },
-
-    buildExcelXML(header, rows) {
-      let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-      xml += '<?mso-application progid="Excel.Sheet"?>\n';
-      xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n';
-      xml += '<Worksheet ss:Name="Gastos"><Table>\n';
-      xml += '<Row>' + header.map(h => `<Cell><Data ss:Type="String">${h}</Data></Cell>`).join('') + '</Row>\n';
-      rows.forEach(r => {
-        xml += '<Row>' + r.map((c, i) => {
-          const type = (i === 3 || i === 7) ? 'Number' : 'String';
-          return `<Cell><Data ss:Type="${type}">${c}</Data></Cell>`;
-        }).join('') + '</Row>\n';
-      });
-      xml += '</Table></Worksheet></Workbook>';
-      return xml;
+      try {
+        // .xlsx REAL via SheetJS. El .xls XML viejo lo rechazaba Office en iPhone
+        // ("este tipo de archivo no es compatible con esta versión de Office").
+        await this._loadSheetJS();
+        const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+        ws['!cols'] = [{ wch: 11 }, { wch: 16 }, { wch: 28 }, { wch: 10 }, { wch: 9 }, { wch: 7 }, { wch: 14 }, { wch: 10 }];
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Gastos');
+        const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        await this._saveFile(blob, 'zepo-gastos.xlsx');
+        this.showToast('Excel descargado');
+      } catch (e) {
+        // Fallback universal: CSV (abre en Excel/Numbers/Sheets en cualquier lado).
+        const csv = [header, ...rows].map(r => r.map(c => {
+          const s = String(c == null ? '' : c);
+          return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+        }).join(',')).join('\n');
+        await this._saveFile(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }), 'zepo-gastos.csv');
+        this.showToast('Excel (CSV) descargado');
+      }
     },
 
     openNew() {
@@ -12893,6 +12945,33 @@ function zepoApp() {
       } catch (e) { this.showToast('Error: ' + e.message); }
     },
 
+    // Guarda un archivo generado. En movil (iOS PWA instalada la descarga <a download>
+    // NO funciona: usa el share sheet nativo via Web Share API con archivos, que SI abre
+    // "Guardar en Archivos"/enviar. En desktop cae a la descarga normal.
+    async _saveFile(blob, filename) {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile && navigator.canShare) {
+        try {
+          const file = new File([blob], filename, { type: blob.type });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: filename });
+            return;
+          }
+        } catch (e) {
+          if (e && e.name === 'AbortError') return; // el usuario cerro el share sheet
+          // cualquier otro error \u2192 cae a la descarga clasica
+        }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    },
+
     async exportCSV() {
       const { data, error } = await sb.from('expenses')
         .select('*')
@@ -12903,7 +12982,7 @@ function zepoApp() {
       const header = 'fecha,categoria,descripcion,monto,tipo,dividido,persona\n';
       const rows = data.map(e => [
         e.date,
-        (CAT_MAP[e.category]?.label || e.category || '').replace(/,/g, ' '),
+        (this.getCatLabel(e.category) || '').replace(/,/g, ' '),
         '"' + (e.description || '').replace(/"/g, '""') + '"',
         e.amount,
         e.is_income ? 'ingreso' : 'gasto',
@@ -12911,14 +12990,7 @@ function zepoApp() {
         (e.split_persona || '').replace(/,/g, ' '),
       ].join(',')).join('\n');
       const blob = new Blob(['\ufeff' + header + rows], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'zepo-gastos-' + localDate() + '.csv';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 200);
+      await this._saveFile(blob, 'zepo-gastos-' + localDate() + '.csv');
       this.showToast('CSV descargado');
     },
 
@@ -12975,12 +13047,14 @@ function zepoApp() {
 
     _loadSheetJS() {
       if (window.XLSX) return Promise.resolve();
-      return new Promise((res, rej) => {
+      if (this._xlsxPromise) return this._xlsxPromise;
+      this._xlsxPromise = new Promise((res, rej) => {
         const s = document.createElement('script');
         s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
         s.onload = res; s.onerror = rej;
         document.head.appendChild(s);
-      });
+      }).catch((e) => { this._xlsxPromise = null; throw e; });
+      return this._xlsxPromise;
     },
 
     _normalizeRows(data) {
@@ -13086,6 +13160,7 @@ function zepoApp() {
           const newCat = { key, emoji, label: cat.raw, color };
           this.categories.push(newCat);
           CAT_MAP[key] = newCat;
+          this._customCatUpsert(newCat, false);
           // Map this raw name → new key for this import session
           this.catResolutions[cat.raw] = key;
         }
@@ -13120,6 +13195,29 @@ function zepoApp() {
 
     // ═════════════════════════════════════════════════════════════════════════
 
+    _loadJsPDF() {
+      if (window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API && window.jspdf.jsPDF.API.autoTable) return Promise.resolve();
+      if (this._jspdfPromise) return this._jspdfPromise;
+      const load = (src) => new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = src; s.onload = res; s.onerror = rej;
+        document.head.appendChild(s);
+      });
+      this._jspdfPromise = load('https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js')
+        .then(() => load('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js'))
+        .catch((e) => { this._jspdfPromise = null; throw e; });
+      return this._jspdfPromise;
+    },
+
+    // Precarga las librerias de exportacion al ABRIR la hoja, para que al tocar Excel/PDF
+    // el archivo se genere sin esperar al CDN: iOS invalida navigator.share() si hay un
+    // await largo despues del gesto del usuario. Fire-and-forget (silencia errores).
+    _preloadExportLibs() {
+      if (!this.hasPlan('elite')) return;
+      this._loadSheetJS().catch(() => {});
+      this._loadJsPDF().catch(() => {});
+    },
+
     async exportPDF() {
       if (!this.hasPlan('elite')) { this.tab = 'plans'; return this.showToast('PDF requiere Elite'); }
       const { data } = await sb.from('expenses')
@@ -13127,59 +13225,60 @@ function zepoApp() {
         .eq('user_id', this.user.id)
         .order('date', { ascending: false });
       if (!data || !data.length) return this.showToast('No hay datos');
+      this.showToast('Generando PDF…');
+      // PDF REAL en el dispositivo (sin window.open, que iOS bloquea → "Permite popups").
+      try {
+        await this._loadJsPDF();
+      } catch (e) {
+        return this.showToast('No se pudo cargar el generador de PDF');
+      }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
 
       const total = data.filter(e => !e.is_income).reduce((s, e) => s + (e.amount || 0), 0);
       const income = data.filter(e => e.is_income).reduce((s, e) => s + (e.amount || 0), 0);
       const byCat = {};
       data.filter(e => !e.is_income).forEach(e => {
-        const k = CAT_MAP[e.category]?.label || e.category || 'Otros';
+        const k = this.getCatLabel(e.category) || 'Otros';
         byCat[k] = (byCat[k] || 0) + (e.amount || 0);
       });
-      const catRows = Object.entries(byCat).sort((a, b) => b[1] - a[1])
-        .map(([k, v]) => `<tr><td>${k}</td><td style="text-align:right">$${v.toFixed(2)}</td></tr>`).join('');
-      const expRows = data.slice(0, 200).map(e => `
-        <tr>
-          <td>${e.date}</td>
-          <td>${CAT_MAP[e.category]?.label || e.category || '-'}</td>
-          <td>${(e.description || '').replace(/</g, '&lt;')}</td>
-          <td style="text-align:right;color:${e.is_income ? '#00B383' : '#222'}">${e.is_income ? '+' : ''}$${(e.amount || 0).toFixed(2)}</td>
-        </tr>`).join('');
 
-      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Zepo · Reporte</title>
-<style>
-  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 32px; color: #1a1a25; max-width: 800px; margin: 0 auto; }
-  h1 { font-size: 28px; margin: 0 0 4px; letter-spacing: -0.5px; }
-  .sub { color: #666; font-size: 13px; margin-bottom: 28px; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
-  .card { padding: 16px; border-radius: 12px; border: 1px solid #ddd; }
-  .card .lbl { font-size: 11px; color: #888; letter-spacing: 1px; text-transform: uppercase; }
-  .card .num { font-size: 24px; font-weight: 800; margin-top: 4px; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 13px; }
-  th { text-align: left; padding: 8px; background: #f5f5f7; font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: #555; }
-  td { padding: 8px; border-bottom: 1px solid #eee; }
-  h2 { font-size: 16px; margin: 24px 0 12px; }
-  .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #ddd; font-size: 11px; color: #999; text-align: center; }
-  @media print { body { padding: 16px; } }
-</style></head><body>
-  <h1>Reporte de gastos · Zepo</h1>
-  <div class="sub">Generado el ${new Date().toLocaleDateString('es-EC', { dateStyle: 'long' })}</div>
-  <div class="grid">
-    <div class="card"><div class="lbl">Total gastos</div><div class="num">$${total.toFixed(2)}</div></div>
-    <div class="card"><div class="lbl">Total ingresos</div><div class="num" style="color:#00B383">$${income.toFixed(2)}</div></div>
-  </div>
-  <h2>Por categoría</h2>
-  <table><thead><tr><th>Categoría</th><th style="text-align:right">Total</th></tr></thead><tbody>${catRows}</tbody></table>
-  <h2>Movimientos${data.length > 200 ? ' (200 más recientes)' : ''}</h2>
-  <table><thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th style="text-align:right">Monto</th></tr></thead><tbody>${expRows}</tbody></table>
-  <div class="footer">Hecho con Zepo · zepo.lynoia.com</div>
-  <scr` + `ipt>setTimeout(() => window.print(), 400);</scr` + `ipt>
-</body></html>`;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(20); doc.setTextColor(26, 36, 24);
+      doc.text('Reporte de gastos · Zepo', 40, 50);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(120, 120, 120);
+      doc.text('Generado el ' + new Date().toLocaleDateString('es-EC', { dateStyle: 'long' }), 40, 68);
+      doc.setFontSize(12); doc.setTextColor(26, 36, 24);
+      doc.text('Total gastos: $' + total.toFixed(2), 40, 94);
+      doc.text('Total ingresos: $' + income.toFixed(2), 300, 94);
 
-      const w = window.open('', '_blank');
-      if (!w) return this.showToast('Permite popups para generar el PDF');
-      w.document.write(html);
-      w.document.close();
-      this.showToast('Generando PDF…');
+      doc.autoTable({
+        startY: 114,
+        head: [['Categoría', 'Total']],
+        body: Object.entries(byCat).sort((a, b) => b[1] - a[1]).map(([k, v]) => [k, '$' + v.toFixed(2)]),
+        styles: { fontSize: 9, cellPadding: 5 },
+        headStyles: { fillColor: [80, 125, 90], textColor: 255 },
+        columnStyles: { 1: { halign: 'right' } },
+        margin: { left: 40, right: 40 },
+      });
+
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 22,
+        head: [['Fecha', 'Categoría', 'Descripción', 'Monto']],
+        body: data.slice(0, 500).map(e => [
+          e.date,
+          this.getCatLabel(e.category) || '-',
+          e.description || '',
+          (e.is_income ? '+' : '') + '$' + (e.amount || 0).toFixed(2),
+        ]),
+        styles: { fontSize: 8, cellPadding: 4, overflow: 'linebreak' },
+        headStyles: { fillColor: [80, 125, 90], textColor: 255 },
+        columnStyles: { 0: { cellWidth: 66 }, 3: { halign: 'right', cellWidth: 70 } },
+        margin: { left: 40, right: 40 },
+      });
+
+      const blob = doc.output('blob');
+      await this._saveFile(blob, 'zepo-reporte.pdf');
+      this.showToast('PDF listo');
     },
 
     async installApp() {
@@ -13679,8 +13778,11 @@ function zepoApp() {
     },
 
     updateParsedItemCat(idx, key) {
-      const cat = CAT_MAP[key];
+      // Fallback a los arrays del grid por si la categoria propia no esta en CAT_MAP
+      // (defensa en profundidad; loadCustomCategories ya deberia haberla registrado).
+      const cat = CAT_MAP[key] || this.categories.find(c => c.key === key) || this.incomeCategories.find(c => c.key === key);
       if (!cat) return;
+      CAT_MAP[key] = cat;
       const it = this.parsedItems[idx];
       if (!it) return;
       it.category = key;
@@ -14565,7 +14667,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v144.js';
+  const CURRENT_SW = 'sw-v145.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {

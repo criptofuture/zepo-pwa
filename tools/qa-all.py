@@ -47,6 +47,8 @@ CHECKS = [
     ("E2E gating de planes (free/pro/elite/max)", ["python", os.path.join(TOOLS, "qa-e2e-plan-gating.py")]),
     ("E2E Patrimonio: ahorro acumulado + total", ["python", os.path.join(TOOLS, "qa-e2e-pat-savings.py")]),
     ("E2E borrar ingreso desde Historial + etiquetas", ["python", os.path.join(TOOLS, "qa-e2e-history-delete.py")]),
+    ("E2E categorias propias tras reload (nombres + seleccion)", ["python", os.path.join(TOOLS, "qa-e2e-custom-cat.py")]),
+    ("E2E categorias propias SYNC nube (sobrevive device nuevo)", ["python", os.path.join(TOOLS, "qa-e2e-custom-cat-sync.py")]),
 ]
 
 def main():
