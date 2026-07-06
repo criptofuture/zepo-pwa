@@ -6505,7 +6505,7 @@ setTimeout(function() {
                           <div style="font-size:11px;color:var(--muted);margin-top:2px;"><span x-text="(e.label || e.category)"></span> · <span x-text="e.date"></span></div>
                         </div>
                         <div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;" :style="{ color: e.is_income ? 'var(--success)' : 'var(--text)' }" x-text="(e.is_income ? '+$' : '−$') + parseFloat(e.amount).toFixed(2)"></div>
-                        <button @click="parsedItems.splice(parsedItems.indexOf(e), 1)" style="width:22px;height:22px;border-radius:6px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;padding:0;" title="Quitar">
+                        <button @click="removeParsedItem(parsedItems.indexOf(e))" style="width:22px;height:22px;border-radius:6px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;padding:0;" title="Quitar">
                           <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
                       </div>
@@ -7529,6 +7529,16 @@ setTimeout(function() {
                   <button @click="claimPayment(activeDebo.id); deboDetailOpen = false" style="width:100%;height:50px;border-radius:25px;background:rgba(var(--c-income-rgb),0.12);border:1px solid rgba(var(--c-income-rgb),0.3);color:var(--success);font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.4" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
                     Ya pague
+                  </button>
+                  <!-- Aceptaste sin registrar: puedes registrarlo como gasto ahora (pedido Alvaro) -->
+                  <button x-show="!activeDebo.receiver_expense_id" @click="registerAcceptedDebt(activeDebo)" style="width:100%;height:46px;border-radius:23px;background:rgba(var(--c-brand-rgb),0.08);border:1px solid rgba(var(--c-brand-rgb),0.25);color:var(--cyan);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Registrar como gasto
+                  </button>
+                  <!-- Ya registrado y visible en la ventana actual: editar ese gasto -->
+                  <button x-show="activeDebo.receiver_expense_id && expenses.some(e => e.id === activeDebo.receiver_expense_id)" @click="deboDetailOpen = false; $nextTick(() => { const exp = expenses.find(e => e.id === activeDebo.receiver_expense_id); if (exp) openEdit(exp); })" style="width:100%;height:46px;border-radius:23px;background:rgba(var(--c-brand-rgb),0.08);border:1px solid rgba(var(--c-brand-rgb),0.25);color:var(--cyan);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Editar registro
                   </button>
                 </div>
               </template>
@@ -8670,7 +8680,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v170',
+    APP_VERSION: 'v171',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -12051,6 +12061,13 @@ function zepoApp() {
       if (!await this.askConfirm({ title: '¿Eliminar grupo?', body: 'Se eliminarán los ' + batchItems.length + ' registros. No se puede deshacer.' })) return;
       try {
         const ids = batchItems.map(e => e.id).filter(id => !String(id).startsWith('temp_'));
+        // Retira cobros ligados de los items divididos antes de borrarlos.
+        for (const it of batchItems) {
+          if (it.is_split && !String(it.id).startsWith('temp_')) {
+            try { await sb.rpc('retract_split_expense', { p_expense_id: it.id }); }
+            catch (e) { console.warn('[deleteBatch] retract:', e.message); }
+          }
+        }
         if (ids.length > 0) {
           try {
             await withTimeout(sb.from('expenses').delete().in('id', ids).then(r => { if (r.error) throw r.error; return r; }), 4000, 'deleteBatch');
@@ -12226,6 +12243,8 @@ function zepoApp() {
           }
         }
 
+        // id del gasto guardado (nuevo o editado) — para ligar el cobro al gasto (retract al borrar)
+        const savedExpenseId = this.editingExpense ? this.editingExpense.id : ((inserted && inserted.id) || null);
         this.sheetOpen = false;
         this._extractFromBatch = false;
 
@@ -12263,6 +12282,7 @@ function zepoApp() {
               category: this.form.category,
               expense_date: this.form.date || localDate(),
               status: 'pending',
+              origin_expense_id: savedExpenseId,
             }));
           }
           if (prInserts.length) bgTasks.push(Promise.all(prInserts));
@@ -12387,6 +12407,7 @@ function zepoApp() {
           const prInserts = [];
           for (const name of names) {
             const friend = this.friends.find(f => f.display_name.toLowerCase() === name.toLowerCase());
+            if (!friend) continue;
             for (let i = 0; i < insertedRows.length; i++) {
               const totalAmt = validItems[i]?.amount || 0;
               const n = names.length;
@@ -12395,14 +12416,13 @@ function zepoApp() {
               if (perPersonAmt > 0) {
                 prInserts.push(sb.from('payment_requests').insert({
                   from_user_id: this.user.id,
-                  to_user_id: friend?.user_id || null,
-                  debtor_name: name,
+                  to_user_id: friend.user_id,
                   amount: perPersonAmt,
                   description: validItems[i]?.description || 'Gasto compartido',
                   category: validItems[i]?.category || 'other',
-                  expense_id: insertedRows[i]?.id || null,
                   expense_date: date,
                   status: 'pending',
+                  origin_expense_id: insertedRows[i]?.id || null,
                 }));
               }
             }
@@ -12538,7 +12558,14 @@ function zepoApp() {
       const wasIncome = !!this.editingExpense.is_income;
       if (!await this.askConfirm({ title: wasIncome ? '¿Eliminar este ingreso?' : '¿Eliminar este gasto?', body: 'Esta acción no se puede deshacer.' })) return;
       const id = this.editingExpense.id;
+      const wasSplit = !!this.editingExpense.is_split;
       try {
+        // Split: retira el/los cobro(s) ligado(s) y borra el gasto espejo del receptor
+        // (funcion segura en la BD; RLS impide tocar filas de otro usuario desde el cliente).
+        if (wasSplit) {
+          try { await sb.rpc('retract_split_expense', { p_expense_id: id }); }
+          catch (e) { console.warn('[deleteExpense] retract:', e.message); }
+        }
         try {
           await withTimeout(sb.from('expenses').delete().eq('id', id).then(r => { if (r.error) throw r.error; return r; }), 2500, 'deleteExpense');
         } catch (e) {
@@ -13807,13 +13834,16 @@ function zepoApp() {
     },
 
     removeParsedItem(idx) {
+      if (idx < 0) return;
       this.parsedItems.splice(idx, 1);
       if (this.parsedItems.length === 0) {
         this.analyzed = false;
         this.form.amount = '';
+        if (this.form.is_split) this._syncSplitAmts();
         return;
       }
-      this.form.amount = this.parsedItems.reduce((s, p) => s + p.amount, 0).toFixed(2);
+      this.form.amount = this.parsedItems.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0).toFixed(2);
+      if (this.form.is_split) this._syncSplitAmts();
     },
 
     updateParsedItemCat(idx, key) {
@@ -14500,7 +14530,7 @@ function zepoApp() {
       if (!this.user) return;
       const uid = this.user.id;
       const { data: received } = await sb.from('payment_requests')
-        .select('id,from_user_id,amount,description,category,expense_date,status,created_at')
+        .select('id,from_user_id,amount,description,category,expense_date,status,created_at,receiver_expense_id')
         .eq('to_user_id', uid).in('status', ['pending','accepted','paid']).order('created_at', { ascending: false });
       const { data: sent } = await sb.from('payment_requests')
         .select('id,to_user_id,amount,description,category,expense_date,status,created_at')
@@ -14542,14 +14572,12 @@ function zepoApp() {
       this.loadFriends();
     },
 
-    // Núcleo de aceptar una solicitud (sin UI). opts.silent omite toast de error; opts.deferReload no recarga gastos.
-    async _doAcceptPr(pr, addExpense, opts) {
-      opts = opts || {};
-      if (!pr) return false;
-      const { error } = await sb.from('payment_requests').update({ status: 'accepted' }).eq('id', pr.id);
-      if (error) { if (!opts.silent) this.showToast('Error al aceptar'); return false; }
-      if (addExpense) {
-        await sb.from('expenses').insert({
+    // Crea el gasto ESPEJO de un cobro y lo liga (receiver_expense_id) para que el remitente
+    // pueda retirarlo al borrar su gasto. Devuelve el id del espejo (o null si falló).
+    async _insertMirrorExpense(pr) {
+      let mirrorId = null;
+      try {
+        const r = await sb.from('expenses').insert({
           user_id:     this.user.id,
           amount:      Number(pr.amount),
           description: pr.description,
@@ -14557,13 +14585,49 @@ function zepoApp() {
           date:        pr.expense_date || localDate(),
           is_income:   false,
           is_split:    false,
+          split_status: null,
           space_id:    this._currentSpaceId(),
-        });
+        }).select('id').single();
+        mirrorId = r.data && r.data.id;
+      } catch (e) { console.warn('[mirror] insert:', e.message); }
+      if (mirrorId) {
+        sb.from('payment_requests').update({ receiver_expense_id: mirrorId }).eq('id', pr.id)
+          .then(({ error }) => { if (error) console.warn('[mirror] link:', error.message); });
+      }
+      return mirrorId;
+    },
+
+    // Núcleo de aceptar una solicitud (sin UI). opts.silent omite toast de error; opts.deferReload no recarga gastos.
+    async _doAcceptPr(pr, addExpense, opts) {
+      opts = opts || {};
+      if (!pr) return false;
+      const { error } = await sb.from('payment_requests').update({ status: 'accepted' }).eq('id', pr.id);
+      if (error) { if (!opts.silent) this.showToast('Error al aceptar'); return false; }
+      if (addExpense) {
+        const mirrorId = await this._insertMirrorExpense(pr);
+        if (mirrorId) {
+          const f = this.payReqs.find(p => p.id === pr.id);
+          if (f) f.receiver_expense_id = mirrorId;
+        }
         if (!opts.deferReload) await this.loadExpenses();
       }
       const found = this.payReqs.find(p => p.id === pr.id);
       if (found) found.status = 'accepted';
       return true;
+    },
+
+    // Registrar como gasto un cobro que YA se aceptó pero SIN registrar (receiver_expense_id null).
+    // Permite cambiar de opinión: crea el gasto espejo ahora y lo liga al cobro.
+    async registerAcceptedDebt(pr) {
+      if (!pr || pr.receiver_expense_id) return;
+      const mirrorId = await this._insertMirrorExpense(pr);
+      if (!mirrorId) { this.showToast('Error al registrar'); return; }
+      pr.receiver_expense_id = mirrorId;
+      const found = this.payReqs.find(p => p.id === pr.id);
+      if (found) found.receiver_expense_id = mirrorId;
+      await this.loadExpenses();
+      this.dataVer++;
+      this.showToast('✅ Gasto registrado');
     },
 
     async acceptPaymentRequest(pr_id, addExpense) {
@@ -14706,7 +14770,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v146.js';
+  const CURRENT_SW = 'sw-v147.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
