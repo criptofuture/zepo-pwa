@@ -4307,6 +4307,14 @@ setTimeout(function() {
 
         <!-- ── Me deben (splits) ── -->
         <div x-show="cuentasTab === 'me-deben'">
+          <!-- Health check: avisa si la libreta no cuadra con los cobros aceptados -->
+          <div x-show="_reconcileWarnings.length > 0" style="margin:0 20px 14px;padding:12px 14px;border-radius:12px;background:rgba(var(--c-warning-rgb),0.12);border:1px solid rgba(var(--c-warning-rgb),0.35);display:flex;gap:10px;align-items:flex-start;">
+            <span style="font-size:16px;line-height:1.2;">⚠️</span>
+            <div style="font-size:12px;color:var(--text);line-height:1.45;">
+              <span style="font-weight:700;">Revisar cuentas</span> — <span x-text="_reconcileWarnings.map(w=>w.name).join(', ')"></span>
+              no cuadra con sus cobros aceptados. Abre a la persona en “Gente que…” para reconciliar.
+            </div>
+          </div>
           <!-- Confirmar pagos (friends claim they paid me) -->
           <div x-show="meDebenPaidClaims.length > 0" style="padding:0 20px 14px;">
             <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--success);text-transform:uppercase;margin-bottom:8px;padding-left:4px;">
@@ -4350,11 +4358,13 @@ setTimeout(function() {
             <div style="padding:0 20px;">
               <div style="padding:1px;border-radius:16px;background:var(--gradient);margin-bottom:14px;box-shadow:0 0 32px rgba(var(--c-brand-rgb),0.12), 0 0 64px rgba(var(--c-accent-rgb),0.08);">
                 <div style="padding:18px;border-radius:15px;background:var(--bg);">
-                  <div style="font-size:11px;color:var(--muted);letter-spacing:1px;font-weight:600;">TE DEBEN</div>
+                  <div style="font-size:11px;color:var(--muted);letter-spacing:1px;font-weight:600;">TE DEBEN <span style="opacity:0.7;">· confirmado</span></div>
                   <div style="margin-top:4px;display:flex;align-items:baseline;gap:4px;">
                     <span style="font-size:22px;color:var(--muted);font-weight:600;">$</span>
-                    <span class="gradient-text" style="font-size:44px;font-weight:800;letter-spacing:-2px;line-height:1;font-variant-numeric:tabular-nums;" x-text="totalPendingAmount.toFixed(2)"></span>
+                    <span class="gradient-text" style="font-size:44px;font-weight:800;letter-spacing:-2px;line-height:1;font-variant-numeric:tabular-nums;" x-text="teDebenConfirmado.toFixed(2)"></span>
                   </div>
+                  <div x-show="teDebenPorAceptar > 0" style="margin-top:6px;font-size:12px;color:var(--warning);font-weight:600;"
+                       x-text="'+ $' + teDebenPorAceptar.toFixed(2) + ' por aceptar'"></div>
                   <div style="margin-top:8px;display:flex;gap:14px;font-size:12px;color:var(--muted);">
                     <div style="display:flex;align-items:center;gap:4px;">
                       <div style="width:6px;height:6px;border-radius:3px;background:var(--warning);"></div>
@@ -4418,7 +4428,8 @@ setTimeout(function() {
                           </div>
                           <div style="text-align:right;flex-shrink:0;">
                             <div style="font-size:16px;font-weight:700;letter-spacing:-0.3px;color:var(--text);font-variant-numeric:tabular-nums;" x-text="'$' + entry._amount.toFixed(2)"></div>
-                            <div style="margin-top:4px;display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(var(--c-warning-rgb),0.15);color:var(--warning);letter-spacing:0.4px;">PENDIENTE</div>
+                            <div style="margin-top:4px;display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(var(--c-warning-rgb),0.15);color:var(--warning);letter-spacing:0.4px;" x-text="_isPorAceptar(entry) ? 'POR ACEPTAR' : 'PENDIENTE'"></div>
+                            <div x-show="_isReviewRequested(entry)" style="margin-top:4px;font-size:10px;font-weight:800;color:var(--warning);letter-spacing:0.3px;">🔎 REVISION</div>
                           </div>
                         </div>
                       </template>
@@ -7403,6 +7414,20 @@ setTimeout(function() {
                 </div>
               </div>
 
+              <!-- El receptor pidio revision de este cobro -> el emisor puede cancelarlo -->
+              <template x-if="_isReviewRequested(activeCobro)">
+                <div style="margin-bottom:12px;">
+                  <div style="padding:12px 14px;border-radius:12px;background:rgba(var(--c-warning-rgb),0.12);border:1px solid rgba(var(--c-warning-rgb),0.35);margin-bottom:8px;">
+                    <div style="font-size:13px;font-weight:700;color:var(--warning);">🔎 Revision pedida</div>
+                    <div style="font-size:12px;color:var(--muted);margin-top:3px;line-height:1.4;">La otra persona pidio revisar este cobro. Si lo cancelas, el gasto vuelve a ser 100% tuyo y desaparece de la deuda de ambos.</div>
+                  </div>
+                  <button @click="cancelCobro((_cobroForSplit(activeCobro)||{}).id)" style="width:100%;height:50px;border-radius:25px;background:rgba(var(--c-expense-rgb),0.12);border:1px solid rgba(var(--c-expense-rgb),0.35);color:var(--danger);font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2.4" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                    Cancelar cobro
+                  </button>
+                </div>
+              </template>
+
               <!-- Boton editar gasto original -->
               <button @click="cobroDetailOpen = false; $nextTick(() => { const exp = expenses.find(e => e.id === activeCobro.id); if (exp) openEdit(exp); })" style="width:100%;height:46px;border-radius:23px;background:rgba(var(--c-brand-rgb),0.08);border:1px solid rgba(var(--c-brand-rgb),0.25);color:var(--cyan);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -7522,6 +7547,11 @@ setTimeout(function() {
                     Aceptar cobro
                   </button>
                   <button @click="declinePaymentRequest(activeDebo.id); deboDetailOpen = false" style="width:100%;height:46px;border-radius:23px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">Ignorar</button>
+                  <button x-show="!activeDebo.review_requested" @click="requestReview(activeDebo.id); deboDetailOpen = false" style="width:100%;height:46px;border-radius:23px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    Pedir revision al emisor
+                  </button>
+                  <div x-show="activeDebo.review_requested" style="width:100%;padding:12px;border-radius:12px;background:rgba(var(--c-brand-rgb),0.08);border:1px solid rgba(var(--c-brand-rgb),0.25);text-align:center;font-size:13px;color:var(--cyan);font-weight:600;">🔎 Revision solicitada — esperando al emisor</div>
                 </div>
               </template>
               <template x-if="activeDeboType === 'deuda'">
@@ -7540,6 +7570,12 @@ setTimeout(function() {
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     Editar registro
                   </button>
+                  <!-- Pedir revision al emisor (si crees que el cobro esta mal, el emisor puede cancelarlo) -->
+                  <button x-show="!activeDebo.review_requested" @click="requestReview(activeDebo.id); deboDetailOpen = false" style="width:100%;height:46px;border-radius:23px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    Pedir revision al emisor
+                  </button>
+                  <div x-show="activeDebo.review_requested" style="width:100%;padding:12px;border-radius:12px;background:rgba(var(--c-brand-rgb),0.08);border:1px solid rgba(var(--c-brand-rgb),0.25);text-align:center;font-size:13px;color:var(--cyan);font-weight:600;">🔎 Revision solicitada — esperando al emisor</div>
                 </div>
               </template>
               <template x-if="activeDeboType === 'paid'">
@@ -8680,7 +8716,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v171',
+    APP_VERSION: 'v172',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -12591,11 +12627,12 @@ function zepoApp() {
     },
 
     async loadSplits() {
-      const baseRest = SUPABASE_URL + '/rest/v1/expenses?user_id=eq.' + encodeURIComponent(this.user.id) + '&is_split=eq.true' + this._spaceFilterUrl();
+      // Deuda GLOBAL (sin filtro de espacio): una deuda entre dos personas es la misma sin importar
+      // el espacio activo, y la app de la otra persona no tiene espacios -> asi cuadran al centavo.
+      const baseRest = SUPABASE_URL + '/rest/v1/expenses?user_id=eq.' + encodeURIComponent(this.user.id) + '&is_split=eq.true';
       const loadPending = async () => {
         try {
           let q = sb.from('expenses').select('*').eq('user_id', this.user.id).eq('is_split', true).eq('split_status', 'pendiente');
-          q = this._applySpaceFilter(q);
           const r = await withTimeout(q.order('date', { ascending: false }), 2500, 'loadSplits-pending');
           this.pendingSplits = r.data || [];
         } catch (e) {
@@ -12606,7 +12643,6 @@ function zepoApp() {
       const loadPaid = async () => {
         try {
           let q = sb.from('expenses').select('*').eq('user_id', this.user.id).eq('is_split', true).eq('split_status', 'cobrado');
-          q = this._applySpaceFilter(q);
           const r = await withTimeout(q.order('date', { ascending: false }).limit(20), 2500, 'loadSplits-paid');
           this.paidSplits = r.data || [];
         } catch (e) {
@@ -12643,6 +12679,36 @@ function zepoApp() {
       const tuPct = exp.split_pct || 50;
       const othersPct = (100 - tuPct) / n;
       return Math.round(total * othersPct / 100 * 100) / 100;
+    },
+
+    // Cobro por-item que YO envie, indexado por el gasto origen (mejor activo: paid>accepted>pending).
+    // Es la fuente unica: lo que la otra persona ACEPTO cuadra al centavo entre las dos apps.
+    get _sentCobroByOrigin() {
+      return this._memo('_sentCobroByOrigin', 'cuentas', () => {
+        const rank = { paid: 3, accepted: 2, pending: 1 };
+        const m = {};
+        (this.payReqsSent || []).forEach(p => {
+          if (!p.origin_expense_id || p.status === 'cancelled' || p.status === 'declined') return;
+          const cur = m[p.origin_expense_id];
+          if (!cur || (rank[p.status] || 0) > (rank[cur.status] || 0)) m[p.origin_expense_id] = p;
+        });
+        return m;
+      });
+    },
+    // Cobro ligado a un gasto (para badge de revision + cancelar). null si no hay.
+    _cobroForSplit(exp) {
+      return this._sentCobroByOrigin[exp && exp.id] || null;
+    },
+    // "Por aceptar": el split tiene un cobro por-item que la otra persona AUN no acepta.
+    // Sin cobro por-item (legacy consolidado o persona no-Zepo) => cuenta como confirmado.
+    _isPorAceptar(exp) {
+      const c = this._sentCobroByOrigin[exp && exp.id];
+      return !!c && c.status === 'pending';
+    },
+    // El receptor pidio revision de este cobro (el emisor puede cancelarlo).
+    _isReviewRequested(exp) {
+      const c = this._sentCobroByOrigin[exp && exp.id];
+      return !!c && c.review_requested === true;
     },
 
     get filteredPendingCobros() {
@@ -12686,6 +12752,14 @@ function zepoApp() {
 
     get totalPendingAmount() {
       return this.filteredPendingCobros.reduce((s, c) => s + (c._amount || 0), 0);
+    },
+    // "Por aceptar": cobros por-item que la otra persona aun no acepta (no cuadran hasta que acepte).
+    get teDebenPorAceptar() {
+      return Math.round(this.filteredPendingCobros.filter(c => this._isPorAceptar(c)).reduce((s, c) => s + (c._amount || 0), 0) * 100) / 100;
+    },
+    // Confirmado = lo que la otra persona ya acepto (o legacy/no-Zepo). ESTE es el numero que cuadra.
+    get teDebenConfirmado() {
+      return Math.round((this.totalPendingAmount - this.teDebenPorAceptar) * 100) / 100;
     },
 
     get deboSolicitudes() {
@@ -12850,16 +12924,18 @@ function zepoApp() {
         const ensure = (name) => {
           const nm = (name && name.trim()) || 'Sin nombre';
           const k = nm.toLowerCase();
-          if (!map[k]) map[k] = { key: k, name: nm, teDebe: 0, leDebes: 0, _debeExps: [], debesItems: [] };
+          if (!map[k]) map[k] = { key: k, name: nm, teDebe: 0, porAceptar: 0, leDebes: 0, _debeExps: [], debesItems: [] };
           return map[k];
         };
         // Te deben: splits pendientes (gasto). Guarda el GASTO completo + la parte de la persona.
+        // Confirmado (cobro aceptado/legacy/no-Zepo) vs por-aceptar (cobro por-item aun pendiente).
         (this.pendingSplits || []).filter(e => !e.is_income).forEach(exp => {
           const share = this.cobroFor(exp);
+          const porAceptar = this._isPorAceptar(exp);
           (exp.split_persona || 'Sin nombre').split(',').map(s => s.trim()).filter(Boolean).forEach(name => {
             const g = ensure(name);
-            g.teDebe += share;
-            g._debeExps.push({ ...exp, _share: r2(share) });
+            if (porAceptar) g.porAceptar += share; else g.teDebe += share;
+            g._debeExps.push({ ...exp, _share: r2(share), _porAceptar: porAceptar });
           });
         });
         // Le debes: deudas confirmadas (payment_requests aceptadas) -> abren detalle Debo (deuda).
@@ -12879,11 +12955,11 @@ function zepoApp() {
           });
         });
         return Object.values(map).map(g => {
-          const teDebe = r2(g.teDebe), leDebes = r2(g.leDebes);
+          const teDebe = r2(g.teDebe), leDebes = r2(g.leDebes), porAceptar = r2(g.porAceptar);
           const debeGroups = this.groupByBatch(g._debeExps).map(en => en._isBatch
             ? { ...en, _shareTotal: r2(en.items.reduce((s, i) => s + (i._share || 0), 0)) }
             : en);
-          return { key: g.key, name: g.name, teDebe, leDebes, neto: r2(teDebe - leDebes),
+          return { key: g.key, name: g.name, teDebe, porAceptar, leDebes, neto: r2(teDebe - leDebes),
                    debeGroups, debesItems: g.debesItems };
         }).sort((a, b) => Math.abs(b.neto) - Math.abs(a.neto));
       });
@@ -12904,8 +12980,31 @@ function zepoApp() {
       this.accountsByPerson.forEach(a => { acc[a.key] = a; });
       return (this.friends || []).map(f => {
         const a = acc[(f.display_name || '').toLowerCase()];
-        return { ...f, neto: a ? a.neto : 0, teDebe: a ? a.teDebe : 0, leDebes: a ? a.leDebes : 0,
+        return { ...f, neto: a ? a.neto : 0, teDebe: a ? a.teDebe : 0, porAceptar: a ? a.porAceptar : 0, leDebes: a ? a.leDebes : 0,
                  debeGroups: a ? a.debeGroups : [], debesItems: a ? a.debesItems : [] };
+      });
+    },
+
+    // Health check: por cada usuario Zepo, la libreta CONFIRMADA debe igualar sus cobros aceptados.
+    // Si no cuadran (>10c, mas alla del redondeo de lotes viejos), avisa para reconciliar a tiempo.
+    get _reconcileWarnings() {
+      return this._memo('_reconcileWarnings', 'cuentas', () => {
+        const TOL = 0.10;
+        const cobrosByName = {};
+        (this.payReqsSent || []).forEach(p => {
+          if (p.status !== 'accepted' && p.status !== 'paid') return;
+          const k = (p.to_name || '').toLowerCase();
+          cobrosByName[k] = (cobrosByName[k] || 0) + Number(p.amount || 0);
+        });
+        const fn = this._friendNameSet;
+        const warns = [];
+        this.accountsByPerson.forEach(a => {
+          if (!fn.has(a.key)) return; // solo usuarios Zepo (tienen app con que cuadrar)
+          const cobros = Math.round((cobrosByName[a.key] || 0) * 100) / 100;
+          const diff = Math.round((a.teDebe - cobros) * 100) / 100;
+          if (Math.abs(diff) > TOL) warns.push({ name: a.name, ledger: a.teDebe, cobros, diff });
+        });
+        return warns;
       });
     },
 
@@ -14530,10 +14629,10 @@ function zepoApp() {
       if (!this.user) return;
       const uid = this.user.id;
       const { data: received } = await sb.from('payment_requests')
-        .select('id,from_user_id,amount,description,category,expense_date,status,created_at,receiver_expense_id')
+        .select('id,from_user_id,amount,description,category,expense_date,status,created_at,receiver_expense_id,review_requested')
         .eq('to_user_id', uid).in('status', ['pending','accepted','paid']).order('created_at', { ascending: false });
       const { data: sent } = await sb.from('payment_requests')
-        .select('id,to_user_id,amount,description,category,expense_date,status,created_at')
+        .select('id,to_user_id,amount,description,category,expense_date,status,created_at,origin_expense_id,receiver_expense_id,review_requested')
         .eq('from_user_id', uid).in('status', ['pending','accepted','paid']).order('created_at', { ascending: false });
 
       const fromIds = [...new Set((received || []).map(p => p.from_user_id))];
@@ -14666,6 +14765,29 @@ function zepoApp() {
       this.showToast('Solicitud ignorada');
     },
 
+    // El RECEPTOR pide revision de un cobro (pendiente o aceptado) que le hicieron.
+    async requestReview(pr_id) {
+      const { data, error } = await sb.rpc('request_cobro_review', { p_cobro_id: pr_id });
+      if (error || data === false) { this.showToast('No se pudo pedir revision'); return; }
+      const found = this.payReqs.find(p => p.id === pr_id);
+      if (found) found.review_requested = true;
+      this.dataVer++;
+      this.showToast('🔎 Revision solicitada al emisor');
+    },
+
+    // El EMISOR cancela un cobro tras la revision: se anula, se borra el gasto espejo del receptor
+    // y el gasto origen vuelve a ser 100% tuyo (deja de estar dividido).
+    async cancelCobro(pr_id) {
+      if (!pr_id) return;
+      if (!confirm('Cancelar este cobro? El gasto vuelve a ser 100% tuyo y desaparece de la deuda de ambos.')) return;
+      const { data, error } = await sb.rpc('cancel_split_cobro', { p_cobro_id: pr_id });
+      if (error || data === false) { this.showToast('No se pudo cancelar el cobro'); return; }
+      this.cobroDetailOpen = false;
+      await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadPaymentRequests(), this._maybeReloadHistory()]);
+      this.dataVer++;
+      this.showToast('✅ Cobro cancelado — el gasto vuelve a ser 100% tuyo');
+    },
+
     async claimPayment(pr_id) {
       const { error } = await sb.from('payment_requests').update({ status: 'paid' }).eq('id', pr_id);
       if (error) { this.showToast('Error al marcar pago'); return; }
@@ -14770,7 +14892,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v147.js';
+  const CURRENT_SW = 'sw-v148.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
