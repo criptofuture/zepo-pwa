@@ -8716,7 +8716,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v172',
+    APP_VERSION: 'v173',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -9113,6 +9113,10 @@ function zepoApp() {
 
       // Coach contextual (Capa B): disparadores por cambio de estado, no invasivos.
       this.$watch('form.is_income', v => { if (v) this.coachTip('income'); });
+      // Si el split ya está activo y el monto total llega DESPUÉS (procesar texto/voz/foto/
+      // documento, o editar el monto), recalcula el reparto por persona. Sin esto la columna
+      // MONTO se queda en $0 cuando activas "Dividir" antes de tener el monto.
+      this.$watch('form.amount', () => { if (this.form.is_split) this._syncSplitAmts(); });
       this.$watch('recurringOn', v => { if (v) this.coachTip('recur'); });
       this.$watch('budgetSheetOpen', v => { if (v) { this.coachTip('budget'); this._initBudgetForm(); } });
       this.$watch('parsedItems', items => { if (items && items.length >= 2) this.coachTip('multi'); });
@@ -14892,7 +14896,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v148.js';
+  const CURRENT_SW = 'sw-v149.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
