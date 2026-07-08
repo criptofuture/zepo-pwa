@@ -2708,6 +2708,58 @@
       0%, 100% { box-shadow: 0 0 0 2px rgba(var(--c-brand-rgb),0.35), 0 0 14px 2px rgba(var(--c-brand-rgb),0.30); }
       50% { box-shadow: 0 0 0 3px rgba(var(--c-brand-rgb),0.55), 0 0 24px 6px rgba(var(--c-brand-rgb),0.50); }
     }
+
+    /* ═══════════════════════════════════════════════════════════════
+       ESCRITORIO — PROOF (aditivo). El móvil (<900px) NO lee nada de aquí:
+       cero riesgo de regresión. Convierte la tab-bar inferior en un
+       sidebar vertical y centra el contenido a un ancho cómodo.
+       ═══════════════════════════════════════════════════════════════ */
+    @media (min-width: 900px) {
+      #app.app-live {   /* solo con sesion iniciada; login/onboarding quedan como columna centrada */
+        max-width: none;
+        padding-left: 244px;
+      }
+      /* tab-bar inferior  ->  sidebar vertical izquierda */
+      .tab-bar {
+        top: 0; bottom: 0; left: 0; right: auto;
+        width: 244px; height: 100dvh;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: stretch;
+        gap: 4px;
+        padding: 28px 14px;
+        border-top: none;
+        border-right: 1px solid var(--border);
+      }
+      .tab-bar::after { display: none; }        /* franja del home-indicator: no aplica en desktop */
+      .tab-bar > div { display: none; }          /* spacer central del FAB: no va en el sidebar */
+      .tab-item {
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-size: 14px;
+        letter-spacing: -0.1px;
+      }
+      .tab-item svg { width: 20px; height: 20px; }
+      .tab-item.active { background: rgba(var(--c-brand-rgb), 0.10); }
+      /* contenido centrado, ancho de lectura cómodo */
+      .main-content {
+        max-width: 780px;
+        margin-inline: auto;
+        width: 100%;
+        padding-bottom: 48px;
+      }
+      /* FAB "+"  ->  esquina inferior derecha (ya no centrado al viewport) */
+      .fab {
+        left: auto; right: 40px; bottom: 40px;
+        transform: none;
+      }
+      .fab:active { transform: scale(0.92); }
+    }
   </style>
 </head>
 <body>
@@ -2898,12 +2950,14 @@
       var _pq = new URLSearchParams(location.search);
       if (_pq.get('id') && _pq.get('clientTransactionId')) return;
     } catch (_e) {}
-    document.documentElement.classList.add('browser-mode');
-
     var ua = navigator.userAgent || '';
     var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
     var isAndroid = /Android/.test(ua);
     var isMobile = isIOS || isAndroid || /Mobile/.test(ua);
+    // Escritorio: la app es usable en el navegador (responsive >=900px). El gate de
+    // instalacion es solo para movil (empuja a instalar la PWA); en desktop mostramos la app.
+    if (!isMobile) return;
+    document.documentElement.classList.add('browser-mode');
     var isIOSNonSafari = isIOS && /CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|GSA\//.test(ua);
 
     function showPanel(p) {
@@ -2999,7 +3053,7 @@ setTimeout(function() {
 </script>
 
 <!-- ═══════════════════ ALPINE APP ═══════════════════ -->
-<div id="app" x-data="zepoApp()" x-init="init()" x-effect="if(appReady){const s=document.getElementById('app-splash');if(s){s.style.opacity='0';setTimeout(()=>s.remove(),300)}}">
+<div id="app" x-data="zepoApp()" x-init="init()" :class="{ 'app-live': appReady && user }" x-effect="if(appReady){const s=document.getElementById('app-splash');if(s){s.style.opacity='0';setTimeout(()=>s.remove(),300)}}">
 
   <!-- ░░░ OFFLINE BANNER ░░░ -->
   <div class="offline-banner" x-show="offline" x-cloak>
@@ -8716,7 +8770,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v173',
+    APP_VERSION: 'v174',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -14896,7 +14950,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v149.js';
+  const CURRENT_SW = 'sw-v150.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
