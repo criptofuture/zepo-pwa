@@ -960,6 +960,14 @@
       font-size: 11px; color: var(--muted); margin-top: 2px;
       display: flex; align-items: center; gap: 5px;
     }
+    .split-chip {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-size: 10px; font-weight: 700; line-height: 1;
+      padding: 3px 7px; border-radius: var(--radius-pill);
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .split-chip.pend { background: rgba(var(--c-warning-rgb),0.12); color: var(--warning); border: 1px solid rgba(var(--c-warning-rgb),0.3); }
+    .split-chip.ok { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
     .expense-amount {
       font-size: 15px; font-weight: 700; letter-spacing: -0.3px;
       text-align: right; white-space: nowrap;
@@ -3868,7 +3876,12 @@ setTimeout(function() {
                         </div>
                         <div class="expense-info">
                           <div class="expense-desc" x-text="exp.description || getCatLabel(exp.category)"></div>
-                          <div class="expense-meta" x-text="formatDate(exp.date)"></div>
+                          <div class="expense-meta">
+                            <span x-text="formatDate(exp.date)"></span>
+                            <template x-if="exp.is_split">
+                              <span class="split-chip" :class="_splitPend(exp) ? 'pend' : 'ok'">👥 <span x-text="_splitPend(exp) ? '$' + fmtMoney(Number(exp.split_pending) || 0) + ' por cobrar' : 'compartido'"></span></span>
+                            </template>
+                          </div>
                         </div>
                         <div class="expense-amount" :class="{ income: exp.is_income }" x-text="(exp.is_income ? '+' : '-') + '$' + fmtMoney(exp.amount)"></div>
                         <svg class="expense-row-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -3886,6 +3899,9 @@ setTimeout(function() {
                     <div class="expense-desc" x-text="entry.description || getCatLabel(entry.category)"></div>
                     <div class="expense-meta">
                       <span x-text="formatDate(entry.date)"></span>
+                      <template x-if="entry.is_split">
+                        <span class="split-chip" :class="_splitPend(entry) ? 'pend' : 'ok'">👥 <span x-text="_splitPend(entry) ? '$' + fmtMoney(Number(entry.split_pending) || 0) + ' por cobrar' : 'compartido'"></span></span>
+                      </template>
                       <template x-if="spaceViewAll && entry.space_id && spaceById(entry.space_id)">
                         <span style="color:var(--dim);"> · <span x-text="(spaceById(entry.space_id)||{}).icon"></span> <span x-text="(spaceById(entry.space_id)||{}).name"></span></span>
                       </template>
@@ -4280,7 +4296,12 @@ setTimeout(function() {
                             </div>
                             <div class="expense-info">
                               <div class="expense-desc" x-text="exp.description || getCatLabel(exp.category)"></div>
-                              <div class="expense-meta" x-text="formatTime(exp.created_at)"></div>
+                              <div class="expense-meta">
+                                <span x-text="formatTime(exp.created_at)"></span>
+                                <template x-if="exp.is_split">
+                                  <span class="split-chip" :class="_splitPend(exp) ? 'pend' : 'ok'">👥 <span x-text="_splitPend(exp) ? '$' + fmtMoney(Number(exp.split_pending) || 0) + ' por cobrar' : 'compartido'"></span></span>
+                                </template>
+                              </div>
                             </div>
                             <div class="expense-amount" :class="{ income: exp.is_income }" x-text="(exp.is_income ? '+' : '-') + '$' + fmtMoney(exp.amount)"></div>
                             <svg class="expense-row-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -4296,7 +4317,12 @@ setTimeout(function() {
                       </div>
                       <div class="expense-info">
                         <div class="expense-desc" x-text="entry.description || getCatLabel(entry.category)"></div>
-                        <div class="expense-meta" x-text="formatTime(entry.created_at)"></div>
+                        <div class="expense-meta">
+                          <span x-text="formatTime(entry.created_at)"></span>
+                          <template x-if="entry.is_split">
+                            <span class="split-chip" :class="_splitPend(entry) ? 'pend' : 'ok'">👥 <span x-text="_splitPend(entry) ? '$' + fmtMoney(Number(entry.split_pending) || 0) + ' por cobrar' : 'compartido'"></span></span>
+                          </template>
+                        </div>
                       </div>
                       <div class="expense-amount" :class="{ income: entry.is_income }" x-text="(entry.is_income ? '+' : '-') + '$' + fmtMoney(entry.amount)"></div>
                       <svg class="expense-row-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -5553,6 +5579,24 @@ setTimeout(function() {
           </button>
         </div>
 
+        <!-- Métodos de pago -->
+        <div class="settings-group-title">Métodos de pago</div>
+        <div class="settings-group" style="padding:14px;">
+          <div style="font-size:12px;color:var(--muted);line-height:1.4;margin-bottom:10px;" x-text="paymentMethods.length ? (paymentMethods.length + ' método(s). Edita, agrega o marca tu favorito.') : 'Efectivo, tarjetas, transferencias…'"></div>
+          <button @click="openPmManager()" style="width:100%;height:42px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--text);font-weight:600;font-size:13px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="14" height="14"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Gestionar métodos de pago
+          </button>
+        </div>
+
+        <!-- Espacios -->
+        <div class="settings-group-title">Espacios</div>
+        <div class="settings-group" style="padding:14px;">
+          <div style="font-size:12px;color:var(--muted);line-height:1.4;margin-bottom:10px;" x-text="spaces.length > 1 ? (spaces.length + ' espacios. Crea, edita o elimina.') : 'Separa Personal, Negocio, Casa…'"></div>
+          <button @click="openSpaceManager()" style="width:100%;height:42px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--text);font-weight:600;font-size:13px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="14" height="14"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg> Gestionar espacios
+          </button>
+        </div>
+
         <!-- Notificaciones -->
         <div class="settings-group-title">Notificaciones</div>
         <div class="settings-group">
@@ -6679,10 +6723,10 @@ setTimeout(function() {
                 </div>
               </div>
 
-              <!-- ═════════ MÉTODO DE PAGO (solo gastos) ═════════ -->
-              <div x-show="!form.is_income && (editingExpense || analyzed || form.amount || parsedItems.length)" style="margin-bottom:12px;">
+              <!-- ═════════ MÉTODO DE PAGO (gasto) / CUENTA DESTINO (ingreso) ═════════ -->
+              <div x-show="editingExpense || analyzed || form.amount || parsedItems.length" style="margin-bottom:12px;">
                 <div class="cd-section-label" style="display:flex;align-items:center;justify-content:space-between;">
-                  <span>MÉTODO DE PAGO</span>
+                  <span x-text="form.is_income ? '¿A QUÉ CUENTA ENTRA?' : 'MÉTODO DE PAGO'"></span>
                   <button type="button" @click="openPmManager()" style="background:transparent;border:none;color:var(--cyan);font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:4px;padding:0;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
                     Gestionar
@@ -8770,7 +8814,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v174',
+    APP_VERSION: 'v175',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -8797,6 +8841,7 @@ function zepoApp() {
         it.color = cat.color;
         it.label = cat.label;
         it.is_income = this.incomeCategories.some(c => c.key === cat.key);
+        it._catManual = true; // elección del usuario: la IA tardía no la pisa
         this._learnCategory(it.description, cat.key);
       }
       this.catPickerItem = null;
@@ -9869,6 +9914,7 @@ function zepoApp() {
         .filter(e => e.is_split && e.split_status === 'pendiente')
         .reduce((s, e) => s + (Number(e.split_pending) || 0), 0);
     },
+    _splitPend(e) { return !!(e && e.is_split && e.split_status === 'pendiente' && (Number(e.split_pending) || 0) > 0); },
     // Desembolso real del mes = tu parte + lo que adelantaste a otros.
     get monthRealOutflow() { return this.monthTotal + this.unsettledAdvances; },
     // Balance contando el desembolso real (lo que de verdad salio de tu bolsillo).
@@ -13869,11 +13915,14 @@ function zepoApp() {
         if (!data.categories || !Array.isArray(data.categories)) return;
         let changed = false;
         data.categories.forEach((cat, i) => {
-          if (cat && CAT_MAP[cat] && uncategorized[i]) {
-            uncategorized[i].category = cat;
-            uncategorized[i].emoji = CAT_MAP[cat].emoji;
-            uncategorized[i].label = CAT_MAP[cat].label;
-            uncategorized[i].color = CAT_MAP[cat].color;
+          const it = uncategorized[i];
+          // La respuesta puede llegar hasta 5s tarde: si mientras tanto el usuario
+          // ya eligió categoría a mano (o el ítem dejó de ser 'other'), NO pisarla.
+          if (cat && CAT_MAP[cat] && it && !it._catManual && otherCats.includes(it.category)) {
+            it.category = cat;
+            it.emoji = CAT_MAP[cat].emoji;
+            it.label = CAT_MAP[cat].label;
+            it.color = CAT_MAP[cat].color;
             changed = true;
           }
         });
@@ -14015,6 +14064,7 @@ function zepoApp() {
       it.emoji = cat.emoji;
       it.label = cat.label;
       it.color = cat.color;
+      it._catManual = true; // elección del usuario: la IA tardía no la pisa
       this._learnCategory(it.description, key);
     },
 
@@ -14950,7 +15000,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v150.js';
+  const CURRENT_SW = 'sw-v151.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {

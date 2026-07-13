@@ -54,6 +54,8 @@ CHECKS = [
     ("E2E borrar ingreso desde Historial + etiquetas", ["python", os.path.join(TOOLS, "qa-e2e-history-delete.py")]),
     ("E2E categorias propias tras reload (nombres + seleccion)", ["python", os.path.join(TOOLS, "qa-e2e-custom-cat.py")]),
     ("E2E categorias propias SYNC nube (sobrevive device nuevo)", ["python", os.path.join(TOOLS, "qa-e2e-custom-cat-sync.py")]),
+    ("E2E carrera categoria manual vs IA tardia", ["python", os.path.join(TOOLS, "qa-e2e-cat-race.py")]),
+    ("E2E UI v175 (config + cuenta ingreso + chips split)", ["python", os.path.join(TOOLS, "qa-e2e-v175-ui.py")]),
 ]
 
 def main():
