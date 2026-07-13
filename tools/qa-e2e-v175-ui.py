@@ -137,7 +137,13 @@ def run(url, shots=None):
 
         # ── 3) CHIPS compartido / no saldado ──
         created = page.evaluate(ADD_SPLIT_JS, TAG)
-        page.wait_for_timeout(2500)
+        # espera ACTIVA (no fija): bajo la carga de la suite completa el insert puede
+        # tardar mas de 2.5s y el test fallaba por flake de timing
+        page.wait_for_function(
+            "(tag)=>{const c=window.Alpine.$data(document.querySelector('#app'));"
+            "const e=(c.expenses||[]).find(x=>(x.description||'')===tag);"
+            "return !!(e && e.is_split);}", arg=TAG, timeout=15000)
+        page.wait_for_timeout(400)
         st = page.evaluate(state_js(TAG), TAG)
         checks.append(("Split: gasto dividido creado (pend $5, pendiente)",
                        bool(st) and st.get("is_split") is True and st.get("pend") == 5.0 and st.get("status") == "pendiente"))

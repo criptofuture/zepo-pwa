@@ -3061,7 +3061,7 @@ setTimeout(function() {
 </script>
 
 <!-- ═══════════════════ ALPINE APP ═══════════════════ -->
-<div id="app" x-data="zepoApp()" x-init="init()" :class="{ 'app-live': appReady && user }" x-effect="if(appReady){const s=document.getElementById('app-splash');if(s){s.style.opacity='0';setTimeout(()=>s.remove(),300)}}">
+<div id="app" x-data="zepoApp()" :class="{ 'app-live': appReady && user }" x-effect="if(appReady){const s=document.getElementById('app-splash');if(s){s.style.opacity='0';setTimeout(()=>s.remove(),300)}}">
 
   <!-- ░░░ OFFLINE BANNER ░░░ -->
   <div class="offline-banner" x-show="offline" x-cloak>
@@ -8634,6 +8634,7 @@ function zepoApp() {
     appReady: false,
     tab: 'home',
     prevTab: 'home',
+    _navPopping: false, // true mientras el handler de popstate cambia pestana (evita doble push)
     offline: !navigator.onLine,
     installPrompt: null,
     pushSubscription: null,
@@ -8814,7 +8815,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v175',
+    APP_VERSION: 'v176',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
@@ -9205,6 +9206,11 @@ function zepoApp() {
     },
 
     async init() {
+      // Alpine v3 llama init() SOLO (metodo del x-data) y el x-init="init()" del div
+      // lo llamaba OTRA vez -> todo doble: 2 listeners de popstate (el gesto atras
+      // saltaba 2 niveles / directo a inicio), watchers y cargas duplicadas.
+      if (this._inited) return;
+      this._inited = true;
       this._dlog('init() URL=' + location.href.slice(0, 150));
       window.addEventListener('online', () => this.offline = false);
       window.addEventListener('offline', () => this.offline = true);
@@ -9265,26 +9271,40 @@ function zepoApp() {
 
       history.replaceState({ zepo: true }, '');
       window.addEventListener('popstate', () => {
-        if (this.spaceManagerOpen) { this.spaceManagerOpen = false; this.cancelEditSpace(); }
-        else if (this.spaceSwitcherOpen) { this.spaceSwitcherOpen = false; }
-        else if (this.recurringManagerOpen) { this.recurringManagerOpen = false; this.cancelEditRt(); }
-        else if (this.pmManagerOpen) { this.pmManagerOpen = false; this.cancelEditPm(); }
-        else if (this.catManagerOpen) { this.catManagerOpen = false; this.cancelEditCategory(); }
-        else if (this.budgetSheetOpen) { this.budgetSheetOpen = false; }
-        else if (this.exportSheetOpen) { this.exportSheetOpen = false; }
-        else if (this.deboDetailOpen) { this.deboDetailOpen = false; }
-        else if (this.sendPrOpen) { this.sendPrOpen = false; }
-        else if (this.catDrillOpen) { this.catDrillOpen = false; }
-        else if (this.cobroDetailOpen) { this.cobroDetailOpen = false; }
-        else if (this.bugReportOpen) { this.bugReportOpen = false; }
-        else if (this.batchEditPromptExp) { this.batchEditPromptExp = null; this.batchEditPromptItems = []; }
-        else if (this.patSheetOpen) { this.patSheetOpen = false; }
-        else if (this.sheetOpen) { this.sheetOpen = false; }
-        else if (['changepass','plans','checkout','pay-processing','pay-success','pay-failed','forgotpw','notifications'].includes(this.tab)) { this.tab = 'settings'; }
-        else if (this.tab === 'history') { this.tab = 'home'; }
-        else if (this.tab !== 'home') { this.tab = this.prevTab || 'home'; }
-        else { history.back(); return; }
-        history.pushState({ zepo: true }, '');
+        // Un gesto/flecha atras = cerrar UN solo nivel. _navPopping evita que el
+        // watcher de tab meta una entrada extra al historial cuando el cambio de
+        // pestana lo hace ESTE handler (doble push = un "atras" en vacio).
+        this._navPopping = true;
+        try {
+          if (this.confirmState) { this._confirmResolve(false); }
+          else if (this.catDropdownOpen) { this.catDropdownOpen = false; }
+          else if (this.showDeleteModal) { this.showDeleteModal = false; this.deleteConfirmText = ''; }
+          else if (this.acceptPrModal) { this.acceptPrModal = null; }
+          else if (this.acceptAllModal) { this.acceptAllModal = null; }
+          else if (this.aliasModalOpen) { this.aliasModalOpen = false; }
+          else if (this.importOpen) { this.importOpen = false; }
+          else if (this.spaceManagerOpen) { this.spaceManagerOpen = false; this.cancelEditSpace(); }
+          else if (this.spaceSwitcherOpen) { this.spaceSwitcherOpen = false; }
+          else if (this.recurringManagerOpen) { this.recurringManagerOpen = false; this.cancelEditRt(); }
+          else if (this.pmManagerOpen) { this.pmManagerOpen = false; this.cancelEditPm(); }
+          else if (this.catManagerOpen) { this.catManagerOpen = false; this.cancelEditCategory(); }
+          else if (this.budgetSheetOpen) { this.budgetSheetOpen = false; }
+          else if (this.exportSheetOpen) { this.exportSheetOpen = false; }
+          else if (this.deboDetailOpen) { this.deboDetailOpen = false; }
+          else if (this.sendPrOpen) { this.sendPrOpen = false; }
+          else if (this.catDrillOpen) { this.catDrillOpen = false; }
+          else if (this.cobroDetailOpen) { this.cobroDetailOpen = false; }
+          else if (this.bugReportOpen) { this.bugReportOpen = false; }
+          else if (this.batchEditPromptExp) { this.batchEditPromptExp = null; this.batchEditPromptItems = []; }
+          else if (this.patSheetOpen) { this.patSheetOpen = false; }
+          else if (this.sheetOpen) { this.sheetOpen = false; }
+          else if (['changepass','plans','checkout','pay-processing','pay-success','pay-failed','forgotpw','notifications'].includes(this.tab)) { this.tab = 'settings'; }
+          else if (this.tab === 'history') { this.tab = 'home'; }
+          else if (['budgets','cuentas','dash','patrimonio'].includes(this.tab)) { this.tab = 'home'; }
+          else if (this.tab !== 'home') { this.tab = this.prevTab || 'home'; }
+          else { history.back(); return; }
+          history.pushState({ zepo: true }, '');
+        } finally { this._navPopping = false; }
       });
 
       this.loadCustomCategories();
@@ -9293,10 +9313,10 @@ function zepoApp() {
 
       this.$watch('tab', (val, old) => {
         if (['home','budgets','cuentas','dash'].includes(val)) this.prevTab = val;
-        if (val !== old) pushBack();
+        if (val !== old && !this._navPopping) pushBack();
       });
 
-      ['sheetOpen','patSheetOpen','catManagerOpen','pmManagerOpen','recurringManagerOpen','spaceSwitcherOpen','spaceManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen'].forEach(k => {
+      ['sheetOpen','patSheetOpen','catManagerOpen','pmManagerOpen','recurringManagerOpen','spaceSwitcherOpen','spaceManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen','acceptPrModal','acceptAllModal','aliasModalOpen','showDeleteModal','importOpen','batchEditPromptExp'].forEach(k => {
         this.$watch(k, v => { if (v) pushBack(); });
       });
 
@@ -15000,7 +15020,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v151.js';
+  const CURRENT_SW = 'sw-v152.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {

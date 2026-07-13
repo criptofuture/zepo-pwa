@@ -56,6 +56,7 @@ CHECKS = [
     ("E2E categorias propias SYNC nube (sobrevive device nuevo)", ["python", os.path.join(TOOLS, "qa-e2e-custom-cat-sync.py")]),
     ("E2E carrera categoria manual vs IA tardia", ["python", os.path.join(TOOLS, "qa-e2e-cat-race.py")]),
     ("E2E UI v175 (config + cuenta ingreso + chips split)", ["python", os.path.join(TOOLS, "qa-e2e-v175-ui.py")]),
+    ("E2E gesto atras = un nivel (init unico, modales, tabs)", ["python", os.path.join(TOOLS, "qa-e2e-back-nav.py")]),
 ]
 
 def main():
