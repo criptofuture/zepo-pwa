@@ -70,7 +70,8 @@ Deno.serve(async (req) => {
   if (!r.ok) {
     const detail = await r.text();
     console.error("resend_error", r.status, detail.slice(0, 300));
-    return json({ error: { http_code: 500, message: `resend ${r.status}` } }, 500);
+    // El detalle solo lo ve quien firma válido (Supabase Auth o pruebas internas).
+    return json({ error: { http_code: 500, message: `resend ${r.status}: ${detail.slice(0, 200)}` } }, 500);
   }
 
   return json({});
