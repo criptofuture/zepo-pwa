@@ -161,6 +161,9 @@ jobs:
           supabase functions deploy send-weekly-email \
             --project-ref vchaxqisbypwwtyjjnjr \
             --no-verify-jwt
+          supabase functions deploy auth-email-hook \
+            --project-ref vchaxqisbypwwtyjjnjr \
+            --no-verify-jwt
           # find-user NO se despliega aquí: está ACTIVE en Supabase (la usa "agregar amigo")
           # pero su código nunca estuvo en este repo (drift). Bundlearla rompía el job y
           # bloqueaba parse-bank-statement. NO re-agregar sin subir supabase/functions/find-user/.
@@ -175,12 +178,14 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+          SEND_EMAIL_HOOK_SECRET: ${{ secrets.SEND_EMAIL_HOOK_SECRET }}
         run: |
           supabase secrets set \
             VAPID_PRIVATE_KEY="$VAPID_PRIVATE_KEY" \
             VAPID_PUBLIC_KEY=BFarnYqUAFW5QEds5F0JQoL4BBpkApdV0hi9unggIHSky4wLmOJgEpIQEGVbHIJ36pL0kvv14mOlYD8orYzqXAM \
             VAPID_EMAIL=hola@zepo.app \
             RESEND_API_KEY="$RESEND_API_KEY" \
-            FROM_EMAIL="Zepo <hola@zepo.lynoia.com>" \
+            FROM_EMAIL="Zepo <zepo@lynoia.com>" \
+            SEND_EMAIL_HOOK_SECRET="$SEND_EMAIL_HOOK_SECRET" \
             WEBHOOK_SECRET="$WEBHOOK_SECRET" \
             --project-ref vchaxqisbypwwtyjjnjr
