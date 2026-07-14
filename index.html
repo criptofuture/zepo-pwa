@@ -2479,6 +2479,48 @@
     }
 
     /* === COACH MARK (mini-demo style) === */
+    /* ═══ JOURNEY — tour guiado 30 días + premios ═══ */
+    .jrn-home-card { margin: 0 20px 16px; padding: 13px 15px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; align-items: center; gap: 12px; cursor: pointer; }
+    .jrn-home-card.claimable { border-color: var(--cyan); box-shadow: 0 4px 16px rgba(var(--c-brand-rgb), 0.14); }
+    .jrn-ring { position: relative; width: 44px; height: 44px; flex-shrink: 0; }
+    .jrn-ring svg { display: block; }
+    .jrn-ring-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+    .jrn-home-mid { flex: 1; min-width: 0; }
+    .jrn-home-title { font-size: 13px; font-weight: 700; letter-spacing: -0.2px; }
+    .jrn-home-sub { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .jrn-home-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+    .jrn-flame { font-size: 11px; font-weight: 800; color: var(--c-accent-soft); white-space: nowrap; }
+    .jrn-x { background: transparent; border: none; color: var(--dim); font-size: 13px; cursor: pointer; padding: 2px 4px; line-height: 1; font-family: inherit; }
+    .jrn-scrim { position: fixed; inset: 0; background: rgba(var(--c-ink-rgb), 0.4); z-index: 92; }
+    .jrn-sheet { position: fixed; left: 0; right: 0; bottom: 0; max-width: 430px; margin: 0 auto; background: var(--bg); border-radius: 24px 24px 0 0; z-index: 93; display: flex; flex-direction: column; height: min(calc(var(--vvh, 100dvh) - 40px), 92dvh); overflow: hidden; }
+    .jrn-head { display: flex; align-items: center; gap: 12px; padding: 16px 18px 12px; border-bottom: 1px solid var(--border); }
+    .jrn-body { flex: 1; overflow-y: auto; padding: 14px 18px calc(24px + var(--safe-bottom, 0px)); -webkit-overflow-scrolling: touch; }
+    .jrn-chapter { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; }
+    .jrn-chapter.locked { opacity: 0.75; }
+    .jrn-ch-head { display: flex; align-items: center; gap: 10px; }
+    .jrn-ch-title { font-size: 14px; font-weight: 800; font-family: var(--font-display); letter-spacing: -0.2px; flex: 1; min-width: 0; }
+    .jrn-ch-count { font-size: 11px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .jrn-lock-pill { font-size: 9px; font-weight: 800; letter-spacing: 0.5px; padding: 2px 7px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border2); color: var(--muted); white-space: nowrap; }
+    .jrn-mission { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--border); margin-top: 0; }
+    .jrn-missions { margin-top: 10px; }
+    .jrn-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--c-brand-contrast); }
+    .jrn-check.done { background: var(--gradient); border-color: transparent; }
+    .jrn-mission-t { font-size: 12.5px; flex: 1; min-width: 0; line-height: 1.35; }
+    .jrn-mission.done .jrn-mission-t { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(var(--c-ink-rgb), 0.25); }
+    .jrn-mission-go { font-size: 11px; color: var(--cyan); font-weight: 700; flex-shrink: 0; }
+    .jrn-reward { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 9px 12px; border-radius: var(--radius-sm); background: var(--surface2); border: 1px dashed var(--border2); font-size: 12px; color: var(--muted); line-height: 1.3; }
+    .jrn-reward.ready { border-style: solid; border-color: var(--cyan); color: var(--text); background: rgba(var(--c-brand-rgb), 0.08); }
+    .jrn-claim-btn { margin-left: auto; height: 32px; padding: 0 14px; border-radius: var(--radius-pill); background: var(--gradient); border: none; color: var(--c-brand-contrast); font-weight: 700; font-size: 12px; font-family: inherit; cursor: pointer; flex-shrink: 0; }
+    .jrn-claim-btn:disabled { opacity: 0.5; }
+    .jrn-final-banner { text-align: center; padding: 14px 16px; border-radius: var(--radius); background: var(--gradient); color: var(--c-brand-contrast); font-weight: 700; margin-bottom: 12px; font-size: 13px; line-height: 1.45; }
+    .jrn-streak-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; font-size: 12px; color: var(--muted); }
+    .jrn-celebrate { position: fixed; inset: 0; z-index: 210; display: flex; align-items: center; justify-content: center; background: rgba(var(--c-ink-rgb), 0.45); }
+    .jrn-celebrate-card { background: var(--surface); border-radius: var(--radius); padding: 28px 24px; text-align: center; max-width: 300px; margin: 0 20px; animation: jrn-pop 420ms cubic-bezier(0.16, 1, 0.3, 1); }
+    @keyframes jrn-pop { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @media (min-width: 900px) {
+      .jrn-sheet { left: auto; right: 32px; bottom: 32px; max-width: none; width: 440px; height: min(720px, calc(100dvh - 64px)); border-radius: 24px; box-shadow: 0 24px 64px rgba(var(--c-ink-rgb), 0.28); }
+    }
+
     @keyframes coach-card-in {
       from { opacity: 0; transform: translateY(20px) scale(0.96); }
       to { opacity: 1; transform: translateY(0) scale(1); }
@@ -3858,6 +3900,37 @@ setTimeout(function() {
             <div class="stat-card-label">PROMEDIO/DÍA</div>
             <div class="stat-card-value mono" x-text="'$' + fmtMoney(monthTotal / Math.max(1, new Date().getDate()))"></div>
             <div class="stat-card-sub">este mes</div>
+          </div>
+        </div>
+
+        <!-- Journey 30 días — checklist guiado con premios -->
+        <div class="jrn-home-card" :class="{ claimable: !!jrnClaimableChapter }" x-show="jrnCardVisible" x-cloak @click="jrnOpen = true">
+          <div class="jrn-ring">
+            <svg viewBox="0 0 44 44" width="44" height="44">
+              <circle cx="22" cy="22" r="18" fill="none" stroke="var(--border)" stroke-width="4"></circle>
+              <circle cx="22" cy="22" r="18" fill="none" stroke="var(--cyan)" stroke-width="4" stroke-linecap="round" transform="rotate(-90 22 22)"
+                :stroke-dasharray="(2 * Math.PI * 18).toFixed(1)"
+                :stroke-dashoffset="((2 * Math.PI * 18) * (1 - jrnDoneCount / Math.max(1, jrnTotalCount))).toFixed(1)"></circle>
+            </svg>
+            <span class="jrn-ring-icon" x-text="jrnLevel.icon"></span>
+          </div>
+          <div class="jrn-home-mid">
+            <template x-if="jrnClaimableChapter">
+              <div>
+                <div class="jrn-home-title">🎁 ¡Capítulo completo!</div>
+                <div class="jrn-home-sub" x-text="'Reclama tu premio: ' + jrnClaimableChapter.rewardLabel"></div>
+              </div>
+            </template>
+            <template x-if="!jrnClaimableChapter">
+              <div>
+                <div class="jrn-home-title" x-text="jrnCurrentChapter ? (jrnCurrentChapter.icon + ' ' + jrnCurrentChapter.title + ' · ' + jrnChapterDoneCount(jrnCurrentChapter) + '/' + jrnCurrentChapter.missions.length) : '🌳 Journey completo'"></div>
+                <div class="jrn-home-sub" x-text="jrnNextMission ? ('Siguiente: ' + jrnNextMission.t) : 'Toca para ver tus premios'"></div>
+              </div>
+            </template>
+          </div>
+          <div class="jrn-home-right">
+            <button class="jrn-x" @click.stop="jrnDismissCard()" aria-label="Ocultar journey">✕</button>
+            <span class="jrn-flame" x-show="jrn && jrn.streak_days >= 2" x-text="'🔥 ' + (jrn ? jrn.streak_days : 0)"></span>
           </div>
         </div>
 
@@ -5467,6 +5540,10 @@ setTimeout(function() {
               </div>
             </div>
             <div style="font-size:18px;font-weight:700;letter-spacing:-0.3px;margin-bottom:12px;" x-text="'Plan ' + userPlan.charAt(0).toUpperCase() + userPlan.slice(1)"></div>
+            <div x-show="trialActive" x-cloak style="display:flex;align-items:center;gap:6px;margin:-6px 0 12px;font-size:12px;color:var(--c-accent-soft);font-weight:600;">
+              <span>🎁</span>
+              <span x-text="'Prueba del journey: ' + (trialPlan || '').toUpperCase() + ' por ' + trialDaysLeft + (trialDaysLeft === 1 ? ' día más' : ' días más')"></span>
+            </div>
             <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:8px;">
               <div style="height:100%;border-radius:2px;background:var(--gradient);transition:width 0.3s;" :style="{ width: (!hasPlan('pro') ? Math.min(monthExpenses.length * 10, 100) : monthPct) + '%' }"></div>
             </div>
@@ -5478,12 +5555,27 @@ setTimeout(function() {
           </div>
         </div>
 
+        <!-- Tu journey -->
+        <div style="margin:0 20px 22px;" x-show="jrn" x-cloak>
+          <div class="settings-group-title" style="margin:0 0 8px;">Tu journey</div>
+          <div class="settings-group" style="padding:14px 16px;cursor:pointer;" @click="jrnOpen = true">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="font-size:22px;" x-text="jrnLevel.icon"></span>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:14px;font-weight:700;" x-text="'Nivel ' + jrnLevel.name + ' · ' + jrnDoneCount + '/' + jrnTotalCount + ' misiones'"></div>
+                <div style="font-size:11.5px;color:var(--muted);margin-top:2px;" x-text="jrnComplete ? 'Journey completo 🎉' : 'Completa capítulos y gana premios (hasta 1 mes de Max gratis)'"></div>
+              </div>
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="18" height="18"><path d="M9 18l6-6-6-6"/></svg>
+            </div>
+          </div>
+        </div>
+
         <!-- Invita y gana -->
         <div style="margin:0 20px 22px;" x-show="referralCode" x-cloak>
           <div class="settings-group-title" style="margin:0 0 8px;">Invita y gana</div>
           <div class="settings-group" style="padding:16px;">
             <div style="font-size:15px;font-weight:700;letter-spacing:-0.3px;margin-bottom:4px;">Regala Zepo, gana meses gratis</div>
-            <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:14px;">Comparte tu código. Cuando tu amigo se suscriba, ganas <b style="color:var(--text);">hasta 2 meses gratis</b> y él arranca con descuento.</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:14px;">Comparte tu código. Cuando tu amigo registre sus primeros 5 gastos, <b style="color:var(--text);">ambos ganan 30 días de Pro gratis</b>.</div>
             <div @click="copyReferralCode()" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:var(--radius-sm);background:var(--surface2);border:1px dashed var(--border2);cursor:pointer;margin-bottom:12px;">
               <span style="font-family:var(--font-display);font-size:18px;font-weight:700;letter-spacing:1px;color:var(--cyan);" x-text="referralCode || '—'"></span>
               <span style="font-size:11px;font-weight:600;color:var(--muted);" x-text="referralCopied ? 'Copiado ✓' : 'Tocar para copiar'"></span>
@@ -5941,20 +6033,21 @@ setTimeout(function() {
                     </template>
                   </div>
 
-                  <!-- CTA -->
-                  <template x-if="p.key === userPlan">
+                  <!-- CTA — usa el plan PAGADO (_rawUserPlan): con un trial del journey
+                       activo, comprar el plan que estás probando debe seguir disponible -->
+                  <template x-if="p.key === _rawUserPlan">
                     <button style="width:100%;height:46px;border-radius:23px;background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;">
                       <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="3" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
                       Plan actual
                     </button>
                   </template>
-                  <template x-if="planRank[p.key] > planRank[userPlan]">
-                    <button @click="startCheckout(p.key)" style="width:100%;height:46px;border-radius:23px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:14px;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(var(--c-brand-rgb),0.18);" x-text="'Mejorar a ' + (p.label.charAt(0) + p.label.slice(1).toLowerCase())"></button>
+                  <template x-if="planRank[p.key] > planRank[_rawUserPlan]">
+                    <button @click="startCheckout(p.key)" style="width:100%;height:46px;border-radius:23px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:14px;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(var(--c-brand-rgb),0.18);" x-text="((trialActive && trialPlan === p.key) ? 'Quedarme en ' : 'Mejorar a ') + (p.label.charAt(0) + p.label.slice(1).toLowerCase())"></button>
                   </template>
-                  <template x-if="p.key !== 'free' && planRank[p.key] < planRank[userPlan]">
+                  <template x-if="p.key !== 'free' && planRank[p.key] < planRank[_rawUserPlan]">
                     <button style="width:100%;height:46px;border-radius:23px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:13px;">Incluido en tu plan</button>
                   </template>
-                  <template x-if="p.key === 'free' && userPlan !== 'free'">
+                  <template x-if="p.key === 'free' && _rawUserPlan !== 'free'">
                     <button style="width:100%;height:46px;border-radius:23px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:13px;">Disponible siempre</button>
                   </template>
                 </div>
@@ -6287,6 +6380,79 @@ setTimeout(function() {
       <button class="fab" @click="openNew" x-show="!sheetOpen">
         <svg viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
+
+      <!-- ══ JOURNEY — hoja de capítulos, misiones y premios ══ -->
+      <template x-if="jrnOpen && jrn">
+        <div>
+          <div class="jrn-scrim" @click="jrnOpen = false"></div>
+          <div class="jrn-sheet">
+            <div class="jrn-head">
+              <div class="jrn-ring">
+                <svg viewBox="0 0 44 44" width="44" height="44">
+                  <circle cx="22" cy="22" r="18" fill="none" stroke="var(--border)" stroke-width="4"></circle>
+                  <circle cx="22" cy="22" r="18" fill="none" stroke="var(--cyan)" stroke-width="4" stroke-linecap="round" transform="rotate(-90 22 22)"
+                    :stroke-dasharray="(2 * Math.PI * 18).toFixed(1)"
+                    :stroke-dashoffset="((2 * Math.PI * 18) * (1 - jrnDoneCount / Math.max(1, jrnTotalCount))).toFixed(1)"></circle>
+                </svg>
+                <span class="jrn-ring-icon" x-text="jrnLevel.icon"></span>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:800;font-size:16px;font-family:var(--font-display);">Tu journey</div>
+                <div style="font-size:11px;color:var(--muted);" x-text="'Nivel ' + jrnLevel.name + ' · ' + jrnDoneCount + '/' + jrnTotalCount + ' misiones'"></div>
+              </div>
+              <button class="zepi-hbtn" @click="jrnOpen = false" title="Cerrar">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div class="jrn-body">
+              <div class="jrn-final-banner">Completa los 5 capítulos y gana<br>🎁 1 MES DE MAX GRATIS</div>
+              <div class="jrn-streak-row">
+                <span style="font-size:16px;">🔥</span>
+                <span><b style="color:var(--text);" x-text="(jrn.streak_days || 0) + (jrn.streak_days === 1 ? ' día' : ' días')"></b> de racha registrando · mejor: <span x-text="jrn.streak_best || 0"></span></span>
+              </div>
+              <template x-for="ch in JRN_CHAPTERS" :key="ch.id">
+                <div class="jrn-chapter" :class="{ locked: jrnChapterLocked(ch) && !jrnChapterDone(ch) }">
+                  <div class="jrn-ch-head">
+                    <span style="font-size:18px;" x-text="ch.icon"></span>
+                    <div class="jrn-ch-title" x-text="ch.title"></div>
+                    <span class="jrn-lock-pill" x-show="jrnChapterLocked(ch) && !jrnChapterDone(ch)" x-text="'Se abre con ' + (ch.needs === 'pro' ? 'Pro' : ch.needs === 'elite' ? 'Elite' : 'Max')"></span>
+                    <span class="jrn-ch-count" x-text="jrnChapterDoneCount(ch) + '/' + ch.missions.length"></span>
+                  </div>
+                  <div class="jrn-missions">
+                    <template x-for="m in ch.missions" :key="m.id">
+                      <div class="jrn-mission" :class="{ done: !!jrn.missions[m.id] }" @click="jrnGo(m)" :style="m.target && !jrn.missions[m.id] ? 'cursor:pointer;' : ''">
+                        <div class="jrn-check" :class="{ done: !!jrn.missions[m.id] }">
+                          <svg x-show="jrn.missions[m.id]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <span style="font-size:14px;flex-shrink:0;" x-text="m.icon"></span>
+                        <div class="jrn-mission-t" x-text="m.t"></div>
+                        <span class="jrn-mission-go" x-show="m.target && !jrn.missions[m.id]">Ir →</span>
+                      </div>
+                    </template>
+                  </div>
+                  <div class="jrn-reward" :class="{ ready: jrnChapterDone(ch) && !jrnChapterClaimed(ch) }">
+                    <span style="font-size:14px;flex-shrink:0;" x-text="jrnChapterClaimed(ch) ? '✅' : '🎁'"></span>
+                    <span x-text="jrnChapterClaimed(ch) ? (ch.rewardLabel + ' — reclamado') : ch.rewardLabel"></span>
+                    <button class="jrn-claim-btn" x-show="jrnChapterDone(ch) && !jrnChapterClaimed(ch)" :disabled="!!jrnClaiming" @click="jrnClaim(ch)" x-text="jrnClaiming === ch.claim ? '…' : 'Reclamar'"></button>
+                  </div>
+                </div>
+              </template>
+              <div style="text-align:center;font-size:11px;color:var(--dim);line-height:1.5;padding:4px 8px 8px;">Los premios de prueba duran 7 días y se encadenan.<br>Tu progreso se guarda en la nube.</div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Celebración al reclamar un premio -->
+      <template x-if="jrnCelebrate">
+        <div class="jrn-celebrate" @click="jrnCelebrate = ''">
+          <div class="jrn-celebrate-card">
+            <div style="font-size:44px;line-height:1;margin-bottom:12px;">🎉</div>
+            <div style="font-weight:800;font-size:17px;font-family:var(--font-display);margin-bottom:6px;">¡Premio desbloqueado!</div>
+            <div style="font-size:13px;color:var(--muted);line-height:1.45;" x-text="jrnCelebrate"></div>
+          </div>
+        </div>
+      </template>
 
       <!-- ══ ZEPI — companion IA (Max) ══ -->
       <button class="zepi-fab" x-show="!sheetOpen && ['home','history','budgets','cuentas','dash','patrimonio'].includes(tab)" @click="openZepi()" aria-label="Zepi, tu asistente">
@@ -7680,6 +7846,14 @@ Pregúntame sobre tus gastos, pídeme un resumen del mes o dime qué no encuentr
                 </button>
               </template>
 
+              <!-- Recordatorio por WhatsApp (loop viral: lleva el link de invitación con tu código) -->
+              <template x-if="activeCobro.split_status !== 'cobrado' && (activeCobro.split_pending || 0) > 0">
+                <button @click="shareCobroWA(activeCobro)" style="width:100%;height:46px;border-radius:23px;background:rgba(var(--c-income-rgb),0.12);border:1px solid rgba(var(--c-income-rgb),0.35);color:var(--success);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" width="15" height="15"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+                  Recordar por WhatsApp
+                </button>
+              </template>
+
               <button @click="removeSplit(activeCobro.id); cobroDetailOpen = false" style="width:100%;height:46px;border-radius:23px;background:transparent;border:1px solid var(--border);color:var(--danger);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 01-2 2H9a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
                 Quitar división
@@ -8907,7 +9081,21 @@ function zepoApp() {
     get userPlan() {
       // DEV MODE: unlock all features for QA. Toggle false to restore real plan gating.
       if (this.devUnlockAll) return 'max';
+      // Trial del journey vigente: gana si su rango supera al plan pagado.
+      // El server impone lo mismo via zepo_plan_rank() (RLS) — esto es solo UI.
+      if (this.trialPlan && this.trialUntil && new Date(this.trialUntil) > new Date()
+          && (this.planRank[this.trialPlan] ?? 0) > (this.planRank[this._rawUserPlan] ?? 0)) {
+        return this.trialPlan;
+      }
       return this._rawUserPlan;
+    },
+    get trialActive() {
+      return !!(this.trialPlan && this.trialUntil && new Date(this.trialUntil) > new Date()
+        && (this.planRank[this.trialPlan] ?? 0) > (this.planRank[this._rawUserPlan] ?? 0));
+    },
+    get trialDaysLeft() {
+      if (!this.trialActive) return 0;
+      return Math.max(1, Math.ceil((new Date(this.trialUntil) - new Date()) / 86400000));
     },
     set userPlan(v) { this._rawUserPlan = v; },
     devUnlockAll: false,
@@ -8949,10 +9137,53 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v177',
+    APP_VERSION: 'v178',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     // ─── ZEPI (companion IA, Max) ───
     zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
+    // ─── JOURNEY (tour guiado 30 días + premios) ───
+    jrnOpen: false, jrn: null, jrnCelebrate: '', jrnClaiming: '', _jrnSaveT: null, _jrnSrc: 'manual',
+    trialPlan: null, trialUntil: null, journeyDiscount: false, referredBy: null, _refActDone: false,
+    // Catálogo de capítulos/misiones. Espejo server-side en zepo_claim_journey_reward
+    // (migración 20260714_journey_trials.sql) — si cambias ids aquí, cambia el RPC.
+    JRN_CHAPTERS: [
+      { id: 'ch1', claim: 'ch1', icon: '🌱', title: 'Primeros pasos', rewardLabel: '7 días de Pro gratis', needs: null, missions: [
+        { id: 'exp_first', icon: '🧾', t: 'Registra tu primer gasto', target: 'newExpense' },
+        { id: 'inc_first', icon: '💵', t: 'Registra un ingreso', target: 'newExpense' },
+        { id: 'cat_assign', icon: '🏷️', t: 'Asigna una categoría a un registro', target: 'newExpense' },
+        { id: 'pm_add', icon: '💳', t: 'Añade un método de pago', target: 'paymethods' },
+        { id: 'streak_3', icon: '🔥', t: 'Registra 3 días seguidos', target: null },
+      ]},
+      { id: 'ch2', claim: 'ch2', icon: '⚡', title: 'Superpoderes', rewardLabel: '7 días de Elite gratis', needs: 'pro', missions: [
+        { id: 'ai_text', icon: '✨', t: 'Crea un registro escribiendo libre («almuerzo 5.50»)', target: 'newExpense' },
+        { id: 'ai_voice', icon: '🎙️', t: 'Registra un gasto por voz', target: 'newExpense' },
+        { id: 'cat_custom', icon: '🎨', t: 'Crea tu propia categoría', target: 'categories' },
+        { id: 'budget_set', icon: '🎯', t: 'Fija tu primer presupuesto', target: 'budgets' },
+        { id: 'exp_edit', icon: '✏️', t: 'Edita un registro', target: 'history' },
+        { id: 'multi_item', icon: '🧺', t: 'Varios gastos en un solo texto', target: 'newExpense' },
+      ]},
+      { id: 'ch3', claim: 'ch3', icon: '📊', title: 'Visión total', rewardLabel: '7 días de Max gratis', needs: 'elite', missions: [
+        { id: 'ocr_photo', icon: '📸', t: 'Registra un gasto con foto', target: 'newExpense' },
+        { id: 'recurring_set', icon: '🔁', t: 'Crea un gasto recurrente', target: 'newExpense' },
+        { id: 'budget_cat', icon: '🗂️', t: 'Presupuesto por categoría', target: 'budgets' },
+        { id: 'dash_visit', icon: '📈', t: 'Explora tu dashboard', target: 'dash' },
+        { id: 'export_data', icon: '📤', t: 'Exporta tu primer reporte', target: 'export' },
+      ]},
+      { id: 'ch4', claim: 'ch4', icon: '🤝', title: 'Zepo en equipo', rewardLabel: '50% de descuento en tu primer mes', needs: 'max', missions: [
+        { id: 'friend_add', icon: '👋', t: 'Conecta con tu primer amigo', target: 'cuentas' },
+        { id: 'split_save', icon: '➗', t: 'Divide un gasto', target: 'newExpense' },
+        { id: 'pr_send', icon: '📨', t: 'Envía tu primera solicitud de cobro', target: 'cuentas' },
+        { id: 'pr_accept', icon: '🤝', t: 'Concreten un gasto compartido (aceptado)', target: 'cuentas' },
+        { id: 'pr_paid', icon: '✅', t: 'Marca un cobro como pagado', target: 'cuentas' },
+        { id: 'zepi_chat', icon: '🪄', t: 'Habla con Zepi', target: null },
+      ]},
+      { id: 'ch5', claim: 'final', icon: '🌳', title: 'El hábito', rewardLabel: '1 MES de Max gratis', needs: null, missions: [
+        { id: 'streak_7', icon: '🔥', t: 'Racha de 7 días', target: null },
+        { id: 'streak_14', icon: '🔥', t: 'Racha de 14 días (1 día de perdón)', target: null },
+        { id: 'month_review', icon: '📅', t: 'Cierra tu primer mes en Zepo', target: null },
+        { id: 'budget_kept', icon: '🏆', t: 'Un mes sin pasarte del presupuesto', target: 'budgets' },
+      ]},
+    ],
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -9004,6 +9235,7 @@ function zepoApp() {
       this.selectCatForItem(cat);
       this._resetQuickCat();
       this.showToast('✓ Categoría "' + label + '" creada y asignada');
+      this.jrnMark('cat_custom');
     },
     _resetQuickCat() {
       this.newCatLabel = '';
@@ -9029,6 +9261,7 @@ function zepoApp() {
       this.form.category = key;
       this._resetGridCat();
       this.showToast('✓ Categoría "' + label + '" creada');
+      this.jrnMark('cat_custom');
     },
     _resetGridCat() {
       this.newCatLabel = '';
@@ -9057,6 +9290,7 @@ function zepoApp() {
       this.updateParsedItemCat(idx, key);
       this._resetGridCat();
       this.showToast('✓ Categoría "' + label + '" creada');
+      this.jrnMark('cat_custom');
     },
     hiddenBankFees: [],
     showHiddenFees: false,
@@ -9432,6 +9666,7 @@ function zepoApp() {
           else if (this.cobroDetailOpen) { this.cobroDetailOpen = false; }
           else if (this.bugReportOpen) { this.bugReportOpen = false; }
           else if (this.batchEditPromptExp) { this.batchEditPromptExp = null; this.batchEditPromptItems = []; }
+          else if (this.jrnOpen) { this.jrnOpen = false; }
           else if (this.zepiOpen) { this.zepiOpen = false; }
           else if (this.patSheetOpen) { this.patSheetOpen = false; }
           else if (this.sheetOpen) { this.sheetOpen = false; }
@@ -9450,10 +9685,11 @@ function zepoApp() {
 
       this.$watch('tab', (val, old) => {
         if (['home','budgets','cuentas','dash'].includes(val)) this.prevTab = val;
+        if (val === 'dash') this.jrnMark('dash_visit');
         if (val !== old && !this._navPopping) pushBack();
       });
 
-      ['sheetOpen','patSheetOpen','zepiOpen','catManagerOpen','pmManagerOpen','recurringManagerOpen','spaceSwitcherOpen','spaceManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen','acceptPrModal','acceptAllModal','aliasModalOpen','showDeleteModal','importOpen','batchEditPromptExp'].forEach(k => {
+      ['sheetOpen','patSheetOpen','zepiOpen','jrnOpen','catManagerOpen','pmManagerOpen','recurringManagerOpen','spaceSwitcherOpen','spaceManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen','acceptPrModal','acceptAllModal','aliasModalOpen','showDeleteModal','importOpen','batchEditPromptExp'].forEach(k => {
         this.$watch(k, v => { if (v) pushBack(); });
       });
 
@@ -9479,6 +9715,7 @@ function zepoApp() {
           await this.ensureUserRow();
           await this.loadSpaces();
           await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadBudgets(), this.loadUserPlan(), this.loadFriends(), this.loadPaymentRequests(), this.loadPaymentMethods(), this.loadCategoryLearning(), this.loadRecurringTemplates(), this.loadPatrimony(), this.loadCustomCategoriesRemote()]);
+          this.loadJourney(); // tras los loads: el backfill lee lo ya cargado en memoria
           this.handlePaymentReturn();
           this.initWelcomeCarousel();
           this.loadNotifSettings();
@@ -9605,6 +9842,7 @@ function zepoApp() {
           this.loadUserPlan();
           this.loadPatrimony();
           this.loadCustomCategoriesRemote();   // baja las categorias propias en login fresco (device nuevo / tras purga de iOS)
+          this.loadJourney();                  // journey también en login fresco (mismo caso que categorías)
           this.initWelcomeCarousel();
           this.loadNotifSettings();
           this.initPushIfNeeded();
@@ -10430,6 +10668,7 @@ function zepoApp() {
     _applyVoiceTranscript(interim) {
       const spoken = (this.voiceFinal + ' ' + (interim || '')).trim();
       const digits = spoken ? this.normalizeSpokenNumbers(spoken) : '';
+      if (digits) this._jrnSrc = 'voice'; // journey: este registro nació por voz
       this.voiceTranscript = digits;
       this.form.description = this.voiceBaseDesc
         ? (digits ? this.voiceBaseDesc + ' ' + digits : this.voiceBaseDesc)
@@ -10533,6 +10772,7 @@ function zepoApp() {
         const clean = this._finalizeImportItems(items);
         if (clean.length === 1) this.form.description = clean[0].description;
         this.analyzed = true;
+        this._jrnSrc = 'photo'; // journey: este registro nació por foto/OCR
         this.showToast(clean.length + (clean.length === 1 ? ' gasto detectado' : ' gastos detectados'));
       } catch (e) {
         console.error('[processPhoto]', e);
@@ -11054,6 +11294,10 @@ function zepoApp() {
         await this.loadBudgets();
         this.budgetSheetOpen = false;
         this.showToast(cleared ? 'Presupuestos limpiados' : 'Presupuestos guardados');
+        if (!cleared) {
+          this.jrnMark('budget_set');
+          if (rows.some(r => r.category)) this.jrnMark('budget_cat');
+        }
       } catch (e) { this.showToast('Error: ' + e.message); }
       this.savingBudget = false;
     },
@@ -11830,6 +12074,7 @@ function zepoApp() {
         const ins = await sbRestInsert('recurring_templates', row);
         const created = (ins && ins[0]) || row;
         this.recurringTemplates.unshift(created);
+        this.jrnMark('recurring_set');
       } catch (e) { console.warn('[saveRecurringTemplate]', e.message); }
     },
     openRecurringManager() {
@@ -11935,6 +12180,7 @@ function zepoApp() {
         this.newPmName = ''; this.newPmType = 'tarjeta';
         if (!this.form.payment_method) this.form.payment_method = created.name;
         this.showToast('Método agregado');
+        this.jrnMark('pm_add');
       } catch (e) { this.showToast('Error: ' + e.message); }
     },
     startEditPm(m) {
@@ -12051,6 +12297,7 @@ function zepoApp() {
       this.newCatEmoji = '✨';
       this._lastAutoEmoji = null;
       this.showToast('✓ Categoría "' + label + '" agregada');
+      this.jrnMark('cat_custom');
     },
 
     startEditCategory(c) {
@@ -12179,6 +12426,7 @@ function zepoApp() {
         const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const blob = new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         await this._saveFile(blob, 'zepo-gastos.xlsx');
+        this.jrnMark('export_data');
         this.showToast('Excel descargado');
       } catch (e) {
         // Fallback universal: CSV (abre en Excel/Numbers/Sheets en cualquier lado).
@@ -12187,6 +12435,7 @@ function zepoApp() {
           return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
         }).join(',')).join('\n');
         await this._saveFile(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }), 'zepo-gastos.csv');
+        this.jrnMark('export_data');
         this.showToast('Excel (CSV) descargado');
       }
     },
@@ -12198,6 +12447,7 @@ function zepoApp() {
       this.saving = false;
       this.analyzing = false;
       this.analyzed = false;
+      this._jrnSrc = 'manual';
       this.voiceTranscript = '';
       this.importedFile = null;
       this.catDropdownOpen = false;
@@ -12543,6 +12793,7 @@ function zepoApp() {
 
         // id del gasto guardado (nuevo o editado) — para ligar el cobro al gasto (retract al borrar)
         const savedExpenseId = this.editingExpense ? this.editingExpense.id : ((inserted && inserted.id) || null);
+        this._jrnAfterSave({ isEdit: !!this.editingExpense, isIncome: !!this.form.is_income, isSplit, hasCat: !!(this.form.category && this.form.category !== 'other') });
         this.sheetOpen = false;
         this._extractFromBatch = false;
 
@@ -12583,7 +12834,7 @@ function zepoApp() {
               origin_expense_id: savedExpenseId,
             }));
           }
-          if (prInserts.length) bgTasks.push(Promise.all(prInserts));
+          if (prInserts.length) { bgTasks.push(Promise.all(prInserts)); this.jrnMark('pr_send'); }
         }
         Promise.all(bgTasks).catch(e => console.warn('[saveExpense] bg reload:', e.message));
         // Dividir es decisión POR registro: no debe arrastrarse al siguiente. Los cobros
@@ -12690,6 +12941,7 @@ function zepoApp() {
           insertedRows = await sbRestInsert('expenses', rows);
         }
         this.showToast(isSplit ? '💸 Split guardado' : ((rows.length === 1 ? 'Registro guardado' : (rows.length + ' registros guardados')) + (skipped > 0 ? ' · ' + skipped + ' duplicados omitidos' : '')));
+        this._jrnAfterSave({ isEdit: false, isIncome: rows.some(r => r.is_income), isSplit, hasCat: rows.some(r => r.category && r.category !== 'other'), multi: rows.length >= 2 });
         this.parsedItems = [];
         this.sheetOpen = false;
         // Optimistic: add items to local array immediately
@@ -12725,7 +12977,7 @@ function zepoApp() {
               }
             }
           }
-          if (prInserts.length) bgTasks.push(Promise.all(prInserts).then(() => this.loadPaymentRequests()));
+          if (prInserts.length) { bgTasks.push(Promise.all(prInserts).then(() => this.loadPaymentRequests())); this.jrnMark('pr_send'); }
         }
         Promise.all(bgTasks).catch(e => console.warn('[saveMultiItems] bg reload:', e.message));
         // Dividir es decisión POR registro: no se arrastra al siguiente (cobros ya encolados con locals).
@@ -12811,6 +13063,8 @@ function zepoApp() {
         this.editingBatch = null;
         this.sheetOpen = false;
         this.showToast(isSplit ? '💸 Split guardado (' + rows.length + ' items)' : rows.length + ' registros actualizados');
+        this.jrnMark('exp_edit');
+        if (isSplit) this.jrnMark('split_save');
 
         // Background reload expenses + splits + create payment_requests
         const bgTasks = [this.loadExpenses(), this.loadSplits(), this._maybeReloadHistory()];
@@ -13338,6 +13592,7 @@ function zepoApp() {
           await sbRestUpdate('expenses', 'id', id, { split_status: 'cobrado', split_pending: 0 });
         }
         this.showToast('✅ Cobro registrado');
+        this.jrnMark('pr_paid');
         await this.loadSplits();
       } catch (e) { this.showToast('Error: ' + e.message); }
     },
@@ -13418,6 +13673,7 @@ function zepoApp() {
       ].join(',')).join('\n');
       const blob = new Blob(['\ufeff' + header + rows], { type: 'text/csv;charset=utf-8;' });
       await this._saveFile(blob, 'zepo-gastos-' + localDate() + '.csv');
+      this.jrnMark('export_data');
       this.showToast('CSV descargado');
     },
 
@@ -13705,6 +13961,7 @@ function zepoApp() {
 
       const blob = doc.output('blob');
       await this._saveFile(blob, 'zepo-reporte.pdf');
+      this.jrnMark('export_data');
       this.showToast('PDF listo');
     },
 
@@ -13988,6 +14245,7 @@ function zepoApp() {
         });
         await this.loadBudgets();
         this.showToast('Presupuesto guardado');
+        this.jrnMark('budget_set');
       } catch (e) { this.showToast('Error: ' + e.message); }
       this.tab = 'onb-method';
     },
@@ -14023,6 +14281,7 @@ function zepoApp() {
       // y el texto quedó sin número, no re-analizar.
       if (this.analyzed && !/\d/.test(text) && parseFloat(this.form.amount) > 0) return;
       text = this.normalizeSpokenNumbers(text); // voz: "cinco de pollo" → "5 de pollo"
+      if (this._jrnSrc === 'manual') this._jrnSrc = 'text'; // journey: texto libre IA (voz/foto ya marcaron lo suyo)
       this.analyzing = true;
       this.parsedItems = [];
       const userIsIncome = this.form.is_income;
@@ -14121,6 +14380,7 @@ function zepoApp() {
       if (!q || this.zepiTyping) return;
       this.zepiInput = '';
       this.zepiMsgs.push({ role: 'user', text: q });
+      this.jrnMark('zepi_chat');
       this._zepiSaveChat();
       this.zepiTyping = true;
       this.$nextTick(() => this._zepiScroll());
@@ -14196,6 +14456,230 @@ function zepoApp() {
       try { snap.recurring = (this.recurringTemplates || []).length; } catch (e) {}
       return snap;
     },
+    // ─── JOURNEY: misiones, rachas y premios (30 días) ───
+    get jrnAllMissionIds() { return this.JRN_CHAPTERS.flatMap(c => c.missions.map(m => m.id)); },
+    get jrnDoneCount() { return this.jrn ? this.jrnAllMissionIds.filter(id => this.jrn.missions[id]).length : 0; },
+    get jrnTotalCount() { return this.jrnAllMissionIds.length; },
+    get jrnLevel() {
+      const n = this.jrnDoneCount;
+      if (n >= this.jrnTotalCount) return { name: 'Bosque', icon: '🌳' };
+      if (n >= 18) return { name: 'Árbol', icon: '🌲' };
+      if (n >= 11) return { name: 'Retoño', icon: '🪴' };
+      if (n >= 5) return { name: 'Brote', icon: '🌿' };
+      return { name: 'Semilla', icon: '🌱' };
+    },
+    jrnChapterDoneCount(ch) { return this.jrn ? ch.missions.filter(m => this.jrn.missions[m.id]).length : 0; },
+    jrnChapterDone(ch) { return this.jrn && ch.missions.every(m => this.jrn.missions[m.id]); },
+    jrnChapterClaimed(ch) { return !!(this.jrn && this.jrn.rewards && this.jrn.rewards[ch.claim]); },
+    jrnChapterLocked(ch) { return !!(ch.needs && !this.hasPlan(ch.needs)); },
+    get jrnCurrentChapter() { return this.jrn ? (this.JRN_CHAPTERS.find(c => !this.jrnChapterDone(c)) || null) : null; },
+    get jrnNextMission() {
+      if (!this.jrn) return null;
+      const ch = this.jrnCurrentChapter;
+      return ch ? ch.missions.find(m => !this.jrn.missions[m.id]) || null : null;
+    },
+    get jrnClaimableChapter() {
+      if (!this.jrn) return null;
+      // 'final' además exige ch1..ch4 reclamados (lo valida el RPC; aquí solo UI)
+      return this.JRN_CHAPTERS.find(c => this.jrnChapterDone(c) && !this.jrnChapterClaimed(c)
+        && (c.claim !== 'final' || ['ch1','ch2','ch3','ch4'].every(k => this.jrn.rewards[k]))) || null;
+    },
+    get jrnComplete() { return this.jrn && this.JRN_CHAPTERS.every(c => this.jrnChapterClaimed(c)); },
+    get jrnCardVisible() { return !!(this.jrn && this.user && !this.jrn.dismissed && !this.jrnComplete); },
+
+    async loadJourney() {
+      if (!this.user) return;
+      try {
+        let { data } = await sb.from('zepo_journey').select('*').eq('user_id', this.user.id).maybeSingle();
+        if (!data) {
+          const ins = await sb.from('zepo_journey').insert({ user_id: this.user.id }).select('*').maybeSingle();
+          data = ins.data || (await sb.from('zepo_journey').select('*').eq('user_id', this.user.id).maybeSingle()).data;
+        }
+        if (!data) return;
+        this.jrn = { ...data, missions: data.missions || {}, rewards: data.rewards || {} };
+        if (!this.jrn.backfilled) await this.jrnBackfill();
+        this.jrnTick();
+        this.checkReferralActivation();
+      } catch (e) { console.warn('[jrn] load:', e.message); }
+    },
+
+    // Referido activado (≥5 registros) → el RPC premia a AMBOS con 30 días de Pro.
+    // El server valida todo; esto solo dispara el chequeo cuando tiene sentido.
+    async checkReferralActivation() {
+      if (this._refActDone || !this.user || !this.referredBy) return;
+      if ((this.expenses || []).length < 5) return;
+      try {
+        const { data } = await sb.rpc('zepo_referral_check_activation');
+        if (data && (data.ok || data.error === 'no_pending')) {
+          this._refActDone = true;
+          if (data.ok) {
+            await this.loadUserPlan();
+            this.showToast('🎁 ¡Referido activado! 30 días de Pro para ti y tu amigo');
+          }
+        }
+      } catch (e) {}
+    },
+
+    // Detección UNA sola vez de lo que el usuario ya hizo antes de estrenarse el
+    // journey (usuarios existentes / device nuevo). Usa lo ya cargado en memoria
+    // por init + 3 queries baratas (counts / cobros).
+    async jrnBackfill() {
+      if (!this.jrn || !this.user) return;
+      try {
+        const uid = this.user.id;
+        const [ge, gi, prs] = await Promise.all([
+          sb.from('expenses').select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('is_income', false),
+          sb.from('expenses').select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('is_income', true),
+          sb.from('payment_requests').select('from_user_id,to_user_id,status').or('from_user_id.eq.' + uid + ',to_user_id.eq.' + uid).limit(100),
+        ]);
+        const m = {};
+        const ts = new Date().toISOString();
+        if ((ge.count || 0) > 0) m.exp_first = ts;
+        if ((gi.count || 0) > 0) m.inc_first = ts;
+        if ((this.expenses || []).some(e => e.category && e.category !== 'other')) m.cat_assign = ts;
+        if ((this.paymentMethods || []).length) m.pm_add = ts;
+        if ((this.budgets || []).some(b => Number(b.amount) > 0)) m.budget_set = ts;
+        if ((this.budgets || []).some(b => b.category && Number(b.amount) > 0)) m.budget_cat = ts;
+        if ((this.categories || []).some(c => String(c.key).startsWith('custom_')) || (this.incomeCategories || []).some(c => String(c.key).startsWith('custom_'))) m.cat_custom = ts;
+        if ((this.recurringTemplates || []).length) m.recurring_set = ts;
+        if ((this.friends || []).length) m.friend_add = ts;
+        if ((this.expenses || []).some(e => e.is_split)) m.split_save = ts;
+        if ((this.expenses || []).some(e => e.is_split && e.split_status === 'cobrado')) m.pr_paid = ts;
+        const prRows = prs.data || [];
+        if (prRows.some(p => p.from_user_id === uid)) m.pr_send = ts;
+        if (prRows.some(p => p.status === 'accepted' || p.status === 'paid')) m.pr_accept = ts;
+        this.jrn.missions = { ...m, ...this.jrn.missions };
+        this.jrn.backfilled = true;
+        await this._jrnSave();
+      } catch (e) { console.warn('[jrn] backfill:', e.message); }
+    },
+
+    // Marca una misión (idempotente) + toast la primera vez.
+    jrnMark(id, opts) {
+      if (!this.jrn || this.jrn.missions[id]) return;
+      const mis = this.JRN_CHAPTERS.flatMap(c => c.missions).find(m => m.id === id);
+      if (!mis) return;
+      this.jrn.missions = { ...this.jrn.missions, [id]: new Date().toISOString() };
+      if (!opts || !opts.quiet) this.showToast('🌱 Misión cumplida: ' + mis.t);
+      this._jrnQueueSave();
+    },
+
+    // Racha: 1 día cuenta con ≥1 registro creado ese día. 1 día de perdón por racha.
+    jrnStreakBump() {
+      if (!this.jrn) return;
+      const today = localDate();
+      const last = this.jrn.streak_last;
+      if (last === today) return;
+      const gap = last ? Math.round((new Date(today) - new Date(last)) / 86400000) : null;
+      if (gap === 1) this.jrn.streak_days++;
+      else if (gap === 2 && (this.jrn.streak_graces || 0) < 1) { this.jrn.streak_days++; this.jrn.streak_graces = (this.jrn.streak_graces || 0) + 1; }
+      else { this.jrn.streak_days = 1; this.jrn.streak_graces = 0; }
+      this.jrn.streak_last = today;
+      this.jrn.streak_best = Math.max(this.jrn.streak_best || 0, this.jrn.streak_days);
+      if (this.jrn.streak_days >= 3) this.jrnMark('streak_3');
+      if (this.jrn.streak_days >= 7) this.jrnMark('streak_7');
+      if (this.jrn.streak_days >= 14) this.jrnMark('streak_14');
+      this._jrnQueueSave();
+    },
+
+    // Chequeo de misiones derivadas del ESTADO (corre al cargar y tras guardar).
+    jrnTick() {
+      if (!this.jrn) return;
+      try {
+        if ((this.friends || []).length) this.jrnMark('friend_add', { quiet: true });
+        const days = (Date.now() - new Date(this.jrn.started_at || Date.now()).getTime()) / 86400000;
+        if (days >= 28 && (this.expenses || []).length >= 15) this.jrnMark('month_review');
+        const dom = new Date().getDate();
+        if (dom >= 28 && this.totalBudgetObj && Number(this.totalBudgetObj.amount) > 0 && this.monthTotal <= Number(this.totalBudgetObj.amount)) this.jrnMark('budget_kept');
+      } catch (e) {}
+    },
+
+    // Hook central tras guardar registros (single/multi). o = {isEdit,isIncome,isSplit,hasCat,multi}
+    _jrnAfterSave(o) {
+      if (!this.jrn) return;
+      if (o.isEdit) { this.jrnMark('exp_edit'); return; }
+      this.jrnMark(o.isIncome ? 'inc_first' : 'exp_first');
+      if (o.hasCat) this.jrnMark('cat_assign', { quiet: true });
+      if (o.isSplit) this.jrnMark('split_save');
+      if (o.multi) this.jrnMark('multi_item');
+      if (this._jrnSrc === 'text') this.jrnMark('ai_text');
+      else if (this._jrnSrc === 'voice') this.jrnMark('ai_voice');
+      else if (this._jrnSrc === 'photo') this.jrnMark('ocr_photo');
+      this._jrnSrc = 'manual';
+      this.jrnStreakBump();
+      this.jrnTick();
+      this.checkReferralActivation();
+    },
+
+    _jrnQueueSave() {
+      clearTimeout(this._jrnSaveT);
+      this._jrnSaveT = setTimeout(() => this._jrnSave(), 900);
+    },
+    async _jrnSave() {
+      if (!this.jrn || !this.user) return;
+      try {
+        await sb.from('zepo_journey').upsert({
+          user_id: this.user.id,
+          missions: this.jrn.missions,
+          streak_days: this.jrn.streak_days || 0,
+          streak_best: this.jrn.streak_best || 0,
+          streak_last: this.jrn.streak_last || null,
+          streak_graces: this.jrn.streak_graces || 0,
+          backfilled: !!this.jrn.backfilled,
+          dismissed: !!this.jrn.dismissed,
+        }, { onConflict: 'user_id' });
+      } catch (e) { console.warn('[jrn] save:', e.message); }
+    },
+
+    async jrnClaim(ch) {
+      if (!this.jrn || this.jrnClaiming) return;
+      this.jrnClaiming = ch.claim;
+      try {
+        clearTimeout(this._jrnSaveT);
+        await this._jrnSave(); // misiones persistidas ANTES de que el RPC valide
+        const { data, error } = await sb.rpc('zepo_claim_journey_reward', { p_chapter: ch.claim });
+        if (error) throw error;
+        if (!data || !data.ok) {
+          const msgs = {
+            missions_incomplete: 'Aún te faltan misiones de este capítulo',
+            chapters_incomplete: 'Primero reclama los capítulos anteriores',
+            not_enough_activity: 'Tu actividad real aún no respalda este premio',
+            already_claimed: 'Ya reclamaste este premio',
+          };
+          this.showToast(msgs[(data || {}).error] || 'No se pudo reclamar el premio');
+          return;
+        }
+        this.jrn.rewards = { ...this.jrn.rewards, [ch.claim]: new Date().toISOString() };
+        await this.loadUserPlan(); // refresca plan/trial/badge al instante
+        this.jrnCelebrate = ch.rewardLabel;
+        setTimeout(() => { this.jrnCelebrate = ''; }, 4000);
+      } catch (e) {
+        this.showToast('No se pudo reclamar: ' + e.message);
+      } finally { this.jrnClaiming = ''; }
+    },
+
+    jrnDismissCard() {
+      if (!this.jrn) return;
+      this.jrn.dismissed = true;
+      this._jrnQueueSave();
+      this.showToast('Journey guardado en Configuración');
+    },
+    jrnGo(m) {
+      if (!m || !m.target || (this.jrn && this.jrn.missions[m.id])) return;
+      this.jrnOpen = false;
+      this.zepiGo(m.target);
+    },
+
+    // Recordatorio de cobro por WhatsApp con link de invitación (?ref=) — el
+    // invitado llega con un motivo real (su parte del gasto), no con publicidad.
+    shareCobroWA(exp) {
+      if (!exp) return;
+      const url = 'https://app.zepo.lynoia.com/pwa/' + (this.referralCode ? ('?ref=' + this.referralCode) : '');
+      const who = (exp.split_persona || '').split(',')[0].trim();
+      const txt = 'Hola' + (who ? ' ' + who : '') + '! Te recuerdo lo de "' + (exp.description || 'nuestro gasto compartido') + '": tu parte quedó en $' + this.fmtMoney(exp.split_pending || 0) + ' 🙂 Lo llevo anotado en Zepo — si quieres ver el detalle y llevar tus propios gastos gratis: ' + url;
+      try { window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank'); } catch (e) {}
+    },
+
     zepiGo(target) {
       // Lista blanca de navegación — el companion solo puede LLEVARTE a pantallas, nada más.
       this.zepiOpen = false;
@@ -14541,11 +15025,15 @@ function zepoApp() {
 
     async loadUserPlan() {
       if (!this.user) return;
-      const { data } = await sb.from('users').select('plan, plan_expires_at, referral_code').eq('id', this.user.id).maybeSingle();
+      const { data } = await sb.from('users').select('plan, plan_expires_at, referral_code, referred_by, trial_plan, trial_until, journey_discount').eq('id', this.user.id).maybeSingle();
       if (data) {
         this.userPlan = data.plan || 'free';
         this.planExpiresAt = data.plan_expires_at;
         this.referralCode = data.referral_code || '';
+        this.referredBy = data.referred_by || null;
+        this.trialPlan = data.trial_plan || null;
+        this.trialUntil = data.trial_until || null;
+        this.journeyDiscount = !!data.journey_discount;
       }
       const { data: card } = await sb.from('saved_cards').select('card_brand, last_digits').eq('user_id', this.user.id).maybeSingle();
       this.savedCard = card ? { last4: card.last_digits, brand: card.card_brand || 'CARD' } : null;
@@ -15094,6 +15582,7 @@ function zepoApp() {
       this.pendingReceived = this.pendingReceived.filter(c => c.id !== conn_id);
       this.friendBadge = this.pendingReceived.length;
       this.showToast('Conexión aceptada');
+      this.jrnMark('friend_add');
       await this.loadFriends();
     },
 
@@ -15146,6 +15635,7 @@ function zepoApp() {
       if (error) { this.showToast('Error al enviar cobro'); return; }
       this.sendPrOpen = false;
       this.showToast('Cobro enviado a ' + this.sendPrTo.display_name);
+      this.jrnMark('pr_send');
       this.loadFriends();
     },
 
@@ -15190,6 +15680,7 @@ function zepoApp() {
       }
       const found = this.payReqs.find(p => p.id === pr.id);
       if (found) found.status = 'accepted';
+      this.jrnMark('pr_accept');
       return true;
     },
 
@@ -15370,7 +15861,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v153.js';
+  const CURRENT_SW = 'sw-v154.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
