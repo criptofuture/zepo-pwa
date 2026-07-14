@@ -2768,6 +2768,46 @@
       }
       .fab:active { transform: scale(0.92); }
     }
+
+    /* ═══ ZEPI — companion IA (Max) ═══ */
+    .zepi-fab { position: fixed; right: 14px; bottom: calc(var(--tab-total) + 14px); width: 50px; height: 50px; border-radius: var(--radius-pill); background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; z-index: 52; box-shadow: 0 4px 14px rgba(26,36,24,0.16); cursor: pointer; transition: transform .2s; }
+    .zepi-fab:active { transform: scale(0.92); }
+    .zepi-fab svg { width: 24px; height: 24px; stroke: var(--cyan); fill: none; stroke-width: 2; }
+    .zepi-badge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--danger); color: var(--c-brand-contrast); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; border: 2px solid var(--bg); }
+    .zepi-scrim { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 92; }
+    .zepi-sheet { position: fixed; left: 0; right: 0; bottom: 0; max-width: 430px; margin: 0 auto; background: var(--bg); border-radius: 24px 24px 0 0; z-index: 93; display: flex; flex-direction: column; height: min(calc(var(--vvh, 100dvh) - 40px), 92dvh); overflow: hidden; }
+    .zepi-head { display: flex; align-items: center; gap: 10px; padding: 14px 16px 10px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .zepi-ava { width: 38px; height: 38px; border-radius: var(--radius-pill); background: var(--gradient); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .zepi-ava svg { width: 20px; height: 20px; stroke: var(--c-brand-contrast); fill: none; stroke-width: 2; }
+    .zepi-hbtn { width: 34px; height: 34px; border-radius: var(--radius-pill); background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+    .zepi-hbtn svg { width: 16px; height: 16px; stroke: var(--muted); fill: none; stroke-width: 2; }
+    .zepi-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+    .zepi-row { display: flex; flex-direction: column; gap: 6px; }
+    .zepi-row.user { align-items: flex-end; }
+    .zepi-row.bot { align-items: flex-start; }
+    .zepi-msg { max-width: 88%; padding: 10px 14px; border-radius: var(--radius); font-size: 14px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; text-align: left; }
+    .zepi-msg.user { background: var(--cyan); color: var(--c-brand-contrast); border-bottom-right-radius: 6px; }
+    .zepi-msg.bot { background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 6px; }
+    .zepi-shot { display: block; width: 230px; max-width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-top: 8px; }
+    .zepi-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .zepi-action { padding: 8px 14px; border-radius: var(--radius-pill); border: 1px solid rgba(var(--c-brand-rgb),0.4); background: rgba(var(--c-brand-rgb),0.08); color: var(--cyan); font-weight: 700; font-size: 13px; font-family: inherit; cursor: pointer; }
+    .zepi-typing { display: inline-flex; gap: 4px; align-items: center; }
+    .zepi-typing span { width: 6px; height: 6px; border-radius: var(--radius-pill); background: var(--muted); animation: zepiBlink 1.2s infinite; }
+    .zepi-typing span:nth-child(2) { animation-delay: .2s; }
+    .zepi-typing span:nth-child(3) { animation-delay: .4s; }
+    @keyframes zepiBlink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+    .zepi-find { background: rgba(var(--c-accent-rgb),0.10); border: 1px solid rgba(var(--c-accent-rgb),0.4); border-radius: var(--radius); padding: 10px 12px; font-size: 13px; }
+    .zepi-foot { display: flex; gap: 8px; align-items: flex-end; padding: 10px 12px calc(10px + var(--safe-bottom)); border-top: 1px solid var(--border); background: var(--bg); flex-shrink: 0; }
+    .zepi-input { flex: 1; min-height: 44px; max-height: 110px; resize: none; border-radius: 22px; border: 1px solid var(--border); background: var(--surface); padding: 11px 14px; font-size: 16px; font-family: inherit; color: var(--text); outline: none; }
+    .zepi-input:focus { border-color: var(--cyan); }
+    .zepi-send { width: 44px; height: 44px; border-radius: var(--radius-pill); background: var(--gradient); border: none; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; }
+    .zepi-send:disabled { opacity: .5; }
+    .zepi-send svg { width: 20px; height: 20px; stroke: var(--c-brand-contrast); fill: none; stroke-width: 2.2; }
+    @media (min-width: 900px) {
+      .zepi-fab { right: 40px; bottom: 124px; }
+      .zepi-scrim { background: rgba(0,0,0,.25); }
+      .zepi-sheet { left: auto; right: 32px; bottom: 32px; max-width: none; width: 420px; height: min(680px, calc(100dvh - 64px)); border-radius: 24px; box-shadow: 0 24px 64px rgba(26,36,24,.28); }
+    }
   </style>
 </head>
 <body>
@@ -6248,6 +6288,100 @@ setTimeout(function() {
         <svg viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
 
+      <!-- ══ ZEPI — companion IA (Max) ══ -->
+      <button class="zepi-fab" x-show="!sheetOpen && ['home','history','budgets','cuentas','dash','patrimonio'].includes(tab)" @click="openZepi()" aria-label="Zepi, tu asistente">
+        <svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M18.5 15.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></svg>
+        <span class="zepi-badge" x-show="zepiBadge > 0" x-text="zepiBadge"></span>
+      </button>
+
+      <template x-if="zepiOpen">
+        <div>
+          <div class="zepi-scrim" @click="zepiOpen = false"></div>
+          <div class="zepi-sheet">
+            <div class="zepi-head">
+              <div class="zepi-ava">
+                <svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M18.5 15.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></svg>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:800;font-size:16px;font-family:var(--font-display);">Zepi</div>
+                <div style="font-size:11px;color:var(--muted);">Tu copiloto financiero</div>
+              </div>
+              <button class="zepi-hbtn" x-show="hasPlan('max') && zepiMsgs.length > 0" @click="zepiClear()" title="Borrar conversación">
+                <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+              </button>
+              <button class="zepi-hbtn" @click="zepiOpen = false" title="Cerrar">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <template x-if="hasPlan('max')">
+              <div class="zepi-body" x-ref="zepibody">
+                <template x-for="(f, fi) in zepiFindings" :key="'zf' + fi">
+                  <div class="zepi-find">
+                    <div style="display:flex;align-items:flex-start;gap:8px;">
+                      <span x-text="f.emoji" style="font-size:16px;flex-shrink:0;"></span>
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-weight:700;" x-text="f.title"></div>
+                        <div style="color:var(--muted);margin-top:2px;" x-text="f.body"></div>
+                      </div>
+                      <button @click="zepiDismissFind(fi)" style="background:transparent;border:none;color:var(--dim);font-size:14px;cursor:pointer;padding:0 2px;line-height:1;font-family:inherit;">✕</button>
+                    </div>
+                    <button x-show="f.target" class="zepi-action" style="margin-top:8px;" x-text="f.cta || 'Ver'" @click="zepiGo(f.target)"></button>
+                  </div>
+                </template>
+
+                <div class="zepi-row bot" x-show="zepiMsgs.length === 0">
+                  <div class="zepi-msg bot">¡Hola! Soy <b>Zepi</b> 👋 Tu copiloto financiero dentro de Zepo.
+Pregúntame sobre tus gastos, pídeme un resumen del mes o dime qué no encuentras en la app y te llevo paso a paso.</div>
+                </div>
+
+                <template x-for="(m, mi) in zepiMsgs" :key="'zm' + mi">
+                  <div class="zepi-row" :class="m.role === 'user' ? 'user' : 'bot'">
+                    <!-- OJO: span+img en UNA linea — .zepi-msg es pre-wrap y renderizaria los saltos del markup -->
+                    <div class="zepi-msg" :class="m.role === 'user' ? 'user' : 'bot'"><span x-html="zepiFmt(m.text)"></span><img x-show="m.shot" class="zepi-shot" :src="m.shot ? ('guide/' + m.shot + '.webp?v=1') : ''" loading="lazy" @error="$el.style.display = 'none'" alt=""></div>
+                    <div class="zepi-actions" x-show="m.actions && m.actions.length > 0">
+                      <template x-for="(a, ai) in (m.actions || [])" :key="'za' + mi + '-' + ai">
+                        <button class="zepi-action" x-text="a.label" @click="zepiGo(a.target)"></button>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+
+                <div class="zepi-row bot" x-show="zepiTyping">
+                  <div class="zepi-msg bot zepi-typing"><span></span><span></span><span></span></div>
+                </div>
+
+                <div class="zepi-actions" x-show="!zepiTyping && zepiMsgs.length === 0">
+                  <button class="zepi-action" @click="zepiAsk('Resume mi mes')">Resume mi mes</button>
+                  <button class="zepi-action" @click="zepiAsk('¿En qué estoy gastando de más?')">¿Dónde gasto de más?</button>
+                  <button class="zepi-action" @click="zepiAsk('¿Cómo divido un gasto con alguien?')">¿Cómo divido un gasto?</button>
+                </div>
+              </div>
+            </template>
+
+            <template x-if="hasPlan('max')">
+              <div class="zepi-foot">
+                <textarea class="zepi-input" x-model="zepiInput" placeholder="Pregúntame lo que sea…" rows="1" enterkeyhint="send" @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); sendZepi(); }"></textarea>
+                <button class="zepi-send" :disabled="zepiTyping" @click="sendZepi()">
+                  <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+              </div>
+            </template>
+
+            <template x-if="!hasPlan('max')">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px 28px;gap:6px;overflow-y:auto;">
+                <div class="zepi-ava" style="width:64px;height:64px;margin-bottom:6px;">
+                  <svg viewBox="0 0 24 24" style="width:30px;height:30px;"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M18.5 15.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></svg>
+                </div>
+                <div style="font-family:var(--font-display);font-weight:800;font-size:20px;">Conoce a Zepi <span class="pat-lock-pill" style="vertical-align:middle;">MAX</span></div>
+                <p style="font-size:14px;color:var(--muted);line-height:1.5;max-width:300px;">Tu asesor financiero personal: responde sobre <b>tus</b> gastos, encuentra errores en tus datos, te da ideas para optimizar y te guía por la app paso a paso.</p>
+                <button class="save-btn" style="margin-top:14px;max-width:300px;" @click="zepiOpen = false; tab = 'plans'">Mejorar a Max · $15/mes</button>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+
       <!-- ══ INPUT / EDIT SHEET (Full-screen Approve) ══ -->
       <template x-if="sheetOpen">
         <div>
@@ -8815,8 +8949,10 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v176',
+    APP_VERSION: 'v177',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
+    // ─── ZEPI (companion IA, Max) ───
+    zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
     freeSunsetActive: false, // sunset del plan Free OCULTO (Alvaro 2026-06-09). Flip a true para reactivar banners/overlay de vencimiento.
     theme: (typeof window !== 'undefined' && window.getZepoThemePref) ? window.getZepoThemePref() : 'auto',
     setTheme(m) { this.theme = m; if (window.setZepoTheme) window.setZepoTheme(m); },
@@ -9296,6 +9432,7 @@ function zepoApp() {
           else if (this.cobroDetailOpen) { this.cobroDetailOpen = false; }
           else if (this.bugReportOpen) { this.bugReportOpen = false; }
           else if (this.batchEditPromptExp) { this.batchEditPromptExp = null; this.batchEditPromptItems = []; }
+          else if (this.zepiOpen) { this.zepiOpen = false; }
           else if (this.patSheetOpen) { this.patSheetOpen = false; }
           else if (this.sheetOpen) { this.sheetOpen = false; }
           else if (['changepass','plans','checkout','pay-processing','pay-success','pay-failed','forgotpw','notifications'].includes(this.tab)) { this.tab = 'settings'; }
@@ -9316,7 +9453,7 @@ function zepoApp() {
         if (val !== old && !this._navPopping) pushBack();
       });
 
-      ['sheetOpen','patSheetOpen','catManagerOpen','pmManagerOpen','recurringManagerOpen','spaceSwitcherOpen','spaceManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen','acceptPrModal','acceptAllModal','aliasModalOpen','showDeleteModal','importOpen','batchEditPromptExp'].forEach(k => {
+      ['sheetOpen','patSheetOpen','zepiOpen','catManagerOpen','pmManagerOpen','recurringManagerOpen','spaceSwitcherOpen','spaceManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen','acceptPrModal','acceptAllModal','aliasModalOpen','showDeleteModal','importOpen','batchEditPromptExp'].forEach(k => {
         this.$watch(k, v => { if (v) pushBack(); });
       });
 
@@ -9802,6 +9939,7 @@ function zepoApp() {
       this.expenses = pendingLocal.length ? [...pendingLocal, ...data] : data;
       this.dataVer++;
       try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
+      try { this.zepiScan(); } catch (e) {} // badge proactivo del companion (barato: puro array local)
     },
 
     async loadHistory() {
@@ -13952,6 +14090,218 @@ function zepoApp() {
       } catch (e) { /* Edge function not deployed or timeout — silent fallback */ }
     },
 
+    // ═══ ZEPI — companion IA (Max) ═══
+    openZepi() {
+      this.zepiOpen = true;
+      this.zepiBadge = 0;
+      if (!this.hasPlan('max')) return;
+      if (!this._zepiLoaded) { this.zepiLoadChat(); this._zepiLoaded = true; }
+      this.zepiScan();
+      this.zepiDailyInsight();
+      this.$nextTick(() => this._zepiScroll());
+    },
+    zepiLoadChat() {
+      try {
+        const raw = localStorage.getItem('zepo_zepi_chat_' + (this.user && this.user.id || ''));
+        if (raw) this.zepiMsgs = JSON.parse(raw).slice(-40);
+      } catch (e) { this.zepiMsgs = []; }
+    },
+    _zepiSaveChat() {
+      try { localStorage.setItem('zepo_zepi_chat_' + (this.user && this.user.id || ''), JSON.stringify(this.zepiMsgs.slice(-40))); } catch (e) {}
+    },
+    zepiClear() { this.zepiMsgs = []; this._zepiSaveChat(); },
+    _zepiScroll() { const el = this.$refs.zepibody; if (el) el.scrollTop = el.scrollHeight; },
+    zepiFmt(t) {
+      const esc = String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return esc.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+    },
+    zepiAsk(q) { this.zepiInput = q; this.sendZepi(); },
+    async sendZepi() {
+      const q = (this.zepiInput || '').trim();
+      if (!q || this.zepiTyping) return;
+      this.zepiInput = '';
+      this.zepiMsgs.push({ role: 'user', text: q });
+      this._zepiSaveChat();
+      this.zepiTyping = true;
+      this.$nextTick(() => this._zepiScroll());
+      try {
+        const token = (await sb.auth.getSession())?.data?.session?.access_token;
+        if (!token) throw new Error('no_session');
+        const resp = await fetch(SUPABASE_URL + '/functions/v1/zepo-companion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + token },
+          body: JSON.stringify({
+            mode: 'chat',
+            messages: this.zepiMsgs.slice(-10).map(m => ({ role: m.role === 'user' ? 'user' : 'model', text: m.text })),
+            snapshot: this._zepiSnapshot(),
+          }),
+          signal: AbortSignal.timeout(30000),
+        });
+        if (!resp.ok) throw new Error('http_' + resp.status);
+        const data = await resp.json();
+        this.zepiMsgs.push({ role: 'model', text: data.text || '…', actions: data.actions || [], shot: data.shot || null });
+      } catch (e) {
+        this.zepiMsgs.push({ role: 'model', text: 'Uy, me quedé sin señal 😅 Revisa tu conexión e inténtalo otra vez.', actions: [], shot: null });
+      } finally {
+        this.zepiTyping = false;
+        this._zepiSaveChat();
+        this.$nextTick(() => this._zepiScroll());
+      }
+    },
+    _zepiSnapshot() {
+      // Resumen COMPACTO de los datos del usuario para el companion. Solo agregados,
+      // nunca el detalle completo (costo acotado). Todo con try/catch: si una fuente
+      // no está cargada, se omite el campo y Zepi trabaja con lo que hay.
+      const r2 = x => Math.round((Number(x) || 0) * 100) / 100;
+      const snap = { currency: this.userCurrency, plan: this.userPlan, today: new Date().toISOString().slice(0, 10) };
+      const monthLabel = d => d.toLocaleDateString('es', { month: 'short', year: 'numeric' });
+      const catAgg = list => {
+        const m = {};
+        list.forEach(e => { const k = this.getCatLabel(e.category) || e.category; if (!m[k]) m[k] = { cat: k, amt: 0, n: 0 }; m[k].amt += e.amount; m[k].n++; });
+        return Object.values(m).sort((a, b) => b.amt - a.amt).slice(0, 8).map(c => ({ cat: c.cat, amt: r2(c.amt), n: c.n }));
+      };
+      try {
+        const spaceId = this._currentSpaceId();
+        snap.space = this.spaceViewAll ? 'all' : (((this.spaces || []).find(s => s.id === spaceId) || {}).name || 'Personal');
+      } catch (e) {}
+      const now = new Date();
+      try {
+        const mExp = this.monthExpenses;
+        snap.month = {
+          label: monthLabel(now),
+          income: r2(this.monthIncome), expenses: r2(this.monthTotal), balance: r2(this.monthBalance),
+          byCat: catAgg(mExp),
+          topExpenses: [...mExp].sort((a, b) => b.amount - a.amount).slice(0, 5).map(e => ({ d: String(e.description || '').slice(0, 40), amt: r2(e.amount), date: String(e.date).slice(5), cat: this.getCatLabel(e.category) })),
+        };
+        if (this.monthIncome > 0) snap.month.safeToSpend = r2(this.safeToSpend);
+        const pmFirst = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const pmStart = pmFirst.getFullYear() + '-' + String(pmFirst.getMonth() + 1).padStart(2, '0') + '-01';
+        const pExp = this.expenses.filter(e => !e.is_income && e.date >= pmStart && e.date < this.currentMonthStart);
+        const pInc = this.expenses.filter(e => e.is_income && e.date >= pmStart && e.date < this.currentMonthStart).reduce((s, e) => s + e.amount, 0);
+        snap.prevMonth = { label: monthLabel(pmFirst), income: r2(pInc), expenses: r2(pExp.reduce((s, e) => s + e.amount, 0)), byCat: catAgg(pExp) };
+        snap.counts = { monthRecords: mExp.length, otherCat: mExp.filter(e => e.category === 'other').length };
+      } catch (e) {}
+      try {
+        if (this.hasPlan('pro')) {
+          const total = this.budgets.find(b => !b.category);
+          snap.budgets = {
+            total: total ? total.amount : null,
+            spent: r2(this.monthTotal),
+            cats: this.budgetBars.slice(0, 10).map(b => ({ cat: b.label, budget: b.budget, spent: r2(b.spent), pct: b.pct })),
+          };
+        }
+      } catch (e) {}
+      try { snap.splits = { meDeben: r2(this.teDebenConfirmado), adelantadoEsteMes: r2(this.unsettledAdvances) }; } catch (e) {}
+      try { if (this.hasPlan('max') && this.lifetimeSavingsLoaded) snap.patrimonio = { neto: r2(this.patNetWorth), ahorro: r2(this.lifetimeSavings) }; } catch (e) {}
+      try { snap.recurring = (this.recurringTemplates || []).length; } catch (e) {}
+      return snap;
+    },
+    zepiGo(target) {
+      // Lista blanca de navegación — el companion solo puede LLEVARTE a pantallas, nada más.
+      this.zepiOpen = false;
+      try {
+        switch (target) {
+          case 'newExpense': this.openNew(); break;
+          case 'patrimonio': this.openPatrimonio(); break;
+          case 'spaces': this.openSpaceManager(); break;
+          case 'paymethods': this.openPmManager(); break;
+          case 'categories': this.openCatManager(); break;
+          case 'recurring': this.openRecurringManager(); break;
+          case 'export': this.tab = 'history'; this.exportSheetOpen = true; break;
+          case 'cuentas': this.tab = 'cuentas'; this.loadSplits(); break;
+          case 'history': this.tab = 'history'; this.histAll = true; this.loadHistory(); break;
+          case 'home': case 'budgets': case 'dash': case 'settings': case 'plans': case 'notifications': this.tab = target; break;
+        }
+      } catch (e) {}
+    },
+    zepiScan() {
+      // Detector proactivo DETERMINISTA (gratis, corre local): duplicados, presupuestos
+      // al límite, categorías disparadas vs mes pasado, cobros viejos, pila de "Otros".
+      if (!this.hasPlan('max')) return;
+      try {
+        const finds = [];
+        const mExp = this.monthExpenses;
+        const seen = {};
+        mExp.forEach(e => {
+          if (e.is_income || !e.amount) return;
+          const k = e.date + '|' + e.amount + '|' + String(e.description || '').trim().toLowerCase();
+          if (seen[k]) seen[k].push(e); else seen[k] = [e];
+        });
+        Object.keys(seen).forEach(k => {
+          const arr = seen[k];
+          if (arr.length >= 2) finds.push({ key: 'dup|' + k, emoji: '👯', title: 'Posible duplicado', body: '"' + String(arr[0].description || 'Sin descripción').slice(0, 30) + '" aparece ' + arr.length + ' veces el ' + String(arr[0].date).slice(5) + ' por $' + this.fmtMoney(arr[0].amount) + '. ¿Se registró doble?', target: 'history', cta: 'Revisar' });
+        });
+        try {
+          this.budgetBars.forEach(b => {
+            if (b.budget > 0 && b.pct >= 90) finds.push({ key: 'bud|' + b.cat, emoji: '🚨', title: 'Presupuesto al ' + b.pct + '%', body: b.label + ': llevas $' + this.fmtMoney(b.spent) + ' de $' + this.fmtMoney(b.budget) + ' este mes.', target: 'budgets', cta: 'Ver presupuestos' });
+          });
+        } catch (e) {}
+        try {
+          const now = new Date();
+          const pmFirst = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          const pmStart = pmFirst.getFullYear() + '-' + String(pmFirst.getMonth() + 1).padStart(2, '0') + '-01';
+          const agg = list => { const m = {}; list.forEach(e => { if (e.is_income) return; m[e.category] = (m[e.category] || 0) + e.amount; }); return m; };
+          const cur = agg(mExp), prev = agg(this.expenses.filter(e => e.date >= pmStart && e.date < this.currentMonthStart));
+          Object.keys(cur).forEach(c => {
+            if (prev[c] > 10 && cur[c] >= prev[c] * 1.5 && cur[c] - prev[c] >= 20) {
+              const pct = Math.round((cur[c] / prev[c] - 1) * 100);
+              finds.push({ key: 'spike|' + c, emoji: '📈', title: (this.getCatLabel(c) || c) + ' subió ' + pct + '%', body: '$' + this.fmtMoney(cur[c]) + ' este mes vs $' + this.fmtMoney(prev[c]) + ' el pasado.', target: 'dash', cta: 'Ver análisis' });
+            }
+          });
+        } catch (e) {}
+        try {
+          const cutoff = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+          const old = this.expenses.filter(e => e.is_split && e.split_status === 'pendiente' && Number(e.split_pending) > 0 && e.date < cutoff);
+          const sum = old.reduce((s, e) => s + Number(e.split_pending), 0);
+          if (sum > 0) finds.push({ key: 'cobros|' + old.length, emoji: '⏳', title: 'Cobros dormidos', body: 'Te deben $' + this.fmtMoney(sum) + ' de ' + old.length + ' gasto(s) divididos hace más de una semana. Un recordatorio no cae mal.', target: 'cuentas', cta: 'Ver cuentas' });
+        } catch (e) {}
+        const others = mExp.filter(e => !e.is_income && e.category === 'other').length;
+        if (others >= 5) finds.push({ key: 'otros|' + others, emoji: '🗂️', title: others + ' gastos en "Otros"', body: 'Sin categoría clara, tus reportes pierden precisión. Toca cada uno y asígnale su categoría.', target: 'history', cta: 'Ordenarlos' });
+        const today = new Date().toISOString().slice(0, 10);
+        let dis = [];
+        try { const raw = JSON.parse(localStorage.getItem('zepo_zepi_dis') || '{}'); if (raw.d === today) dis = raw.keys || []; } catch (e) {}
+        const ai = this.zepiFindings.filter(f => String(f.key).slice(0, 3) === 'ai|');
+        this.zepiFindings = ai.concat(finds.filter(f => !dis.includes(f.key)).slice(0, 4));
+        if (!this.zepiOpen) this.zepiBadge = this.zepiFindings.length;
+      } catch (e) {}
+    },
+    zepiDismissFind(i) {
+      const f = this.zepiFindings[i];
+      if (!f) return;
+      this.zepiFindings.splice(i, 1);
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        let raw = {};
+        try { raw = JSON.parse(localStorage.getItem('zepo_zepi_dis') || '{}'); } catch (e) {}
+        const keys = (raw.d === today && Array.isArray(raw.keys)) ? raw.keys : [];
+        keys.push(f.key);
+        localStorage.setItem('zepo_zepi_dis', JSON.stringify({ d: today, keys: keys.slice(-50) }));
+      } catch (e) {}
+    },
+    async zepiDailyInsight() {
+      // 1 insight IA por día máximo (guard localStorage) — no quema créditos en cada apertura.
+      if (!this.hasPlan('max')) return;
+      const today = new Date().toISOString().slice(0, 10);
+      try { if (localStorage.getItem('zepo_zepi_insight_d') === today) return; } catch (e) {}
+      if (this.monthExpenses.length < 3) return;
+      try {
+        const token = (await sb.auth.getSession())?.data?.session?.access_token;
+        if (!token) return;
+        const resp = await fetch(SUPABASE_URL + '/functions/v1/zepo-companion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ mode: 'insight', snapshot: this._zepiSnapshot() }),
+          signal: AbortSignal.timeout(20000),
+        });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (!data.text) return;
+        try { localStorage.setItem('zepo_zepi_insight_d', today); } catch (e) {}
+        const a = (data.actions || [])[0];
+        this.zepiFindings.unshift({ key: 'ai|' + today, emoji: '✨', title: data.title || 'Insight del día', body: data.text, target: a ? a.target : null, cta: a ? a.label : null });
+      } catch (e) { /* sin insight hoy — silencioso */ }
+    },
+
     splitItems(text) {
       // Si el texto viene en varias líneas, CADA LÍNEA = un ítem. Respeta el formato del
       // usuario y NO parte descripciones internas ("pan y pastel", "gasolina y aceite",
@@ -15020,7 +15370,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v152.js';
+  const CURRENT_SW = 'sw-v153.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
