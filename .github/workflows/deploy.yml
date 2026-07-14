@@ -164,6 +164,8 @@ jobs:
           # bloqueaba parse-bank-statement. NO re-agregar sin subir supabase/functions/find-user/.
           supabase functions deploy parse-bank-statement \
             --project-ref vchaxqisbypwwtyjjnjr
+          supabase functions deploy zepo-companion \
+            --project-ref vchaxqisbypwwtyjjnjr
 
       - name: Set Edge Function secrets
         env:
