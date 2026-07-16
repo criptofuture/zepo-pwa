@@ -3158,6 +3158,20 @@ setTimeout(function() {
         <span class="auth-logo-name">Zepo</span>
       </div>
 
+      <!-- Revisa tu correo (aparece tras registro cuando la confirmación de email está activa) -->
+      <div x-show="signupSent" x-cloak>
+        <div style="font-size:44px;margin-bottom:16px;">✉️</div>
+        <h1 class="auth-title" style="text-align:left;margin-bottom:8px;">Revisa tu correo</h1>
+        <p class="auth-subtitle" style="text-align:left;margin-bottom:24px;">Te enviamos un enlace de confirmación a <strong x-text="signupEmail" style="color:var(--text);"></strong>. Ábrelo para activar tu cuenta y entrar. Revisa también spam o promociones.</p>
+        <div x-show="authError" class="auth-error" style="margin-bottom:12px;" x-text="authError"></div>
+        <button class="auth-btn" type="button" :disabled="authLoading" @click="resendSignup()">
+          <span x-show="!authLoading">Reenviar correo</span>
+          <span x-show="authLoading">Enviando…</span>
+        </button>
+        <button type="button" class="auth-forgot" style="margin-top:14px;" @click="signupSent=false; authMode='login'; authError=''">Volver a iniciar sesión</button>
+      </div>
+
+      <div x-show="!signupSent">
       <h1 class="auth-title" style="text-align:left;margin-bottom:8px;">
         <span x-show="authMode === 'login'">Bienvenido <span class="gradient-text">de nuevo</span></span>
         <span x-show="authMode === 'signup'" style="font-size:30px;">Crea tu cuenta</span>
@@ -3207,6 +3221,7 @@ setTimeout(function() {
         <a href="/privacidad.html" style="color:var(--cyan);text-decoration:underline;" target="_blank">política de privacidad</a> y los
         <a href="/terminos.html" style="color:var(--cyan);text-decoration:underline;" target="_blank">términos de servicio</a>.
       </p>
+      </div>
     </div>
   </template>
 
@@ -7255,7 +7270,7 @@ Pregúntame sobre tus gastos, pídeme un resumen del mes o dime qué no encuentr
                     <!-- Archivo (clip) -->
                     <label class="cd-inline-action" :style="!hasPlan('max') ? 'opacity:0.7' : ''" title="Importar archivo" @click="if (!hasPlan('max')) { $event.preventDefault(); tab = 'plans'; sheetOpen = false; }">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
-                      <input type="file" accept=".pdf,.xlsx,.csv,.xml,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,application/xml" @change="handleFileImport($event)" style="display:none" :disabled="!hasPlan('max')">
+                      <input type="file" accept=".pdf,.xlsx,.xls,.csv,.xml,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,application/xml" @change="handleFileImport($event)" style="display:none" :disabled="!hasPlan('max')">
                       <svg x-show="!hasPlan('max')" class="cd-inline-lock" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                     </label>
                   </div>
@@ -8958,6 +8973,8 @@ function zepoApp() {
     authEmail: '',
     authPassword: '',
     authName: '',
+    signupSent: false,
+    signupEmail: '',
     authError: '',
     debugLog: [],
     _dlog(msg) {
@@ -9137,7 +9154,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v178',
+    APP_VERSION: 'v179',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     // ─── ZEPI (companion IA, Max) ───
     zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
@@ -9753,6 +9770,16 @@ function zepoApp() {
         this.$nextTick(() => { this.tab = 'setnewpw'; });
       }
 
+      // ── Confirmación de correo: el enlace del email de bienvenida vuelve con type=signup ──
+      // El SDK procesa el hash y emite SIGNED_IN (crea la fila y entra). Solo mostramos un saludo.
+      const isSignupConfirm = hashParams.get('type') === 'signup' || urlParams.get('type') === 'signup';
+      if (isSignupConfirm) {
+        this._dlog('Signup confirmation link detected');
+        this.signupSent = false;
+        this.toast = '¡Correo confirmado! Bienvenido a Zepo.';
+        setTimeout(() => { if (this.toast === '¡Correo confirmado! Bienvenido a Zepo.') this.toast = ''; }, 6000);
+      }
+
       if (oauthError) {
         this._dlog('URL has ?error=' + oauthError + ' desc=' + (oauthErrorDesc||''));
         console.warn('[init] OAuth error in URL:', { oauthError, oauthErrorDesc });
@@ -9901,6 +9928,26 @@ function zepoApp() {
       } catch (e) { console.warn('[ensureUserRow] profiles upsert:', e.message); }
     },
 
+    async resendSignup() {
+      if (!this.signupEmail) return;
+      this.authError = '';
+      this.authLoading = true;
+      try {
+        const { error } = await withTimeout(
+          sb.auth.resend({ type: 'signup', email: this.signupEmail, options: { emailRedirectTo: location.origin + location.pathname } }),
+          10000, 'resendSignup'
+        );
+        if (error) throw error;
+        this.toast = 'Correo reenviado. Revisa tu bandeja.';
+        setTimeout(() => { if (this.toast === 'Correo reenviado. Revisa tu bandeja.') this.toast = ''; }, 6000);
+      } catch (e) {
+        const m = e.message || '';
+        this.authError = /rate|too many|seconds/i.test(m) ? 'Espera un momento antes de reenviar el correo.' : ('No se pudo reenviar: ' + m);
+      } finally {
+        this.authLoading = false;
+      }
+    },
+
     async handleAuth() {
       this.authError = '';
       this.authLoading = true;
@@ -9919,11 +9966,23 @@ function zepoApp() {
             sb.auth.signUp({
               email: this.authEmail,
               password: this.authPassword,
-              options: { data: { name: this.authName || this.authEmail.split('@')[0] } }
+              options: {
+                data: { name: this.authName || this.authEmail.split('@')[0] },
+                emailRedirectTo: location.origin + location.pathname
+              }
             }),
             10000, 'signUp'
           );
           if (error) throw error;
+          // Sin sesión = Supabase pide confirmar el correo antes de entrar.
+          // La fila `users` se crea al confirmar (ensureUserRow en SIGNED_IN), no aquí:
+          // sin sesión el RLS bloquea el INSERT. Mostramos "revisa tu correo".
+          if (data.user && !data.session) {
+            this.signupEmail = this.authEmail;
+            this.signupSent = true;
+            this.authLoading = false;
+            return;
+          }
           if (data.user) {
             try {
               await withTimeout(sb.from('users').upsert({
@@ -10870,39 +10929,56 @@ function zepoApp() {
       if (!this.importedFile?.raw || this.importProcessing) return;
       const file = this.importedFile.raw;
       const ext = (file.name.split('.').pop() || '').toLowerCase();
-      if (ext !== 'pdf') {
-        this.showToast('Por ahora solo se procesan archivos PDF');
+      const isPdf = ext === 'pdf', isSheet = ext === 'xlsx' || ext === 'xls';
+      if (!isPdf && !isSheet && ext !== 'csv' && ext !== 'xml' && ext !== 'txt') {
+        this.showToast('Formato no soportado. Sube un PDF, Excel (.xlsx) o CSV.');
         return;
       }
       this.importProcessing = true;
-      this.importStatus = 'Cargando PDF...';
+      this.importStatus = 'Cargando archivo...';
       this.importProgress = 0;
       this._dlog('processFile: start ' + file.name + ' (' + Math.round(file.size/1024) + 'KB)');
       try {
-        if (!window.pdfjsLib) {
-          this.importStatus = 'Cargando lector PDF...';
-          this._dlog('processFile: loading pdf.js');
-          const pdfjs = await withTimeout(import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs'), 20000, 'pdfjs-load');
-          window.pdfjsLib = pdfjs;
-          pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
-        }
-        this._dlog('processFile: pdf.js ready');
-        const arrayBuffer = await file.arrayBuffer();
-        this.importStatus = 'Abriendo PDF...';
-        const pdf = await withTimeout(window.pdfjsLib.getDocument({ data: arrayBuffer }).promise, 30000, 'pdf-open');
-        this._dlog('processFile: PDF opened, ' + pdf.numPages + ' pages');
         let fullText = '';
-        for (let i = 1; i <= pdf.numPages; i++) {
-          this.importStatus = 'Leyendo pág ' + i + '/' + pdf.numPages + '...';
-          const page = await withTimeout(pdf.getPage(i), 15000, 'pdf-page-' + i);
-          const content = await withTimeout(page.getTextContent(), 15000, 'pdf-text-' + i);
-          const pageText = content.items.map(item => item.str).join(' ');
-          fullText += pageText + '\n--- PAGE BREAK ---\n';
+        if (isPdf) {
+          if (!window.pdfjsLib) {
+            this.importStatus = 'Cargando lector PDF...';
+            this._dlog('processFile: loading pdf.js');
+            const pdfjs = await withTimeout(import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs'), 20000, 'pdfjs-load');
+            window.pdfjsLib = pdfjs;
+            pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+          }
+          this._dlog('processFile: pdf.js ready');
+          const arrayBuffer = await file.arrayBuffer();
+          this.importStatus = 'Abriendo PDF...';
+          const pdf = await withTimeout(window.pdfjsLib.getDocument({ data: arrayBuffer }).promise, 30000, 'pdf-open');
+          this._dlog('processFile: PDF opened, ' + pdf.numPages + ' pages');
+          for (let i = 1; i <= pdf.numPages; i++) {
+            this.importStatus = 'Leyendo pág ' + i + '/' + pdf.numPages + '...';
+            const page = await withTimeout(pdf.getPage(i), 15000, 'pdf-page-' + i);
+            const content = await withTimeout(page.getTextContent(), 15000, 'pdf-text-' + i);
+            const pageText = content.items.map(item => item.str).join(' ');
+            fullText += pageText + '\n--- PAGE BREAK ---\n';
+          }
+        } else if (isSheet) {
+          // Excel → CSV con fechas ISO forzadas (cellText:false + dateNF): la IA no debe
+          // adivinar dd/mm vs mm/dd según el formato regional que traiga el archivo.
+          this.importStatus = 'Leyendo Excel...';
+          await withTimeout(this._loadSheetJS(), 20000, 'sheetjs-load');
+          const wb = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true, cellText: false });
+          fullText = wb.SheetNames
+            .map(n => XLSX.utils.sheet_to_csv(wb.Sheets[n], { dateNF: 'yyyy-mm-dd hh:mm', blankrows: false }))
+            .join('\n--- PAGE BREAK ---\n');
+        } else {
+          this.importStatus = 'Leyendo archivo...';
+          fullText = await file.text();
         }
         this._dlog('processFile: extracted ' + fullText.trim().length + ' chars');
         if (fullText.trim().length < 20) {
-          this._dlog('processFile: PDF has no extractable text (scanned?)');
-          this.showToast('Este PDF parece escaneado (sin texto). Toma una FOTO del estado de cuenta en su lugar.');
+          this._dlog('processFile: no extractable text');
+          this.showToast(isPdf
+            ? 'Este PDF parece escaneado (sin texto). Toma una FOTO del estado de cuenta en su lugar.'
+            : 'El archivo está vacío o no tiene texto legible.');
           this.importProcessing = false;
           this.importStatus = '';
           return;
@@ -10935,14 +11011,17 @@ function zepoApp() {
         // Chunks paralelos = cada uno rápido, ninguno excede el límite.
         // Divide por LÍNEAS (robusto: no depende de cómo pdf.js separe páginas)
         const lines = fullText.split(/\n|--- PAGE BREAK ---/).map(l => l.trim()).filter(l => l.length > 2);
-        const header = lines.slice(0, 6).join('\n').slice(0, 400); // período/año para contexto
+        // Contexto repetido por chunk SOLO en PDF (membrete del banco con período/año).
+        // En CSV/Excel las primeras líneas son transacciones reales: repetirlas en cada
+        // chunk haría que la IA las devuelva otra vez → registros duplicados.
+        const header = isPdf ? lines.slice(0, 6).join('\n').slice(0, 400) : '';
         const CHUNK_CHARS = 4000; // ~70 transacciones por chunk → ~30s cada uno (margen vs límite 60s)
         const chunks = [];
         let cur = '';
         for (const line of lines) {
           if (cur.length + line.length > CHUNK_CHARS && cur.trim()) {
             chunks.push(cur);
-            cur = header + '\n';
+            cur = header ? header + '\n' : '';
           }
           cur += line + '\n';
         }
@@ -11016,7 +11095,7 @@ function zepoApp() {
         console.error('[processImportedFile]', e);
         this._dlog('processFile: ERROR ' + (e.message || e));
         const msg = (e.message || '').includes('timeout')
-          ? 'El PDF es muy grande o la conexión está lenta. Intenta con un PDF más pequeño o toma una foto.'
+          ? 'El archivo es muy grande o la conexión está lenta. Intenta con uno más pequeño.'
           : 'Error al procesar: ' + (e.message || 'intenta de nuevo');
         this.showToast(msg);
       } finally {
@@ -15861,7 +15940,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v154.js';
+  const CURRENT_SW = 'sw-v155.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {

@@ -9,3 +9,11 @@ screenshots/
 _dist/
 tools/_shots/
 supabase/.temp/
+
+# Salidas de QA (regenerables)
+_qa_*.pdf
+_qa_*.xlsx
+tools/__pycache__/
+tools/_journey-shots/
+tools/_plan-shots/
+tools/_zepi-shots/
