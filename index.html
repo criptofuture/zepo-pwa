@@ -4636,7 +4636,7 @@ setTimeout(function() {
                           </div>
                           <div style="text-align:right;flex-shrink:0;">
                             <div style="font-size:16px;font-weight:700;letter-spacing:-0.3px;color:var(--text);font-variant-numeric:tabular-nums;" x-text="'$' + entry._amount.toFixed(2)"></div>
-                            <div style="margin-top:4px;display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(var(--c-warning-rgb),0.15);color:var(--warning);letter-spacing:0.4px;" x-text="_isPorAceptar(entry) ? 'POR ACEPTAR' : 'PENDIENTE'"></div>
+                            <div style="margin-top:4px;display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(var(--c-warning-rgb),0.15);color:var(--warning);letter-spacing:0.4px;" x-text="_isPorAceptar(entry, entry._person) ? 'POR ACEPTAR' : 'PENDIENTE'"></div>
                             <div x-show="_isReviewRequested(entry)" style="margin-top:4px;font-size:10px;font-weight:800;color:var(--warning);letter-spacing:0.3px;">🔎 REVISION</div>
                           </div>
                         </div>
@@ -7145,7 +7145,7 @@ Pregúntame sobre tus gastos, pídeme un resumen del mes o dime qué no encuentr
                               </template>
                             </div>
                           </div>
-                          <input type="number" min="0" max="100" x-model.number="p.pct" @input="onSplitPctChange()" class="cd-split-pct-input" style="flex-shrink:0;">
+                          <input type="number" min="0" max="100" x-model.number="p.pct" @input="onSplitPctChange(pi)" class="cd-split-pct-input" style="flex-shrink:0;">
                           <div class="cd-split-amt-box">
                             <span style="font-size:12px;font-weight:700;color:var(--cyan);">$</span>
                             <input type="number" min="0" step="0.01" inputmode="decimal" x-model.number="p.amt" x-init="p.amt = Math.round((parseFloat(form.amount)||0) * (p.pct||0) / 100 * 100) / 100" @input="onSplitAmtChange(pi)" @focus="$event.target.select()" class="cd-split-amt-input">
@@ -7184,10 +7184,24 @@ Pregúntame sobre tus gastos, pídeme un resumen del mes o dime qué no encuentr
                     </template>
 
                     <!-- Sum check -->
-                    <div :style="'margin-top:4px;padding:8px 10px;border-radius:8px;display:flex;justify-content:space-between;font-size:11px;font-weight:600;' + (splitSum === 100 ? 'background:rgba(var(--c-brand-rgb),0.08);border:1px solid rgba(var(--c-brand-rgb),0.25)' : 'background:rgba(var(--c-accent-rgb),0.10);border:1px solid rgba(var(--c-accent-rgb),0.30)')">
+                    <div :style="'margin-top:4px;padding:8px 10px;border-radius:8px;display:flex;justify-content:space-between;gap:8px;font-size:11px;font-weight:600;' + (splitCuadra ? 'background:rgba(var(--c-brand-rgb),0.08);border:1px solid rgba(var(--c-brand-rgb),0.25)' : 'background:rgba(var(--c-accent-rgb),0.10);border:1px solid rgba(var(--c-accent-rgb),0.30)')">
                       <span style="color:var(--muted);">Suma de partes</span>
-                      <span :style="'color:' + (splitSum === 100 ? 'var(--success)' : 'var(--warning)')" x-text="splitSum + '%' + (splitSum === 100 ? ' ✓' : ' · debe ser 100%')"></span>
+                      <span :style="'text-align:right;color:' + (splitCuadra ? 'var(--success)' : 'var(--warning)')" x-text="splitCuadra ? (splitSum + '% ✓') : (splitSum + '% · ' + (splitRemainderPct > 0 ? 'falta $' + fmtMoney(splitRemainderAmt) + ' (' + splitRemainderPct + '%)' : 'sobra $' + fmtMoney(-splitRemainderAmt) + ' (' + (-splitRemainderPct) + '%)'))"></span>
                     </div>
+
+                    <!-- Restante: reparte lo que falta/sobra entre quienes no fijaste a mano -->
+                    <template x-if="splitRestanteMode === 'assign' || splitRestanteMode === 'divide'">
+                      <button @click="applySplitRemainder()" style="width:100%;height:38px;margin-top:8px;border-radius:10px;background:rgba(var(--c-brand-rgb),0.08);border:1px solid var(--cyan);color:var(--cyan);font-weight:600;font-size:12px;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="12" height="12" style="flex-shrink:0;"><path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><line x1="4" y1="21" x2="20" y2="21"/></svg>
+                        <span x-text="splitRestanteMode === 'assign' ? ('Asignar restante a ' + ((splitUntouched[0] && splitUntouched[0].name) || 'la persona restante')) : ('Dividir restante entre ' + splitUntouched.length)"></span>
+                      </button>
+                    </template>
+
+                    <template x-if="splitRestanteMode === 'stuck' || splitRestanteMode === 'over'">
+                      <div style="margin-top:8px;padding:8px 10px;border-radius:8px;background:rgba(var(--c-accent-rgb),0.10);border:1px solid rgba(var(--c-accent-rgb),0.30);font-size:11px;color:var(--c-accent-soft);line-height:1.5;">
+                        <span x-text="splitRestanteMode === 'over' ? 'Las partes que fijaste ya pasan del 100%: baja alguna.' : 'Fijaste todas las partes a mano: ajusta una o usa Partes iguales.'"></span>
+                      </div>
+                    </template>
 
                     <!-- Actions -->
                     <div style="display:flex;gap:6px;margin-top:12px;">
@@ -9154,7 +9168,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v179',
+    APP_VERSION: 'v180',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     // ─── ZEPI (companion IA, Max) ───
     zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
@@ -11129,9 +11143,10 @@ function zepoApp() {
       const used = this.form.split_people.map(p => p.color);
       const nextColor = this.splitColorPalette.find(c => !used.includes(c)) || '#888';
       const n = this.form.split_people.length;
-      const equal = Math.floor(100 / (n + 1));
-      this.form.split_people.forEach(p => p.pct = equal);
-      this.form.split_people.push({ name: '', pct: 100 - equal * n, color: nextColor });
+      // Entra sin valor propio y el restante se reparte entre los que NO fijaste a mano:
+      // antes igualaba a TODOS y borraba los porcentajes que ya habías escrito.
+      this.form.split_people.push({ name: '', pct: 0, color: nextColor });
+      this.applySplitRemainder();
       this._syncSplitAmts();
       // Auto-open picker on new row
       this.$nextTick(() => { this.splitPickerIdx = n; this.splitPickerQuery = ''; });
@@ -11143,7 +11158,11 @@ function zepoApp() {
       if (this.form.split_people.length < 2) {
         this.form.is_split = false;
         this.form.split_people = [];
+        return;
       }
+      // Su parte vuelve al bote de los no fijados a mano. Si todos están fijados, no se
+      // toca nada: el indicador mostrará cuánto sobra para que el usuario decida.
+      if (this.splitUntouched.length) this.applySplitRemainder();
     },
 
     splitEqual() {
@@ -11151,11 +11170,14 @@ function zepoApp() {
       if (n === 0) return;
       const base = Math.floor(100 / n);
       const remainder = 100 - base * n;
-      this.form.split_people.forEach((p, i) => p.pct = base + (i === n - 1 ? remainder : 0));
+      // Reparte de cero: también olvida qué partes habías fijado a mano.
+      this.form.split_people.forEach((p, i) => { p.pct = base + (i === n - 1 ? remainder : 0); p.touched = false; });
       this._syncSplitAmts();
     },
 
-    onSplitPctChange() {
+    onSplitPctChange(pi) {
+      const edited = this.form.split_people[pi];
+      if (edited) edited.touched = true; // fijada a mano: deja de recibir el reparto automático
       const total = parseFloat(this.form.amount) || 0;
       this.form.split_people.forEach(p => {
         const v = parseFloat(p.pct);
@@ -11169,8 +11191,24 @@ function zepoApp() {
       const total = parseFloat(this.form.amount) || 0;
       const p = this.form.split_people[pi];
       if (!p) return;
+      p.touched = true;
       const amt = Math.max(0, parseFloat(p.amt) || 0);
       if (total > 0) p.pct = Math.round(Math.max(0, Math.min(100, amt / total * 100)) * 100) / 100;
+    },
+
+    // Lo que falta (o sobra) para el 100% se reparte entre las personas que NO fijaste a
+    // mano. El último cierra la suma en 100.00 exacto: sin esto, 100/3 dejaría un centavo
+    // suelto en cada guardado.
+    applySplitRemainder() {
+      const un = this.splitUntouched;
+      if (!un.length) return;
+      const target = Math.max(0, Math.round((100 - this.splitTouchedSum) * 100) / 100);
+      const base = Math.floor(target / un.length * 100) / 100;
+      un.forEach(p => p.pct = base);
+      const last = un[un.length - 1];
+      const otros = this.form.split_people.reduce((s, p) => s + (p === last ? 0 : (parseFloat(p.pct) || 0)), 0);
+      last.pct = Math.max(0, Math.round((100 - otros) * 100) / 100);
+      this._syncSplitAmts();
     },
 
     // Recalcula todos los montos desde el % cuando cambia el total del gasto.
@@ -11206,7 +11244,38 @@ function zepoApp() {
 
     get splitSum() {
       if (!this.form.split_people || !this.form.split_people.length) return 0;
-      return this.form.split_people.reduce((s, p) => s + (parseFloat(p.pct) || 0), 0);
+      // Redondeado: sin esto 33.33+33.33+33.34 daba 100.00000000000001 y nunca era "= 100".
+      return Math.round(this.form.split_people.reduce((s, p) => s + (parseFloat(p.pct) || 0), 0) * 100) / 100;
+    },
+
+    // ¿Las partes cuadran en 100%? Tolerancia mínima: absorbe ruido de coma flotante, no
+    // centavos reales (0.01% de $100 = $0.01 y eso SÍ debe avisarse).
+    get splitCuadra() { return Math.abs(this.splitSum - 100) < 0.005; },
+
+    // Cuánto de la torta ya está fijado a mano en esta edición.
+    get splitTouchedSum() {
+      return Math.round((this.form.split_people || []).filter(p => p.touched).reduce((s, p) => s + (parseFloat(p.pct) || 0), 0) * 100) / 100;
+    },
+
+    // Personas cuyo valor sigue siendo automático (repartido por la app o 0): son las que
+    // absorben el restante. Alvaro: "pueden estar con valor ya asignado porque lo dividió
+    // automático, o puede estar con valor 0".
+    get splitUntouched() { return (this.form.split_people || []).filter(p => !p.touched); },
+
+    get splitRemainderPct() { return Math.round((100 - this.splitSum) * 100) / 100; }, // + falta · − sobra
+    get splitRemainderAmt() {
+      return Math.round((parseFloat(this.form.amount) || 0) * this.splitRemainderPct / 100 * 100) / 100;
+    },
+
+    // Qué ofrecer para cuadrar el 100%:
+    //  hidden = ya cuadra · assign = queda 1 persona por repartir · divide = quedan varias
+    //  stuck  = todas fijadas a mano (nadie puede absorber) · over = lo fijado ya pasa de 100%
+    get splitRestanteMode() {
+      if (!this.form.is_split || !this.form.split_people || this.form.split_people.length < 2) return 'hidden';
+      if (this.splitCuadra) return 'hidden';
+      if (this.splitTouchedSum > 100.004) return 'over';
+      const n = this.splitUntouched.length;
+      return n === 0 ? 'stuck' : (n === 1 ? 'assign' : 'divide');
     },
 
     async uploadReceipt(expenseId) {
@@ -12134,20 +12203,13 @@ function zepoApp() {
       // Dividir + recurrente: persistir el split en la plantilla. amount = TOTAL.
       // split_people guarda cada otra persona con su % y su user_id (resuelto AHORA
       // contra amigos) para que el cron mensual genere los mismos cobros que este mes.
-      if (this.form.is_split && this.form.split_people && this.form.split_people.length >= 2) {
-        const tuPerson = this.form.split_people.find(p => p.you);
-        const others = this.form.split_people.filter(p => !p.you);
-        if (tuPerson && others.length > 0) {
-          row.is_split = true;
-          const tuPctRaw = parseFloat(tuPerson.pct);
-          row.split_pct = Number.isNaN(tuPctRaw) ? 50 : tuPctRaw; // 0% (tú no pagas nada) es válido; solo NaN cae a 50
-          row.split_total = data.amount;
-          row.split_persona = others.map(p => p.name || 'Sin nombre').filter(Boolean).join(', ') || 'Sin nombre';
-          row.split_people = others.map(p => {
-            const friend = this.friends.find(f => f.display_name.toLowerCase() === (p.name || '').toLowerCase());
-            return { name: p.name || 'Sin nombre', pct: parseFloat(p.pct) || 0, user_id: friend ? friend.user_id : null };
-          });
-        }
+      const recMeta = this._splitMeta();
+      if (recMeta) {
+        row.is_split = true;
+        row.split_pct = recMeta.pct;
+        row.split_total = data.amount;
+        row.split_persona = recMeta.persona;
+        row.split_people = recMeta.people;
       }
       try {
         const ins = await sbRestInsert('recurring_templates', row);
@@ -12575,19 +12637,7 @@ function zepoApp() {
       this.saving = false;
       this.gridAddingCat = false;
       this.removeReceipt();
-      // Rebuild split_people array from legacy split_persona (comma-separated names) + split_pct (your %)
-      let splitPeople = [];
-      if (exp.is_split && exp.split_pct != null) {
-        const others = (exp.split_persona || '').split(',').map(s => s.trim()).filter(Boolean);
-        const tuPct = parseFloat(exp.split_pct) || 50;
-        const othersTotalPct = Math.max(0, 100 - tuPct);
-        const eachOtherPct = others.length > 0 ? othersTotalPct / others.length : othersTotalPct;
-        splitPeople = [
-          { name: 'Tú', pct: tuPct, you: true, color: this.splitColorPalette[0] },
-          ...others.map((name, i) => ({ name, pct: eachOtherPct, color: this.splitColorPalette[(i + 1) % this.splitColorPalette.length] })),
-        ];
-        if (splitPeople.length < 2) splitPeople.push({ name: '', pct: othersTotalPct, color: this.splitColorPalette[1] });
-      }
+      const splitPeople = this._rebuildSplitPeople(exp);
       this.form = {
         amount: exp.is_split ? exp.split_total : exp.amount,
         description: exp.description || '',
@@ -12624,18 +12674,7 @@ function zepoApp() {
       const batchIsSplit = allSplit && sameSplitPersona && sameSplitPct;
 
       // Build split_people if batch has uniform split
-      let splitPeople = [];
-      if (batchIsSplit && items[0].split_pct != null) {
-        const others = (items[0].split_persona || '').split(',').map(s => s.trim()).filter(Boolean);
-        const tuPct = parseFloat(items[0].split_pct) || 50;
-        const othersTotalPct = Math.max(0, 100 - tuPct);
-        const eachOtherPct = others.length > 0 ? othersTotalPct / others.length : othersTotalPct;
-        splitPeople = [
-          { name: 'Tú', pct: tuPct, you: true, color: this.splitColorPalette[0] },
-          ...others.map((name, i) => ({ name, pct: eachOtherPct, color: this.splitColorPalette[(i + 1) % this.splitColorPalette.length] })),
-        ];
-        if (splitPeople.length < 2) splitPeople.push({ name: '', pct: othersTotalPct, color: this.splitColorPalette[1] });
-      }
+      const splitPeople = batchIsSplit ? this._rebuildSplitPeople(items[0]) : [];
 
       this.parsedItems = items.map(exp => ({
         _existingId: exp.id,
@@ -12731,6 +12770,13 @@ function zepoApp() {
     async saveExpense() {
       // Flush split picker if still open (race condition: user taps Save while input focused)
       if (this.splitPickerIdx >= 0) this.closeSplitPicker();
+      // Las partes DEBEN sumar 100%: antes un 40/40 se guardaba igual y el 20% restante
+      // desaparecía (nadie lo pagaba ni se cobraba). Va antes de todo: cubre gasto simple,
+      // lote, edición de lote y la plantilla recurrente, que salen todos de aquí.
+      if (this.form.is_split && this.form.split_people && this.form.split_people.length >= 2 && !this.splitCuadra) {
+        this.showToast('Las partes suman ' + this.splitSum + '% — deben sumar 100%');
+        return;
+      }
       // Feature 4: si está marcado "Repetir cada mes", crea la PLANTILLA. Ahora funciona
       // con 1 o VARIOS ítems: se crea una plantilla por cada ítem (mismo día del mes).
       // Coexiste con "Dividir": saveRecurringTemplate lee this.form para guardar el split
@@ -12780,19 +12826,13 @@ function zepoApp() {
       try {
         await this.ensureFreshSession();
         const totalAmount = parseFloat(this.form.amount);
-        // Map multi-person split (split_people) → legacy split_persona/split_pct for backwards compat
-        let isSplit = false, pct = 0, persona = '';
-        if (this.form.is_split && this.form.split_people && this.form.split_people.length >= 2) {
-          const tuPerson = this.form.split_people.find(p => p.you);
-          const others = this.form.split_people.filter(p => !p.you);
-          if (tuPerson && others.length > 0 && this.splitSum > 0) {
-            isSplit = true;
-            const tuPctRaw = parseFloat(tuPerson.pct);
-            pct = Number.isNaN(tuPctRaw) ? 50 : tuPctRaw; // 0% (tú no pagas nada) es válido; solo NaN cae a 50
-            persona = others.map(p => p.name || 'Sin nombre').filter(Boolean).join(', ') || 'Sin nombre';
-            this.form.split_persona = persona;
-            this.form.split_pct = pct;
-          }
+        const meta = this._splitMeta();
+        const isSplit = !!meta;
+        const pct = isSplit ? meta.pct : 0;
+        const persona = isSplit ? meta.persona : '';
+        if (isSplit) {
+          this.form.split_persona = persona;
+          this.form.split_pct = pct;
         }
         const miParte = isSplit ? Math.round(totalAmount * pct / 100 * 100) / 100 : totalAmount;
         const pendiente = isSplit ? Math.round((totalAmount - miParte) * 100) / 100 : 0;
@@ -12808,6 +12848,7 @@ function zepoApp() {
           split_total: isSplit ? totalAmount : null,
           split_pct: isSplit ? pct : null,
           split_persona: isSplit ? persona : null,
+          split_people: isSplit ? meta.people : null,
           split_pending: isSplit ? pendiente : null,
           split_status: isSplit ? 'pendiente' : null,
           payment_method: this.form.payment_method || null,
@@ -12871,8 +12912,9 @@ function zepoApp() {
         }
 
         // id del gasto guardado (nuevo o editado) — para ligar el cobro al gasto (retract al borrar)
+        const _wasEditing = !!this.editingExpense; // editingExpense se limpia abajo; los cobros lo necesitan
         const savedExpenseId = this.editingExpense ? this.editingExpense.id : ((inserted && inserted.id) || null);
-        this._jrnAfterSave({ isEdit: !!this.editingExpense, isIncome: !!this.form.is_income, isSplit, hasCat: !!(this.form.category && this.form.category !== 'other') });
+        this._jrnAfterSave({ isEdit: _wasEditing, isIncome: !!this.form.is_income, isSplit, hasCat: !!(this.form.category && this.form.category !== 'other') });
         this.sheetOpen = false;
         this._extractFromBatch = false;
 
@@ -12895,25 +12937,43 @@ function zepoApp() {
         if (isSplit) {
           // Un cobro por cada OTRA persona, con SU porcentaje (mismo cálculo que el
           // cron mensual de recurrentes → mes 1 y mes N idénticos). Solo a amigos.
-          const others = (this.form.split_people || []).filter(p => !p.you);
-          const prInserts = [];
-          for (const p of others) {
-            const friend = this.friends.find(f => f.display_name.toLowerCase() === (p.name || '').toLowerCase());
-            if (!friend) continue;
-            const perPersonAmt = Math.round(totalAmount * (parseFloat(p.pct) || 0) / 100 * 100) / 100;
+          const prRows = [];
+          for (const p of meta.people) {
+            if (!p.user_id) continue;
+            const perPersonAmt = Math.round(totalAmount * p.pct / 100 * 100) / 100;
             if (perPersonAmt <= 0) continue;
-            prInserts.push(sb.from('payment_requests').insert({
+            prRows.push({
               from_user_id: this.user.id,
-              to_user_id: friend.user_id,
+              to_user_id: p.user_id,
               amount: perPersonAmt,
               description: this.form.description.trim() || 'Gasto compartido',
               category: this.form.category,
               expense_date: this.form.date || localDate(),
               status: 'pending',
               origin_expense_id: savedExpenseId,
-            }));
+            });
           }
-          if (prInserts.length) { bgTasks.push(Promise.all(prInserts)); this.jrnMark('pr_send'); }
+          if (prRows.length) {
+            bgTasks.push((async () => {
+              // Editar re-emite los cobros: hay que anular el pendiente anterior o la otra
+              // persona ve dos cobros por lo mismo. Se anulan SOLO los de quienes reciben
+              // cobro nuevo ahora (nunca una deuda que no se vaya a reponer: si el contacto
+              // dejó de ser amigo no se le emite cobro, y borrarle el pendiente le haría
+              // desaparecer la deuda). Los 'accepted' no se tocan: lo que el receptor ya
+              // confirmó solo se anula por revisión/cancelación. Va ANTES del insert: en
+              // paralelo, el update podría alcanzar a los cobros recién creados.
+              if (_wasEditing && savedExpenseId) {
+                await sb.from('payment_requests')
+                  .update({ status: 'cancelled' })
+                  .eq('from_user_id', this.user.id)
+                  .eq('origin_expense_id', savedExpenseId)
+                  .eq('status', 'pending')
+                  .in('to_user_id', prRows.map(r => r.to_user_id));
+              }
+              await Promise.all(prRows.map(r => sb.from('payment_requests').insert(r)));
+            })());
+            this.jrnMark('pr_send');
+          }
         }
         Promise.all(bgTasks).catch(e => console.warn('[saveExpense] bg reload:', e.message));
         // Dividir es decisión POR registro: no debe arrastrarse al siguiente. Los cobros
@@ -12930,6 +12990,63 @@ function zepoApp() {
       this.form.split_people = [];
       this.form.split_persona = '';
       this.form.split_pct = '';
+    },
+
+    // Traduce el form multi-persona a lo que se guarda. null = no es un split válido.
+    // people usa el MISMO shape que recurring_templates.split_people ([{name,pct,user_id}],
+    // solo los OTROS) → el cron mensual y el cliente comparten formato sin conversión.
+    // Antes cada ruta de guardado repetía este bloque y ninguna persistía el % por persona:
+    // "Cuentas" lo reconstruía en partes iguales y las proporciones custom se perdían.
+    _splitMeta() {
+      const f = this.form;
+      if (!(f.is_split && f.split_people && f.split_people.length >= 2)) return null;
+      const tuPerson = f.split_people.find(p => p.you);
+      const others = f.split_people.filter(p => !p.you);
+      if (!tuPerson || others.length === 0 || this.splitSum <= 0) return null;
+      const tuPctRaw = parseFloat(tuPerson.pct);
+      const pct = Number.isNaN(tuPctRaw) ? 50 : tuPctRaw; // 0% (tú no pagas nada) es válido; solo NaN cae a 50
+      const persona = others.map(p => p.name || 'Sin nombre').filter(Boolean).join(', ') || 'Sin nombre';
+      const people = others.map(p => {
+        const friend = this.friends.find(f2 => f2.display_name.toLowerCase() === (p.name || '').toLowerCase());
+        return {
+          name: p.name || 'Sin nombre',
+          pct: Math.round((parseFloat(p.pct) || 0) * 100) / 100,
+          user_id: friend ? friend.user_id : null,
+        };
+      });
+      return { pct, persona, people };
+    },
+
+    // Reconstruye el editor de un split guardado. Misma prioridad que cobroFor:
+    // % persistido → monto real del cobro → partes iguales (legacy sin nada). Antes
+    // siempre igualaba, así que abrir un split 50/30/20 y guardar lo reescribía 50/25/25
+    // aunque no tocaras la división.
+    _rebuildSplitPeople(exp) {
+      if (!exp || !exp.is_split || exp.split_pct == null) return [];
+      const r2 = n => Math.round(n * 100) / 100;
+      const total = exp.split_total || (exp.amount + (exp.split_pending || 0));
+      const tuRaw = parseFloat(exp.split_pct);
+      const tuPct = Number.isNaN(tuRaw) ? 50 : tuRaw; // 0% es válido: no cae a 50
+      const names = (exp.split_persona || '').split(',').map(s => s.trim()).filter(Boolean);
+      const stored = Array.isArray(exp.split_people) ? exp.split_people : [];
+      const others = names.map((name, i) => {
+        const s = stored.find(p => (p.name || '').toLowerCase() === name.toLowerCase());
+        let pct = (s && s.pct != null) ? parseFloat(s.pct) : null;
+        if (pct == null || Number.isNaN(pct)) {
+          const pr = this._prForPersona(exp, name);
+          pct = (pr && total > 0) ? r2(Number(pr.amount) / total * 100) : null;
+        }
+        return { name, pct, color: this.splitColorPalette[(i + 1) % this.splitColorPalette.length] };
+      });
+      const unknown = others.filter(p => p.pct == null);
+      if (unknown.length) {
+        const asignado = others.reduce((s, p) => s + (p.pct || 0), 0);
+        const leftover = Math.max(0, 100 - tuPct - asignado);
+        unknown.forEach(p => p.pct = r2(leftover / unknown.length));
+      }
+      const people = [{ name: 'Tú', pct: tuPct, you: true, color: this.splitColorPalette[0] }, ...others];
+      if (people.length < 2) people.push({ name: '', pct: r2(Math.max(0, 100 - tuPct)), color: this.splitColorPalette[1] });
+      return people;
     },
 
     async saveMultiItems() {
@@ -12951,17 +13068,10 @@ function zepoApp() {
         const batchLabel = labelText + ' — ' + new Date(date + 'T12:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
 
         // Compute split data (same logic as saveBatchEdit)
-        let isSplit = false, pct = 0, persona = '';
-        if (this.form.is_split && this.form.split_people && this.form.split_people.length >= 2) {
-          const tuPerson = this.form.split_people.find(p => p.you);
-          const others = this.form.split_people.filter(p => !p.you);
-          if (tuPerson && others.length > 0 && this.splitSum > 0) {
-            isSplit = true;
-            const tuPctRaw = parseFloat(tuPerson.pct);
-            pct = Number.isNaN(tuPctRaw) ? 50 : tuPctRaw; // 0% (tú no pagas nada) es válido; solo NaN cae a 50
-            persona = others.map(p => p.name || 'Sin nombre').filter(Boolean).join(', ') || 'Sin nombre';
-          }
-        }
+        const meta = this._splitMeta();
+        const isSplit = !!meta;
+        const pct = isSplit ? meta.pct : 0;
+        const persona = isSplit ? meta.persona : '';
 
         const rows = validItems.map(it => {
           const totalAmt = it.amount;
@@ -12978,6 +13088,7 @@ function zepoApp() {
             split_total: isSplit ? totalAmt : null,
             split_pct: isSplit ? pct : null,
             split_persona: isSplit ? persona : null,
+            split_people: isSplit ? meta.people : null,
             split_pending: isSplit ? pendiente : null,
             split_status: isSplit ? 'pendiente' : null,
             payment_method: this.form.payment_method || null,
@@ -13032,24 +13143,25 @@ function zepoApp() {
         const bgTasks = [this.loadExpenses(), this._maybeReloadHistory()];
         if (isSplit && insertedRows) {
           bgTasks.push(this.loadSplits());
-          const names = persona.split(',').map(s => s.trim()).filter(Boolean);
+          // Un cobro por ítem × persona con SU porcentaje (antes repartía (100-pct)/n
+          // en partes iguales aunque el usuario hubiera puesto proporciones distintas).
+          // Se itera sobre `rows` (ya deduplicado) y no sobre validItems: insertedRows
+          // corresponde a rows, así que con duplicados omitidos los índices no calzaban.
           const prInserts = [];
-          for (const name of names) {
-            const friend = this.friends.find(f => f.display_name.toLowerCase() === name.toLowerCase());
-            if (!friend) continue;
+          for (const p of meta.people) {
+            if (!p.user_id) continue;
             for (let i = 0; i < insertedRows.length; i++) {
-              const totalAmt = validItems[i]?.amount || 0;
-              const n = names.length;
-              const othersPct = (100 - pct) / n;
-              const perPersonAmt = Math.round(totalAmt * othersPct / 100 * 100) / 100;
+              const r = rows[i];
+              if (!r) continue;
+              const perPersonAmt = Math.round((r.split_total || 0) * p.pct / 100 * 100) / 100;
               if (perPersonAmt > 0) {
                 prInserts.push(sb.from('payment_requests').insert({
                   from_user_id: this.user.id,
-                  to_user_id: friend.user_id,
+                  to_user_id: p.user_id,
                   amount: perPersonAmt,
-                  description: validItems[i]?.description || 'Gasto compartido',
-                  category: validItems[i]?.category || 'other',
-                  expense_date: date,
+                  description: r.description || 'Gasto compartido',
+                  category: r.category || 'other',
+                  expense_date: r.date || date,
                   status: 'pending',
                   origin_expense_id: insertedRows[i]?.id || null,
                 }));
@@ -13080,17 +13192,10 @@ function zepoApp() {
         const batchLabel = labelText + ' — ' + new Date(date + 'T12:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
 
         // Compute split data (same logic as saveExpense)
-        let isSplit = false, pct = 0, persona = '';
-        if (this.form.is_split && this.form.split_people && this.form.split_people.length >= 2) {
-          const tuPerson = this.form.split_people.find(p => p.you);
-          const others = this.form.split_people.filter(p => !p.you);
-          if (tuPerson && others.length > 0 && this.splitSum > 0) {
-            isSplit = true;
-            const tuPctRaw = parseFloat(tuPerson.pct);
-            pct = Number.isNaN(tuPctRaw) ? 50 : tuPctRaw; // 0% (tú no pagas nada) es válido; solo NaN cae a 50
-            persona = others.map(p => p.name || 'Sin nombre').filter(Boolean).join(', ') || 'Sin nombre';
-          }
-        }
+        const meta = this._splitMeta();
+        const isSplit = !!meta;
+        const pct = isSplit ? meta.pct : 0;
+        const persona = isSplit ? meta.persona : '';
 
         // Delete old batch items from DB
         const oldIds = this.expenses.filter(e => e.batch_id === batchId).map(e => e.id).filter(id => !String(id).startsWith('temp_'));
@@ -13118,6 +13223,7 @@ function zepoApp() {
             split_total: isSplit ? totalAmt : null,
             split_pct: isSplit ? pct : null,
             split_persona: isSplit ? persona : null,
+            split_people: isSplit ? meta.people : null,
             split_pending: isSplit ? pendiente : null,
             split_status: isSplit ? 'pendiente' : null,
             payment_method: this.form.payment_method || null,
@@ -13148,26 +13254,22 @@ function zepoApp() {
         // Background reload expenses + splits + create payment_requests
         const bgTasks = [this.loadExpenses(), this.loadSplits(), this._maybeReloadHistory()];
         if (isSplit) {
-          const names = persona.split(',').map(s => s.trim()).filter(Boolean);
+          // Un cobro consolidado por persona con SU porcentaje (antes (100-pct)/n igualado).
+          const totalBatchAmt = validItems.reduce((s, it) => s + it.amount, 0);
           const prInserts = [];
-          for (const name of names) {
-            const friend = this.friends.find(f => f.display_name.toLowerCase() === name.toLowerCase());
-            if (friend) {
-              const n = names.length;
-              const othersPct = (100 - pct) / n;
-              // Sum total pending for ALL items in batch for this person
-              const totalBatchAmt = validItems.reduce((s, it) => s + it.amount, 0);
-              const perPersonAmt = Math.round(totalBatchAmt * othersPct / 100 * 100) / 100;
-              prInserts.push(sb.from('payment_requests').insert({
-                from_user_id: this.user.id,
-                to_user_id: friend.user_id,
-                amount: perPersonAmt,
-                description: validItems.map(it => it.description).filter(Boolean).join(', ') || 'Gasto compartido',
-                category: validItems[0].category,
-                expense_date: date,
-                status: 'pending',
-              }));
-            }
+          for (const p of meta.people) {
+            if (!p.user_id) continue;
+            const perPersonAmt = Math.round(totalBatchAmt * p.pct / 100 * 100) / 100;
+            if (perPersonAmt <= 0) continue;
+            prInserts.push(sb.from('payment_requests').insert({
+              from_user_id: this.user.id,
+              to_user_id: p.user_id,
+              amount: perPersonAmt,
+              description: validItems.map(it => it.description).filter(Boolean).join(', ') || 'Gasto compartido',
+              category: validItems[0].category,
+              expense_date: date,
+              status: 'pending',
+            }));
           }
           if (prInserts.length) bgTasks.push(Promise.all(prInserts));
           bgTasks.push(this.loadPaymentRequests());
@@ -13267,13 +13369,63 @@ function zepoApp() {
       return !!(exp.split_persona && exp.split_persona.includes(','));
     },
 
+    // Lo que le toca a UNA persona de un gasto dividido. Con personaName usa el dato REAL
+    // en 2 pasos antes de adivinar: (1) el cobro emitido (payment_requests) — es la misma
+    // fila que ve la otra app, cubre los splits viejos que se guardaron sin desglose;
+    // (2) el % persistido en split_people. Solo si no hay ninguno reparte en partes
+    // iguales (legacy sin cobro por-ítem). Sin personaName conserva el cálculo viejo:
+    // lo llaman sitios que solo necesitan "la parte típica" (matcher de cobros).
     cobroFor(exp, personaName) {
+      const r2 = n => Math.round(n * 100) / 100;
+      const total = exp.split_total || (exp.amount + (exp.split_pending || 0));
+      if (personaName) {
+        const pr = this._prForPersona(exp, personaName);
+        if (pr) return r2(Number(pr.amount) || 0);
+        const sp = Array.isArray(exp.split_people) ? exp.split_people : [];
+        const person = sp.find(p => (p.name || '').toLowerCase() === personaName.toLowerCase());
+        if (person && person.pct != null) return r2(total * (parseFloat(person.pct) || 0) / 100);
+      }
       const others = (exp.split_persona || '').split(',').map(s => s.trim()).filter(Boolean);
       const n = others.length || 1;
-      const total = exp.split_total || (exp.amount + (exp.split_pending || 0));
-      const tuPct = exp.split_pct || 50;
+      const tuPct = exp.split_pct != null ? (parseFloat(exp.split_pct) || 0) : 50;
       const othersPct = (100 - tuPct) / n;
-      return Math.round(total * othersPct / 100 * 100) / 100;
+      return r2(total * othersPct / 100);
+    },
+
+    // TODOS los cobros activos que YO envié, agrupados por gasto origen. _sentCobroByOrigin
+    // guarda solo el mejor por gasto: con varias personas en un mismo split hacen falta todos.
+    get _sentCobrosByOriginAll() {
+      return this._memo('_sentCobrosByOriginAll', 'cuentas', () => {
+        const m = {};
+        (this.payReqsSent || []).forEach(p => {
+          if (!p.origin_expense_id || p.status === 'cancelled' || p.status === 'declined') return;
+          (m[p.origin_expense_id] = m[p.origin_expense_id] || []).push(p);
+        });
+        return m;
+      });
+    },
+
+    // El cobro de UNA persona para un gasto. Match por user_id si split_people lo trae
+    // (inmune a que el alias del contacto cambie después), si no por nombre. Entre varios:
+    // mejor estado (paid>accepted>pending) y luego el más reciente — una edición vieja pudo
+    // dejar un pending anterior.
+    _prForPersona(exp, personaName) {
+      const prs = this._sentCobrosByOriginAll[exp && exp.id];
+      if (!prs || !prs.length) return null;
+      const nm = (personaName || '').toLowerCase();
+      const sp = Array.isArray(exp.split_people) ? exp.split_people : [];
+      const person = sp.find(p => (p.name || '').toLowerCase() === nm);
+      const rank = { paid: 3, accepted: 2, pending: 1 };
+      let best = null;
+      prs.forEach(p => {
+        const hit = (person && person.user_id)
+          ? p.to_user_id === person.user_id
+          : (p.to_name || '').toLowerCase() === nm;
+        if (!hit) return;
+        const pr_ = rank[p.status] || 0, br = best ? (rank[best.status] || 0) : -1;
+        if (!best || pr_ > br || (pr_ === br && String(p.created_at) > String(best.created_at))) best = p;
+      });
+      return best;
     },
 
     // Cobro por-item que YO envie, indexado por el gasto origen (mejor activo: paid>accepted>pending).
@@ -13296,7 +13448,13 @@ function zepoApp() {
     },
     // "Por aceptar": el split tiene un cobro por-item que la otra persona AUN no acepta.
     // Sin cobro por-item (legacy consolidado o persona no-Zepo) => cuenta como confirmado.
-    _isPorAceptar(exp) {
+    // Con personaName mira el cobro DE ESA persona: en un split de varios, una puede haber
+    // aceptado y otra no. Sin nombre conserva el comportamiento por gasto.
+    _isPorAceptar(exp, personaName) {
+      if (personaName && this._sentCobrosByOriginAll[exp && exp.id]) {
+        const pr = this._prForPersona(exp, personaName);
+        return !!pr && pr.status === 'pending';
+      }
       const c = this._sentCobroByOrigin[exp && exp.id];
       return !!c && c.status === 'pending';
     },
@@ -13311,9 +13469,8 @@ function zepoApp() {
       const rows = [];
       this.pendingSplits.filter(e => !e.is_income).forEach(exp => {
         const others = (exp.split_persona || 'Sin nombre').split(',').map(s => s.trim()).filter(Boolean);
-        const amt = this.cobroFor(exp);
         others.forEach(name => {
-          if (!q || name.toLowerCase().includes(q)) rows.push({ ...exp, _person: name, _amount: amt });
+          if (!q || name.toLowerCase().includes(q)) rows.push({ ...exp, _person: name, _amount: this.cobroFor(exp, name) });
         });
       });
       return rows;
@@ -13324,9 +13481,8 @@ function zepoApp() {
       const rows = [];
       this.paidSplits.filter(e => !e.is_income).forEach(exp => {
         const others = (exp.split_persona || 'Sin nombre').split(',').map(s => s.trim()).filter(Boolean);
-        const amt = this.cobroFor(exp);
         others.forEach(name => {
-          if (!q || name.toLowerCase().includes(q)) rows.push({ ...exp, _person: name, _amount: amt });
+          if (!q || name.toLowerCase().includes(q)) rows.push({ ...exp, _person: name, _amount: this.cobroFor(exp, name) });
         });
       });
       return rows;
@@ -13337,9 +13493,8 @@ function zepoApp() {
       const rows = [];
       this.pendingSplits.filter(e => e.is_income).forEach(exp => {
         const others = (exp.split_persona || 'Sin nombre').split(',').map(s => s.trim()).filter(Boolean);
-        const amt = this.cobroFor(exp);
         others.forEach(name => {
-          if (!q || name.toLowerCase().includes(q)) rows.push({ ...exp, _person: name, _amount: amt });
+          if (!q || name.toLowerCase().includes(q)) rows.push({ ...exp, _person: name, _amount: this.cobroFor(exp, name) });
         });
       });
       return rows;
@@ -13350,7 +13505,7 @@ function zepoApp() {
     },
     // "Por aceptar": cobros por-item que la otra persona aun no acepta (no cuadran hasta que acepte).
     get teDebenPorAceptar() {
-      return Math.round(this.filteredPendingCobros.filter(c => this._isPorAceptar(c)).reduce((s, c) => s + (c._amount || 0), 0) * 100) / 100;
+      return Math.round(this.filteredPendingCobros.filter(c => this._isPorAceptar(c, c._person)).reduce((s, c) => s + (c._amount || 0), 0) * 100) / 100;
     },
     // Confirmado = lo que la otra persona ya acepto (o legacy/no-Zepo). ESTE es el numero que cuadra.
     get teDebenConfirmado() {
@@ -13525,9 +13680,9 @@ function zepoApp() {
         // Te deben: splits pendientes (gasto). Guarda el GASTO completo + la parte de la persona.
         // Confirmado (cobro aceptado/legacy/no-Zepo) vs por-aceptar (cobro por-item aun pendiente).
         (this.pendingSplits || []).filter(e => !e.is_income).forEach(exp => {
-          const share = this.cobroFor(exp);
-          const porAceptar = this._isPorAceptar(exp);
           (exp.split_persona || 'Sin nombre').split(',').map(s => s.trim()).filter(Boolean).forEach(name => {
+            const share = this.cobroFor(exp, name);
+            const porAceptar = this._isPorAceptar(exp, name);
             const g = ensure(name);
             if (porAceptar) g.porAceptar += share; else g.teDebe += share;
             g._debeExps.push({ ...exp, _share: r2(share), _porAceptar: porAceptar });
@@ -13542,8 +13697,8 @@ function zepoApp() {
         });
         // Le debes: ingresos compartidos -> abren detalle Debo (income-split).
         (this.pendingSplits || []).filter(e => e.is_income).forEach(exp => {
-          const share = this.cobroFor(exp);
           (exp.split_persona || 'Sin nombre').split(',').map(s => s.trim()).filter(Boolean).forEach(name => {
+            const share = this.cobroFor(exp, name);
             const g = ensure(name);
             g.leDebes += share;
             g.debesItems.push({ ...exp, _amount: r2(share), _amt: r2(share), _person: name, _deboType: 'income-split' });
@@ -15853,11 +16008,15 @@ function zepoApp() {
         const amt = Number(pr.amount);
         const desc = (pr.description || '').trim();
         const date = pr.expense_date;
-        const match = this.pendingSplits.find(e =>
-          Math.abs(this.cobroFor(e) - amt) < 0.02
-          && (e.description || '').trim() === desc
-          && e.date === date
-        );
+        // El vínculo directo primero: con proporciones distintas el matcheo por monto no
+        // encontraba el gasto (comparaba contra la parte "típica") y el split nunca pasaba
+        // a cobrado. El matcheo por monto queda para cobros viejos sin origin_expense_id.
+        const match = (pr.origin_expense_id && this.pendingSplits.find(e => e.id === pr.origin_expense_id))
+          || this.pendingSplits.find(e =>
+            Math.abs(this.cobroFor(e, pr.to_name) - amt) < 0.02
+            && (e.description || '').trim() === desc
+            && e.date === date
+          );
         if (match) {
           try {
             await sb.from('expenses').update({ split_status: 'cobrado', split_pending: 0 }).eq('id', match.id);
@@ -15940,7 +16099,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v155.js';
+  const CURRENT_SW = 'sw-v156.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {

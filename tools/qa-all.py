@@ -34,6 +34,8 @@ CHECKS = [
     ("Layout teclado/split (5 perfiles)", ["python", os.path.join(TOOLS, "qa-keyboard.py")]),
     ("E2E CRUD gasto (alta/editar/borrar)", ["python", os.path.join(TOOLS, "qa-e2e-crud.py")]),
     ("E2E editar cobro + agregar persona", ["python", os.path.join(TOOLS, "qa-e2e-edit-split.py")]),
+    ("E2E proporciones desiguales (guardar/cuentas/editar/historico)", ["python", os.path.join(TOOLS, "qa-e2e-split-proportions.py")]),
+    ("E2E restante del split (asignar/dividir/fijado a mano)", ["python", os.path.join(TOOLS, "qa-e2e-split-restante.py")]),
     ("E2E editar 'Debo' quitar division",  ["python", os.path.join(TOOLS, "qa-e2e-remove-split.py")]),
     ("Parpadeo Cuentas (keys duplicadas)", ["python", os.path.join(TOOLS, "qa-cuentas-flicker.py")]),
     ("E2E multi-item / batch",         ["python", os.path.join(TOOLS, "qa-e2e-batch.py")]),
