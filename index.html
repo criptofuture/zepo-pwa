@@ -6700,17 +6700,25 @@ Pregúntame sobre tus gastos, pídeme un resumen del mes o dime qué no encuentr
                 </div>
                 <!-- Summary footer: total + category breakdown -->
                 <div style="margin-top:10px;padding:10px 14px;border-radius:var(--radius-sm);background:linear-gradient(135deg, rgba(var(--c-brand-rgb),0.06), rgba(var(--c-accent-rgb),0.06));border:1px solid rgba(var(--c-brand-rgb),0.2);">
-                  <div style="display:flex;align-items:center;justify-content:space-between;">
-                    <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--muted);">TOTAL</span>
-                    <span class="gradient-text" style="font-size:18px;font-weight:800;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;" x-text="'$' + parsedItems.reduce((s,p) => s + (parseFloat(p.amount)||0), 0).toFixed(2)"></span>
+                  <div x-show="parsedHasExpense" style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--muted);" x-text="parsedIsMixed ? 'GASTOS' : 'TOTAL'"></span>
+                    <span style="font-size:17px;font-weight:800;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;color:var(--text);" x-text="'−$' + parsedExpenseTotal.toFixed(2)"></span>
+                  </div>
+                  <div x-show="parsedHasIncome" style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
+                    <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--muted);" x-text="parsedIsMixed ? 'INGRESOS' : 'TOTAL'"></span>
+                    <span style="font-size:17px;font-weight:800;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;color:var(--success);" x-text="'+$' + parsedIncomeTotal.toFixed(2)"></span>
+                  </div>
+                  <div x-show="parsedIsMixed" style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid rgba(var(--c-brand-rgb),0.15);">
+                    <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--muted);">NETO</span>
+                    <span style="font-size:18px;font-weight:800;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;" :style="{ color: parsedNetTotal < 0 ? 'var(--danger)' : 'var(--success)' }" x-text="(parsedNetTotal < 0 ? '−$' : '+$') + Math.abs(parsedNetTotal).toFixed(2)"></span>
                   </div>
                   <div x-show="parsedItems.length > 5" style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(var(--c-brand-rgb),0.15);display:flex;flex-direction:column;gap:7px;">
                     <template x-for="cs in parsedCategorySummary" :key="cs.key">
                       <div style="display:flex;align-items:center;gap:8px;">
                         <span style="font-size:15px;flex-shrink:0;" x-text="cs.emoji"></span>
                         <span style="font-size:13px;font-weight:600;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="getCatLabel(cs.key)"></span>
-                        <span style="font-size:12px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;flex-shrink:0;width:38px;text-align:right;" x-text="Math.round(cs.total / Math.max(0.01, parsedItems.reduce((s,p) => s + (parseFloat(p.amount)||0), 0)) * 100) + '%'"></span>
-                        <span style="font-size:14px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;flex-shrink:0;min-width:66px;text-align:right;" x-text="'$' + cs.total.toFixed(2)"></span>
+                        <span style="font-size:12px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;flex-shrink:0;width:38px;text-align:right;" x-text="Math.round(cs.total / Math.max(0.01, cs.is_income ? parsedIncomeTotal : parsedExpenseTotal) * 100) + '%'"></span>
+                        <span style="font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0;min-width:66px;text-align:right;" :style="{ color: cs.is_income ? 'var(--success)' : 'var(--text)' }" x-text="(cs.is_income ? '+$' : '−$') + cs.total.toFixed(2)"></span>
                       </div>
                     </template>
                   </div>
@@ -6854,17 +6862,17 @@ Pregúntame sobre tus gastos, pídeme un resumen del mes o dime qué no encuentr
                         <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="importedFile.name"></div>
                         <div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--font-display);" x-text="importedFile.meta"></div>
                       </div>
-                      <button @click="importedFile = null" style="background:none;border:none;cursor:pointer;padding:4px;">
+                      <button @click="clearImportedFile()" style="background:none;border:none;cursor:pointer;padding:4px;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                       </button>
                     </div>
 
-                    <!-- Process with AI button -->
-                    <button @click="processImportedFile()" x-show="parsedItems.length === 0" :disabled="importProcessing" class="save-btn" style="margin-top:12px;" :style="importProcessing && 'opacity:0.6;cursor:wait'">
+                    <!-- Procesar. En Excel/CSV el botón NO promete IA porque no la usa. -->
+                    <button @click="processImportedFile()" x-show="parsedItems.length === 0 && !tabMapOpen" :disabled="importProcessing" class="save-btn" style="margin-top:12px;" :style="importProcessing && 'opacity:0.6;cursor:wait'">
                       <template x-if="!importProcessing">
                         <span style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;">
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-                          Procesar con IA
+                          <span x-text="importIsTabular ? 'Leer archivo' : 'Procesar con IA'"></span>
                         </span>
                       </template>
                       <template x-if="importProcessing">
@@ -6886,6 +6894,146 @@ Pregúntame sobre tus gastos, pídeme un resumen del mes o dime qué no encuentr
                     <div x-show="importedFile" style="text-align:center;margin-top:6px;font-size:10px;color:var(--muted);opacity:0.6;font-family:var(--font-display);" x-text="'build ' + APP_VERSION"></div>
                   </div>
                 </template>
+
+                <!-- ═══ CUADRE del archivo tabular (visible también tras confirmar) ═══ -->
+                <div x-show="tabCounts" style="margin-top:12px;padding:10px 14px;border-radius:var(--radius-sm);background:rgba(var(--c-brand-rgb),0.06);border:1px solid rgba(var(--c-brand-rgb),0.2);">
+                  <div style="font-size:12px;color:var(--text);line-height:1.7;">
+                    <span style="font-weight:700;font-variant-numeric:tabular-nums;" x-text="tabCounts && tabCounts.total"></span> filas en el archivo ·
+                    <span style="font-weight:700;color:var(--success);font-variant-numeric:tabular-nums;" x-text="tabCounts && tabCounts.ok"></span> se importan<template x-if="tabCounts && tabCounts.discarded > 0"><span> ·
+                    <span style="font-weight:700;color:var(--warning);font-variant-numeric:tabular-nums;" x-text="tabCounts.discarded"></span> se descartan</span></template>
+                  </div>
+                  <div x-show="tabSniff && !tabSniff.hasHeader" style="font-size:10px;color:var(--muted);margin-top:3px;">Sin fila de títulos — deduje las columnas por su contenido.</div>
+                  <div x-show="_tabTruncated > 0" style="font-size:10px;color:var(--warning);margin-top:3px;" x-text="'Archivo muy grande: solo se leyeron las primeras 3000 filas de ' + _tabTruncated + '.'"></div>
+                  <div x-show="_tabExtraSheets" style="font-size:10px;color:var(--warning);margin-top:3px;">El archivo tiene varias hojas: se usó la que más filas tiene.</div>
+                  <button type="button" x-show="!tabMapOpen" @click="tabMapOpen = true; parsedItems = []" style="margin-top:6px;background:none;border:none;padding:0;font-family:inherit;font-size:11px;font-weight:700;color:var(--cyan);cursor:pointer;">Cambiar columnas</button>
+                </div>
+
+                <!-- ═══ MAPEO: qué entendió de cada columna ═══
+                     x-if y NO x-show: Alpine evalúa los x-model/x-text aunque el
+                     contenedor esté oculto → con tabSniff null reventaba en consola. -->
+                <template x-if="tabMapOpen && tabSniff">
+                <div style="margin-top:14px;">
+                  <div class="cd-section-label" style="margin-top:0;">QUÉ ENTENDÍ DE TU ARCHIVO</div>
+
+                  <div style="margin-bottom:8px;">
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                      <span style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.6px;">FECHA</span>
+                      <span x-show="tabSniff && tabSniff.map.date < 0" style="font-size:9px;font-weight:700;color:var(--c-accent-soft);padding:1px 6px;border-radius:var(--radius-pill);background:rgba(var(--c-accent-rgb),0.15);">ELIGE</span>
+                    </div>
+                    <select class="cd-day-select" style="width:100%;" x-init="$nextTick(() => $el.value = tabSniff.map.date)" @change="tabSniff.map.date = +$el.value; tabPreview()">
+                      <option :value="-1">— elige la columna —</option>
+                      <template x-for="c in tabColOptions" :key="c.idx"><option :value="c.idx" x-text="c.text"></option></template>
+                    </select>
+                  </div>
+
+                  <div x-show="tabSniff && tabSniff.dateOrder === 'ask'" style="margin-bottom:8px;padding:8px 10px;border-radius:var(--radius-sm);background:rgba(var(--c-accent-rgb),0.10);border:1px solid rgba(var(--c-accent-rgb),0.30);">
+                    <div style="font-size:11px;font-weight:700;color:var(--c-accent-soft);margin-bottom:5px;">No puedo saber si es día/mes o mes/día — elige tú</div>
+                    <select class="cd-day-select" style="width:100%;" x-init="$nextTick(() => $el.value = tabSniff.dateOrderPick)" @change="tabSniff.dateOrderPick = $el.value; tabPreview()">
+                      <option value="dmy">día/mes/año (Latinoamérica)</option>
+                      <option value="mdy">mes/día/año (EE.UU.)</option>
+                    </select>
+                    <div style="font-size:10px;color:var(--muted);margin-top:4px;" x-text="tabDateOrderHint"></div>
+                  </div>
+
+                  <div x-show="tabSniff && tabSniff.signMode !== 'twocol'" style="margin-bottom:8px;">
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                      <span style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.6px;">MONTO</span>
+                      <span x-show="tabSniff && tabSniff.map.amount < 0" style="font-size:9px;font-weight:700;color:var(--c-accent-soft);padding:1px 6px;border-radius:var(--radius-pill);background:rgba(var(--c-accent-rgb),0.15);">ELIGE</span>
+                    </div>
+                    <select class="cd-day-select" style="width:100%;" x-init="$nextTick(() => $el.value = tabSniff.map.amount)" @change="tabSniff.map.amount = +$el.value; tabPreview()">
+                      <option :value="-1">— elige la columna —</option>
+                      <template x-for="c in tabColOptions" :key="c.idx"><option :value="c.idx" x-text="c.text"></option></template>
+                    </select>
+                    <div x-show="tabSniff && tabSniff.warn.includes('amount_unknown')" style="font-size:10px;color:var(--muted);margin-top:3px;">Hay varias columnas de números y no distingo cuál es la de montos. Elígela tú.</div>
+                  </div>
+
+                  <div x-show="tabSniff && tabSniff.signMode !== 'twocol'" style="margin-bottom:8px;">
+                    <div style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.6px;margin-bottom:4px;">GASTO O INGRESO</div>
+                    <select class="cd-day-select" style="width:100%;" x-init="$nextTick(() => $el.value = tabSniff.signMode)" @change="tabSniff.signMode = $el.value; tabPreview()">
+                      <option value="sign">Por el signo del monto (negativo = gasto)</option>
+                      <option value="type" x-show="tabSniff && tabSniff.map.type >= 0" x-text="'Por la columna ' + tabTypeColName"></option>
+                      <option value="allexp">Todo son gastos</option>
+                      <option value="allinc">Todo son ingresos</option>
+                    </select>
+                  </div>
+
+                  <div style="margin-bottom:8px;">
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                      <span style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.6px;">DESCRIPCIÓN</span>
+                      <span x-show="tabSniff && tabSniff.warn.includes('desc_ambiguous')" style="font-size:9px;font-weight:700;color:var(--c-accent-soft);padding:1px 6px;border-radius:var(--radius-pill);background:rgba(var(--c-accent-rgb),0.15);">REVISA</span>
+                    </div>
+                    <select class="cd-day-select" style="width:100%;" x-init="$nextTick(() => $el.value = tabSniff.map.desc)" @change="tabSniff.map.desc = +$el.value; tabPreview()">
+                      <option :value="-1">— sin descripción —</option>
+                      <template x-for="c in tabColOptions" :key="c.idx"><option :value="c.idx" x-text="c.text"></option></template>
+                    </select>
+                    <div x-show="tabSniff && tabSniff.warn.includes('desc_ambiguous')" style="font-size:10px;color:var(--muted);margin-top:3px;">Dos columnas podrían serlo. Mira la vista previa y elige la que prefieras.</div>
+                  </div>
+
+                  <div style="margin-bottom:10px;">
+                    <div style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.6px;margin-bottom:4px;">CATEGORÍA DEL ARCHIVO</div>
+                    <select class="cd-day-select" style="width:100%;" x-init="$nextTick(() => $el.value = tabSniff.map.cat)" @change="tabSniff.map.cat = +$el.value; tabPreview()">
+                      <option :value="-1">— ninguna (Zepo la deduce) —</option>
+                      <template x-for="c in tabColOptions" :key="c.idx"><option :value="c.idx" x-text="c.text"></option></template>
+                    </select>
+                  </div>
+
+                  <!-- Vista previa -->
+                  <div class="cd-section-label">VISTA PREVIA</div>
+                  <div style="overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--border);">
+                    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+                      <thead>
+                        <tr style="background:var(--surface2);">
+                          <th style="padding:7px 8px;text-align:left;font-weight:600;color:var(--muted);white-space:nowrap;">Fecha</th>
+                          <th style="padding:7px 8px;text-align:right;font-weight:600;color:var(--muted);">Monto</th>
+                          <th style="padding:7px 8px;text-align:left;font-weight:600;color:var(--muted);">Descripción</th>
+                          <th style="padding:7px 8px;text-align:left;font-weight:600;color:var(--muted);">Categoría</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <template x-for="(r, ri) in tabPreviewRows" :key="ri">
+                          <tr style="border-top:1px solid var(--border);">
+                            <td style="padding:7px 8px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums;" x-text="r.date"></td>
+                            <td style="padding:7px 8px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;" :style="{ color: r.is_income ? 'var(--success)' : 'var(--text)' }" x-text="(r.is_income ? '+$' : '−$') + r.amount.toFixed(2)"></td>
+                            <td style="padding:7px 8px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="r.description || '—'"></td>
+                            <td style="padding:7px 8px;color:var(--muted);white-space:nowrap;" x-text="r.category_raw || '—'"></td>
+                          </tr>
+                        </template>
+                        <tr x-show="tabPreviewRows.length === 0">
+                          <td colspan="4" style="padding:12px 8px;text-align:center;color:var(--muted);font-size:11px;">Elige al menos la fecha y el monto.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- Descartes: qué se queda fuera y por qué -->
+                  <div x-show="tabDiscards.length > 0" style="margin-top:10px;">
+                    <button type="button" @click="tabShowDiscards = !tabShowDiscards" style="width:100%;padding:8px 12px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:8px;font-family:inherit;">
+                      <span style="font-size:13px;">⚠️</span>
+                      <span style="font-size:11px;font-weight:600;color:var(--muted);flex:1;text-align:left;" x-text="(tabShowDiscards ? 'Ocultar' : 'Ver') + ' las ' + tabDiscards.length + ' filas descartadas'"></span>
+                      <svg :style="tabShowDiscards && 'transform:rotate(180deg)'" style="transition:transform 0.2s;" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div x-show="tabShowDiscards" style="margin-top:6px;display:flex;flex-direction:column;gap:4px;">
+                      <template x-for="(d, di) in tabDiscards.slice(0, 20)" :key="di">
+                        <div style="padding:7px 10px;border-radius:var(--radius-sm);background:var(--surface);border:1px dashed var(--border);display:flex;align-items:center;gap:8px;">
+                          <span style="font-size:10px;font-weight:700;color:var(--dim);font-variant-numeric:tabular-nums;flex-shrink:0;" x-text="'#' + d.row"></span>
+                          <span style="font-size:11px;color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="d.sample"></span>
+                          <span style="font-size:9px;font-weight:700;color:var(--c-accent-soft);flex-shrink:0;" x-text="d.why"></span>
+                        </div>
+                      </template>
+                      <div x-show="tabDiscards.length > 20" style="font-size:10px;color:var(--dim);text-align:center;padding:4px;" x-text="'y ' + (tabDiscards.length - 20) + ' más'"></div>
+                    </div>
+                  </div>
+
+                  <button class="save-btn" @click="tabConfirm()" :disabled="!tabCounts || tabCounts.ok === 0" style="margin-top:12px;"
+                    x-text="tabCounts && tabCounts.ok ? ('Confirmar ' + tabCounts.ok + ' registros') : 'Elige la fecha y el monto'"></button>
+                </div>
+                </template>
+              </div>
+
+              <!-- Aviso honesto: datos que el archivo NO trae (no se inventan en silencio) -->
+              <div x-show="importWarn && !editingExpense" style="margin-bottom:12px;padding:10px 12px;border-radius:var(--radius-sm);background:rgba(var(--c-accent-rgb),0.10);border:1px solid rgba(var(--c-accent-rgb),0.30);display:flex;gap:8px;align-items:flex-start;">
+                <span style="font-size:13px;flex-shrink:0;">⚠️</span>
+                <span style="font-size:11px;color:var(--c-accent-soft);line-height:1.5;" x-text="importWarn"></span>
               </div>
 
               <!-- ═══════ RESULTADOS UNIFICADOS (foto + archivo) ═══════ -->
@@ -6939,10 +7087,20 @@ Pregúntame sobre tus gastos, pídeme un resumen del mes o dime qué no encuentr
                   <button x-show="parsedItems.length > 4" @click="showAllImported = !showAllImported" style="width:100%;padding:12px 0;text-align:center;font-size:12px;color:var(--cyan);font-weight:700;border:none;border-top:1px solid var(--border);background:none;cursor:pointer;" x-text="showAllImported ? 'Ver menos ▲' : ('Ver los ' + parsedItems.length + ' gastos ▼')"></button>
                 </div>
 
-                <!-- Total -->
-                <div style="margin-top:10px;padding:10px 14px;border-radius:var(--radius-sm);background:linear-gradient(135deg, rgba(var(--c-brand-rgb),0.06), rgba(var(--c-accent-rgb),0.06));border:1px solid rgba(var(--c-brand-rgb),0.2);display:flex;align-items:center;justify-content:space-between;">
-                  <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--muted);">TOTAL</span>
-                  <span class="gradient-text" style="font-size:18px;font-weight:800;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;" x-text="'$' + parsedItems.reduce((s,p) => s + (parseFloat(p.amount)||0), 0).toFixed(2)"></span>
+                <!-- Totales: gastos e ingresos SEPARADOS. Sumarlos daba una cifra sin significado. -->
+                <div style="margin-top:10px;padding:10px 14px;border-radius:var(--radius-sm);background:linear-gradient(135deg, rgba(var(--c-brand-rgb),0.06), rgba(var(--c-accent-rgb),0.06));border:1px solid rgba(var(--c-brand-rgb),0.2);">
+                  <div x-show="parsedHasExpense" style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--muted);" x-text="parsedIsMixed ? 'GASTOS' : 'TOTAL'"></span>
+                    <span style="font-size:17px;font-weight:800;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;color:var(--text);" x-text="'−$' + parsedExpenseTotal.toFixed(2)"></span>
+                  </div>
+                  <div x-show="parsedHasIncome" style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
+                    <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--muted);" x-text="parsedIsMixed ? 'INGRESOS' : 'TOTAL'"></span>
+                    <span style="font-size:17px;font-weight:800;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;color:var(--success);" x-text="'+$' + parsedIncomeTotal.toFixed(2)"></span>
+                  </div>
+                  <div x-show="parsedIsMixed" style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid rgba(var(--c-brand-rgb),0.15);">
+                    <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--muted);">NETO</span>
+                    <span style="font-size:18px;font-weight:800;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;" :style="{ color: parsedNetTotal < 0 ? 'var(--danger)' : 'var(--success)' }" x-text="(parsedNetTotal < 0 ? '−$' : '+$') + Math.abs(parsedNetTotal).toFixed(2)"></span>
+                  </div>
                 </div>
               </div>
 
@@ -8496,7 +8654,7 @@ Pregúntame sobre tus gastos, pídeme un resumen del mes o dime qué no encuentr
           <svg viewBox="0 0 24 24" fill="none" stroke="var(--text)" stroke-width="2" width="16" height="16"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <div style="flex:1;">
-          <div style="font-size:17px;font-weight:700;" x-text="importStep===1 ? '📥 Importar desde otra app' : importStep===2 ? '📂 Sube tu archivo' : importStep===3 ? '👀 Vista previa' : '✅ ¡Importado!'"></div>
+          <div style="font-size:17px;font-weight:700;" x-text="importStep===1 ? '📥 Importar desde otra app' : '📂 Sube tu archivo'"></div>
           <div x-show="importStep===1" style="font-size:12px;color:var(--muted);margin-top:2px;">Trae tu historial completo a Zepo</div>
         </div>
         <button @click="importOpen=false" style="width:32px;height:32px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -8561,92 +8719,6 @@ Pregúntame sobre tus gastos, pídeme un resumen del mes o dime qué no encuentr
           <input type="file" accept=".csv,.xlsx,.xls" style="display:none;" @change="handleImportFile($event)" @file-drop.window="handleImportFile({target:{files:[$event.detail.file]}})">
         </label>
         <div x-show="saving" style="margin-top:12px;text-align:center;font-size:13px;color:var(--muted);">Analizando archivo...</div>
-      </div>
-
-      <!-- STEP 3: Vista previa -->
-      <div x-show="importStep===3">
-        <!-- Resumen -->
-        <div style="padding:12px 16px;border-radius:12px;background:rgba(var(--c-brand-rgb),0.06);border:1px solid rgba(var(--c-brand-rgb),0.2);margin-bottom:16px;">
-          <span style="font-size:14px;font-weight:600;color:var(--cyan);" x-text="importRows.length + ' registros'"></span>
-          <span style="font-size:13px;color:var(--muted);"> listos para importar</span>
-          <span x-show="importErrors > 0" style="font-size:12px;color:var(--muted);" x-text="' · ' + importErrors + ' ignorados (sin fecha o monto)'"></span>
-        </div>
-
-        <!-- Tabla de preview (5 filas) -->
-        <div style="overflow-x:auto;margin-bottom:16px;border-radius:10px;border:1px solid var(--border);">
-          <table style="width:100%;border-collapse:collapse;font-size:12px;">
-            <thead>
-              <tr style="background:var(--surface2);">
-                <th style="padding:8px 10px;text-align:left;font-weight:600;color:var(--muted);white-space:nowrap;">Fecha</th>
-                <th style="padding:8px 10px;text-align:right;font-weight:600;color:var(--muted);">Monto</th>
-                <th style="padding:8px 10px;text-align:left;font-weight:600;color:var(--muted);">Categoría</th>
-                <th style="padding:8px 10px;text-align:left;font-weight:600;color:var(--muted);">Descripción</th>
-              </tr>
-            </thead>
-            <tbody>
-              <template x-for="(row, i) in importRows.slice(0, 5)" :key="i">
-                <tr style="border-top:1px solid var(--border);">
-                  <td style="padding:8px 10px;color:var(--muted);white-space:nowrap;" x-text="row.date"></td>
-                  <td style="padding:8px 10px;text-align:right;font-weight:600;" :style="row.is_income ? 'color:var(--success)' : 'color:var(--text)'" x-text="(row.is_income ? '+' : '') + '$' + row.amount.toFixed(2)"></td>
-                  <td style="padding:8px 10px;white-space:nowrap;">
-                    <span x-text="getCatEmoji(importMapCategory(row.category_raw, row.is_income))"></span>
-                    <span style="color:var(--muted);margin-left:4px;" x-text="row.category_raw || '—'"></span>
-                  </td>
-                  <td style="padding:8px 10px;color:var(--text);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="row.description || '—'"></td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Resolver categorías nuevas -->
-        <div x-show="importNewCats.length > 0" style="margin-bottom:16px;">
-          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">⚠️ Categorías no reconocidas</div>
-          <template x-for="(cat, i) in importNewCats" :key="i">
-            <div style="padding:12px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);margin-bottom:8px;">
-              <div style="font-size:13px;font-weight:600;margin-bottom:8px;" x-text="'\"' + cat.raw + '\"'"></div>
-              <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-                <div style="flex:1;min-width:120px;">
-                  <select x-model="catResolutions[cat.raw]"
-                    style="width:100%;padding:7px 10px;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;outline:none;">
-                    <option value="">Mapear a...</option>
-                    <template x-for="c in categories" :key="c.key">
-                      <option :value="c.key" x-text="c.emoji + ' ' + c.label"></option>
-                    </template>
-                    <template x-for="c in incomeCategories" :key="c.key">
-                      <option :value="c.key" x-text="c.emoji + ' ' + c.label"></option>
-                    </template>
-                  </select>
-                </div>
-                <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap;cursor:pointer;">
-                  <input type="checkbox" x-model="cat.createNew" style="accent-color:var(--cyan);width:14px;height:14px;">
-                  Crear nueva
-                </label>
-              </div>
-            </div>
-          </template>
-        </div>
-
-        <button class="btn-primary" style="width:100%;justify-content:center;padding:14px;" @click="runImport()" :disabled="saving">
-          <span x-show="!saving">Importar <span x-text="importRows.length"></span> registros</span>
-          <span x-show="saving">
-            Importando... <span x-text="importProgress + '%'"></span>
-          </span>
-        </button>
-        <button @click="importStep=2" style="width:100%;padding:10px;margin-top:8px;font-size:13px;color:var(--muted);background:transparent;border:none;">Cambiar archivo</button>
-      </div>
-
-      <!-- STEP 4: Resultado -->
-      <div x-show="importStep===4" style="text-align:center;padding:12px 0 8px;">
-        <div style="font-size:52px;margin-bottom:16px;">🎉</div>
-        <div style="font-size:22px;font-weight:800;margin-bottom:8px;">¡Importación completada!</div>
-        <div style="font-size:14px;color:var(--muted);margin-bottom:6px;" x-text="importRows.length + ' registros importados'"></div>
-        <div x-show="importErrors > 0" style="font-size:12px;color:var(--muted);margin-bottom:6px;" x-text="importErrors + ' filas ignoradas (sin fecha o monto)'"></div>
-        <div x-show="importNewCats.filter(c=>c.createNew).length > 0" style="font-size:12px;color:var(--muted);margin-bottom:20px;" x-text="importNewCats.filter(c=>c.createNew).length + ' categorías nuevas creadas'"></div>
-        <div x-show="importErrors === 0 && importNewCats.filter(c=>c.createNew).length === 0" style="margin-bottom:20px;"></div>
-        <button class="btn-primary" style="width:100%;justify-content:center;padding:14px;" @click="importOpen=false; tab='history'">
-          Ver mis gastos
-        </button>
       </div>
 
     </div>
@@ -8929,18 +9001,13 @@ const CAT_IMPORT_MAP = {
   'sale':'sale','venta':'sale','selling':'sale',
 };
 
-// Parsers declarativos por app (CSV). incF+expF = columnas separadas; amtF+typeF = columna única.
-const APP_PARSERS = {
-  wallet:    { dateF:'date',   incF:'income',   expF:'expense',  catF:'category',                descF:'note' },
-  ynab:      { dateF:'Date',   incF:'Inflow',   expF:'Outflow',  catF:'Category Group/Category', descF:'Memo' },
-  spendee:   { dateF:'date',   amtF:'amount',   typeF:'type',    catF:'category name',           descF:'note' },
-  toshl:     { dateF:'Date',   amtF:'Amount',   catF:'Main category',                            descF:'Name' },
-  mobills:   { dateF:'DATA',   amtF:'VALUE',    catF:'CATEGORY',                                 descF:'DESCRIPTION' },
-  mint:      { dateF:'Date',   amtF:'Amount',   typeF:'Transaction Type', catF:'Category',       descF:'Description' },
-  splitwise: { dateF:'Date',   amtF:'Cost',     catF:'Category',                                 descF:'Description' },
-  // money_manager usa XLSX → SheetJS lo convierte a filas con: Date, Amount, Income/Expense, Category, Note
-  money_manager: { dateF:'Date', amtF:'Amount', typeF:'Income/Expense', catF:'Category',        descF:'Note' },
-};
+// El mapa de arriba tiene entradas con tilde ('alimentación'), pero los archivos reales
+// suelen venir sin ella ("Alimentacion") → índice normalizado (sin acentos) para buscar.
+const _catNorm = s => (s || '').toString().toLowerCase()
+  .normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+const CAT_IMPORT_NORM = Object.fromEntries(
+  Object.entries(CAT_IMPORT_MAP).map(([k, v]) => [_catNorm(k), v]));
+
 
 // Instrucciones de exportación por app (para el tooltip en Step 2)
 const IMPORT_INSTRUCTIONS = {
@@ -9162,13 +9229,25 @@ function zepoApp() {
     importStatus: '',
     importProgress: 0,
     showAllImported: false,
+    // Import tabular (Excel/CSV). La grilla cruda NO vive aquí: Alpine proxifica en
+    // profundidad y 3000×20 celdas reactivas traban el móvil → va en _ZCACHE.
+    tabMapOpen: false,
+    tabSniff: null,
+    tabCounts: null,
+    tabPreviewRows: [],
+    tabDiscards: [],
+    tabShowDiscards: false,
+    importWarn: '',
+    _tabRunId: 0,
+    _tabTruncated: 0,
+    _tabExtraSheets: false,
     catPickerItem: null,
     catPickerAdding: false,
     gridAddingCat: false,
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v180',
+    APP_VERSION: 'v181',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     // ─── ZEPI (companion IA, Max) ───
     zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
@@ -9331,11 +9410,7 @@ function zepoApp() {
     importOpen: false,
     importStep: 1,
     importApp: null,
-    importRows: [],
     importProgress: 0,
-    importErrors: 0,
-    importNewCats: [],
-    catResolutions: {},
     importShowInstructions: false,
     IMPORT_INSTRUCTIONS,
     onboardingCurrencies: [
@@ -10419,10 +10494,19 @@ function zepoApp() {
 
     BANK_FEE_PATTERNS: /\b(ISD|IVASD|IMPUESTO ISD|IVA COBRADO|IVA TVCB|IVA TRF|IVA CONSUMO|IVA COMPRA|IVA SERV|IVA INT|COM TVCB|COM TRF|COM INTERBANC|COMISION|RETENCION|RET\.?\s*FTE|REG EN CTA|IMPUESTO SALIDA|IMP\.\s*SALIDA|RET\.\s*IVA|SOL\.\s*DIVISA|COSTO TRANSAC|TARIFA USO POS|MANTENIMIENTO CUENTA|NOTA DE DEBITO POR IMPUESTO|NOTA DEBITO POR IMP|S\.?\s*O\.?\s*L\.?\s*DIVISA)\b/i,
 
+    // Totales de lo detectado, SEPARADOS por signo. Sumar gastos e ingresos en un solo
+    // número da una cifra que no significa nada (era el bug del "TOTAL $6630.71").
+    get parsedExpenseTotal() { return this.parsedItems.reduce((s, p) => s + (p.is_income ? 0 : (parseFloat(p.amount) || 0)), 0); },
+    get parsedIncomeTotal()  { return this.parsedItems.reduce((s, p) => s + (p.is_income ? (parseFloat(p.amount) || 0) : 0), 0); },
+    get parsedNetTotal()     { return this.parsedIncomeTotal - this.parsedExpenseTotal; },
+    get parsedHasIncome()    { return this.parsedItems.some(p => p.is_income); },
+    get parsedHasExpense()   { return this.parsedItems.some(p => !p.is_income); },
+    get parsedIsMixed()      { return this.parsedHasIncome && this.parsedHasExpense; },
+
     get parsedCategorySummary() {
       const map = {};
       for (const it of this.parsedItems) {
-        if (!map[it.category]) map[it.category] = { key: it.category, emoji: it.emoji, count: 0, total: 0 };
+        if (!map[it.category]) map[it.category] = { key: it.category, emoji: it.emoji, count: 0, total: 0, is_income: !!it.is_income };
         map[it.category].count++;
         map[it.category].total += it.amount;
       }
@@ -10937,14 +11021,71 @@ function zepoApp() {
       this.hiddenBankFees = [];
       this.showHiddenFees = false;
       this.bankReconciliation = null;
+      this._tabReset();
+    },
+
+    clearImportedFile() {
+      this.importedFile = null;
+      this.parsedItems = [];
+      this.hiddenBankFees = [];
+      this.bankReconciliation = null;
+      this._tabReset();
+    },
+
+    _tabReset() {
+      this.importWarn = '';
+      this.tabMapOpen = false;
+      this.tabSniff = null;
+      this.tabCounts = null;
+      this.tabPreviewRows = [];
+      this.tabDiscards = [];
+      this.tabShowDiscards = false;
+      this._tabRunId++;                      // invalida respuestas de IA en vuelo
+      _ZCACHE.tabGrid = null;
+      _ZCACHE.tabRows = null;
+    },
+
+    get importIsTabular() {
+      const e = (this.importedFile?.name || '').split('.').pop().toLowerCase();
+      return e === 'xlsx' || e === 'xls' || e === 'csv';
+    },
+
+    // Cada opción muestra una MUESTRA REAL del archivo: es lo que deja al usuario
+    // distinguir "Col B · Amazon" de "Col G · $35 amazon /2" de un vistazo.
+    get tabColOptions() {
+      const s = this.tabSniff;
+      if (!s) return [];
+      return s.cols.filter(c => c.kind !== 'empty').map(c => ({
+        idx: c.idx,
+        text: (s.hasHeader && c.name ? c.name : 'Col ' + (c.idx < 26 ? String.fromCharCode(65 + c.idx) : '#' + (c.idx + 1)))
+            + ' · ' + (c.samples.join(' / ').slice(0, 30) || 'vacía'),
+      }));
+    },
+    get tabTypeColName() {
+      const s = this.tabSniff;
+      if (!s || s.map.type < 0) return '';
+      const c = s.cols[s.map.type];
+      return (s.hasHeader && c.name ? c.name : 'Col ' + String.fromCharCode(65 + c.idx)) + ' (' + (c.samples[0] || '') + ')';
+    },
+    get tabDateOrderHint() {
+      const s = this.tabSniff;
+      if (!s || s.map.date < 0) return '';
+      const c = s.cols[s.map.date];
+      const sample = (c.samples || []).find(x => /^\d{1,2}[\/\-.]\d{1,2}/.test(x));
+      if (!sample) return '';
+      const out = this._tabDate(sample, s.dateOrderPick);
+      return out ? sample + ' se leería como ' + out : '';
     },
 
     async processImportedFile() {
       if (!this.importedFile?.raw || this.importProcessing) return;
       const file = this.importedFile.raw;
       const ext = (file.name.split('.').pop() || '').toLowerCase();
-      const isPdf = ext === 'pdf', isSheet = ext === 'xlsx' || ext === 'xls';
-      if (!isPdf && !isSheet && ext !== 'csv' && ext !== 'xml' && ext !== 'txt') {
+      // Tabular = motor determinista. Una hoja de cálculo ya tiene columnas: la IA no
+      // debe re-teclear sus números (era la causa de los montos inventados).
+      if (ext === 'xlsx' || ext === 'xls' || ext === 'csv') return this.processTabularFile(file, ext);
+      const isPdf = ext === 'pdf';
+      if (!isPdf && ext !== 'xml' && ext !== 'txt') {
         this.showToast('Formato no soportado. Sube un PDF, Excel (.xlsx) o CSV.');
         return;
       }
@@ -10974,15 +11115,6 @@ function zepoApp() {
             const pageText = content.items.map(item => item.str).join(' ');
             fullText += pageText + '\n--- PAGE BREAK ---\n';
           }
-        } else if (isSheet) {
-          // Excel → CSV con fechas ISO forzadas (cellText:false + dateNF): la IA no debe
-          // adivinar dd/mm vs mm/dd según el formato regional que traiga el archivo.
-          this.importStatus = 'Leyendo Excel...';
-          await withTimeout(this._loadSheetJS(), 20000, 'sheetjs-load');
-          const wb = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true, cellText: false });
-          fullText = wb.SheetNames
-            .map(n => XLSX.utils.sheet_to_csv(wb.Sheets[n], { dateNF: 'yyyy-mm-dd hh:mm', blankrows: false }))
-            .join('\n--- PAGE BREAK ---\n');
         } else {
           this.importStatus = 'Leyendo archivo...';
           fullText = await file.text();
@@ -11025,10 +11157,22 @@ function zepoApp() {
         // Chunks paralelos = cada uno rápido, ninguno excede el límite.
         // Divide por LÍNEAS (robusto: no depende de cómo pdf.js separe páginas)
         const lines = fullText.split(/\n|--- PAGE BREAK ---/).map(l => l.trim()).filter(l => l.length > 2);
+        // Excel→PDF con la columna angosta imprime "#####" en vez del valor. Ese dato NO
+        // está en el archivo: nadie puede recuperarlo. Se avisa con un banner permanente
+        // (un toast se pierde) en vez de dejar que la IA invente una fecha en silencio.
+        if (lines.filter(l => /#{4,}/.test(l)).length > lines.length * 0.25) {
+          this.importWarn = 'Este PDF tiene columnas cortadas (se imprimieron como ###). Ese dato no existe en el archivo, así que las fechas de abajo son una suposición. Si es tu caso, sube el Excel: ahí las fechas sí se leen exactas.';
+        }
         // Contexto repetido por chunk SOLO en PDF (membrete del banco con período/año).
         // En CSV/Excel las primeras líneas son transacciones reales: repetirlas en cada
         // chunk haría que la IA las devuelva otra vez → registros duplicados.
-        const header = isPdf ? lines.slice(0, 6).join('\n').slice(0, 400) : '';
+        // El marcador NO EXTRAER cubre PDFs sin membrete (ej. una hoja impresa donde las
+        // primeras líneas también son transacciones): sin él, salían triplicadas.
+        const headerRaw = isPdf ? lines.slice(0, 6).join('\n').slice(0, 400) : '';
+        const header = headerRaw
+          ? '[CONTEXTO: primeras lineas del documento, SOLO para deducir periodo/año. NO extraigas transacciones de este bloque.]\n'
+            + headerRaw + '\n[FIN DEL CONTEXTO. Extrae transacciones SOLO de las lineas siguientes:]'
+          : '';
         const CHUNK_CHARS = 4000; // ~70 transacciones por chunk → ~30s cada uno (margen vs límite 60s)
         const chunks = [];
         let cur = '';
@@ -11115,6 +11259,443 @@ function zepoApp() {
       } finally {
         this.importProcessing = false;
         this.importStatus = '';
+      }
+    },
+
+    /* ═══════════ MOTOR TABULAR DETERMINISTA (.xlsx/.xls/.csv) ═══════════
+       Una hoja de cálculo YA tiene columnas: la IA no debe re-teclear sus números.
+       Antes el Excel se serializaba a texto y se mandaba a Gemini, que inventaba
+       montos (leía el "6" de "6 taxis" en una fila de monto 0) y duplicaba filas.
+       Aquí los montos/fechas salen leídos de la celda; la IA solo sugiere categorías. */
+
+    async processTabularFile(file, ext) {
+      this.importProcessing = true;
+      this.importStatus = 'Leyendo archivo...';
+      this.importProgress = 10;
+      this._tabReset();
+      this._dlog('processTabular: start ' + file.name + ' (' + ext + ')');
+      try {
+        const grid = await this._tabReadGrid(file, ext);
+        if (!grid.length) { this.showToast('El archivo está vacío'); return; }
+        _ZCACHE.tabGrid = grid;
+        this.tabSniff = this._tabSniff(grid);
+        this.tabPreview();
+        this.tabMapOpen = true;
+        this._dlog('processTabular: ' + grid.length + ' filas, map=' + JSON.stringify(this.tabSniff.map));
+      } catch (e) {
+        console.error('[processTabularFile]', e);
+        this._dlog('processTabular: ERROR ' + (e.message || e));
+        this.showToast('No se pudo leer el archivo: ' + (e.message || 'formato no reconocido'));
+      } finally {
+        this.importProcessing = false;
+        this.importStatus = '';
+        this.importProgress = 0;
+      }
+    },
+
+    async _tabReadGrid(file, ext) {
+      let grid = [];
+      if (ext === 'csv') {
+        const text = await file.text();
+        const p = Papa.parse(text.trim(), { header: false, skipEmptyLines: 'greedy' });
+        grid = p.data || [];
+      } else {
+        await withTimeout(this._loadSheetJS(), 20000, 'sheetjs-load');
+        // cellDates+raw: las celdas llegan TIPADAS (Date real, number real). Sin pasar
+        // por texto no hay nada que re-interpretar mal.
+        const wb = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true, cellText: false });
+        const sheets = wb.SheetNames.map(n => XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: null, blankrows: false }));
+        grid = sheets.reduce((a, b) => (b.length > a.length ? b : a), []);      // la hoja con más filas
+        if (sheets.filter(s => s.length > 1).length > 1) this._tabExtraSheets = true;
+      }
+      if (grid.length > 3000) { this._tabTruncated = grid.length; grid = grid.slice(0, 3000); }
+      else this._tabTruncated = 0;
+      return grid;
+    },
+
+    // Re-corre en cada cambio de los selects. Puro JS sobre la grilla en caché: instantáneo.
+    tabPreview() {
+      const s = this.tabSniff;
+      if (!s || s.map.date < 0 || (s.map.amount < 0 && s.map.inc < 0)) { this.tabCounts = null; this.tabPreviewRows = []; this.tabDiscards = []; return; }
+      const { rows, discards } = this._tabParseRows(_ZCACHE.tabGrid || [], s);
+      _ZCACHE.tabRows = rows;
+      this.tabDiscards = discards;
+      this.tabPreviewRows = rows.slice(0, 5);
+      this.tabCounts = { total: rows.length + discards.length, ok: rows.length, discarded: discards.length, hidden: 0 };
+    },
+
+    tabConfirm() {
+      const rows = _ZCACHE.tabRows || [];
+      if (!rows.length) return;
+      this.tabCategorize(rows);
+      this._finalizeTabularItems(rows);
+      if (this.tabCounts) this.tabCounts.hidden = this.hiddenBankFees.length;
+      this.tabMapOpen = false;
+      this._tabAiCategorize();          // async, opcional: nunca bloquea el guardado
+    },
+
+    _tabNum(v) {
+      if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+      if (v instanceof Date) return null;
+      let s = String(v == null ? '' : v).trim();
+      if (!s) return null;
+      let neg = /^\(.*\)$/.test(s);                 // (35.00) = negativo contable
+      s = s.replace(/[()]/g, '');
+      if (/^[-+]/.test(s)) { if (s[0] === '-') neg = true; s = s.slice(1); }
+      s = s.replace(/[\s ]/g, '').replace(/usd|eur|ars|mxn|cop|clp|pen|brl|\$|€|£/gi, '');
+      if (!/^[\d.,]+$/.test(s) || !/\d/.test(s)) return null;
+      const dec = Math.max(s.lastIndexOf('.'), s.lastIndexOf(','));
+      let out;
+      if (dec === -1) out = s;
+      else {
+        const tail = s.slice(dec + 1), seps = (s.match(/[.,]/g) || []).length;
+        out = (/^\d{3}$/.test(tail) && seps === 1 && s.length > 4)
+          ? s.replace(/[.,]/g, '')                  // "1,234" → miles
+          : s.slice(0, dec).replace(/[.,]/g, '') + '.' + tail;
+      }
+      const n = parseFloat(out);
+      return Number.isFinite(n) ? (neg ? -n : n) : null;
+    },
+
+    _tabDate(v, order) {
+      // localDate y NO toISOString: SheetJS crea los Date en hora LOCAL; pasarlos a UTC
+      // devuelve el día anterior en husos UTC+.
+      if (v instanceof Date) return isNaN(v.getTime()) ? null : localDate(v);
+      let s = String(v == null ? '' : v).trim();
+      if (!s) return null;
+      s = s.replace(/^(\d{1,2})([\/\-.])(\d{1,2})\2(\d{2})$/, '$1$2$3$220$4');   // dd/mm/aa → dd/mm/20aa
+      if (order === 'dmy') {
+        const m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
+        if (m) {
+          const d = +m[1], mo = +m[2];
+          if (d >= 1 && d <= 31 && mo >= 1 && mo <= 12) return m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0');
+          return null;
+        }
+      }
+      return this._parseImportDate(s);
+    },
+
+    _tabCellKind(v) {
+      if (v == null || String(v).trim() === '') return 'empty';
+      if (v instanceof Date) return isNaN(v.getTime()) ? 'text' : 'date';
+      if (typeof v === 'number') return Number.isFinite(v) ? 'number' : 'text';
+      const s = String(v).trim();
+      if (this._tabNum(s) !== null) return 'number';
+      if (this._parseImportDate(s) || /^\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}/.test(s)) return 'date';
+      return 'text';
+    },
+
+    _tabIsIncomeWord(v) {
+      return /^(ingreso|ingresos|income|inflow|credit|credito|abono|deposito|haber|entrada|in)$/.test(_catNorm(v));
+    },
+    _tabIsExpenseWord(v) {
+      return /^(egreso|egresos|gasto|gastos|expense|outflow|debit|debito|cargo|debe|salida|out)$/.test(_catNorm(v));
+    },
+
+    _tabProfile(grid, hasHeader) {
+      const start = hasHeader ? 1 : 0;
+      const width = grid.reduce((m, r) => Math.max(m, (r || []).length), 0);
+      const body = grid.slice(start);
+      const step = Math.max(1, Math.floor(body.length / 60));      // muestrea TODO el archivo, no solo el inicio
+      const sample = body.filter((_, i) => i % step === 0).slice(0, 60);
+      const cols = [];
+      for (let j = 0; j < width; j++) {
+        const vals = sample.map(r => (r || [])[j]);
+        const kinds = vals.map(v => this._tabCellKind(v));
+        const nonEmpty = vals.filter((_, i) => kinds[i] !== 'empty');
+        const nums = nonEmpty.map(v => this._tabNum(v)).filter(n => n !== null);
+        const texts = nonEmpty.map(v => String(v).trim()).filter(Boolean);
+        const count = k => kinds.filter(x => x === k).length;
+        const n = sample.length || 1;
+        const dominant = ['date', 'number', 'text'].reduce((a, k) => count(k) > count(a) ? k : a, 'text');
+        const uniq = new Set(texts.map(t => t.toLowerCase()));
+        const abs = nums.map(Math.abs).sort((a, b) => a - b);
+        cols.push({
+          idx: j,
+          name: hasHeader ? String((grid[0] || [])[j] == null ? '' : (grid[0] || [])[j]).trim() : '',
+          kind: nonEmpty.length ? dominant : 'empty',
+          fill: nonEmpty.length / n,
+          hasDecimals: nums.some(x => Math.abs(x % 1) > 1e-9),
+          hasNegatives: nums.some(x => x < 0),
+          intLike: nums.length > 0 && nums.every(x => Math.abs(x % 1) < 1e-9),
+          uniqRatio: texts.length ? uniq.size / texts.length : 0,
+          absMedian: abs.length ? abs[Math.floor(abs.length / 2)] : 0,
+          avgLen: texts.length ? texts.reduce((s, t) => s + t.length, 0) / texts.length : 0,
+          isTypeCol: nonEmpty.length > 0 && nonEmpty.filter(v => this._tabIsIncomeWord(v) || this._tabIsExpenseWord(v)).length / nonEmpty.length >= 0.8,
+          isCurrencyCol: nonEmpty.length > 0 && nonEmpty.filter(v => /^[a-z]{3}$/i.test(String(v).trim())).length / nonEmpty.length >= 0.8,
+          catHitRatio: uniq.size ? [...uniq].filter(t => CAT_IMPORT_NORM[_catNorm(t)]).length / uniq.size : 0,
+          samples: nonEmpty.slice(0, 3).map(v => v instanceof Date ? localDate(v) : String(v).trim().slice(0, 18)),
+        });
+      }
+      return cols;
+    },
+
+    _tabHasHeader(grid) {
+      if (grid.length < 2) return false;
+      const probe = this._tabProfile(grid.slice(1), false);        // perfila el CUERPO, sin la fila 0
+      let evidence = 0, against = 0;
+      probe.forEach((c, j) => {
+        if ((c.kind !== 'date' && c.kind !== 'number') || c.fill < 0.6) return;
+        const k = this._tabCellKind((grid[0] || [])[j]);
+        if (k === 'text') evidence++;
+        else if (k === c.kind) against++;
+      });
+      return evidence > 0 && evidence >= against;
+    },
+
+    // Un monto tiene centavos y signo; un id es un entero grande y único. Sin esto el
+    // sniffer confunde la columna de montos con la de ids (el archivo real trae 3 numéricas).
+    _tabAmountScore(c) {
+      let s = 0;
+      if (/monto|amount|importe|valor|value|cost|precio|total|debe|haber|cargo|abono/i.test(c.name)) s += 3;
+      if (/\bid\b|c[oó]digo|code|folio|ref|n[uú]mero|\bnum\b|cuenta|account|balance|saldo/i.test(c.name)) s -= 5;
+      if (c.hasDecimals) s += 3;
+      if (c.hasNegatives) s += 2;
+      if (c.intLike && c.absMedian >= 1e5) s -= 4;
+      if (c.absMedian >= 1e6) s -= 3;
+      if (c.intLike && c.uniqRatio > 0.95 && c.absMedian > 1000) s -= 3;
+      if (c.intLike && !c.hasNegatives && c.uniqRatio > 0 && c.uniqRatio < 0.1) s -= 2;
+      return s;
+    },
+
+    _tabDescScore(c) {
+      let s = 0;
+      if (/descrip|concepto|detalle|title|titulo|payee|merchant|comercio|nombre|name/i.test(c.name)) s += 3;
+      if (/note|nota|memo|comment/i.test(c.name)) s += 2;
+      if (c.uniqRatio > 0.5) s += 3;
+      if (c.uniqRatio < 0.15) s -= 3;
+      if (c.isCurrencyCol) s -= 4;
+      if (c.isTypeCol) s -= 4;
+      if (c.avgLen >= 4 && c.avgLen <= 40) s += 1;
+      if (c.avgLen < 3) s -= 2;
+      return s;
+    },
+
+    _tabCatScore(c) {
+      let s = 0;
+      if (/categor|rubro/i.test(c.name)) s += 4;
+      if (/descrip|concepto|detalle|title|titulo|payee|merchant|nombre|name|note|nota|memo/i.test(c.name)) s -= 5;
+      // Graduado: una columna de categorías propias mezcla nombres conocidos ("Salud")
+      // con inventados ("Qimia") → rara vez pasa del 50%. Con 25% ya es señal.
+      if (c.catHitRatio >= 0.5) s += 5;
+      else if (c.catHitRatio >= 0.25) s += 3;
+      // Una categoría SE REPITE; una descripción no. Sin esto, descripciones cortas
+      // ("Cafe", "Pan") matchean el diccionario y se roban el rol de categoría.
+      if (c.uniqRatio > 0.8) s -= 3;
+      else if (c.uniqRatio > 0 && c.uniqRatio < 0.4) s += 1;
+      if (c.isTypeCol) s -= 4;
+      if (c.isCurrencyCol) s -= 4;
+      return s;
+    },
+
+    _tabSniff(grid) {
+      const hasHeader = this._tabHasHeader(grid);
+      const cols = this._tabProfile(grid, hasHeader);
+      const warn = [];
+      const map = { date: -1, amount: -1, type: -1, desc: -1, cat: -1, inc: -1, exp: -1 };
+
+      const dates = cols.filter(c => c.kind === 'date' && c.fill > 0.5).sort((a, b) => (b.fill - a.fill) || (a.idx - b.idx));
+      if (dates.length) map.date = dates[0].idx;
+
+      // Orden de fecha: solo es ambiguo en texto (los Date nativos de Excel no lo son)
+      let dateOrder = 'iso';
+      if (map.date >= 0) {
+        const raw = grid.slice(hasHeader ? 1 : 0).map(r => (r || [])[map.date])
+          .filter(v => v != null && !(v instanceof Date)).map(v => String(v).trim()).filter(Boolean);
+        if (raw.length) {
+          let d1 = false, d2 = false, iso = 0;
+          raw.forEach(s => {
+            if (/^\d{4}-\d{2}-\d{2}/.test(s)) { iso++; return; }
+            const m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.]\d{2,4}/);
+            if (m) { if (+m[1] > 12) d1 = true; if (+m[2] > 12) d2 = true; }
+          });
+          dateOrder = iso === raw.length ? 'iso' : d1 ? 'dmy' : d2 ? 'mdy' : 'ask';
+        } else dateOrder = 'native';
+      }
+
+      const nums = cols.filter(c => c.kind === 'number' && c.fill > 0.3);
+      const scored = nums.map(c => ({ c, s: this._tabAmountScore(c) })).sort((a, b) => b.s - a.s || a.c.idx - b.c.idx);
+      // Puerta de confianza: si no hay un ganador claro, NO adivina — la UI lo pide.
+      if (scored.length === 1 && scored[0].s >= 0) map.amount = scored[0].c.idx;
+      else if (scored.length > 1 && scored[0].s >= 3 && (scored[0].s - scored[1].s) >= 2) map.amount = scored[0].c.idx;
+
+      // Dos columnas Inflow/Outflow (YNAB, Wallet)
+      const incC = nums.find(c => /inflow|ingreso|abono|haber|income|deposit/i.test(c.name));
+      const expC = nums.find(c => /outflow|egreso|gasto|debe|expense|withdraw/i.test(c.name));
+      if (incC && expC && incC.idx !== expC.idx) { map.inc = incC.idx; map.exp = expC.idx; map.amount = -1; }
+
+      const typeC = cols.find(c => c.isTypeCol);
+      if (typeC) map.type = typeC.idx;
+
+      const catScored = cols.filter(c => c.kind === 'text' && c.idx !== map.type)
+        .map(c => ({ c, s: this._tabCatScore(c) })).sort((a, b) => b.s - a.s || a.c.idx - b.c.idx);
+      if (catScored.length && catScored[0].s >= 4) map.cat = catScored[0].c.idx;
+
+      const taken = [map.date, map.amount, map.type, map.cat, map.inc, map.exp];
+      const descScored = cols.filter(c => c.kind === 'text' && !taken.includes(c.idx))
+        .map(c => ({ c, s: this._tabDescScore(c) })).sort((a, b) => b.s - a.s || a.c.idx - b.c.idx);
+      if (descScored.length) {
+        map.desc = descScored[0].c.idx;
+        // Empate real (ej. "Amazon" vs "$35 amazon /2") → que elija el usuario
+        if (descScored.length > 1 && (descScored[0].s - descScored[1].s) <= 1) warn.push('desc_ambiguous');
+      }
+
+      let signMode = 'allexp';
+      if (map.inc >= 0 && map.exp >= 0) signMode = 'twocol';
+      else if (map.amount >= 0 && cols[map.amount] && cols[map.amount].hasNegatives) signMode = 'sign';
+      else if (map.type >= 0) signMode = 'type';
+
+      if (map.amount < 0 && map.inc < 0) warn.push('amount_unknown');
+      if (map.date < 0) warn.push('date_unknown');
+
+      return { hasHeader, cols, map, dateOrder, dateOrderPick: dateOrder === 'ask' ? 'dmy' : dateOrder, signMode, warn };
+    },
+
+    _tabRowText(r) {
+      return (r || []).filter(c => c != null && String(c).trim() !== '')
+        .slice(0, 3).map(c => c instanceof Date ? localDate(c) : String(c).trim()).join(' · ').slice(0, 60);
+    },
+
+    _tabParseRows(grid, sniff) {
+      const m = sniff.map, rows = [], discards = [];
+      const order = sniff.dateOrder === 'ask' ? sniff.dateOrderPick : sniff.dateOrder;
+      const start = sniff.hasHeader ? 1 : 0;
+      for (let i = start; i < grid.length; i++) {
+        const r = grid[i] || [];
+        if (r.every(c => c == null || String(c).trim() === '')) continue;      // fila vacía: ni se cuenta
+        let n = null, isInc = false;
+        if (sniff.signMode === 'twocol') {
+          const inc = this._tabNum(r[m.inc]) || 0, exp = this._tabNum(r[m.exp]) || 0;
+          if (inc > 0) { n = inc; isInc = true; } else if (exp > 0) { n = exp; isInc = false; } else n = null;
+        } else {
+          n = this._tabNum(r[m.amount]);
+          isInc = sniff.signMode === 'sign' ? n > 0
+                : sniff.signMode === 'type' ? this._tabIsIncomeWord(r[m.type])
+                : sniff.signMode === 'allinc';
+        }
+        // Monto 0 o vacío → fuera. Aquí morían los "fantasmas": la IA leía el 6 de "6 taxis".
+        if (n === null) { discards.push({ row: i + 1, why: 'sin monto', sample: this._tabRowText(r) }); continue; }
+        if (n === 0)    { discards.push({ row: i + 1, why: 'monto 0',   sample: this._tabRowText(r) }); continue; }
+        const date = this._tabDate(r[m.date], order);
+        if (!date)      { discards.push({ row: i + 1, why: 'fecha ilegible', sample: this._tabRowText(r) }); continue; }
+        rows.push({
+          date, amount: Math.abs(n), is_income: !!isInc,
+          description: m.desc >= 0 ? String(r[m.desc] == null ? '' : r[m.desc]).trim().slice(0, 200) : '',
+          category_raw: m.cat >= 0 ? String(r[m.cat] == null ? '' : r[m.cat]).trim() : '',
+          _row: i + 1,
+        });
+      }
+      return { rows, discards };
+    },
+
+    // Hermano de _finalizeImportItems SIN sus mutaciones: aquel reencuadra años y pisa
+    // is_income (correcto para OCR/foto, que sí alucina fechas), pero corrompería una
+    // hoja histórica. Aquí la celda manda.
+    _finalizeTabularItems(rows) {
+      const cats = [...this.categories, ...this.incomeCategories];
+      const all = rows.map(r => {
+        const c = cats.find(x => x.key === r.category);
+        return {
+          description: r.description, amount: r.amount, category: r.category || 'other',
+          is_income: !!r.is_income, date: r.date,
+          label: c?.label || r.category, emoji: c?.emoji || (r.is_income ? '💰' : '📦'),
+          color: c?.color || '#888',
+        };
+      });
+      const fee = this.BANK_FEE_PATTERNS;
+      this.hiddenBankFees = all.filter(i => !i.is_income && fee.test(i.description));
+      this.parsedItems = all.filter(i => !this.hiddenBankFees.includes(i));
+      this.showHiddenFees = false;
+      this.showAllImported = false;
+      this.form.amount = this.parsedItems.reduce((s, p) => s + p.amount, 0).toFixed(2);
+      if (this.parsedItems.length) { this.form.is_income = false; this.form.category = this.parsedItems[0].category; }
+      return this.parsedItems;
+    },
+
+    // Texto libre del archivo ("Alimentacion") → key interna ('food'). Sin IA.
+    _tabMapCategory(raw, isIncome) {
+      const k = _catNorm(raw);
+      if (!k) return '';
+      let key = CAT_IMPORT_NORM[k] || '';
+      if (!key) {
+        const own = [...this.categories, ...this.incomeCategories].find(c => _catNorm(c.label) === k || c.key === raw);
+        if (own) key = own.key;
+      }
+      if (!key || !CAT_MAP[key]) return '';
+      // No poner 'salary' en un gasto: si la dirección no cuadra, se ignora.
+      if (this._isIncomeCat(key) !== !!isIncome) return '';
+      return key;
+    },
+
+    // Cascada local, síncrona. La IA NO participa: aquí no se toca ningún número.
+    tabCategorize(rows) {
+      rows.forEach(r => {
+        const learned = this._learnedCategory(r.description, !!r.is_income);   // lo que el usuario ya corrigió manda
+        if (learned) { r.category = learned; return; }
+        const fromFile = this._tabMapCategory(r.category_raw, r.is_income);
+        if (fromFile) { r.category = fromFile; return; }
+        if (!r.is_income) {
+          const hit = this.MERCHANT_RULES.find(x => x.re.test((r.description || '').toUpperCase()));
+          if (hit) { r.category = hit.cat; return; }                            // ojo: sin el is_income=false del original
+        }
+        r.category = r.is_income ? 'other_income' : 'other';
+      });
+      return rows;
+    },
+
+    // Pase IA OPCIONAL: solo las que quedaron sin categoría. Manda descripciones y
+    // recibe keys de un enum validado en el servidor — jamás un número.
+    async _tabAiCategorize() {
+      const run = this._tabRunId;
+      const other = ['other', 'other_income'];
+      const pend = this.parsedItems.filter(it => other.includes(it.category) && !it._catManual);
+      if (!pend.length) return;
+      // Dedup por token: "6 taxis" y "8 taxis" → "taxis" = UNA llamada, no dos.
+      const groups = new Map();
+      pend.forEach(it => {
+        const tok = this._normToken(it.description);
+        if (!tok || tok.length < 3) return;
+        const k = tok + '|' + (it.is_income ? 'i' : 'e');
+        if (!groups.has(k)) groups.set(k, { description: it.description, amount: it.amount, is_income: !!it.is_income, items: [] });
+        groups.get(k).items.push(it);
+      });
+      const uniq = [...groups.values()].slice(0, 60);   // tope: un archivo enorme no dispara 50 llamadas
+      if (!uniq.length) return;
+      let token = null;
+      try { token = (await withTimeout(sb.auth.getSession(), 5000, 'tab-session'))?.data?.session?.access_token; } catch {}
+      if (!token || run !== this._tabRunId) return;
+      const sleep = ms => new Promise(r => setTimeout(r, ms));
+      const batches = chunk(uniq, 10);                  // tope duro del edge function
+      for (let b = 0; b < batches.length; b++) {
+        if (run !== this._tabRunId) return;             // el usuario cerró/guardó/subió otro: no mutar nada
+        const batch = batches[b];
+        let cats = null;
+        for (let attempt = 0; attempt < 2 && !cats; attempt++) {
+          try {
+            const resp = await fetch(SUPABASE_URL + '/functions/v1/categorize-ai', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + token },
+              body: JSON.stringify({ items: batch.map(g => ({ description: g.description, amount: g.amount, is_income: g.is_income })) }),
+              signal: AbortSignal.timeout(8000),
+            });
+            if (resp.ok) { const d = await resp.json(); if (Array.isArray(d.categories)) cats = d.categories; }
+            else if (attempt === 0) await sleep(1500);  // Vertex tira 429 con concurrencia
+          } catch { if (attempt === 0) await sleep(1500); }
+        }
+        if (run !== this._tabRunId) return;
+        if (cats) {
+          cats.forEach((cat, i) => {
+            const g = batch[i];
+            if (!g || !cat || !CAT_MAP[cat]) return;
+            if (this._isIncomeCat(cat) !== g.is_income) return;   // la IA no cambia la dirección
+            g.items.forEach(it => {
+              if (it._catManual || !other.includes(it.category)) return;
+              it.category = cat; it.emoji = CAT_MAP[cat].emoji; it.label = CAT_MAP[cat].label; it.color = CAT_MAP[cat].color;
+            });
+          });
+          this.dataVer++;
+        }
+        if (b < batches.length - 1) await sleep(250);
       }
     },
 
@@ -13920,11 +14501,7 @@ function zepoApp() {
       this.importOpen = true;
       this.importStep = 1;
       this.importApp = null;
-      this.importRows = [];
       this.importProgress = 0;
-      this.importErrors = 0;
-      this.importNewCats = [];
-      this.catResolutions = {};
       this.importShowInstructions = false;
     },
 
@@ -13934,32 +14511,24 @@ function zepoApp() {
       this.importShowInstructions = false;
     },
 
+    // Ajustes → Importar entrega el archivo al MISMO motor tabular del clip.
+    // Antes tenía su propio parser (_normalizeRows + runImport) que exigía fila de
+    // cabecera, sólo conocía 8 apps, y declaraba éxito sin comprobar si el INSERT falló.
     async handleImportFile(e) {
-      const file = e.target.files?.[0];
+      const file = e.target?.files?.[0];
       if (!file) return;
-      this.saving = true;
-      try {
-        const ext = file.name.split('.').pop().toLowerCase();
-        let csvText;
-        if (ext === 'xlsx' || ext === 'xls') {
-          await this._loadSheetJS();
-          const buf = await file.arrayBuffer();
-          const wb = XLSX.read(buf, { type: 'array' });
-          const ws = wb.Sheets[wb.SheetNames[0]];
-          csvText = XLSX.utils.sheet_to_csv(ws);
-        } else {
-          csvText = await file.text();
-        }
-        const parsed = Papa.parse(csvText.trim(), { header: true, skipEmptyLines: true });
-        if (!parsed.data?.length) { this.showToast('Archivo vacío o sin formato reconocido'); this.saving = false; return; }
-        this.importRows = this._normalizeRows(parsed.data);
-        this.importErrors = parsed.data.length - this.importRows.length;
-        this._detectNewCategories();
-        this.importStep = 3;
-      } catch(err) {
-        this.showToast('Error al leer el archivo: ' + err.message);
-      }
-      this.saving = false;
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
+      if (!['xlsx', 'xls', 'csv'].includes(ext)) { this.showToast('Sube un Excel (.xlsx) o un CSV'); return; }
+      this.importOpen = false;
+      this.openNew();
+      const sizeKb = Math.round(file.size / 1024);
+      this.importedFile = {
+        name: file.name,
+        ext: (ext || 'file').toUpperCase().slice(0, 4),
+        meta: sizeKb >= 1024 ? (sizeKb / 1024).toFixed(1) + ' MB' : sizeKb + ' KB',
+        raw: file,
+      };
+      await this.processTabularFile(file, ext);
     },
 
     _loadSheetJS() {
@@ -13974,42 +14543,6 @@ function zepoApp() {
       return this._xlsxPromise;
     },
 
-    _normalizeRows(data) {
-      const p = APP_PARSERS[this.importApp];
-      const rows = [];
-      for (const row of data) {
-        try {
-          // Fecha
-          const rawDate = row[p?.dateF] || row['date'] || row['Date'] || row['fecha'] || row['DATE'] || '';
-          const date = this._parseImportDate(rawDate);
-          if (!date) continue;
-
-          // Monto e is_income
-          let amount = 0, is_income = false;
-          if (p?.incF && p?.expF) {
-            const inc = parseFloat((row[p.incF] || '0').toString().replace(/[^0-9.-]/g,'')) || 0;
-            const exp = parseFloat((row[p.expF] || '0').toString().replace(/[^0-9.-]/g,'')) || 0;
-            if (inc > 0) { amount = inc; is_income = true; }
-            else { amount = exp; is_income = false; }
-          } else {
-            const rawAmt = row[p?.amtF] || row['amount'] || row['Amount'] || row['monto'] || row['VALUE'] || '0';
-            amount = Math.abs(parseFloat(rawAmt.toString().replace(/[^0-9.-]/g,'')) || 0);
-            const typeVal = (row[p?.typeF] || '').toLowerCase();
-            is_income = typeVal === 'income' || typeVal === 'inflow' || typeVal === 'credit' || typeVal === 'ingreso';
-            // Toshl: amount negative = expense
-            if (!p?.typeF && parseFloat(rawAmt) < 0) is_income = false;
-          }
-          if (!amount) continue;
-
-          const category_raw = (row[p?.catF] || row['category'] || row['Category'] || row['categoría'] || '').trim();
-          const description = (row[p?.descF] || row['description'] || row['note'] || row['Note'] || '').trim().slice(0, 200);
-          const account = (row[p?.accountF] || row['account'] || row['Account'] || '').trim();
-
-          rows.push({ date, amount, is_income, category_raw, description, account });
-        } catch { /* skip malformed row */ }
-      }
-      return rows;
-    },
 
     _parseImportDate(raw) {
       if (!raw) return null;
@@ -14036,79 +14569,8 @@ function zepoApp() {
       return null;
     },
 
-    _detectNewCategories() {
-      const seen = new Set();
-      this.importNewCats = [];
-      for (const row of this.importRows) {
-        const raw = row.category_raw;
-        if (!raw || seen.has(raw)) continue;
-        seen.add(raw);
-        const key = raw.toLowerCase().trim();
-        const mapped = CAT_IMPORT_MAP[key];
-        const isBuiltin = Object.values(CAT_MAP).some(c => c.label.toLowerCase() === key || c.key === key);
-        if (!mapped && !isBuiltin) {
-          this.importNewCats.push({ raw, zKey: 'other', createNew: false });
-        }
-      }
-    },
 
-    importMapCategory(raw, is_income) {
-      const key = (raw || '').toLowerCase().trim();
-      if (this.catResolutions[raw] !== undefined) return this.catResolutions[raw];
-      if (CAT_IMPORT_MAP[key]) return CAT_IMPORT_MAP[key];
-      // Check custom categories by label
-      const allCats = [...this.categories, ...this.incomeCategories];
-      const byLabel = allCats.find(c => c.label.toLowerCase() === key);
-      if (byLabel) return byLabel.key;
-      return is_income ? 'other_income' : 'other';
-    },
 
-    async runImport() {
-      if (!this.importRows.length) return;
-      this.saving = true;
-      this.importProgress = 0;
-      try {
-        // Crear categorías nuevas que el usuario eligió
-        for (const cat of this.importNewCats.filter(c => c.createNew)) {
-          const emoji = this.emojiForLabel(cat.raw) || '✨';
-          const key = 'custom_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
-          const palette = ['#C2553F','#4F8A99','#5E9469','#8A6E9C','#C9972F','#A98BB0','#B0875B'];
-          const color = palette[Math.floor(Math.random() * palette.length)];
-          const newCat = { key, emoji, label: cat.raw, color };
-          this.categories.push(newCat);
-          CAT_MAP[key] = newCat;
-          this._customCatUpsert(newCat, false);
-          // Map this raw name → new key for this import session
-          this.catResolutions[cat.raw] = key;
-        }
-        this.saveCustomCategories();
-
-        // Construir payload
-        const rows = this.importRows.map(r => ({
-          user_id: this.user.id,
-          amount: r.amount,
-          category: this.importMapCategory(r.category_raw, r.is_income),
-          description: r.description || '',
-          date: r.date,
-          is_income: r.is_income,
-          is_split: false,
-          space_id: this._currentSpaceId(),
-        })).filter(r => r.amount > 0 && r.date);
-
-        // Insertar en lotes de 50
-        const batches = chunk(rows, 50);
-        for (let i = 0; i < batches.length; i++) {
-          await sb.from('expenses').insert(batches[i]);
-          this.importProgress = Math.round((i + 1) / batches.length * 100);
-        }
-
-        this.importStep = 4;
-        await this.loadExpenses();
-      } catch(err) {
-        this.showToast('Error al importar: ' + err.message);
-      }
-      this.saving = false;
-    },
 
     // ═════════════════════════════════════════════════════════════════════════
 
@@ -16099,7 +16561,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v156.js';
+  const CURRENT_SW = 'sw-v157.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {

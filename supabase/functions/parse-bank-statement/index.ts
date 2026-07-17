@@ -31,10 +31,14 @@ REGLAS:
 5. Descripcion: texto descriptivo de la transaccion tal como aparece, limpio (sin numeros de referencia internos si son irrelevantes).
 6. Si hay un saldo, NO lo incluyas como transaccion.
 7. Si hay totales/resumen al final, NO los incluyas.
-8. Si una linea NO es claramente una transaccion (es un encabezado, pie de pagina, informacion de cuenta), IGNORALA.
+8. Si una linea NO es claramente una transaccion (es un encabezado, pie de pagina, informacion de cuenta), IGNORALA. Una linea que solo tiene numeros de referencia/ID y una palabra suelta (ej. "12134230 129 Egreso") NO es una transaccion: no tiene descripcion real. IGNORALA.
 9. FORMATO COLUMNAS (bancos ecuatorianos como Pichincha): FECHA | OFICINA | DESCRIPCION | N.DOC | DEBITO | CREDITO | SALDO. La columna SALDO es el balance acumulado, NO es un monto de transaccion — nunca lo incluyas.
 10. NO confundas la columna SALDO con CREDITO. Si ves un numero despues de un debito, probablemente es el saldo restante, no un credito.
 11. Impuestos (ISD, IVASD), retenciones (RETENCION IVASD, RET FTE), comisiones (COMISION), IVA COBRADO, y registros en cuenta (REG EN CTA) son SIEMPRE debitos, nunca creditos.
+12. El monto SOLO sale de la columna de monto. NUNCA uses como monto un numero que forme parte del texto de la descripcion.
+13. Si el monto de una transaccion es 0 o esta vacio, OMITE la fila entera. Es preferible omitir una fila dudosa que inventarle un monto.
+14. Cada transaccion se devuelve UNA sola vez. No repitas una que ya extrajiste.
+15. "###" o "#####" en lugar de un valor significa que el dato NO existe (columna angosta al imprimir): no lo adivines.
 
 CATEGORIAS para gastos (debit): food, transport, market, health, rent, fun, shop, coffee, pets, savings, invest_out, gym, education, travel, other
 CATEGORIAS para ingresos (credit): salary, freelance, business, investment, gift, refund, rental, sale, other_income

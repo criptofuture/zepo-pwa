@@ -40,6 +40,7 @@ CHECKS = [
     ("Parpadeo Cuentas (keys duplicadas)", ["python", os.path.join(TOOLS, "qa-cuentas-flicker.py")]),
     ("E2E multi-item / batch",         ["python", os.path.join(TOOLS, "qa-e2e-batch.py")]),
     ("E2E importar + quitar + dividir (suma restante)", ["python", os.path.join(TOOLS, "qa-e2e-import-split.py")]),
+    ("E2E import tabular determinista (Excel/CSV sin IA)", ["python", os.path.join(TOOLS, "qa-e2e-import-tabular.py")]),
     ("E2E presupuestos",               ["python", os.path.join(TOOLS, "qa-e2e-budgets.py")]),
     ("E2E herencia de presupuestos mes a mes", ["python", os.path.join(TOOLS, "qa-e2e-budget-carry.py")]),
     ("Smoke todas las pantallas (sin errores)", ["python", os.path.join(TOOLS, "qa-smoke-screens.py")]),
