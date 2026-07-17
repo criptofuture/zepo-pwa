@@ -23,6 +23,60 @@ Arreglar ya: **D1, D2, D3, D5, D6 y D15** (baratos y duelen). Elegir umbral en D
 
 ---
 
+## ✅ ESTADO 17-jul: Alvaro aprobó D1, D2, D3, D5, D6 y D15 — los 6 ARREGLADOS (v182, en dev)
+
+Cada uno entró al gate con su prueba en vivo y su **control negativo** (demostrar que el test falla si se
+invierte el predicado). Gate: `qa-e2e-invariantes-dash.py` (37/37), `qa-e2e-invariantes-presup.py` (50/50),
+`qa-e2e-invariantes-limites.py` (14/14, nuevo).
+
+| # | Qué se hizo | Prueba que lo certifica |
+|---|-------------|-------------------------|
+| **D1** | `pendingRecurringThisMonth` aplica `split_pct` igual que el cron. Borde cubierto: `split_pct=0` aporta $0 (no cae en el `\|\| 100`). | limites check5-9: delta $400 (no $700); con pct=0 → $0.00 |
+| **D2** | **El arreglo del informe era INCORRECTO** (ver abajo). Se paginó con `.range()` vía `_fetchAllRows`. | limites check1-3: 1200 filas sembradas → CSV trae 1200 (no 1000) |
+| **D3** | `catDrillPct` divide por el total del periodo+modo activos; el texto ya no dice fijo "del gasto del mes". | dash INV8: 100% donde el bug daba 136% |
+| **D5** | Modo balance netea en desglose, barras y los 2 heatmaps. Signo por color; % sobre movimiento bruto (el neto puede rondar $0 y los % explotarían). | dash INV7-bonus + INV12a-d |
+| **D6** | Una sola definición de semana: 7 días contando hoy, cerrada en hoy. | dash INV5a/c/e + CN3 (la ventana vieja habría dado $73.68 vs $40.35) |
+| **D15** | `pendingLocal` exige la misma condición que la query: mismo espacio (`_rowInActiveSpace`) y misma ventana de fechas. | presup B5/B6: espacio B mide $70 (era $100); Σ(espacios)==vista todos |
+
+### ⚠️ D2: el arreglo que este informe proponía NO servía
+
+Este informe decía *"añadir `.limit(100000)`"* y citaba `loadLifetimeSavings` como precedente que ya lo tenía
+resuelto. **Las dos cosas eran falsas.** Verificado empíricamente (1200 filas sembradas en `free@zepo.test`):
+
+| Consulta | Filas devueltas |
+|---|---|
+| `GET expenses` sin limit | **1000** (`Content-Range: 0-999/*`) |
+| `GET expenses&limit=100000` | **1000** (idéntico) |
+
+El tope de 1000 es `db-max-rows`, del **servidor**: `.limit()` solo puede BAJARLO, nunca subirlo. Por lo tanto
+el `.limit(100000)` que `loadLifetimeSavings` llevaba puesto —con el comentario "límite alto para no truncar
+(default PostgREST=1000)"— **era un placebo**: el ahorro acumulado de un usuario con +1000 registros salía
+cortado igual. Se arregló también (no estaba en el alcance aprobado, pero es exactamente el mismo bug y su
+"arreglo" ya se daba por hecho en el código).
+
+Fix real: paginar con `.range()` hasta que una página vuelva con <1000, con orden TOTAL (desempate por `id`)
+o las páginas se solapan. Con <1000 filas hace UNA petición → sin coste en el caso normal.
+Sitios paginados: `exportCSV`, `exportExcel`, `exportPDF`, `loadSplits` (pendientes) y `loadLifetimeSavings`.
+
+**Lección para la próxima campaña:** D2 se marcó "confianza: alta" leyendo solo el código. El código era
+correcto en el diagnóstico (hay truncado) y **erróneo en el remedio**. Un hallazgo sin prueba en vivo puede
+acertar el síntoma y fallar la cura.
+
+### Nuevos hallazgos que salieron al arreglar (NO tocados, para tu decisión)
+
+- **D18 · "Este mes" incluye gastos del mes SIGUIENTE.** `monthExpenses`/`monthTotal` filtran `date >= día 1
+  del mes` **sin tope superior**, y `loadExpenses` carga hasta fin del mes que viene. Un gasto con fecha
+  futura (ej. hoy 17-jul, gasto fechado 25-ago) suma en el "gastado" de julio, en `safeToSpend` y en las
+  barras de presupuesto — pero el heatmap del mes lo excluye. Misma familia que D6. No lo toqué: cambia el
+  significado de "este mes" y eso lo decides tú.
+- **D19 · El Historial "todo el tiempo" se corta en 1000** (`.limit(1000)` explícito, deliberado). Con
+  +1000 registros faltan los más viejos sin aviso. Paginarlo tiene coste de rendimiento en móvil → decisión
+  de producto.
+- **D20 · La tarjeta "Transacciones" del dashboard cuenta el MES aunque el periodo sea semana o año**
+  (`dashMonthData.length` con la etiqueta `periodLabel`). Cosmético pero miente.
+
+---
+
 ## YA ARREGLADO Y EN DEV (v180) — no requiere decisión
 
 | # | Bug | Estado |

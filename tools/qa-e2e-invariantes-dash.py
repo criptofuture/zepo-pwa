@@ -215,6 +215,7 @@ def main():
     today = date.today()
     T = today.isoformat()
     T7 = (today - timedelta(days=7)).isoformat()
+    T6 = (today - timedelta(days=6)).isoformat()
     if today.month == 1:
         pm_y, pm_m = today.year - 1, 12
     else:
@@ -229,7 +230,12 @@ def main():
 
     SEED = [
         dict(description=TAG + " gasto10", amount=10.00, category="food", date=T, is_income=False),
+        # Las 2 filas frontera de la "semana" (7 dias contando hoy = hoy-6..hoy):
+        #   t7 (hoy-7) queda FUERA -> ni el titular ni las barras la cuentan.
+        #   t6 (hoy-6) queda DENTRO -> titular y barras la cuentan, las dos.
+        # Con la ventana vieja de 8 dias, t7 contaba arriba y en ninguna barra (bug D6).
         dict(description=TAG + " gasto3333_t7", amount=33.33, category="food", date=T7, is_income=False),
+        dict(description=TAG + " gasto1234_t6", amount=12.34, category="food", date=T6, is_income=False),
         dict(description=TAG + " gasto001", amount=0.01, category="other", date=T, is_income=False),
         dict(description=TAG + " ingreso100", amount=100.00, category="salary", date=T, is_income=True),
         dict(description=TAG + " ingreso050", amount=0.50, category="salary", date=T, is_income=True),
@@ -288,8 +294,9 @@ def main():
     rows = [{"amount": float(r["amount"]), "date": r["date"], "is_income": bool(r["is_income"]),
              "category": r["category"]} for r in inserted]
     cm_start = date(today.year, today.month, 1).isoformat()
-    week_semana_start = (today - timedelta(days=7)).isoformat()   # = periodStart('semana')
-    week_chart_start = (today - timedelta(days=6)).isoformat()    # = weeklyChart winStart
+    # UNA sola definicion de semana: 7 dias contando hoy. periodStart('semana') y el
+    # winStart de weeklyChart deben coincidir; antes eran hoy-7 y hoy-6 (8 vs 7 dias).
+    week_start = (today - timedelta(days=6)).isoformat()
     year_start = date(today.year, 1, 1).isoformat()
     win_start = date(pm_y, pm_m, 1).isoformat()
     nw_y, nw_m = (today.year + 1, 1) if today.month == 12 else (today.year, today.month + 1)
@@ -304,9 +311,13 @@ def main():
     inc_month = round(sum(r["amount"] for r in inc_rows if r["date"] >= cm_start), 2)
     bal_month = round(inc_month - exp_month, 2)
 
-    exp_semana = round(sum(r["amount"] for r in exp_rows if r["date"] >= week_semana_start and in_window(r["date"])), 2)
-    inc_semana = round(sum(r["amount"] for r in inc_rows if r["date"] >= week_semana_start and in_window(r["date"])), 2)
-    exp_weekchart = round(sum(r["amount"] for r in exp_rows if r["date"] >= week_chart_start and in_window(r["date"])), 2)
+    # La semana se cierra en HOY (las barras no pasan de hoy).
+    exp_semana = round(sum(r["amount"] for r in exp_rows if week_start <= r["date"] <= T and in_window(r["date"])), 2)
+    inc_semana = round(sum(r["amount"] for r in inc_rows if week_start <= r["date"] <= T and in_window(r["date"])), 2)
+    bal_semana = round(inc_semana - exp_semana, 2)
+    # Derivado por separado a proposito: si titular y barras volvieran a usar ventanas
+    # distintas, INV5a/INV5b lo cazan cada uno contra la BD, no solo uno contra el otro.
+    exp_weekchart = round(sum(r["amount"] for r in exp_rows if week_start <= r["date"] <= T and in_window(r["date"])), 2)
 
     exp_year_dash = round(sum(r["amount"] for r in exp_rows if r["date"] >= year_start and in_window(r["date"])), 2)
     exp_year_chart = round(sum(r["amount"] for r in exp_rows if r["date"] >= year_start), 2)
@@ -339,8 +350,17 @@ def main():
 
     d_dashPeriodData_mes_bal = d2(m1["dash"]["balance_mes"]["dashPeriodData"], m0["dash"]["balance_mes"]["dashPeriodData"])
 
+    # Modo balance en las GRAFICAS (D5): antes sumaban ingreso+gasto en positivo mientras
+    # el titular restaba. Ahora tienen que netear igual que el titular.
+    d_monthlyChartSum_bal = d2(m1["dash"]["balance_mes"]["monthlyChartSum"], m0["dash"]["balance_mes"]["monthlyChartSum"])
+    d_monthlyDayGridTotal_bal = d2(m1["dash"]["balance_mes"]["monthlyDayGridTotal"], m0["dash"]["balance_mes"]["monthlyDayGridTotal"])
+    d_dashPeriodData_semana_bal = d2(m1["dash"]["balance_semana"]["dashPeriodData"], m0["dash"]["balance_semana"]["dashPeriodData"])
+    d_weeklyChartSum_bal = d2(m1["dash"]["balance_semana"]["weeklyChartSum"], m0["dash"]["balance_semana"]["weeklyChartSum"])
+
     # ---------- checks ----------
     checks = []  # (label, passed_bool, detail_str)
+    known = []   # divergencias YA reportadas a Alvaro y NO aprobadas para arreglo:
+                 # se miden y se reportan, pero no tumban el gate.
 
     def chk(label, observed, expected, tol=TOL, detail=""):
         ok = abs(observed - expected) <= tol
@@ -374,12 +394,15 @@ def main():
     chk("INV4d dashPeriodData(mes,gasto)(delta) == monthTotal(delta) Home", d_dashPeriodData_mes_exp, d_monthTotal)
 
     print("--- INV5: Dashboard semana ---")
-    chk("INV5a dashPeriodData(semana,gasto)(delta) == BD gastos date>=hoy-7", d_dashPeriodData_semana_exp, exp_semana)
-    chk("INV5b suma(weeklyChart)(delta) == BD gastos date>=hoy-6", d_weeklyChartSum, exp_weekchart)
-    checks.append(("INV5c dashPeriodData(semana) == suma(weeklyChart)  [se espera FALLA: ventanas de 8 vs 7 dias]",
+    chk("INV5a dashPeriodData(semana,gasto)(delta) == BD gastos en hoy-6..hoy (NO cuenta la fila de hoy-7)", d_dashPeriodData_semana_exp, exp_semana)
+    chk("INV5b suma(weeklyChart)(delta) == BD gastos en hoy-6..hoy", d_weeklyChartSum, exp_weekchart)
+    checks.append(("INV5c dashPeriodData(semana) == suma(weeklyChart)  [D6: una sola definicion de semana]",
                     abs(d_dashPeriodData_semana_exp - d_weeklyChartSum) <= TOL,
                     f"dashPeriodData(delta)={d_dashPeriodData_semana_exp}  weeklyChart(delta)={d_weeklyChartSum}  "
-                    f"diff={d2(d_dashPeriodData_semana_exp, d_weeklyChartSum)} (== fila del dia frontera 33.33 si el bug existe)"))
+                    f"diff={d2(d_dashPeriodData_semana_exp, d_weeklyChartSum)} (con el bug de 8 vs 7 dias daba 33.33)"))
+    checks.append(("INV5e la fila del dia frontera hoy-6 ($12.34) SI cuenta en la semana (titular y barras)",
+                    abs(d_dashPeriodData_semana_exp - exp_semana) <= TOL and exp_semana >= 12.34,
+                    f"exp_semana(BD)={exp_semana} incluye la fila de hoy-6=12.34; observado={d_dashPeriodData_semana_exp}"))
     testable_5d = today.day > 7
     if testable_5d:
         checks.append((f"INV5d weekTotal(Home) vs weeklyChart en cruce de mes -- NO TESTABLE hoy (dia-mes={today.day} > 7, la ventana de 7 dias no cruza el mes)",
@@ -390,10 +413,10 @@ def main():
     print("--- INV6: Dashboard año ---")
     chk("INV6a dashPeriodData(año,gasto)(delta) == BD gastos en ventana loadExpenses con date>=1-ene", d_dashPeriodData_year_exp, exp_year_dash)
     chk("INV6b suma(yearlyChart)(delta) == BD TODOS los gastos con date>=1-ene (incl. historyData)", d_yearlyChartSum, exp_year_chart)
-    checks.append(("INV6c dashPeriodData(año) == suma(yearlyChart)  [se espera FALLA: dashPeriodData no ve el gasto de hace 5 meses]",
+    known.append(("D4 dashPeriodData(año) == suma(yearlyChart)  [NO aprobado para arreglo: el titular no ve el gasto de hace 5 meses]",
                     abs(d_dashPeriodData_year_exp - d_yearlyChartSum) <= TOL,
                     f"dashPeriodData(delta)={d_dashPeriodData_year_exp}  yearlyChart(delta)={d_yearlyChartSum}  "
-                    f"diff={d2(d_dashPeriodData_year_exp, d_yearlyChartSum)} (== fila de hace 5 meses, 77.00, si el bug existe)"))
+                    f"diff={d2(d_dashPeriodData_year_exp, d_yearlyChartSum)} (== la fila de hace 5 meses, 77.00)"))
 
     print("--- INV7: categoryBreakdown suma == dashPeriodData (mes/semana, gasto/ingreso) ---")
     for period in ("mes", "semana"):
@@ -406,9 +429,10 @@ def main():
     for period in ("mes", "semana"):
         key = f"balance_{period}"
         e = m1["dash"][key]
-        checks.append((f"INV7-bonus {key}: suma(categoryBreakdown) == dashPeriodData  [no pedido explicitamente; se espera FALLA: breakdown suma bruto, dashPeriodData resta neto]",
+        checks.append((f"INV7-bonus {key}: suma(categoryBreakdown) == dashPeriodData  [D5: el desglose netea igual que el titular]",
                         abs(e["breakdownSum"] - e["dashPeriodData"]) <= TOL,
-                        f"breakdownSum={e['breakdownSum']}  dashPeriodData={e['dashPeriodData']}"))
+                        f"breakdownSum={e['breakdownSum']}  dashPeriodData={e['dashPeriodData']}  "
+                        f"(con el bug el desglose sumaba bruto: $161.84 vs titular $39.16)"))
 
     print("--- INV8: catDrillPct (periodo=semana, modo=ingresos, categoria=salary) ---")
     cd = m1["catDrill"]
@@ -416,7 +440,7 @@ def main():
     month_total_m1 = m1["home"]["monthTotal"]
     correct_pct = round(cd["total"] / period_income_semana * 100) if period_income_semana else 0
     buggy_pct_via_monthTotal = round(cd["total"] / month_total_m1 * 100) if month_total_m1 else 0
-    checks.append(("INV8 catDrillPct usa el denominador correcto del periodo/modo (periodIncome semana), NO monthTotal  [se espera FALLA]",
+    checks.append(("INV8 catDrillPct usa el denominador correcto del periodo/modo (periodIncome semana), NO monthTotal  [D3]",
                     cd["pct"] == correct_pct,
                     f"catDrillTotal={cd['total']}  catDrillPct(observado)={cd['pct']}  "
                     f"pct-correcto(/periodIncome semana={period_income_semana})={correct_pct}  "
@@ -429,6 +453,18 @@ def main():
     checks.append(("INV9-control dashPeriodData(mes,balance) NO es la suma bruta (gasto+ingreso)",
                     abs(d_dashPeriodData_mes_bal - gross_mes) > TOL,
                     f"observado(delta)={d_dashPeriodData_mes_bal}  bruto-hubiera-sido={gross_mes}"))
+
+    print("--- INV12: modo balance en las GRAFICAS netea (D5) ---")
+    chk("INV12a suma(monthlyChart)(balance,mes)(delta) == monthBalance(delta)", d_monthlyChartSum_bal, d_monthBalance)
+    chk("INV12b monthlyDayGrid.total(balance,mes)(delta) == monthBalance(delta)", d_monthlyDayGridTotal_bal, d_monthBalance)
+    chk("INV12c suma(weeklyChart)(balance,semana)(delta) == dashPeriodData(balance,semana)(delta)",
+        d_weeklyChartSum_bal, d_dashPeriodData_semana_bal)
+    chk("INV12d dashPeriodData(balance,semana)(delta) == BD (ingreso-gasto) de hoy-6..hoy",
+        d_dashPeriodData_semana_bal, bal_semana)
+    gross_bal_mes = round(exp_month + inc_month, 2)
+    checks.append(("INV12-control suma(monthlyChart)(balance,mes) NO es la suma bruta (gasto+ingreso)",
+                    abs(d_monthlyChartSum_bal - gross_bal_mes) > TOL,
+                    f"observado(delta)={d_monthlyChartSum_bal}  bruto-hubiera-sido={gross_bal_mes}"))
 
     print("--- INV10: gasto dividido cuenta 18, no 90 ---")
     chk("INV10a monthTotal(delta) incluye SOLO mi parte del split (18, no 90)", d_monthTotal, exp_month)
@@ -465,6 +501,13 @@ def main():
                     f"rent(delta) observado={d_rent_mes}  90.00-invertido={90.00}  "
                     f"({'el control detecto correctamente el predicado invertido como falso' if cn2_correctly_fails else 'BUG EN EL PROPIO TEST: el control no discrimina'})"))
 
+    buggy_semana = round(exp_semana + 33.33, 2)
+    cn3_correctly_fails = abs(d_dashPeriodData_semana_exp - buggy_semana) > TOL
+    checks.append(("CN3 [control negativo] dashPeriodData(semana,gasto) == ventana VIEJA de 8 dias (incluye la fila de hoy-7) -- debe DAR FALSO",
+                    cn3_correctly_fails,
+                    f"observado(delta)={d_dashPeriodData_semana_exp}  con-ventana-de-8-dias-hubiera-sido={buggy_semana}  "
+                    f"({'el control detecto correctamente la ventana vieja como falsa' if cn3_correctly_fails else 'BUG: la semana sigue contando 8 dias'})"))
+
     print("--- Cleanup ---")
     restored_row = d2(m2["home"]["monthTotal"], m0["home"]["monthTotal"]) if m2 else None
     checks.append(("cleanup: monthTotal(m2) vuelve al valor inicial (m0)",
@@ -486,6 +529,10 @@ def main():
         print("\n=== NO TESTABLES HOY ===")
         for label, det in untestable:
             print(f"  [NO TESTABLE] {label}\n        {det}")
+    if known:
+        print("\n=== DIVERGENCIAS CONOCIDAS (reportadas, NO aprobadas para arreglo -> no tumban el gate) ===")
+        for label, ok, det in known:
+            print(f"  [{'ya no diverge' if ok else 'DIVERGE (esperado)'}] {label}\n        {det}")
 
     ok_all = all(ok for _, ok, _ in testable)
     print("\n" + ("OK GLOBAL (dado lo reportado arriba)" if ok_all else "HAY FALLAS -- ver detalle arriba"))

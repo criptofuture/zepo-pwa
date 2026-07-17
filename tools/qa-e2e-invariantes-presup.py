@@ -514,13 +514,16 @@ def run(url):
             add("B5: Sigma(monthTotal de TODOS los espacios) == monthTotal en vista 'todos'",
                 abs(per_space_sum - view_all["monthTotal"]) < 0.01,
                 f"Sigma={per_space_sum:.2f} viewAll={view_all['monthTotal']:.2f}")
-            # CONTROL NEGATIVO: Sigma(solo A+B) vs viewAll -- solo coincide si NO hay mas espacios/gastos
+            # CONTROL NEGATIVO: Sigma(solo A+B) coincide con viewAll si y solo si los DEMAS
+            # espacios no aportan nada este mes. Contar espacios NO sirve como premisa: un
+            # tercer espacio vacio ($0) deja A+B == viewAll y el control se auto-fallaba.
             sum_ab_only = homeA["monthTotal"] + homeB["monthTotal"]
             only_ab_matches = abs(sum_ab_only - view_all["monthTotal"]) < 0.01
-            add("[CONTROL NEGATIVO] B5: Sigma(solo A+B) == viewAll SOLO si no hay otros espacios/gastos este mes",
-                only_ab_matches == (len(spaces_now) <= 2 and view_all["expenseCount"] >= 0),
-                f"sum_ab={sum_ab_only:.2f} viewAll={view_all['monthTotal']:.2f} nSpaces={len(spaces_now)} "
-                "(este check documenta el escenario, no es un pase/falla de bug — ver detalle en el reporte)")
+            others_sum = per_space_sum - sum_ab_only
+            add("[CONTROL NEGATIVO] B5: Sigma(solo A+B) == viewAll si y solo si los demas espacios aportan $0 este mes",
+                only_ab_matches == (abs(others_sum) < 0.01),
+                f"sum_ab={sum_ab_only:.2f} viewAll={view_all['monthTotal']:.2f} "
+                f"otros_espacios={others_sum:.2f} nSpaces={len(spaces_now)}")
 
             # --- B6: gasto con space_id NULL -> catch-all del espacio DEFAULT ---
             null_exp = page.evaluate(INSERT_EXPENSE_JS, {
@@ -544,22 +547,16 @@ def run(url):
             add("B6: gasto space_id=NULL SI aparece en vista 'todos'", r_all is True, f"observado={r_all}")
 
             findings.append(
-                "B5/B6 — BUG REAL confirmado (no es artefacto de este QA): loadExpenses() "
-                "(index.html ~10219-10254) mezcla gastos de OTRO espacio al cambiar de espacio "
-                "activo dentro de los primeros 120s de creado un gasto. Causa: el bloque "
-                "'pendingLocal' (~10243-10250), pensado para no perder un insert propio por lag "
-                "de replica, preserva cualquier fila de `this.expenses` que sea reciente (<120s) "
-                "y no venga en la respuesta fresca de la query -- SIN verificar que esa fila siga "
-                "perteneciendo al espacio activo. Repro limpio (sin deletes de por medio): crear "
-                "gasto A=$30 en espacio A, luego gasto B=$70 en espacio B, seleccionar espacio A "
-                "(monthTotal=30, correcto) y LUEGO seleccionar espacio B -> monthTotal debería ser "
-                "70 pero midió 100 (arrastra el $30 de A). Mismo patron con un gasto de space_id=NULL: "
-                "tras verlo en el espacio DEFAULT, cambiar a un espacio NO-default y seguir "
-                "'viendolo' (r_nondef=True cuando debería ser False). Afecta Home (monthTotal), "
-                "budgetBars y cualquier getter derivado de `this.expenses`; el Historial NO se ve "
-                "afectado (usa `historyData`, una query/cache separada sin este merge). Fix sugerido: "
-                "en el filtro de `pendingLocal`, exigir tambien que "
-                "`e.space_id === this.activeSpaceId || (this._isDefaultSpaceActive() && e.space_id == null) || this.spaceViewAll`.")
+                "B5/B6 (D15) — ARREGLADO y verificado aqui en vivo. Era: loadExpenses() mezclaba "
+                "gastos de OTRO espacio durante los 120s siguientes a crear un gasto. El bloque "
+                "'pendingLocal' (para no perder un insert propio por lag de replica) conservaba "
+                "toda fila reciente que la query fresca no devolviera -- sin comprobar que siguiera "
+                "perteneciendo al espacio activo, cuando la query la excluia precisamente por eso. "
+                "Medido entonces: gasto A=$30 en espacio A + gasto B=$70 en espacio B -> al "
+                "seleccionar B el Home decia $100. Ahora pendingLocal exige la MISMA condicion que "
+                "la query (mismo espacio via _rowInActiveSpace + misma ventana de fechas). Los "
+                "checks B5/B6 de arriba son la certificacion: B mide $70, Sigma(espacios)==viewAll, "
+                "y el gasto con space_id=NULL ya no aparece en un espacio no-default.")
 
             # --- B7: exportCSV NO filtra por espacio (Historial SI) — confirmar el hallazgo ya conocido ---
             page.evaluate(SELECT_SPACE_JS, [space_a]); page.wait_for_timeout(400)

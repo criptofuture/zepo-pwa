@@ -62,6 +62,11 @@ CHECKS = [
     ("E2E gesto atras = un nivel (init unico, modales, tabs)", ["python", os.path.join(TOOLS, "qa-e2e-back-nav.py")]),
     ("E2E Zepi companion (chat, scan, candado Max)", ["python", os.path.join(TOOLS, "qa-e2e-zepi.py")]),
     ("E2E Journey 30 dias + trials (misiones, reclamo, anti-trampa)", ["python", os.path.join(TOOLS, "qa-e2e-journey.py")]),
+    # Invariantes de dinero entre pantallas (campana de calculos, jul-2026). Cada uno deriva
+    # la aritmetica por su cuenta desde la BD y lleva controles negativos.
+    ("E2E invariantes Dashboard/Home/Historial (semana, balance, drill-down)", ["python", os.path.join(TOOLS, "qa-e2e-invariantes-dash.py")]),
+    ("E2E invariantes presupuestos/espacios/patrimonio", ["python", os.path.join(TOOLS, "qa-e2e-invariantes-presup.py")]),
+    ("E2E limites (tope 1000 filas paginado + recurrente dividido)", ["python", os.path.join(TOOLS, "qa-e2e-invariantes-limites.py")]),
 ]
 
 def main():

@@ -5321,7 +5321,7 @@ setTimeout(function() {
             <template x-for="(b, bi) in periodChart" :key="bi + '-' + b.label">
               <div class="bar-col">
                 <div class="bar-track">
-                  <div class="bar-fill" :style="'height:' + b.pct + '%;background:' + (b.isToday ? 'var(--gradient)' : 'var(--border2)') + (b.isToday ? ';box-shadow:0 0 12px rgba(var(--c-brand-rgb),0.3)' : '')"></div>
+                  <div class="bar-fill" :style="'height:' + b.pct + '%;background:' + (b.neg ? 'rgba(var(--c-expense-rgb),0.55)' : b.isToday ? 'var(--gradient)' : 'var(--border2)') + (b.isToday ? ';box-shadow:0 0 12px rgba(var(--c-brand-rgb),0.3)' : '')"></div>
                 </div>
                 <div class="bar-label" :style="b.isToday ? 'color:var(--cyan);font-weight:700' : ''" x-text="b.label"></div>
               </div>
@@ -5337,9 +5337,9 @@ setTimeout(function() {
               <div :style="c.type === 'header' ? 'font-size:10px;text-align:center;color:var(--dim);font-weight:700;letter-spacing:0.3px;padding:2px 0;' :
                 c.type === 'rowLabel' ? 'font-size:9px;color:var(--dim);font-weight:600;display:flex;align-items:center;justify-content:center;' :
                 'aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;font-variant-numeric:tabular-nums;' +
-                'background:' + (c.isCurrent ? 'var(--gradient)' : c.isFuture ? 'rgba(var(--c-ink-rgb),0.02)' : (c.total > 0 ? 'rgba(var(--c-brand-rgb),' + (0.08 + c.intensity * 0.42) + ')' : 'var(--surface)')) + ';' +
+                'background:' + (c.isCurrent ? 'var(--gradient)' : c.isFuture ? 'rgba(var(--c-ink-rgb),0.02)' : (c.total > 0 ? 'rgba(var(--c-brand-rgb),' + (0.08 + c.intensity * 0.42) + ')' : c.total < 0 ? 'rgba(var(--c-expense-rgb),' + (0.08 + c.intensity * 0.42) + ')' : 'var(--surface)')) + ';' +
                 'border:1px solid ' + (c.isCurrent ? 'var(--cyan)' : 'var(--border)') + ';' +
-                'color:' + (c.isCurrent ? 'var(--c-brand-contrast)' : 'var(--cyan)') + ';' +
+                'color:' + (c.isCurrent ? 'var(--c-brand-contrast)' : c.total < 0 ? 'var(--danger)' : 'var(--cyan)') + ';' +
                 'opacity:' + (c.isFuture ? '0.4' : '1') + ';'"
                 x-text="c.text || ''"></div>
             </template>
@@ -5366,7 +5366,7 @@ setTimeout(function() {
                       ? 'var(--gradient)'
                       : c.isFuture
                         ? 'rgba(var(--c-ink-rgb),0.02)'
-                        : (c.total > 0 ? 'rgba(var(--c-brand-rgb),' + (0.08 + c.intensity * 0.42) + ')' : 'var(--surface)'),
+                        : (c.total > 0 ? 'rgba(var(--c-brand-rgb),' + (0.08 + c.intensity * 0.42) + ')' : c.total < 0 ? 'rgba(var(--c-expense-rgb),' + (0.08 + c.intensity * 0.42) + ')' : 'var(--surface)'),
                   border: c.day === null ? 'none' : (c.isToday ? '1px solid var(--cyan)' : '1px solid var(--border)'),
                   display: 'flex',
                   flexDirection: 'column',
@@ -5376,7 +5376,7 @@ setTimeout(function() {
                   opacity: c.isFuture ? 0.4 : 1
                 }">
                   <span x-show="c.day !== null" :style="{ fontSize: '11px', fontWeight: c.isToday ? 800 : 600, color: c.isToday ? 'var(--c-brand-contrast)' : 'var(--text)' }" x-text="c.day"></span>
-                  <span x-show="c.day !== null && c.total > 0" :style="{ fontSize: '9px', fontWeight: 700, color: c.isToday ? 'var(--c-brand-contrast)' : 'var(--cyan)', marginTop: '1px', fontVariantNumeric: 'tabular-nums' }" x-text="'$' + Math.round(c.total)"></span>
+                  <span x-show="c.day !== null && c.total !== 0" :style="{ fontSize: '9px', fontWeight: 700, color: c.isToday ? 'var(--c-brand-contrast)' : c.total < 0 ? 'var(--danger)' : 'var(--cyan)', marginTop: '1px', fontVariantNumeric: 'tabular-nums' }" x-text="(c.total < 0 ? '-$' : '$') + Math.abs(Math.round(c.total))"></span>
                 </div>
               </template>
             </template>
@@ -5403,7 +5403,7 @@ setTimeout(function() {
               <div style="width:10px;height:10px;border-radius:3px;flex-shrink:0;" :style="{ background: cat.color }"></div>
               <span style="font-size:13px;font-weight:500;flex:1;" x-text="cat.emoji + ' ' + cat.label"></span>
               <span class="mono" style="font-size:12px;color:var(--muted);" x-text="cat.pct + '%'"></span>
-              <span class="mono" style="font-size:13px;font-weight:600;" x-text="'$' + fmtMoney(cat.total)"></span>
+              <span class="mono" style="font-size:13px;font-weight:600;" :style="dashViewMode === 'balance' ? (cat.total < 0 ? 'color:var(--danger)' : 'color:var(--success)') : ''" x-text="fmtSigned(cat.total)"></span>
               <svg viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="2" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
             </div>
           </template>
@@ -5437,7 +5437,7 @@ setTimeout(function() {
               <div>
                 <div style="font-size:13px;font-weight:700;">Categoría top</div>
                 <div style="font-size:11px;color:var(--muted);margin-top:2px;">
-                  <span style="color:var(--cyan);font-weight:600;" x-text="categoryBreakdown.length ? categoryBreakdown[0].label : ''"></span> con <span class="mono" style="color:var(--text);font-weight:600;" x-text="'$' + fmtMoney(categoryBreakdown.length ? categoryBreakdown[0].total : 0)"></span>
+                  <span style="color:var(--cyan);font-weight:600;" x-text="categoryBreakdown.length ? categoryBreakdown[0].label : ''"></span> con <span class="mono" style="color:var(--text);font-weight:600;" x-text="fmtSigned(categoryBreakdown.length ? categoryBreakdown[0].total : 0)"></span>
                 </div>
               </div>
             </div>
@@ -7555,9 +7555,9 @@ Pregúntame sobre tus gastos, pídeme un resumen del mes o dime qué no encuentr
               <div style="font-size:12px;color:var(--muted);margin-top:2px;" x-text="catDrillExpenses.length + ' registro' + (catDrillExpenses.length !== 1 ? 's' : '') + ' · ' + periodLabel"></div>
             </div>
             <div style="text-align:right;flex-shrink:0;">
-              <div class="mono" style="font-size:16px;font-weight:700;letter-spacing:-0.3px;" x-text="'$' + fmtMoney(catDrillTotal)"></div>
+              <div class="mono" style="font-size:16px;font-weight:700;letter-spacing:-0.3px;" :style="dashViewMode === 'balance' ? (catDrillTotal < 0 ? 'color:var(--danger)' : 'color:var(--success)') : ''" x-text="fmtSigned(catDrillTotal)"></div>
               <div style="font-size:12px;color:var(--muted);margin-top:3px;">
-                <span x-text="catDrillPct + '% del gasto del mes'"></span>
+                <span x-text="catDrillPct + '% ' + catDrillPctLabel"></span>
                 <template x-if="budgetForm[catDrillKey] > 0">
                   <span style="margin-left:5px;opacity:.5;">·</span>
                   <span style="margin-left:5px;" :style="Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) >= 100 ? 'color:var(--danger)' : Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) >= 80 ? 'color:var(--warning)' : 'color:var(--success)'" x-text="Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) + '% de su presupuesto'"></span>
@@ -9247,7 +9247,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v181',
+    APP_VERSION: 'v182',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     // ─── ZEPI (companion IA, Max) ───
     zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
@@ -10291,6 +10291,46 @@ function zepoApp() {
       }
     },
 
+    // PostgREST corta TODA respuesta en 1000 filas (db-max-rows, tope del SERVIDOR) y `.limit(N)`
+    // NO lo sube: verificado sembrando 1200 filas -> con y sin .limit(100000) devolvio 1000 y
+    // Content-Range "0-999/*". La unica salida es paginar con .range(). Ojo: el orden tiene que
+    // ser TOTAL (desempate por id) o las paginas se solapan y se pierden/duplican filas.
+    // Con menos de 1000 filas hace UNA sola peticion: no cuesta nada en el caso normal.
+    // Devuelve {data, error} SIEMPRE (nunca lanza): withTimeout rechaza al vencer el plazo y
+    // los exportes no tienen try/catch -> sin este catch un timeout los mataba sin avisar.
+    async _fetchAllRows(build, label, timeoutMs = 8000) {
+      const PAGE = 1000, MAX = 100000;
+      let out = [], from = 0;
+      for (;;) {
+        let r;
+        try {
+          r = await withTimeout(build().range(from, from + PAGE - 1), timeoutMs, label);
+        } catch (e) {
+          return { data: null, error: e };
+        }
+        if (r.error) return { data: null, error: r.error };
+        const batch = r.data || [];
+        out = out.concat(batch);
+        if (batch.length < PAGE || out.length >= MAX) break;
+        from += PAGE;
+      }
+      return { data: out, error: null };
+    },
+    // Misma paginacion para los fallbacks por REST directo (el &limit= tampoco sube el tope).
+    async _fetchAllRest(url, headers) {
+      const PAGE = 1000, MAX = 100000;
+      let out = [], from = 0;
+      for (;;) {
+        const res = await fetch(url + '&offset=' + from + '&limit=' + PAGE, { headers });
+        if (!res.ok) return null;
+        const batch = await res.json();
+        out = out.concat(batch);
+        if (batch.length < PAGE || out.length >= MAX) break;
+        from += PAGE;
+      }
+      return out;
+    },
+
     async loadExpenses() {
       const now = new Date();
       const start = new Date(now.getFullYear(), now.getMonth() - 1, 1).toLocaleDateString('en-CA');
@@ -10317,11 +10357,15 @@ function zepoApp() {
       if (!ok) return;
       // Conserva inserciones locales muy recientes (<120s) que el replica aún no devuelve
       // (lag lectura-tras-escritura): sin esto el gasto recién insertado se esfuma al recargar.
+      // La fila solo se conserva si la query FRESCA la habría devuelto (mismo espacio y misma
+      // ventana de fechas). Sin esa condición se colaba lo que la query excluye a propósito:
+      // un gasto de OTRO espacio sobrevivía 120s en el espacio activo (medido: $100 donde iban $70).
       const freshIds = new Set(data.map(e => e.id));
       const nowMs = Date.now();
       const pendingLocal = (this.expenses || []).filter(e =>
         !freshIds.has(e.id) && !String(e.id).startsWith('temp_') && e.created_at &&
-        (nowMs - new Date(e.created_at).getTime() < 120000));
+        (nowMs - new Date(e.created_at).getTime() < 120000) &&
+        e.date >= start && e.date <= end && this._rowInActiveSpace(e));
       this.expenses = pendingLocal.length ? [...pendingLocal, ...data] : data;
       this.dataVer++;
       try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
@@ -10477,7 +10521,14 @@ function zepoApp() {
         const eff = Math.min(Number(t.day_of_month) || 1, lastDay);
         const notYet = !t.last_generated || t.last_generated < monthStart;
         if (eff >= today && notYet) {
-          const amt = Number(t.amount) || 0;
+          // t.amount es el TOTAL. Si la plantilla esta dividida, lo que va a caer en tu
+          // cuenta es solo TU parte: misma formula que el cron (v_mypart). Sin esto, una
+          // renta compartida de $600 al 50% descontaba $600 del "disponible", no $300.
+          // split_pct puede ser 0 (pagas 0%) -> comparar con == null, nunca con ||.
+          const total = Number(t.amount) || 0;
+          const amt = t.is_split
+            ? Math.round(total * (t.split_pct == null ? 100 : (Number(t.split_pct) || 0)) / 100 * 100) / 100
+            : total;
           if (t.is_income) income += amt; else expenses += amt;
         }
       }
@@ -10567,21 +10618,48 @@ function zepoApp() {
       } catch { return null; }
     },
 
+    // "Semana" = los mismos 7 días que dibuja weeklyChart (hoy incluido). Antes el titular
+    // arrancaba en now-7d (8 días) y las barras en today-6 (7 días): el gasto del día
+    // frontera contaba arriba y no aparecía en ninguna barra (medido: $61.34 vs $28.01).
     get periodStart() {
       const now = new Date();
       if (this.dashPeriod === 'semana') {
-        return new Date(now - 7 * 86400000).toLocaleDateString('en-CA');
+        return new Date(now - 6 * 86400000).toLocaleDateString('en-CA');
       } else if (this.dashPeriod === 'año') {
         return new Date(now.getFullYear(), 0, 1).toLocaleDateString('en-CA');
       }
       return new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('en-CA');
     },
+    // La semana cierra HOY (las barras no pasan de hoy). Mes y año quedan abiertos.
+    get periodEnd() {
+      return this.dashPeriod === 'semana' ? new Date().toLocaleDateString('en-CA') : null;
+    },
+    _inPeriod(e) {
+      if (e.date < this.periodStart) return false;
+      const end = this.periodEnd;
+      return !end || e.date <= end;
+    },
+    // Filas del periodo Y modo activos. Fuente única del titular, el desglose y el drill-down:
+    // si las tres no salen de aquí, vuelven a discrepar.
+    get periodSrc() {
+      const mode = this.dashViewMode;
+      const all = this.expenses.filter(e => this._inPeriod(e));
+      if (mode === 'income') return all.filter(e => e.is_income);
+      if (mode === 'balance') return all;
+      return all.filter(e => !e.is_income);
+    },
+    // En modo balance un gasto RESTA. Sin esto el desglose sumaba ingresos y gastos en
+    // positivo mientras el titular restaba (medido: desglose $161.84 vs titular $39.16).
+    _amtFor(e) {
+      if (this.dashViewMode !== 'balance') return e.amount;
+      return e.is_income ? e.amount : -e.amount;
+    },
     get periodExpenses() {
-      return this.expenses.filter(e => !e.is_income && e.date >= this.periodStart);
+      return this.expenses.filter(e => !e.is_income && this._inPeriod(e));
     },
     get periodTotal() { return this.periodExpenses.reduce((s, e) => s + e.amount, 0); },
     get periodIncome() {
-      return this.expenses.filter(e => e.is_income && e.date >= this.periodStart).reduce((s, e) => s + e.amount, 0);
+      return this.expenses.filter(e => e.is_income && this._inPeriod(e)).reduce((s, e) => s + e.amount, 0);
     },
     get periodLabel() {
       if (this.dashPeriod === 'semana') return 'Esta semana';
@@ -12264,6 +12342,13 @@ function zepoApp() {
       if (this._isDefaultSpaceActive()) return '&or=(space_id.eq.' + this.activeSpaceId + ',space_id.is.null)';
       return '&space_id=eq.' + this.activeSpaceId;
     },
+    // Version en memoria de _applySpaceFilter: "esta fila la habria devuelto la query?".
+    // Mantener las TRES en sync (query, URL REST y esta).
+    _rowInActiveSpace(e) {
+      if (this.spaceViewAll || !this.activeSpaceId) return true;
+      if (this._isDefaultSpaceActive()) return e.space_id === this.activeSpaceId || e.space_id == null;
+      return e.space_id === this.activeSpaceId;
+    },
     _hexToRgba(hex, a) {
       const h = (hex || '#507D5A').replace('#', '');
       const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
@@ -12518,18 +12603,21 @@ function zepoApp() {
       try {
         // Respeta el espacio activo (igual que loadExpenses/el resto de la app): en un espacio
         // concreto suma solo ese; en vista "todos" suma todo. Antes mezclaba todos los espacios
-        // → junio salía inflado. Límite alto para no truncar el histórico (default PostgREST=1000).
-        let q = sb.from('expenses').select('amount, is_income, date').eq('user_id', this.user.id).limit(100000);
-        q = this._applySpaceFilter(q);
-        const r = await withTimeout(q, 6000, 'lifetimeSavings');
+        // → junio salía inflado. PAGINADO: el `.limit(100000)` que había aquí NO subía el tope
+        // de 1000 del servidor (verificado con 1200 filas) → el ahorro acumulado de un usuario
+        // con historial largo salía cortado. Ver _fetchAllRows.
+        const r = await this._fetchAllRows(
+          () => this._applySpaceFilter(
+            sb.from('expenses').select('amount, is_income, date').eq('user_id', this.user.id)
+          ).order('id', { ascending: true }), 'lifetimeSavings', 6000);
         if (r.error) throw r.error;
         apply(r.data);
       } catch (e) {
         console.warn('[loadLifetimeSavings] fallback REST:', e.message);
         try {
-          const url = SUPABASE_URL + '/rest/v1/expenses?user_id=eq.' + encodeURIComponent(this.user.id) + '&select=amount,is_income,date&limit=100000' + this._spaceFilterUrl();
-          const res = await fetch(url, { headers: await sbAuthHeadersFresh() });
-          if (res.ok) apply(await res.json());
+          const url = SUPABASE_URL + '/rest/v1/expenses?user_id=eq.' + encodeURIComponent(this.user.id) + '&select=amount,is_income,date&order=id.asc' + this._spaceFilterUrl();
+          const rows = await this._fetchAllRest(url, await sbAuthHeadersFresh());
+          if (rows) apply(rows);
         } catch (e2) { /* red caída: deja el último valor */ }
       }
     },
@@ -13128,7 +13216,10 @@ function zepoApp() {
     // ── Export Excel ──
     async exportExcel() {
       if (!this.hasPlan('elite')) { this.tab = 'plans'; return this.showToast('Excel requiere Elite'); }
-      const { data } = await sb.from('expenses').select('*').eq('user_id', this.user.id).order('date', { ascending: false });
+      // Paginado: sin esto el Excel salía cortado en 1000 filas sin avisar. Ver _fetchAllRows.
+      const { data } = await this._fetchAllRows(
+        () => sb.from('expenses').select('*').eq('user_id', this.user.id)
+          .order('date', { ascending: false }).order('id', { ascending: false }), 'exportExcel');
       if (!data || !data.length) return this.showToast('No hay datos');
       this.showToast('Generando Excel…');
       const header = ['Fecha','Categoría','Descripción','Monto','Tipo','Split','Persona','Pendiente'];
@@ -13910,12 +14001,18 @@ function zepoApp() {
       const baseRest = SUPABASE_URL + '/rest/v1/expenses?user_id=eq.' + encodeURIComponent(this.user.id) + '&is_split=eq.true';
       const loadPending = async () => {
         try {
-          let q = sb.from('expenses').select('*').eq('user_id', this.user.id).eq('is_split', true).eq('split_status', 'pendiente');
-          const r = await withTimeout(q.order('date', { ascending: false }), 2500, 'loadSplits-pending');
+          // Paginado: sin esto, con más de 1000 splits pendientes "Me deben" quedaría
+          // incompleto en silencio. Ver _fetchAllRows.
+          const r = await this._fetchAllRows(
+            () => sb.from('expenses').select('*').eq('user_id', this.user.id)
+              .eq('is_split', true).eq('split_status', 'pendiente')
+              .order('date', { ascending: false }).order('id', { ascending: false }),
+            'loadSplits-pending', 2500);
+          if (r.error) throw r.error;
           this.pendingSplits = r.data || [];
         } catch (e) {
-          const res = await fetch(baseRest + '&split_status=eq.pendiente&order=date.desc', { headers: sbAuthHeaders() });
-          this.pendingSplits = res.ok ? await res.json() : [];
+          const rows = await this._fetchAllRest(baseRest + '&split_status=eq.pendiente&order=date.desc,id.desc', sbAuthHeaders());
+          this.pendingSplits = rows || [];
         }
       };
       const loadPaid = async () => {
@@ -14470,10 +14567,11 @@ function zepoApp() {
     },
 
     async exportCSV() {
-      const { data, error } = await sb.from('expenses')
-        .select('*')
-        .eq('user_id', this.user.id)
-        .order('date', { ascending: false });
+      // Paginado: sin esto PostgREST devolvía solo los 1000 más recientes y el CSV omitía
+      // el resto SIN avisar. Ver _fetchAllRows (.limit NO sube el tope del servidor).
+      const { data, error } = await this._fetchAllRows(
+        () => sb.from('expenses').select('*').eq('user_id', this.user.id)
+          .order('date', { ascending: false }).order('id', { ascending: false }), 'exportCSV');
       if (error) return this.showToast('Error: ' + error.message);
       if (!data || !data.length) return this.showToast('No hay datos');
       const header = 'fecha,categoria,descripcion,monto,tipo,dividido,persona\n';
@@ -14599,10 +14697,11 @@ function zepoApp() {
 
     async exportPDF() {
       if (!this.hasPlan('elite')) { this.tab = 'plans'; return this.showToast('PDF requiere Elite'); }
-      const { data } = await sb.from('expenses')
-        .select('*')
-        .eq('user_id', this.user.id)
-        .order('date', { ascending: false });
+      // Paginado: sin esto el "Total gastos" del encabezado salía calculado sobre 1000 filas,
+      // no sobre todo el historial. Ver _fetchAllRows.
+      const { data } = await this._fetchAllRows(
+        () => sb.from('expenses').select('*').eq('user_id', this.user.id)
+          .order('date', { ascending: false }).order('id', { ascending: false }), 'exportPDF');
       if (!data || !data.length) return this.showToast('No hay datos');
       this.showToast('Generando PDF…');
       // PDF REAL en el dispositivo (sin window.open, que iOS bloquea → "Permite popups").
@@ -14809,6 +14908,12 @@ function zepoApp() {
     fmtMoney(n) {
       if (this.hideAmounts) return '••••';
       return (n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    },
+    // Monto con signo y símbolo: -$50.00 / $800.00. En modo balance una categoría puede ser
+    // negativa; sin esto saldría "$-50.00". Fuera de balance nunca hay negativos -> igual que antes.
+    fmtSigned(n) {
+      if (this.hideAmounts) return '••••';
+      return (n < 0 ? '-$' : '$') + this.fmtMoney(Math.abs(n));
     },
 
     toggleHideAmounts() {
@@ -15998,11 +16103,12 @@ function zepoApp() {
         const d = new Date(today);
         d.setDate(d.getDate() - i);
         const dateStr = d.toLocaleDateString('en-CA');
-        const total = src.filter(e => e.date === dateStr).reduce((s, e) => s + e.amount, 0);
-        if (total > max) max = total;
-        result.push({ label: days[d.getDay()], total, isToday: i === 0 });
+        const total = src.filter(e => e.date === dateStr).reduce((s, e) => s + this._amtFor(e), 0);
+        if (Math.abs(total) > max) max = Math.abs(total);
+        result.push({ label: days[d.getDay()], total, neg: total < 0, isToday: i === 0 });
       }
-      result.forEach(d => d.pct = Math.round(d.total / max * 100));
+      // La barra mide MAGNITUD (en balance un día puede ser negativo); el signo va por color.
+      result.forEach(d => d.pct = Math.round(Math.abs(d.total) / max * 100));
       return result;
     },
 
@@ -16020,11 +16126,11 @@ function zepoApp() {
         const d = new Date(e.date + 'T12:00:00');
         if (d.getMonth() !== month || d.getFullYear() !== year) return;
         const day = d.getDate();
-        for (const b of buckets) if (day >= b.range[0] && day <= b.range[1]) { b.total += e.amount; break; }
+        for (const b of buckets) if (day >= b.range[0] && day <= b.range[1]) { b.total += this._amtFor(e); break; }
       });
-      buckets.forEach(b => { b.isToday = todayDay >= b.range[0] && todayDay <= b.range[1]; });
-      const max = Math.max(1, ...buckets.map(b => b.total));
-      buckets.forEach(b => b.pct = Math.round(b.total / max * 100));
+      buckets.forEach(b => { b.isToday = todayDay >= b.range[0] && todayDay <= b.range[1]; b.neg = b.total < 0; });
+      const max = Math.max(1, ...buckets.map(b => Math.abs(b.total)));
+      buckets.forEach(b => b.pct = Math.round(Math.abs(b.total) / max * 100));
       return buckets;
     },
 
@@ -16041,15 +16147,15 @@ function zepoApp() {
         const d = new Date(e.date + 'T12:00:00');
         if (d.getMonth() !== month || d.getFullYear() !== year) return;
         const day = d.getDate();
-        totalsByDay[day] = (totalsByDay[day] || 0) + e.amount;
+        totalsByDay[day] = (totalsByDay[day] || 0) + this._amtFor(e);
       });
-      const max = Math.max(1, ...Object.values(totalsByDay));
+      const max = Math.max(1, ...Object.values(totalsByDay).map(v => Math.abs(v)));
       const cells = [];
       // padding inicial
       for (let i = 0; i < firstDow; i++) cells.push({ day: null });
       for (let d = 1; d <= daysInMonth; d++) {
         const total = totalsByDay[d] || 0;
-        const intensity = max > 0 ? total / max : 0;
+        const intensity = Math.abs(total) / max;
         cells.push({
           day: d,
           total,
@@ -16087,13 +16193,13 @@ function zepoApp() {
         if (d.getFullYear() !== year) return;
         const mi = d.getMonth();
         const wi = Math.min(3, Math.floor((d.getDate() - 1) / 7));
-        grid[wi][mi].total += e.amount;
+        grid[wi][mi].total += this._amtFor(e);
       });
       let max = 0;
-      grid.forEach(row => row.forEach(c => { if (c.total > max) max = c.total; }));
+      grid.forEach(row => row.forEach(c => { if (Math.abs(c.total) > max) max = Math.abs(c.total); }));
       max = max || 1;
       grid.forEach((row, wi) => row.forEach((c, mi) => {
-        c.intensity = c.total / max;
+        c.intensity = Math.abs(c.total) / max;
         c.isCurrent = mi === curMonth && wi === curWeek;
         c.isFuture = mi > curMonth || (mi === curMonth && wi > curWeek);
       }));
@@ -16102,7 +16208,7 @@ function zepoApp() {
       labels.forEach(l => flat.push({ type: 'header', text: l }));
       grid.forEach((row, wi) => {
         flat.push({ type: 'rowLabel', text: 'S' + (wi + 1) });
-        row.forEach(c => flat.push({ ...c, type: 'cell', text: c.total > 0 ? Math.round(c.total) : '' }));
+        row.forEach(c => flat.push({ ...c, type: 'cell', text: c.total ? (c.total < 0 ? '-' : '') + Math.abs(Math.round(c.total)) : '' }));
       });
       return { labels, grid, flat };
       });
@@ -16140,23 +16246,20 @@ function zepoApp() {
 
     get categoryBreakdown() {
       return this._memo('categoryBreakdown', 'dash', () => {
-      const mode = this.dashViewMode;
-      const src = mode === 'income'
-        ? this.expenses.filter(e => e.is_income && e.date >= this.periodStart)
-        : mode === 'balance'
-          ? this.expenses.filter(e => e.date >= this.periodStart)
-          : this.expenses.filter(e => !e.is_income && e.date >= this.periodStart);
+      const src = this.periodSrc;
       const totals = {};
       src.forEach(e => {
         if (!totals[e.category]) totals[e.category] = 0;
-        totals[e.category] += e.amount;
+        totals[e.category] += this._amtFor(e);
       });
-      const total = src.reduce((s, e) => s + e.amount, 0) || 1;
+      // Denominador = movimiento BRUTO. En balance el neto puede rondar $0 y los % explotarían
+      // (sueldo 80.000% de un neto de $1). Bruto: siempre positivo, siempre suma ~100%.
+      const gross = src.reduce((s, e) => s + Math.abs(this._amtFor(e)), 0) || 1;
       return Object.entries(totals)
-        .sort((a, b) => b[1] - a[1])
+        .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
         .map(([key, val]) => ({
           key, total: val,
-          pct: Math.round(val / total * 100),
+          pct: Math.round(Math.abs(val) / gross * 100),
           label: CAT_MAP[key]?.label || key,
           emoji: CAT_MAP[key]?.emoji || '✨',
           color: CAT_MAP[key]?.color || '#948E80',
@@ -16166,19 +16269,21 @@ function zepoApp() {
 
     get catDrillExpenses() {
       if (!this.catDrillKey) return [];
-      const mode = this.dashViewMode;
-      const src = mode === 'income'
-        ? this.expenses.filter(e => e.is_income && e.date >= this.periodStart)
-        : mode === 'balance'
-          ? this.expenses.filter(e => e.date >= this.periodStart)
-          : this.expenses.filter(e => !e.is_income && e.date >= this.periodStart);
-      return src.filter(e => e.category === this.catDrillKey).sort((a, b) => b.date.localeCompare(a.date));
+      return this.periodSrc.filter(e => e.category === this.catDrillKey).sort((a, b) => b.date.localeCompare(a.date));
     },
     get catDrillTotal() {
-      return this.catDrillExpenses.reduce((s, e) => s + e.amount, 0);
+      return this.catDrillExpenses.reduce((s, e) => s + this._amtFor(e), 0);
     },
+    // % sobre el periodo Y el modo ACTIVOS. Antes dividía siempre por monthTotal (gastos del
+    // mes): en semana/ingresos daba 164% donde correspondía 100%.
     get catDrillPct() {
-      return Math.round(this.catDrillTotal / (this.monthTotal || 1) * 100);
+      const gross = this.periodSrc.reduce((s, e) => s + Math.abs(this._amtFor(e)), 0);
+      return Math.round(Math.abs(this.catDrillTotal) / (gross || 1) * 100);
+    },
+    get catDrillPctLabel() {
+      const mode = this.dashViewMode;
+      const what = mode === 'income' ? 'del ingreso' : mode === 'balance' ? 'del movimiento' : 'del gasto';
+      return what + ' · ' + this.periodLabel.toLowerCase();
     },
 
     // ── SOCIAL METHODS ──────────────────────────────────────────────
@@ -16561,7 +16666,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v157.js';
+  const CURRENT_SW = 'sw-v158.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
