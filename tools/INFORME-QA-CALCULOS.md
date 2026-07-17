@@ -62,18 +62,42 @@ Sitios paginados: `exportCSV`, `exportExcel`, `exportPDF`, `loadSplits` (pendien
 correcto en el diagnóstico (hay truncado) y **erróneo en el remedio**. Un hallazgo sin prueba en vivo puede
 acertar el síntoma y fallar la cura.
 
-### Nuevos hallazgos que salieron al arreglar (NO tocados, para tu decisión)
+### Nuevos hallazgos que salieron al arreglar → TODOS ARREGLADOS (2ª tanda, aprobados 17-jul, v183)
 
-- **D18 · "Este mes" incluye gastos del mes SIGUIENTE.** `monthExpenses`/`monthTotal` filtran `date >= día 1
-  del mes` **sin tope superior**, y `loadExpenses` carga hasta fin del mes que viene. Un gasto con fecha
-  futura (ej. hoy 17-jul, gasto fechado 25-ago) suma en el "gastado" de julio, en `safeToSpend` y en las
-  barras de presupuesto — pero el heatmap del mes lo excluye. Misma familia que D6. No lo toqué: cambia el
-  significado de "este mes" y eso lo decides tú.
-- **D19 · El Historial "todo el tiempo" se corta en 1000** (`.limit(1000)` explícito, deliberado). Con
-  +1000 registros faltan los más viejos sin aviso. Paginarlo tiene coste de rendimiento en móvil → decisión
-  de producto.
-- **D20 · La tarjeta "Transacciones" del dashboard cuenta el MES aunque el periodo sea semana o año**
-  (`dashMonthData.length` con la etiqueta `periodLabel`). Cosmético pero miente.
+- **D18 · "Este mes" incluía gastos del mes SIGUIENTE.** `monthExpenses`/`monthTotal` filtraban `date >=
+  día 1` **sin tope superior**, y `loadExpenses` carga hasta fin del mes que viene → un gasto fechado a
+  futuro sumaba en el "gastado" de julio y en `safeToSpend`, pero el heatmap lo excluía. **Arreglado:**
+  getter `_inCurrentMonth` acota `>= inicio AND <= fin de mes`. Prueba: extra D18 (delta $40, no $1039; y
+  la fila futura SÍ está cargada → se excluye por fecha, no por no-carga).
+- **D19 · El Historial "todo el tiempo" se cortaba en 1000.** **Arreglado:** `loadHistory` pagina con
+  `.range()` (mismo `_fetchAllRows` de D2). Prueba: extra D19 (1100 filas sembradas → 1100 en historyData).
+- **D20 · La tarjeta "Transacciones" contaba el MES con la etiqueta del periodo activo.** **Arreglado:**
+  usa `periodSrc.length`. Prueba: extra D20 (semana=1, mes=2 con las mismas filas → depende del periodo).
+
+---
+
+## ✅ 2ª TANDA — D4, D7, D8, D9, D10, D14, D18, D19, D20 ARREGLADOS (aprobados 17-jul, v183, en dev)
+
+Los "bugs claros" que quedaban del informe + los 3 nuevos. Gate: `qa-e2e-invariantes-extra.py` **29/29 (nuevo)**,
+`qa-e2e-invariantes-dash.py` **46/46**, `qa-e2e-invariantes-presup.py` **55/55**. Cada uno con control negativo.
+
+| # | Qué se hizo | Prueba |
+|---|-------------|--------|
+| **D4** | Titular y mapa del año leen la misma fuente `dashYearData` (año completo, paginado, por espacio). | dash INV6c/d + CN4: titular ya ve el gasto de hace 5 meses ($77); la ventana vieja de 2 meses lo omitía |
+| **D7** | `unsettledAdvances` lee el libro de splits (`pendingSplits`, global en el tiempo), no `monthExpenses`. | extra D7: un adelanto del mes pasado resta $40 en safeToSpend (antes, al cambiar de mes, dejaba de contar) |
+| **D8** | `refreshForSpace` también llama `loadHistory`. | presup B8: al cambiar de espacio el Historial se refresca solo |
+| **D9** | `loadSpaceStats` manda los gastos sin espacio al espacio por defecto (catch-all), no a un bucket muerto. | presup B9: selector = Home ($15 = $15); no queda bucket `_none` |
+| **D10** | El PDF lista TODAS las filas (`data.map`), no `slice(0,500)`; el encabezado ya sumaba todo. | extra D10: sin `slice(0,500)`, con `body: data.map(`; +1000 filas disponibles por la misma vía paginada |
+| **D14** | Borrar un espacio es ATÓMICO vía RPC `zepo_delete_space` (SECURITY DEFINER, transacción). | extra D14: borra + mueve el gasto al destino; rechaza id ajeno/inexistente |
+| D18/D19/D20 | (arriba) | extra 29/29 |
+
+**D17 (infra) también arreglado:** `spaces`, `patrimony_items`, `recurring_templates` recibieron
+`GRANT SELECT/INSERT/UPDATE/DELETE` a `service_role` (migración `20260717_grant_service_role.sql`). Ya no
+dan 403 mudo a scripts admin / Edge. La UNIQUE de `budgets` resultó ser `(user_id, category, month, year)`
+**sin `space_id`** → la colisión que D14 temía era imposible; el riesgo real era la falta de transacción.
+
+**Siguen SIN tocar (decisión de producto, esperan tu elección):** D11 (exportes vs espacio activo),
+D12 (umbral del semáforo 80/100 vs 70/90), D16 (la alerta salta desde el 79.50 por redondeo).
 
 ---
 

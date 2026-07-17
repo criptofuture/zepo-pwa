@@ -3904,7 +3904,7 @@ setTimeout(function() {
           <div class="stat-card tint-inc">
             <div class="stat-card-label">INGRESOS</div>
             <div class="stat-card-value mono" style="color:var(--success);" x-text="'+$' + fmtMoney(monthIncome)"></div>
-            <div class="stat-card-sub" x-text="expenses.filter(e => e.is_income && e.date >= currentMonthStart).length + ' este mes'"></div>
+            <div class="stat-card-sub" x-text="monthIncomeRows.length + ' este mes'"></div>
           </div>
           <div class="stat-card tint-exp">
             <div class="stat-card-label">GASTOS</div>
@@ -5304,7 +5304,7 @@ setTimeout(function() {
         <div class="dash-period-selector">
           <button class="dash-period-btn" :class="{ active: dashPeriod === 'semana' }" @click="dashPeriod = 'semana'">Semana</button>
           <button class="dash-period-btn" :class="{ active: dashPeriod === 'mes' }" @click="dashPeriod = 'mes'">Mes</button>
-          <button class="dash-period-btn" :class="{ active: dashPeriod === 'año' }" @click="dashPeriod = 'año'">Año</button>
+          <button class="dash-period-btn" :class="{ active: dashPeriod === 'año' }" @click="dashPeriod = 'año'; ensureDashYear()">Año</button>
         </div>
 
         <!-- Dashboard summary -->
@@ -5448,7 +5448,7 @@ setTimeout(function() {
               <div>
                 <div style="font-size:13px;font-weight:700;">Transacciones</div>
                 <div style="font-size:11px;color:var(--muted);margin-top:2px;">
-                  <span style="color:var(--text);font-weight:600;" x-text="dashMonthData.length"></span> <span x-text="dashViewMode === 'income' ? 'ingresos' : dashViewMode === 'balance' ? 'movimientos' : 'gastos'"></span> · <span x-text="periodLabel"></span>
+                  <span style="color:var(--text);font-weight:600;" x-text="periodSrc.length"></span> <span x-text="dashViewMode === 'income' ? 'ingresos' : dashViewMode === 'balance' ? 'movimientos' : 'gastos'"></span> · <span x-text="periodLabel"></span>
                 </div>
               </div>
             </div>
@@ -6385,7 +6385,7 @@ setTimeout(function() {
           Cuentas
           <span x-show="friendBadge > 0" x-text="friendBadge" class="friend-badge"></span>
         </button>
-        <button class="tab-item" :class="{ active: tab === 'dash' }" @click="hasPlan('elite') ? (tab = 'dash') : (tab = 'plans', showToast('El panel de análisis está en Elite'))">
+        <button class="tab-item" :class="{ active: tab === 'dash' }" @click="hasPlan('elite') ? (tab = 'dash', ensureDashYear()) : (tab = 'plans', showToast('El panel de análisis está en Elite'))">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
           Dash
         </button>
@@ -9083,6 +9083,8 @@ function zepoApp() {
     budgetAlertThresholds: [50, 75, 90],
     dashPeriod: 'mes',
     dashViewMode: 'expense',
+    dashYearData: [],       // todo el año en curso (para que el titular 'año' vea lo mismo que el mapa)
+    dashYearKey: null,      // 'año|espacio' cacheado; recarga si cambia
     histMonth: new Date().getMonth(),
     histYear: new Date().getFullYear(),
     histAll: false,
@@ -9247,7 +9249,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v182',
+    APP_VERSION: 'v183',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     // ─── ZEPI (companion IA, Max) ───
     zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
@@ -10370,40 +10372,58 @@ function zepoApp() {
       this.dataVer++;
       try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
       try { this.zepiScan(); } catch (e) {} // badge proactivo del companion (barato: puro array local)
+      // Si el usuario esta mirando el dashboard 'año' cuando cambian los datos (alta/baja de gasto),
+      // refresca dashYearData para que el titular/mapa del año no queden un momento desactualizados.
+      if (this.tab === 'dash' && this.dashPeriod === 'año') this.ensureDashYear(true);
     },
 
+    // Paginado tambien en "todo el tiempo": el `.limit(1000)` que habia aqui cortaba el
+    // historial largo SIN avisar (faltaban los registros mas viejos) -- y aunque se quitara,
+    // el tope de 1000 del servidor lo cortaba igual. Ver _fetchAllRows.
     async loadHistory() {
-      let q = sb.from('expenses')
-        .select('*')
-        .eq('user_id', this.user.id)
-        .order('date', { ascending: false })
-        .order('created_at', { ascending: false });
-      let filterUrl = '/rest/v1/expenses?user_id=eq.' + encodeURIComponent(this.user.id) + '&order=date.desc,created_at.desc';
-      if (!this.histAll) {
-        const start = new Date(this.histYear, this.histMonth, 1).toLocaleDateString('en-CA');
-        const end = new Date(this.histYear, this.histMonth + 1, 0).toLocaleDateString('en-CA');
-        q = q.gte('date', start).lte('date', end);
-        filterUrl += '&date=gte.' + start + '&date=lte.' + end;
-      } else {
-        q = q.limit(1000);
-        filterUrl += '&limit=1000';
-      }
-      q = this._applySpaceFilter(q);
+      const mStart = this.histAll ? null : new Date(this.histYear, this.histMonth, 1).toLocaleDateString('en-CA');
+      const mEnd = this.histAll ? null : new Date(this.histYear, this.histMonth + 1, 0).toLocaleDateString('en-CA');
+      const build = () => {
+        let q = sb.from('expenses')
+          .select('*')
+          .eq('user_id', this.user.id)
+          .order('date', { ascending: false })
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: false });   // orden TOTAL: sin esto las paginas se solapan
+        if (mStart) q = q.gte('date', mStart).lte('date', mEnd);
+        return this._applySpaceFilter(q);
+      };
+      let filterUrl = '/rest/v1/expenses?user_id=eq.' + encodeURIComponent(this.user.id) + '&order=date.desc,created_at.desc,id.desc';
+      if (mStart) filterUrl += '&date=gte.' + mStart + '&date=lte.' + mEnd;
       filterUrl += this._spaceFilterUrl();
-      try {
-        const { data } = await withTimeout(q, 2500, 'loadHistory');
-        this.historyData = data || [];
-      } catch (e) {
-        console.warn('[loadHistory] fallback REST:', e.message);
+      const r = await this._fetchAllRows(build, 'loadHistory', 2500);
+      if (!r.error) {
+        this.historyData = r.data || [];
+      } else {
+        console.warn('[loadHistory] fallback REST:', r.error.message);
         try {
-          const headers = sbAuthHeaders();
-          const res = await fetch(SUPABASE_URL + filterUrl, { headers });
-          this.historyData = res.ok ? await res.json() : [];
+          const rows = await this._fetchAllRest(SUPABASE_URL + filterUrl, sbAuthHeaders());
+          this.historyData = rows || [];
         } catch (e2) {
           this.historyData = [];
         }
       }
       this.historyVer++;   // invalida el cache de agrupacion (solo cambia cuando recargan datos)
+    },
+
+    // Carga TODO el año en curso para el dashboard 'año' (paginado, respeta espacio). Antes el
+    // titular leia this.expenses (ventana de 2 meses) y el mapa mezclaba historyData -> daban
+    // numeros distintos (medido: titular $86.34 vs mapa $163.34). Con esto ambos leen dashYearData.
+    async ensureDashYear(force = false) {
+      const key = new Date().getFullYear() + '|' + (this.spaceViewAll ? '__all__' : (this.activeSpaceId || ''));
+      if (!force && this.dashYearKey === key && this.dashYearData.length) return;
+      const yStart = new Date(new Date().getFullYear(), 0, 1).toLocaleDateString('en-CA');
+      const r = await this._fetchAllRows(
+        () => this._applySpaceFilter(
+          sb.from('expenses').select('*').eq('user_id', this.user.id).gte('date', yStart)
+        ).order('date', { ascending: false }).order('id', { ascending: false }),
+        'dashYear', 4000);
+      if (!r.error) { this.dashYearData = r.data || []; this.dashYearKey = key; this.dataVer++; }
     },
 
     historyData: [],
@@ -10483,23 +10503,36 @@ function zepoApp() {
       const now = new Date();
       return new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('en-CA');
     },
-    get monthExpenses() { return this.expenses.filter(e => !e.is_income && e.date >= this.currentMonthStart); },
+    get currentMonthEnd() {
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth() + 1, 0).toLocaleDateString('en-CA');
+    },
+    // "Este mes" = el mes del CALENDARIO. loadExpenses carga hasta fin del mes SIGUIENTE, así que
+    // sin tope superior un gasto fechado a futuro (25-ago registrado en julio) sumaba en el
+    // "gastado" de julio, en safeToSpend y en las barras de presupuesto — mientras el calendario
+    // del mes lo excluía. Con tope, "este mes" significa lo mismo en todas las pantallas.
+    _inCurrentMonth(e) { return e.date >= this.currentMonthStart && e.date <= this.currentMonthEnd; },
+    get monthExpenses() { return this.expenses.filter(e => !e.is_income && this._inCurrentMonth(e)); },
+    get monthIncomeRows() { return this.expenses.filter(e => e.is_income && this._inCurrentMonth(e)); },
     get dashMonthData() {
       const mode = this.dashViewMode;
-      const all = this.expenses.filter(e => e.date >= this.currentMonthStart);
+      const all = this.expenses.filter(e => this._inCurrentMonth(e));
       if (mode === 'income') return all.filter(e => e.is_income);
       if (mode === 'balance') return all;
       return all.filter(e => !e.is_income);
     },
     get monthTotal() { return this.monthExpenses.reduce((s, e) => s + e.amount, 0); },
-    get monthIncome() { return this.expenses.filter(e => e.is_income && e.date >= this.currentMonthStart).reduce((s, e) => s + e.amount, 0); },
+    get monthIncome() { return this.monthIncomeRows.reduce((s, e) => s + e.amount, 0); },
     get monthBalance() { return this.monthIncome - this.monthTotal; },
 
     // Adelantos no saldados: lo que pagaste por otros en splits aun "pendiente" (split_pending).
     // Es dinero que SI salio de tu bolsillo y vuelve cuando marcas el cobro como pagado.
+    // Fuente: el libro de splits (pendingSplits), NO monthExpenses -> antes un adelanto del mes
+    // pasado desaparecia al cambiar de mes y safeToSpend/monthBalanceReal quedaban altos por ese
+    // monto. Sigue acotado al espacio activo (igual que el resto del Home).
     get unsettledAdvances() {
-      return this.monthExpenses
-        .filter(e => e.is_split && e.split_status === 'pendiente')
+      return (this.pendingSplits || [])
+        .filter(e => !e.is_income && e.split_status === 'pendiente' && this._rowInActiveSpace(e))
         .reduce((s, e) => s + (Number(e.split_pending) || 0), 0);
     },
     _splitPend(e) { return !!(e && e.is_split && e.split_status === 'pendiente' && (Number(e.split_pending) || 0) > 0); },
@@ -10630,20 +10663,29 @@ function zepoApp() {
       }
       return new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('en-CA');
     },
-    // La semana cierra HOY (las barras no pasan de hoy). Mes y año quedan abiertos.
+    // 'semana' cierra HOY; 'mes' cierra a fin de mes (para que el titular NO incluya el mes que
+    // viene y cuadre con su mapa de calor, que ya esta acotado — misma familia que D18). 'año'
+    // queda abierto: la vista anual muestra a proposito los meses futuros del año en curso.
     get periodEnd() {
-      return this.dashPeriod === 'semana' ? new Date().toLocaleDateString('en-CA') : null;
+      if (this.dashPeriod === 'semana') return new Date().toLocaleDateString('en-CA');
+      if (this.dashPeriod === 'año') return null;
+      return this.currentMonthEnd;
     },
     _inPeriod(e) {
       if (e.date < this.periodStart) return false;
       const end = this.periodEnd;
       return !end || e.date <= end;
     },
+    // Base según el periodo: en 'año' es dashYearData (año completo); en semana/mes, la ventana
+    // de 2 meses de this.expenses alcanza. Así el titular del año ve lo MISMO que el mapa (D4).
+    get _periodBase() {
+      return this.dashPeriod === 'año' ? this.dashYearData : this.expenses;
+    },
     // Filas del periodo Y modo activos. Fuente única del titular, el desglose y el drill-down:
     // si las tres no salen de aquí, vuelven a discrepar.
     get periodSrc() {
       const mode = this.dashViewMode;
-      const all = this.expenses.filter(e => this._inPeriod(e));
+      const all = this._periodBase.filter(e => this._inPeriod(e));
       if (mode === 'income') return all.filter(e => e.is_income);
       if (mode === 'balance') return all;
       return all.filter(e => !e.is_income);
@@ -10655,11 +10697,11 @@ function zepoApp() {
       return e.is_income ? e.amount : -e.amount;
     },
     get periodExpenses() {
-      return this.expenses.filter(e => !e.is_income && this._inPeriod(e));
+      return this._periodBase.filter(e => !e.is_income && this._inPeriod(e));
     },
     get periodTotal() { return this.periodExpenses.reduce((s, e) => s + e.amount, 0); },
     get periodIncome() {
-      return this.expenses.filter(e => e.is_income && this._inPeriod(e)).reduce((s, e) => s + e.amount, 0);
+      return this._periodBase.filter(e => e.is_income && this._inPeriod(e)).reduce((s, e) => s + e.amount, 0);
     },
     get periodLabel() {
       if (this.dashPeriod === 'semana') return 'Esta semana';
@@ -12410,8 +12452,12 @@ function zepoApp() {
           rows = res.ok ? await res.json() : [];
         }
         const stats = {};
+        // El espacio por defecto es catch-all (igual que _applySpaceFilter): los gastos sin
+        // space_id cuentan para ÉL. Antes iban a un bucket '_none' que nadie leía → el selector
+        // decía "Personal: $50" y al entrar el Home mostraba $80.
+        const defId = (this.spaces.find(s => s.is_default) || {}).id || null;
         (rows || []).forEach(e => {
-          const k = e.space_id || '_none';
+          const k = e.space_id || defId || '_none';
           if (!stats[k]) stats[k] = { spent: 0, count: 0 };
           stats[k].count++;
           if (!e.is_income) stats[k].spent += Number(e.amount) || 0;
@@ -12431,8 +12477,11 @@ function zepoApp() {
       await this.refreshForSpace();
     },
     async refreshForSpace() {
-      await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadBudgets(), this.loadRecurringTemplates()]);
+      // loadHistory TAMBIÉN: sin esto, al cambiar de espacio el Home ya mostraba el nuevo pero
+      // el Historial seguía listando los ítems y el total del espacio anterior.
+      await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadBudgets(), this.loadRecurringTemplates(), this.loadHistory()]);
       this.loadLifetimeSavings();  // el ahorro acumulado también depende del espacio activo
+      if (this.dashPeriod === 'año') this.ensureDashYear(true);  // el año del dash también es por espacio
     },
     openSpaceManager() { if (!this.hasPlan('max')) { this.spaceSwitcherOpen = false; this.tab = 'plans'; return this.showToast('Espacios (centros de gasto) está en Max'); } this.resetNewSpace(); this.editingSpaceId = null; this.spaceSwitcherOpen = false; this.spaceManagerOpen = true; },
     resetNewSpace() { this.newSpaceName = ''; this.newSpaceIcon = '🏪'; this.newSpaceColor = '#BF8A2A'; },
@@ -12469,13 +12518,13 @@ function zepoApp() {
       const def = this.spaces.find(x => x.is_default) || this.spaces.find(x => x.id !== s.id);
       if (!await this.askConfirm({ title: '¿Eliminar "' + s.name + '"?', body: 'Sus gastos y presupuestos se moverán a "' + (def ? def.name : 'Personal') + '". Nada se borra.' })) return;
       try {
-        await sbRestUpdate('expenses', 'space_id', s.id, { space_id: def.id });
-        await sbRestUpdate('budgets', 'space_id', s.id, { space_id: def.id });
-        await sbRestUpdate('recurring_templates', 'space_id', s.id, { space_id: def.id });
-        await sbRestDelete('spaces', { id: s.id });
+        // ATÓMICO: mover gastos/presupuestos/recurrentes + borrar el espacio en UNA transacción.
+        // Antes eran 4 await sueltos: si la red se caía a mitad quedaba un espacio fantasma. D14.
+        const { error } = await sb.rpc('zepo_delete_space', { p_space_id: s.id, p_target_id: def.id });
+        if (error) throw error;
         this.spaces = this.spaces.filter(x => x.id !== s.id);
         if (this.activeSpaceId === s.id) await this.selectSpace(def.id);
-      } catch (e) { this.showToast('Error: ' + e.message); }
+      } catch (e) { this.showToast('Error: ' + (e.message || e)); }
     },
     // ── Patrimonio (Max) ──
     patrimonyItems: [],
@@ -14742,7 +14791,9 @@ function zepoApp() {
       doc.autoTable({
         startY: doc.lastAutoTable.finalY + 22,
         head: [['Fecha', 'Categoría', 'Descripción', 'Monto']],
-        body: data.slice(0, 500).map(e => [
+        // TODAS las filas: el encabezado suma todo, asi que la tabla debe listar todo o el PDF
+        // se contradice (antes cortaba en 500 y el total nunca cuadraba con lo visible). D10.
+        body: data.map(e => [
           e.date,
           this.getCatLabel(e.category) || '-',
           e.description || '',
@@ -16182,11 +16233,9 @@ function zepoApp() {
       const curWeek = Math.min(3, Math.floor((now.getDate() - 1) / 7));
       const grid = Array.from({length: 4}, () => labels.map((_, mi) => ({ total: 0, month: mi, isCurrent: false, isFuture: false })));
       const mode = this.dashViewMode;
-      const all = [...(this.expenses || []), ...(this.historyData || [])];
-      const seen = new Set();
-      all.forEach(e => {
-        if (seen.has(e.id)) return;
-        seen.add(e.id);
+      // MISMA fuente que el titular del año (dashYearData) -> ya no discrepan (D4). dashYearData
+      // es una query limpia del año, sin duplicados, asi que no hace falta el dedup de antes.
+      (this.dashYearData || []).forEach(e => {
         if (mode === 'expense' && e.is_income) return;
         if (mode === 'income' && !e.is_income) return;
         const d = new Date(e.date + 'T12:00:00');
@@ -16666,7 +16715,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v158.js';
+  const CURRENT_SW = 'sw-v159.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {

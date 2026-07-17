@@ -147,6 +147,7 @@ async () => {
   await c.loadHistory();
 
   c.tab = 'dash';
+  await c.ensureDashYear(true);   // el titular y el mapa del año leen dashYearData (D4)
   const dash = {};
   for (const mode of ['expense','income','balance']) {
     c.dashViewMode = mode;
@@ -410,13 +411,22 @@ def main():
     else:
         checks.append((f"INV5d weekTotal(Home) vs weeklyChart en cruce de mes -- SI cruza hoy (dia-mes={today.day} <= 7) pero este script no lo mide directamente, ver reporte", None, ""))
 
-    print("--- INV6: Dashboard año ---")
-    chk("INV6a dashPeriodData(año,gasto)(delta) == BD gastos en ventana loadExpenses con date>=1-ene", d_dashPeriodData_year_exp, exp_year_dash)
-    chk("INV6b suma(yearlyChart)(delta) == BD TODOS los gastos con date>=1-ene (incl. historyData)", d_yearlyChartSum, exp_year_chart)
-    known.append(("D4 dashPeriodData(año) == suma(yearlyChart)  [NO aprobado para arreglo: el titular no ve el gasto de hace 5 meses]",
+    print("--- INV6: Dashboard año (D4: titular y mapa leen dashYearData = año completo) ---")
+    chk("INV6a dashPeriodData(año,gasto)(delta) == BD TODOS los gastos del año (incl. el de hace 5 meses)", d_dashPeriodData_year_exp, exp_year_chart)
+    chk("INV6b suma(yearlyChart)(delta) == BD TODOS los gastos del año", d_yearlyChartSum, exp_year_chart)
+    checks.append(("INV6c [D4] dashPeriodData(año) == suma(yearlyChart)  (titular y mapa ya NO discrepan)",
                     abs(d_dashPeriodData_year_exp - d_yearlyChartSum) <= TOL,
                     f"dashPeriodData(delta)={d_dashPeriodData_year_exp}  yearlyChart(delta)={d_yearlyChartSum}  "
-                    f"diff={d2(d_dashPeriodData_year_exp, d_yearlyChartSum)} (== la fila de hace 5 meses, 77.00)"))
+                    f"diff={d2(d_dashPeriodData_year_exp, d_yearlyChartSum)} (con el bug el titular no veia los 77.00 de hace 5 meses)"))
+    checks.append(("INV6d [D4] el titular del año SI incluye el gasto de hace 5 meses ($77)",
+                    d_dashPeriodData_year_exp >= 77.0 - TOL,
+                    f"dashPeriodData(año) delta={d_dashPeriodData_year_exp} (debe incluir el 77.00 fuera de la ventana de 2 meses)"))
+    # CONTROL NEGATIVO D4: con la ventana vieja (window-limited) el titular NO habria visto el 77.
+    cn4_correctly_fails = abs(d_dashPeriodData_year_exp - exp_year_dash) > TOL
+    checks.append(("CN4 [control negativo D4] dashPeriodData(año) == ventana VIEJA de 2 meses (sin el 77) -- debe DAR FALSO",
+                    cn4_correctly_fails,
+                    f"observado={d_dashPeriodData_year_exp}  ventana-vieja-hubiera-sido={exp_year_dash}  "
+                    f"({'discrimina: el titular ya ve el año completo' if cn4_correctly_fails else 'BUG: el titular sigue con la ventana de 2 meses'})"))
 
     print("--- INV7: categoryBreakdown suma == dashPeriodData (mes/semana, gasto/ingreso) ---")
     for period in ("mes", "semana"):

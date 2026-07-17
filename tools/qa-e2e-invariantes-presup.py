@@ -224,6 +224,33 @@ async () => {
   return (c.historyData||[]).map(e => e.description || '');
 }
 """
+# Lee historyData SIN recargar: para probar que el CAMBIO de espacio ya refresco el historial (D8).
+READ_HISTORY_NOW_JS = """
+() => {
+  const c = window.Alpine.$data(document.querySelector('#app'));
+  return (c.historyData || []).map(e => e.description || '');
+}
+"""
+# Fija el historial en "mes actual" (no todo el tiempo) antes de probar D8.
+SET_HIST_CURMONTH_JS = """
+() => {
+  const c = window.Alpine.$data(document.querySelector('#app'));
+  const n = new Date();
+  c.histAll = false; c.histMonth = n.getMonth(); c.histYear = n.getFullYear();
+  c.histType = 'all'; c.filterCat = 'all';
+  return true;
+}
+"""
+# spaceStats[id].spent tras loadSpaceStats (D9): el selector de espacios.
+SPACE_STATS_JS = """
+async ([defId]) => {
+  const c = window.Alpine.$data(document.querySelector('#app'));
+  await c.loadSpaceStats();
+  const st = c.spaceStats || {};
+  return { defSpent: (st[defId] ? st[defId].spent : 0), hasNone: !!st['_none'],
+           noneSpent: (st['_none'] ? st['_none'].spent : 0) };
+}
+"""
 EXPORT_CSV_JS = """
 async () => {
   const c = window.Alpine.$data(document.querySelector('#app'));
@@ -581,6 +608,33 @@ def run(url):
             except Exception as e:
                 not_tested.append(f"B7 (export real): no se pudo capturar la descarga con Playwright ({e}). "
                                    "No se marca como PASS/FALLA.")
+
+            # --- B8 (D8): cambiar de espacio REFRESCA el Historial (sin recargar a mano) ---
+            page.evaluate(SET_HIST_CURMONTH_JS)
+            page.evaluate(SELECT_SPACE_JS, [space_a]); page.wait_for_timeout(400)
+            histA = [d for d in page.evaluate(READ_HISTORY_NOW_JS) if d.startswith(TAG)]
+            add("B8 (D8): al entrar al espacio A, el Historial (sin recargar a mano) muestra solo HomeA30",
+                histA == [TAG + " HomeA30"], f"observado={histA}")
+            page.evaluate(SELECT_SPACE_JS, [space_b]); page.wait_for_timeout(400)
+            histB = [d for d in page.evaluate(READ_HISTORY_NOW_JS) if d.startswith(TAG)]
+            add("B8 (D8): al cambiar a B, el Historial se refresca solo a HomeB70 (antes seguia en A)",
+                histB == [TAG + " HomeB70"], f"observado={histB}")
+            add("B8 (D8) [CONTROL NEGATIVO]: el Historial de B ya NO muestra el gasto de A",
+                (TAG + " HomeA30") not in histB, f"historial B={histB}")
+
+            # --- B9 (D9): el selector de espacios cuenta los gastos huerfanos igual que el Home ---
+            if default_space_id:
+                page.evaluate(SELECT_SPACE_JS, [default_space_id]); page.wait_for_timeout(400)
+                home_def = page.evaluate(MEASURE_HOME_JS)["monthTotal"]
+                stats = page.evaluate(SPACE_STATS_JS, [default_space_id])
+                add("B9 (D9): selector del espacio DEFAULT (spaceStats) == Home del espacio DEFAULT (incluye el huerfano)",
+                    abs(stats["defSpent"] - home_def) < 0.01,
+                    f"selector={stats['defSpent']:.2f} home={home_def:.2f} (el $15 sin space_id cuenta para ambos)")
+                add("B9 (D9) [CONTROL NEGATIVO]: NO queda un bucket '_none' con el gasto huerfano perdido",
+                    (not stats["hasNone"]) or stats["noneSpent"] == 0,
+                    f"hasNone={stats['hasNone']} noneSpent={stats['noneSpent']}")
+            else:
+                not_tested.append("B9 (D9): no hay espacio is_default -> no se pudo probar el catch-all del selector.")
 
             # ═══ C. PATRIMONIO ═════════════════════════════════════════════
             # --- C8: lifetimeSavings usa TODO el historial (BD), no la ventana local de 2 meses ---
