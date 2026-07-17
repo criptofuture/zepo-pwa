@@ -96,8 +96,17 @@ Los "bugs claros" que quedaban del informe + los 3 nuevos. Gate: `qa-e2e-invaria
 dan 403 mudo a scripts admin / Edge. La UNIQUE de `budgets` resultó ser `(user_id, category, month, year)`
 **sin `space_id`** → la colisión que D14 temía era imposible; el riesgo real era la falta de transacción.
 
-**Siguen SIN tocar (decisión de producto, esperan tu elección):** D11 (exportes vs espacio activo),
-D12 (umbral del semáforo 80/100 vs 70/90), D16 (la alerta salta desde el 79.50 por redondeo).
+---
+
+## ✅ 3ª TANDA — decisiones de producto D11, D12, D16 (elegidas por Alvaro 17-jul, v184, en dev)
+
+Alvaro eligió; implementado y probado. Gate: `qa-e2e-invariantes-presup.py` **61/61**.
+
+| # | Su elección → qué hace ahora | Prueba |
+|---|------------------------------|--------|
+| **D11** | "Que se pueda escoger": toggle en el sheet de export (**Este espacio** / **Todos los espacios**), visible solo si tienes >1 espacio. Default = Todos (respaldo). Aplica `_exportSpaceFilter` a CSV/Excel/PDF. | presup B7: `all` trae A y B; `active` (espacio A) trae solo A; control negativo: el toggle cambia el resultado |
+| **D12** | Un solo umbral en toda la app: **naranja ≥70%, rojo ≥90%** (antes 80/100 en la pestaña vs 70/90 en Ajustes). Helper único `budgetLevel`/`budgetColor` + `level` en cada barra. | presup A1: 70.00→warn, 89.99→warn, 90.00→danger |
+| **D16** | La alerta compara la razón **exacta** sin redondear (antes `Math.round(79.5)=80` disparaba medio dólar antes). El `%` mostrado sigue redondeado. | presup A1: **$69.99 muestra "70%" pero NO alerta**; $70.00 sí |
 
 ---
 

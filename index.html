@@ -3965,8 +3965,8 @@ setTimeout(function() {
 
         <!-- Budget alerts -->
         <template x-for="alert in budgetAlerts" :key="alert.cat">
-          <div class="budget-alert" :class="{ danger: alert.pct >= 100 }" @click="tab = 'budgets'" style="cursor:pointer;margin:0 20px 8px;">
-            <span x-text="alert.pct >= 100 ? '🚨' : '⚠️'"></span>
+          <div class="budget-alert" :class="{ danger: alert.level === 'danger' }" @click="tab = 'budgets'" style="cursor:pointer;margin:0 20px 8px;">
+            <span x-text="alert.level === 'danger' ? '🚨' : '⚠️'"></span>
             <span x-text="alert.label + ': ' + alert.pct + '%'"></span>
             <span style="margin-left:auto;font-size:11px;color:var(--cyan);">Ver →</span>
           </div>
@@ -5201,11 +5201,11 @@ setTimeout(function() {
                   </div>
                   <div style="text-align:right;">
                     <div style="font-size:11px;color:var(--muted);letter-spacing:1px;font-weight:600;">RESTANTE</div>
-                    <div :style="'margin-top:4px;font-size:18px;font-weight:700;color:' + (totalBudgetPct >= 100 ? 'var(--danger)' : 'var(--success)')" x-text="'$' + fmtMoney(Math.max(0, totalBudgetObj.amount - monthTotal))"></div>
+                    <div :style="'margin-top:4px;font-size:18px;font-weight:700;color:' + (totalBudgetLevel === 'danger' ? 'var(--danger)' : 'var(--success)')" x-text="'$' + fmtMoney(Math.max(0, totalBudgetObj.amount - monthTotal))"></div>
                   </div>
                 </div>
                 <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;display:flex;">
-                  <div :style="'height:100%;transition:width 0.4s;width:' + Math.min(totalBudgetPct, 100) + '%;background:' + (totalBudgetPct >= 100 ? 'var(--danger)' : totalBudgetPct >= 80 ? 'var(--warning)' : 'var(--gradient)')"></div>
+                  <div :style="'height:100%;transition:width 0.4s;width:' + Math.min(totalBudgetPct, 100) + '%;background:' + (totalBudgetLevel === 'danger' ? 'var(--danger)' : totalBudgetLevel === 'warn' ? 'var(--warning)' : 'var(--gradient)')"></div>
                   <div x-show="totalBudgetAdvancePct > 0" :style="'height:100%;transition:width 0.4s;width:' + Math.min(totalBudgetAdvancePct, Math.max(0, 100 - Math.min(totalBudgetPct, 100))) + '%;background:var(--c-warning)'"></div>
                 </div>
                 <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.4;" x-text="totalBudgetPct + '% usado · ' + daysRemainingInMonth + ' días restantes'"></div>
@@ -5237,7 +5237,7 @@ setTimeout(function() {
                       <div style="font-size:14px;font-weight:600;" x-text="b.label"></div>
                       <div style="font-size:11px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums;" x-text="'$' + fmtMoney(b.spent) + ' de $' + fmtMoney(b.budget) + (b.advance > 0 ? ' · +$' + fmtMoney(b.advance) + ' adelantado' : '')"></div>
                     </div>
-                    <div :style="'font-size:16px;font-weight:800;letter-spacing:-0.4px;font-variant-numeric:tabular-nums;color:' + (b.pct >= 100 ? 'var(--danger)' : b.pct >= 80 ? 'var(--warning)' : 'var(--success)')" x-text="b.pct + '%'"></div>
+                    <div :style="'font-size:16px;font-weight:800;letter-spacing:-0.4px;font-variant-numeric:tabular-nums;color:' + budgetColor(b.level)" x-text="b.pct + '%'"></div>
                     <template x-if="b.orphan && !spaceViewAll">
                       <button @click.stop="deleteBudgetRow(b.cat)" title="Eliminar presupuesto huérfano" style="width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--danger);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
@@ -5245,7 +5245,7 @@ setTimeout(function() {
                     </template>
                   </div>
                   <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;display:flex;">
-                    <div :style="'height:100%;transition:width 0.4s;width:' + Math.min(b.pct, 100) + '%;background:' + (b.pct >= 100 ? 'var(--danger)' : b.pct >= 80 ? 'var(--warning)' : b.color || 'var(--cyan)')"></div>
+                    <div :style="'height:100%;transition:width 0.4s;width:' + Math.min(b.pct, 100) + '%;background:' + (b.level === 'danger' ? 'var(--danger)' : b.level === 'warn' ? 'var(--warning)' : (b.color || 'var(--cyan)'))"></div>
                     <div x-show="b.advancePct > 0" :style="'height:100%;transition:width 0.4s;width:' + Math.min(b.advancePct, Math.max(0, 100 - Math.min(b.pct, 100))) + '%;background:var(--c-warning)'"></div>
                   </div>
                   <div style="display:flex;gap:4px;margin-top:8px;">
@@ -5703,7 +5703,7 @@ setTimeout(function() {
                 </div>
               </div>
               <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;">
-                <div :style="'height:100%;border-radius:3px;width:' + Math.min(b.pct, 100) + '%;background:' + (b.pct >= 90 ? 'var(--danger)' : b.pct >= 70 ? 'var(--warning)' : 'var(--success)')"></div>
+                <div :style="'height:100%;border-radius:3px;width:' + Math.min(b.pct, 100) + '%;background:' + budgetColor(b.level)"></div>
               </div>
               <div style="display:flex;gap:4px;margin-top:8px;">
                 <template x-for="a in [50, 75, 90]" :key="a">
@@ -7489,7 +7489,18 @@ Pregúntame sobre tus gastos, pídeme un resumen del mes o dime qué no encuentr
             <div class="sheet-grabber"></div>
             <div style="padding:12px 22px 24px;">
               <div style="font-size:22px;font-weight:700;letter-spacing:-0.5px;margin-bottom:4px;">Exportar mis datos</div>
-              <div style="font-size:13px;color:var(--muted);margin-bottom:22px;">Elige el formato. Se descarga al momento.</div>
+              <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">Elige el formato. Se descarga al momento.</div>
+
+              <!-- Alcance del export (solo si hay varios espacios) — D11 -->
+              <template x-if="spaces.length > 1">
+                <div style="margin-bottom:18px;">
+                  <div class="cd-section-label" style="margin-bottom:8px;">Qué exportar</div>
+                  <div style="display:flex;gap:6px;">
+                    <button type="button" @click="exportScope = 'active'" style="flex:1;padding:9px 0;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;" :style="exportScope === 'active' ? { background: 'rgba(var(--c-brand-rgb),0.10)', color: 'var(--cyan)', border: '1px solid var(--cyan)' } : { background: 'var(--surface)', color: 'var(--muted)', border: '1px solid var(--border)' }" x-text="'Este espacio' + (activeSpace ? ' (' + activeSpace.name + ')' : '')"></button>
+                    <button type="button" @click="exportScope = 'all'" style="flex:1;padding:9px 0;border-radius:10px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;" :style="exportScope === 'all' ? { background: 'rgba(var(--c-brand-rgb),0.10)', color: 'var(--cyan)', border: '1px solid var(--cyan)' } : { background: 'var(--surface)', color: 'var(--muted)', border: '1px solid var(--border)' }">Todos los espacios</button>
+                  </div>
+                </div>
+              </template>
 
               <!-- CSV (free) -->
               <button @click="exportCSV(); exportSheetOpen = false" class="cd-export-item">
@@ -7560,7 +7571,7 @@ Pregúntame sobre tus gastos, pídeme un resumen del mes o dime qué no encuentr
                 <span x-text="catDrillPct + '% ' + catDrillPctLabel"></span>
                 <template x-if="budgetForm[catDrillKey] > 0">
                   <span style="margin-left:5px;opacity:.5;">·</span>
-                  <span style="margin-left:5px;" :style="Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) >= 100 ? 'color:var(--danger)' : Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) >= 80 ? 'color:var(--warning)' : 'color:var(--success)'" x-text="Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) + '% de su presupuesto'"></span>
+                  <span style="margin-left:5px;" :style="'color:' + budgetColor(budgetLevel(catDrillTotal / budgetForm[catDrillKey] * 100))" x-text="Math.round(catDrillTotal / budgetForm[catDrillKey] * 100) + '% de su presupuesto'"></span>
                 </template>
               </div>
             </div>
@@ -9139,6 +9150,7 @@ function zepoApp() {
     activeDebo: null,
     activeDeboType: null,
     exportSheetOpen: false,
+    exportScope: 'all',   // 'all' = todos los espacios (respaldo) · 'active' = solo el espacio activo (D11)
     catManagerOpen: false,
     catManagerMode: 'expense',
     newCatLabel: '',
@@ -9249,7 +9261,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v183',
+    APP_VERSION: 'v184',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     // ─── ZEPI (companion IA, Max) ───
     zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
@@ -12384,6 +12396,11 @@ function zepoApp() {
       if (this._isDefaultSpaceActive()) return '&or=(space_id.eq.' + this.activeSpaceId + ',space_id.is.null)';
       return '&space_id=eq.' + this.activeSpaceId;
     },
+    // D11: los exportes aplican el filtro de espacio SOLO si el usuario eligio "este espacio"
+    // (exportScope='active'); por defecto 'all' = respaldo completo (todos los espacios).
+    _exportSpaceFilter(q) {
+      return this.exportScope === 'active' ? this._applySpaceFilter(q) : q;
+    },
     // Version en memoria de _applySpaceFilter: "esta fila la habria devuelto la query?".
     // Mantener las TRES en sync (query, URL REST y esta).
     _rowInActiveSpace(e) {
@@ -13245,19 +13262,27 @@ function zepoApp() {
         // Nunca mostrar el slug crudo (custom_xxx): la categoria propia se borro o no
         // sincronizo desde otro equipo -> nombre legible + se podra borrar (boton huerfano).
         const label = (cat && cat.label) || (String(b.category).startsWith('custom_') ? 'Categoría eliminada' : b.category);
-        return { cat: b.category, label: label, emoji: (cat && cat.emoji) || (orphan ? '🗂️' : '✨'), color: (cat && cat.color) || '#948E80', budget: b.amount, spent, advance, pct: Math.round(spent / b.amount * 100), advancePct: Math.round(advance / b.amount * 100), orphan: orphan };
+        // pctRaw = razon SIN redondear: se usa para el color y las alertas (umbral EXACTO, D16).
+        // pct (redondeado) es SOLO para mostrar. level unifica el semaforo a 70/90 en toda la app (D12).
+        const pctRaw = b.amount > 0 ? spent / b.amount * 100 : 0;
+        return { cat: b.category, label: label, emoji: (cat && cat.emoji) || (orphan ? '🗂️' : '✨'), color: (cat && cat.color) || '#948E80', budget: b.amount, spent, advance, pct: Math.round(pctRaw), pctRaw, level: this.budgetLevel(pctRaw), advancePct: Math.round(advance / b.amount * 100), orphan: orphan };
       }));
     },
+    // Semaforo unico del presupuesto: naranja desde 70%, rojo desde 90% (D12), comparando la
+    // razon EXACTA sin redondear (D16: antes Math.round(79.5)=80 disparaba medio dolar antes).
+    budgetLevel(pctRaw) { return pctRaw >= 90 ? 'danger' : pctRaw >= 70 ? 'warn' : 'ok'; },
+    budgetColor(level) { return level === 'danger' ? 'var(--danger)' : level === 'warn' ? 'var(--warning)' : 'var(--success)'; },
 
     get budgetAlerts() {
       const alerts = [];
       this.budgetBars.forEach(b => {
-        if (b.pct >= 80) alerts.push(b);
+        if (b.level !== 'ok') alerts.push(b);
       });
       const totalBudget = this.budgets.find(b => !b.category);
-      if (totalBudget) {
-        const pct = Math.round(this.monthTotal / totalBudget.amount * 100);
-        if (pct >= 80) alerts.push({ cat: '_total', label: 'Total mensual', pct, spent: this.monthTotal, budget: totalBudget.amount });
+      if (totalBudget && totalBudget.amount > 0) {
+        const pctRaw = this.monthTotal / totalBudget.amount * 100;
+        const level = this.budgetLevel(pctRaw);
+        if (level !== 'ok') alerts.push({ cat: '_total', label: 'Total mensual', pct: Math.round(pctRaw), pctRaw, level, spent: this.monthTotal, budget: totalBudget.amount });
       }
       return alerts;
     },
@@ -13267,7 +13292,7 @@ function zepoApp() {
       if (!this.hasPlan('elite')) { this.tab = 'plans'; return this.showToast('Excel requiere Elite'); }
       // Paginado: sin esto el Excel salía cortado en 1000 filas sin avisar. Ver _fetchAllRows.
       const { data } = await this._fetchAllRows(
-        () => sb.from('expenses').select('*').eq('user_id', this.user.id)
+        () => this._exportSpaceFilter(sb.from('expenses').select('*').eq('user_id', this.user.id))
           .order('date', { ascending: false }).order('id', { ascending: false }), 'exportExcel');
       if (!data || !data.length) return this.showToast('No hay datos');
       this.showToast('Generando Excel…');
@@ -14619,7 +14644,7 @@ function zepoApp() {
       // Paginado: sin esto PostgREST devolvía solo los 1000 más recientes y el CSV omitía
       // el resto SIN avisar. Ver _fetchAllRows (.limit NO sube el tope del servidor).
       const { data, error } = await this._fetchAllRows(
-        () => sb.from('expenses').select('*').eq('user_id', this.user.id)
+        () => this._exportSpaceFilter(sb.from('expenses').select('*').eq('user_id', this.user.id))
           .order('date', { ascending: false }).order('id', { ascending: false }), 'exportCSV');
       if (error) return this.showToast('Error: ' + error.message);
       if (!data || !data.length) return this.showToast('No hay datos');
@@ -14749,7 +14774,7 @@ function zepoApp() {
       // Paginado: sin esto el "Total gastos" del encabezado salía calculado sobre 1000 filas,
       // no sobre todo el historial. Ver _fetchAllRows.
       const { data } = await this._fetchAllRows(
-        () => sb.from('expenses').select('*').eq('user_id', this.user.id)
+        () => this._exportSpaceFilter(sb.from('expenses').select('*').eq('user_id', this.user.id))
           .order('date', { ascending: false }).order('id', { ascending: false }), 'exportPDF');
       if (!data || !data.length) return this.showToast('No hay datos');
       this.showToast('Generando PDF…');
@@ -15001,9 +15026,15 @@ function zepoApp() {
     },
 
     get totalBudgetPct() {
-      if (!this.totalBudgetObj) return 0;
+      if (!this.totalBudgetObj || !this.totalBudgetObj.amount) return 0;
       return Math.round(this.monthTotal / this.totalBudgetObj.amount * 100);
     },
+    // Razon EXACTA (sin redondear) + level 70/90 del presupuesto total, para color/alerta (D12/D16).
+    get totalBudgetPctRaw() {
+      if (!this.totalBudgetObj || !this.totalBudgetObj.amount) return 0;
+      return this.monthTotal / this.totalBudgetObj.amount * 100;
+    },
+    get totalBudgetLevel() { return this.budgetLevel(this.totalBudgetPctRaw); },
 
     get totalBudgetAdvancePct() {
       if (!this.totalBudgetObj || !this.totalBudgetObj.amount) return 0;
@@ -15569,7 +15600,7 @@ function zepoApp() {
         });
         try {
           this.budgetBars.forEach(b => {
-            if (b.budget > 0 && b.pct >= 90) finds.push({ key: 'bud|' + b.cat, emoji: '🚨', title: 'Presupuesto al ' + b.pct + '%', body: b.label + ': llevas $' + this.fmtMoney(b.spent) + ' de $' + this.fmtMoney(b.budget) + ' este mes.', target: 'budgets', cta: 'Ver presupuestos' });
+            if (b.budget > 0 && b.level === 'danger') finds.push({ key: 'bud|' + b.cat, emoji: '🚨', title: 'Presupuesto al ' + b.pct + '%', body: b.label + ': llevas $' + this.fmtMoney(b.spent) + ' de $' + this.fmtMoney(b.budget) + ' este mes.', target: 'budgets', cta: 'Ver presupuestos' });
           });
         } catch (e) {}
         try {
@@ -16715,7 +16746,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v159.js';
+  const CURRENT_SW = 'sw-v160.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {

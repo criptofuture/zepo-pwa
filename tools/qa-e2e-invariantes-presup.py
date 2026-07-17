@@ -183,7 +183,7 @@ MEASURE_BAR_JS = """
   const bar = (c.budgetBars||[]).find(b => b.cat === cat);
   const alertOn = (c.budgetAlerts||[]).some(a => a.cat === cat);
   return {
-    bar: bar ? { spent: bar.spent, advance: bar.advance, pct: bar.pct, advancePct: bar.advancePct, budget: bar.budget } : null,
+    bar: bar ? { spent: bar.spent, advance: bar.advance, pct: bar.pct, pctRaw: bar.pctRaw, level: bar.level, advancePct: bar.advancePct, budget: bar.budget } : null,
     alertOn, monthTotal: c.monthTotal,
   };
 }
@@ -256,6 +256,13 @@ async () => {
   const c = window.Alpine.$data(document.querySelector('#app'));
   await c.exportCSV();
   return true;
+}
+"""
+SET_EXPORT_SCOPE_JS = """
+([scope]) => {
+  const c = window.Alpine.$data(document.querySelector('#app'));
+  c.exportScope = scope;
+  return c.exportScope;
 }
 """
 MEASURE_LIFETIME_JS = """
@@ -380,42 +387,51 @@ def run(url):
             ])
             page.evaluate(SELECT_SPACE_JS, [space_a]); page.wait_for_timeout(600)  # recarga budgets
 
-            # --- A1: umbral de alerta exacto (>=80% de $100) ---
+            # --- A1 (D12 + D16): semaforo unico 70/90, umbral EXACTO sin redondeo ---
             food_row = page.evaluate(INSERT_EXPENSE_JS, {
-                "user_id": uid, "amount": 78.00, "description": TAG + " THRESH", "category": "food",
+                "user_id": uid, "amount": 50.00, "description": TAG + " THRESH", "category": "food",
                 "date": today, "is_income": False, "space_id": space_a,
             })
             food_id = food_row["id"]; seeded_expense_ids.append(food_id)
             page.evaluate(RELOAD_JS)
 
-            subtests = [(78.00, False), (79.49, False), (79.51, True), (79.99, True), (80.00, True)]
-            for amt, expect_alert in subtests:
+            # (monto/100, alerta_esperada, level_esperado). D12: warn>=70, danger>=90. D16: EXACTO
+            # (69.99 NO alerta; 70.00 SI; 89.99 warn; 90.00 danger). Con el bug viejo (round vs 80)
+            # la alerta arrancaba a 79.50 -> estos limites de 70 y 90 lo cazan.
+            subtests = [
+                (50.00, False, "ok"),
+                (69.99, False, "ok"),
+                (70.00, True,  "warn"),
+                (70.01, True,  "warn"),
+                (89.99, True,  "warn"),
+                (90.00, True,  "danger"),
+                (100.00, True, "danger"),
+            ]
+            for amt, expect_alert, expect_level in subtests:
                 page.evaluate(PATCH_EXPENSE_JS, [food_id, {"amount": amt}])
                 page.evaluate(RELOAD_JS)
                 m = page.evaluate(MEASURE_BAR_JS, ["food"])
-                exp_pct = js_round(amt / 100 * 100)  # == js_round(amt), calculado independiente del codigo
-                observed_pct = m["bar"]["pct"] if m["bar"] else None
+                observed_level = m["bar"]["level"] if m["bar"] else None
                 observed_alert = m["alertOn"]
-                add(f"A1: pct redondeado en ${amt:.2f}/100 == {exp_pct}%", observed_pct == exp_pct,
-                    f"observado={observed_pct}")
-                add(f"A1: alerta en ${amt:.2f} == {expect_alert}", observed_alert == expect_alert,
-                    f"observado={observed_alert} spent={m['bar']['spent'] if m['bar'] else None}")
+                add(f"A1 (D12/D16): level en ${amt:.2f}/100 == {expect_level}", observed_level == expect_level,
+                    f"observado={observed_level} pctRaw={m['bar']['pctRaw'] if m['bar'] else None}")
+                add(f"A1 (D12/D16): alerta en ${amt:.2f} == {expect_alert}", observed_alert == expect_alert,
+                    f"observado={observed_alert}")
+
+            # CONTROL NEGATIVO D16: a $79.99 el bug viejo (round(79.99)=80 >= 80) alertaba; hoy es
+            # warn de todos modos (>=70), asi que la prueba que discrimina el REDONDEO es el limite
+            # inferior: a $69.99, con redondeo daria pct=70 y (con umbral 70) alertaria de mas.
+            page.evaluate(PATCH_EXPENSE_JS, [food_id, {"amount": 69.99}]); page.evaluate(RELOAD_JS)
+            m69 = page.evaluate(MEASURE_BAR_JS, ["food"])
+            add("[CONTROL NEGATIVO] A1 (D16): $69.99 NO alerta (si redondeara a 70% alertaria de mas)",
+                m69["alertOn"] is False and m69["bar"]["level"] == "ok",
+                f"alertOn={m69['alertOn']} level={m69['bar']['level']} pctRaw={m69['bar']['pctRaw']} pct(display)={m69['bar']['pct']}")
 
             findings.append(
-                "A1 — Regla de alerta: budgetAlerts usa `b.pct >= 80` donde `b.pct = Math.round(spent/budget*100)` "
-                "(index.html ~12543 y ~12536). Al redondear ANTES de comparar, la alerta dispara desde "
-                "$79.50 de $100 (79.5% redondea a 80), NO desde $80.00 exacto. Confirmado empiricamente: "
-                "$79.49 -> pct=79 sin alerta; $79.51 -> pct=80 CON alerta. Es coherente puertas adentro "
-                "(el color de la barra en el HTML usa el mismo `b.pct>=80`, linea ~5240/~5248), pero el "
-                "limite real no es un $80.00 limpio como sugeriria 'umbral 80%'.")
+                "A1 (D12/D16) — ARREGLADO: semaforo unico 70/90 (antes 80/100 en la pestana y 70/90 en "
+                "Ajustes) comparando la razon EXACTA sin redondear (antes Math.round(79.5)=80 disparaba "
+                "medio dolar antes). Verificado: 69.99 no alerta, 70.00 warn, 89.99 warn, 90.00 danger.")
 
-            # --- A1 CONTROL NEGATIVO: invertir el predicado en $78 (78% no deberia alertar) ---
-            m78 = page.evaluate(MEASURE_BAR_JS, ["food"])  # nota: food ya quedo en 80.00 tras el loop; repetimos con 78
-            page.evaluate(PATCH_EXPENSE_JS, [food_id, {"amount": 78.00}]); page.evaluate(RELOAD_JS)
-            m78 = page.evaluate(MEASURE_BAR_JS, ["food"])
-            wrong_hypothesis = (m78["alertOn"] == True)  # si esto fuera True, seria el bug "alerta con <80%"
-            add("[CONTROL NEGATIVO] A1: hipotesis invertida '78% SI alerta' debe salir FALSA", wrong_hypothesis is False,
-                f"alertOn observado={m78['alertOn']} (si esto diera True, el check primario de 78%=sin-alerta habria fallado)")
             # deja food en 80.00 para A3 (monthTotal = 80 food + 20 transport)
             page.evaluate(PATCH_EXPENSE_JS, [food_id, {"amount": 80.00}]); page.evaluate(RELOAD_JS)
 
@@ -585,28 +601,40 @@ def run(url):
                 "checks B5/B6 de arriba son la certificacion: B mide $70, Sigma(espacios)==viewAll, "
                 "y el gasto con space_id=NULL ya no aparece en un espacio no-default.")
 
-            # --- B7: exportCSV NO filtra por espacio (Historial SI) — confirmar el hallazgo ya conocido ---
+            # --- B7 (D11): el export elige alcance. Default 'all' = respaldo (todos los espacios);
+            #     'active' = solo el espacio activo (como el Historial). ---
             page.evaluate(SELECT_SPACE_JS, [space_a]); page.wait_for_timeout(400)
             hist_descs = page.evaluate(LOAD_HISTORY_ALL_JS)
             hist_tagged = [d for d in hist_descs if d.startswith(TAG)]
             add("B7: Historial (espacio A activo) muestra SOLO los gastos TAG de A (1: HomeA30)",
                 sorted(hist_tagged) == sorted([TAG + " HomeA30"]), f"observado={hist_tagged}")
 
-            try:
+            def _csv_tag_lines():
                 with page.expect_download(timeout=8000) as dl_info:
                     page.evaluate(EXPORT_CSV_JS)
-                dl = dl_info.value
-                csv_path = dl.path()
-                with open(csv_path, encoding="utf-8-sig") as f:
-                    csv_text = f.read()
-                csv_lines = [l for l in csv_text.splitlines() if l]
-                csv_tag_lines = [l for l in csv_lines if TAG in l]
-                add("B7 [CONFIRMA hallazgo ya conocido]: exportCSV (espacio A activo) incluye gastos de "
-                    "OTROS espacios (>=2 filas TAG: A y B)", len(csv_tag_lines) >= 2,
-                    f"filas TAG en CSV={len(csv_tag_lines)} filas TAG en Historial={len(hist_tagged)} -> "
-                    f"CSV{'>' if len(csv_tag_lines) > len(hist_tagged) else '<='}Historial")
+                with open(dl_info.value.path(), encoding="utf-8-sig") as f:
+                    return [l for l in f.read().splitlines() if TAG in l]
+            try:
+                # Alcance 'all' (default / respaldo): trae A y B aunque el espacio activo sea A.
+                page.evaluate(SET_EXPORT_SCOPE_JS, ["all"])
+                csv_all = _csv_tag_lines()
+                add("B7 (D11): exportScope='all' -> el CSV trae TODOS los espacios (respaldo: A y B, >=2 filas TAG)",
+                    len(csv_all) >= 2, f"filas TAG en CSV(all)={len(csv_all)}")
+
+                # Alcance 'active' (espacio A activo): trae SOLO A, igual que el Historial.
+                page.evaluate(SET_EXPORT_SCOPE_JS, ["active"])
+                csv_active = [l for l in _csv_tag_lines()]
+                a_in = any((TAG + " HomeA30") in l for l in csv_active)
+                b_in = any((TAG + " HomeB70") in l for l in csv_active)
+                add("B7 (D11): exportScope='active' (espacio A) -> el CSV trae SOLO A (HomeA30), NO B (HomeB70)",
+                    a_in and not b_in and len(csv_active) == 1,
+                    f"filas TAG en CSV(active)={len(csv_active)} A_incluida={a_in} B_incluida={b_in}")
+                add("B7 (D11) [CONTROL NEGATIVO]: el CSV 'active' NO es igual al 'all' (el toggle SI cambia algo)",
+                    len(csv_active) < len(csv_all),
+                    f"active={len(csv_active)} < all={len(csv_all)}")
+                page.evaluate(SET_EXPORT_SCOPE_JS, ["all"])  # restaura default
             except Exception as e:
-                not_tested.append(f"B7 (export real): no se pudo capturar la descarga con Playwright ({e}). "
+                not_tested.append(f"B7/D11 (export real): no se pudo capturar la descarga con Playwright ({e}). "
                                    "No se marca como PASS/FALLA.")
 
             # --- B8 (D8): cambiar de espacio REFRESCA el Historial (sin recargar a mano) ---
