@@ -9261,7 +9261,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v184',
+    APP_VERSION: 'v185',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     // ─── ZEPI (companion IA, Max) ───
     zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
@@ -10750,60 +10750,10 @@ function zepoApp() {
       return Math.round((now.getDate() / daysInMonth) * 100);
     },
 
-    get spentPct() {
-      const total = this.budgetTotalAmount;
-      if (total <= 0) return Math.min(100, Math.round((this.monthTotal / Math.max(this.monthTotal, 1)) * 100));
-      return Math.min(100, Math.round((this.monthTotal / total) * 100));
-    },
-
-    get weekTotal() {
-      const now = new Date();
-      const weekAgo = new Date(now - 7 * 86400000).toLocaleDateString('en-CA');
-      return this.monthExpenses.filter(e => e.date >= weekAgo).reduce((s, e) => s + e.amount, 0);
-    },
-
-    get topCategory() {
-      const totals = {};
-      this.monthExpenses.forEach(e => { totals[e.category] = (totals[e.category] || 0) + e.amount; });
-      const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]);
-      return sorted.length ? CAT_MAP[sorted[0][0]]?.label || sorted[0][0] : '';
-    },
-
-    get topCategoryAmount() {
-      const totals = {};
-      this.monthExpenses.forEach(e => { totals[e.category] = (totals[e.category] || 0) + e.amount; });
-      const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]);
-      return sorted.length ? sorted[0][1] : 0;
-    },
-
-    get topCategoryEmoji() {
-      const totals = {};
-      this.monthExpenses.forEach(e => { totals[e.category] = (totals[e.category] || 0) + e.amount; });
-      const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]);
-      return sorted.length ? (CAT_MAP[sorted[0][0]]?.emoji || '✨') : '';
-    },
-
-    get topCategoryPct() {
-      if (!this.monthTotal) return 0;
-      return Math.round((this.topCategoryAmount / this.monthTotal) * 100);
-    },
-
-    get weekExpenseCount() {
-      const now = new Date();
-      const weekAgo = new Date(now - 7 * 86400000).toLocaleDateString('en-CA');
-      return this.monthExpenses.filter(e => e.date >= weekAgo).length;
-    },
-
-    get budgetTotalAmount() {
-      const total = this.budgets?.find(b => !b.category);
-      if (total) return total.amount || 0;
-      return this.budgets?.reduce((s, b) => s + (b.amount || 0), 0) || 0;
-    },
-
-    get budgetTotalPct() {
-      if (!this.budgetTotalAmount) return 0;
-      return Math.min(100, Math.round((this.monthTotal / this.budgetTotalAmount) * 100));
-    },
+    // Los getters de resumen viejos (spentPct, weekTotal, weekExpenseCount, topCategory*,
+    // budgetTotalAmount/Pct) se eliminaron: nada los renderizaba y calculaban con definiciones
+    // ya corregidas en los getters vivos (periodStart/periodSrc, totalBudgetObj/totalBudgetPct).
+    // El gate (presup A3 / dash INV5d) vigila que no vuelvan.
 
     get recentExpenses() {
       return this.expenses.slice(0, 8);
@@ -12546,7 +12496,7 @@ function zepoApp() {
     // ── Patrimonio (Max) ──
     patrimonyItems: [],
     patSnapshots: [],
-    lifetimeSavings: 0,          // ingresos − gastos de TODO el historial (global, todos los espacios)
+    lifetimeSavings: 0,          // ingresos − gastos de todo el historial DEL ESPACIO ACTIVO (en vista "todos", global)
     lifetimeSavingsByMonth: [],  // [{month:'YYYY-MM', income, expense, saldo}] desc — desglose del ahorro
     lifetimeSavingsLoaded: false,
     savingsBreakdownOpen: false, // UI: desplegar el desglose por mes en Patrimonio
@@ -12642,9 +12592,11 @@ function zepoApp() {
       this.ensurePatSnapshot();        // …luego fotografía el neto del mes
       this.loadLifetimeSavings();      // …y el ahorro acumulado de todo el historial
     },
-    // Ahorro acumulado = ingresos − gastos de TODO el historial (todos los meses, todos los
-    // espacios → global, consistente con el patrimonio que también es global por usuario).
-    // Trae solo 2 columnas (amount, is_income); ligero. Si crece mucho, migrar a un RPC SUM.
+    // Ahorro acumulado = ingresos − gastos de todo el historial DEL ESPACIO ACTIVO. Ojo (D13):
+    // el patrimonio (patNetWorth) es global por usuario, así que "Patrimonio total" =
+    // patrimonio global + ahorro del espacio → varía al cambiar de espacio. Divergencia
+    // ACEPTADA por Alvaro (1-jul); hacer el patrimonio por-espacio sería un cambio grande.
+    // Trae solo 3 columnas (amount, is_income, date); ligero. Si crece mucho, migrar a un RPC SUM.
     async loadLifetimeSavings() {
       if (!this.user || !this.hasPlan('max')) return;
       const apply = rows => {
@@ -16746,7 +16698,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v160.js';
+  const CURRENT_SW = 'sw-v161.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {

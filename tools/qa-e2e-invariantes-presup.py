@@ -191,7 +191,9 @@ MEASURE_BAR_JS = """
 MEASURE_TOTALS_JS = """
 () => {
   const c = window.Alpine.$data(document.querySelector('#app'));
-  return { budgetTotalAmount: c.budgetTotalAmount, budgetTotalPct: c.budgetTotalPct, monthTotal: c.monthTotal,
+  return { monthTotal: c.monthTotal,
+           deadGone: ['budgetTotalAmount','budgetTotalPct','spentPct'].every(k => typeof c[k] === 'undefined'),
+           liveTotalPct: typeof c.totalBudgetPct,
            budgets: (c.budgets||[]).map(b => ({cat:b.category, amt:Number(b.amount)})) };
 }
 """
@@ -456,40 +458,21 @@ def run(url):
             add("[CONTROL NEGATIVO] A2: hipotesis invertida 'spent==50 (total)' debe salir FALSA", wrong_h2 is False,
                 f"spent observado={bar2.get('spent')} (si diera 50, habria doble conteo del split)")
 
-            # --- A3: budgetTotalAmount / budgetTotalPct ---
+            # --- A3: getters muertos de presupuesto ELIMINADOS (barrido 18-jul) ---
+            # budgetTotalAmount/budgetTotalPct/spentPct calculaban bien pero NADA los renderizaba:
+            # la pantalla Presupuestos usa totalBudgetObj/totalBudgetPct (HTML ~5192-5211). Eran una
+            # trampa (quien "arreglara" el par muerto no cambiaba nada en pantalla) -> se borraron.
+            # Este check vigila que no se reintroduzcan.
             t3a = page.evaluate(MEASURE_TOTALS_JS)
-            # sin fila total: budgetTotalAmount = suma de categorias (food 100 + transport 100 = 200)
-            exp_total_amt_fallback = 200.00
             exp_month_total = 80.00 + 20.00  # food final (80) + transport mi parte (20)
-            exp_pct_fallback = min(100, js_round(exp_month_total / exp_total_amt_fallback * 100))
             add("A3: monthTotal == food(80)+transport(20) == 100", t3a["monthTotal"] == exp_month_total,
                 f"observado monthTotal={t3a['monthTotal']}")
-            add("A3: budgetTotalAmount (fallback suma categorias) == 200", t3a["budgetTotalAmount"] == exp_total_amt_fallback,
-                f"observado={t3a['budgetTotalAmount']}")
-            add("A3: budgetTotalPct (fallback) == round(100/200*100) == 50", t3a["budgetTotalPct"] == exp_pct_fallback,
-                f"observado={t3a['budgetTotalPct']}")
-
-            page.evaluate(INSERT_BUDGETS_JS, [
-                {"user_id": uid, "category": None, "amount": 300, "month": cur_m, "year": cur_y, "space_id": space_a},
-            ])
-            page.evaluate(RELOAD_JS)
-            t3b = page.evaluate(MEASURE_TOTALS_JS)
-            exp_total_amt_override = 300.00
-            exp_pct_override = min(100, js_round(exp_month_total / exp_total_amt_override * 100))
-            add("A3: con fila total ($300), budgetTotalAmount IGNORA suma de categorias == 300",
-                t3b["budgetTotalAmount"] == exp_total_amt_override, f"observado={t3b['budgetTotalAmount']}")
-            add("A3: budgetTotalPct con fila total == round(100/300*100) == 33",
-                t3b["budgetTotalPct"] == exp_pct_override, f"observado={t3b['budgetTotalPct']}")
-
-            findings.append(
-                "A3 — Ojo: existen DOS pares de getters de presupuesto total con nombres casi identicos: "
-                "`budgetTotalAmount`/`budgetTotalPct` (index.html ~10581/~10587, los que pide este check) y "
-                "`totalBudgetObj`/`totalBudgetPct` (~14387/~14391, los que SI renderiza la pantalla Presupuestos "
-                "en el HTML ~5192-5211). Verificado por grep: `budgetTotalPct` no aparece en ningun template x-text/x-if "
-                "del archivo -> es un getter MUERTO (no se ve en UI), aunque calcula bien. `totalBudgetPct` (el usado "
-                "en pantalla) NO tiene fallback de suma-de-categorias: si no existe la fila total, `totalBudgetObj` es "
-                "null y la tarjeta de 'Gastado total' simplemente no se muestra (x-if=totalBudgetObj). No es un bug, "
-                "pero conviene saber cual getter alimenta la pantalla real antes de tocar uno.")
+            add("A3: getters muertos (budgetTotalAmount/budgetTotalPct/spentPct) eliminados del codigo",
+                t3a["deadGone"] is True, f"deadGone={t3a['deadGone']} (los 3 deben dar typeof undefined)")
+            # CONTROL NEGATIVO: la sonda distingue muerto de vivo -> el getter VIVO del mismo dominio
+            # (totalBudgetPct, el que la pantalla SI renderiza) existe y es numerico (0 sin fila total).
+            add("[CONTROL NEGATIVO] A3: totalBudgetPct (getter VIVO de la pantalla) SI existe (typeof number)",
+                t3a["liveTotalPct"] == "number", f"typeof totalBudgetPct={t3a['liveTotalPct']}")
 
             # cleanup expenses A1/A2 antes de A4 (no afecta budgets)
             page.evaluate(DELETE_EXPENSES_JS, [food_id, split_id])

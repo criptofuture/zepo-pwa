@@ -173,7 +173,11 @@ async () => {
   c.catDrillOpen = false; c.catDrillKey = null;
 
   c.tab = 'home';
-  const home = { monthTotal: c.monthTotal, monthIncome: c.monthIncome, monthBalance: c.monthBalance, weekTotal: c.weekTotal };
+  // deadGone: los getters muertos de semana/resumen se ELIMINARON (barrido 18-jul). Si alguien
+  // los reintroduce sin alinearlos a periodStart (7 dias cerrados en hoy), INV5d lo detecta.
+  const DEAD = ['weekTotal','weekExpenseCount','topCategory','topCategoryAmount','topCategoryEmoji','topCategoryPct'];
+  const home = { monthTotal: c.monthTotal, monthIncome: c.monthIncome, monthBalance: c.monthBalance,
+                 deadGone: DEAD.every(k => typeof c[k] === 'undefined'), liveType: typeof c.monthTotal };
 
   c.tab = 'history';
   const hist = {};
@@ -404,12 +408,15 @@ def main():
     checks.append(("INV5e la fila del dia frontera hoy-6 ($12.34) SI cuenta en la semana (titular y barras)",
                     abs(d_dashPeriodData_semana_exp - exp_semana) <= TOL and exp_semana >= 12.34,
                     f"exp_semana(BD)={exp_semana} incluye la fila de hoy-6=12.34; observado={d_dashPeriodData_semana_exp}"))
-    testable_5d = today.day > 7
-    if testable_5d:
-        checks.append((f"INV5d weekTotal(Home) vs weeklyChart en cruce de mes -- NO TESTABLE hoy (dia-mes={today.day} > 7, la ventana de 7 dias no cruza el mes)",
-                        None, "se dispara con dia-mes entre 1 y 7 (weekAgo cae en el mes anterior); ver reporte final"))
-    else:
-        checks.append((f"INV5d weekTotal(Home) vs weeklyChart en cruce de mes -- SI cruza hoy (dia-mes={today.day} <= 7) pero este script no lo mide directamente, ver reporte", None, ""))
+    # Barrido 18-jul: weekTotal/weekExpenseCount/topCategory* eran getters MUERTOS (0 referencias
+    # en templates) con la definicion vieja de semana (now-7 = 8 dias) sobre monthExpenses (pierde
+    # los dias del mes anterior). Se ELIMINARON; este check vigila que no vuelvan.
+    checks.append(("INV5d [barrido] getters muertos de semana (weekTotal/weekExpenseCount/topCategory*) eliminados del codigo",
+                    m1["home"].get("deadGone") is True,
+                    f"deadGone={m1['home'].get('deadGone')} (los 6 deben dar typeof undefined)"))
+    checks.append(("[CONTROL NEGATIVO] INV5d la sonda distingue muerto de vivo: monthTotal SI existe (typeof number)",
+                    m1["home"].get("liveType") == "number",
+                    f"typeof monthTotal={m1['home'].get('liveType')}"))
 
     print("--- INV6: Dashboard año (D4: titular y mapa leen dashYearData = año completo) ---")
     chk("INV6a dashPeriodData(año,gasto)(delta) == BD TODOS los gastos del año (incl. el de hace 5 meses)", d_dashPeriodData_year_exp, exp_year_chart)

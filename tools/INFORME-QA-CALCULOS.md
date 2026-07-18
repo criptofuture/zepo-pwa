@@ -110,6 +110,25 @@ Alvaro eligió; implementado y probado. Gate: `qa-e2e-invariantes-presup.py` **6
 
 ---
 
+## ✅ 4ª TANDA — barrido final de lo que quedaba (18-jul, v185)
+
+Alvaro pidió verificar y corregir todo lo que el informe dejó sin arreglar. Resultado del barrido:
+
+| Qué quedaba | Verificación en el código actual | Acción |
+|---|---|---|
+| **Getters muertos** (`weekTotal`, `weekExpenseCount`, `topCategory*`, `budgetTotalAmount/Pct`) | Re-verificado por grep: 0 referencias en templates; conservaban definiciones VIEJAS ya corregidas en otro lado (semana de 8 días sobre `monthExpenses`) | **Eliminados** (la recomendación del informe). El gate vigila que no vuelvan: dash INV5d + presup A3, cada uno con control negativo de que la sonda sí distingue un getter vivo |
+| `spentPct` — hallazgo **NUEVO** del barrido (no estaba en el informe) | También muerto: su único consumidor era el par muerto `budgetTotalAmount` | Eliminado con el bloque |
+| **D13 — comentario desactualizado** ("aparte, gratis") | Los comentarios (~12549 y ~12645) decían "global, todos los espacios" pero el código filtra por el espacio activo desde v183 | Comentarios corregidos: ahora explican la divergencia aceptada y por qué |
+| Nota de D2 sobre `loadSplits` | ✅ pendientes ya paginados (`_fetchAllRows`). El `limit(20)` de "Cobrados" es tope de VISTA: ningún total se calcula desde `paidSplits` (verificado: solo lista, chips de nombres y find-by-id) | Nada — no es bug |
+
+**D13 (el diseño en sí) queda como Alvaro lo aceptó el 1-jul**: el patrimonio es global por usuario y
+el ahorro filtra por espacio → "Patrimonio total" varía al cambiar de espacio. Cambiarlo implicaría
+patrimonio por-espacio (cambio grande); no se toca sin pedido explícito.
+
+**Con esto el informe queda CERRADO: 0 pendientes.** (D13-diseño = aceptado, no pendiente.)
+
+---
+
 ## YA ARREGLADO Y EN DEV (v180) — no requiere decisión
 
 | # | Bug | Estado |
@@ -282,7 +301,7 @@ Alvaro eligió; implementado y probado. Gate: `qa-e2e-invariantes-presup.py` **6
 - **`ensurePatSnapshot`/`patHistory`**: internamente consistentes.
 - **Los 3 exportes** coinciden entre sí en la definición de "monto" (tu parte) cuando no hay truncado.
 
-## Getters muertos (no son bugs hoy, pero son trampas)
+## Getters muertos (no son bugs hoy, pero son trampas) — ✅ RESUELTO 18-jul: eliminados (4ª tanda)
 
 - `weekTotal`, `weekExpenseCount`, `topCategory*` filtran sobre `monthExpenses` y tienen el bug que
   `weeklyChart` ya arregló (a principio de mes pierden los días del mes anterior), **pero no están
