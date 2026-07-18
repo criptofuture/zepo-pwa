@@ -61,6 +61,7 @@ CHECKS = [
     ("E2E UI v175 (config + cuenta ingreso + chips split)", ["python", os.path.join(TOOLS, "qa-e2e-v175-ui.py")]),
     ("E2E gesto atras = un nivel (init unico, modales, tabs)", ["python", os.path.join(TOOLS, "qa-e2e-back-nav.py")]),
     ("E2E Zepi companion (chat, scan, candado Max)", ["python", os.path.join(TOOLS, "qa-e2e-zepi.py")]),
+    ("E2E Zepi agente lector (tool query_records, edge real)", ["python", os.path.join(TOOLS, "qa-zepi-agent.py")]),
     ("E2E Journey 30 dias + trials (misiones, reclamo, anti-trampa)", ["python", os.path.join(TOOLS, "qa-e2e-journey.py")]),
     # Invariantes de dinero entre pantallas (campana de calculos, jul-2026). Cada uno deriva
     # la aritmetica por su cuenta desde la BD y lleva controles negativos.

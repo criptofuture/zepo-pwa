@@ -6,6 +6,7 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { create as createJWT } from "https://deno.land/x/djwt@v3.0.2/mod.ts";
 import { SYSTEM_PROMPT } from "./prompt.ts";
+import { runQueryRecords } from "./tools.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -17,6 +18,7 @@ const MODEL = Deno.env.get("ZEPI_MODEL") || "gemini-2.5-flash";
 const MAX_MESSAGES = 12;        // historial que aceptamos del cliente
 const MAX_MSG_CHARS = 1000;     // por mensaje
 const MAX_SNAPSHOT_CHARS = 6000;
+const MAX_TOOL_ROUNDS = 2;      // consultas históricas por turno (presupuesto de 60s del edge)
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -69,6 +71,23 @@ const RESPONSE_SCHEMA = {
         required: ["label", "target"],
       },
     },
+    // Consulta histórica (agente lector): el edge la ejecuta y re-llama al modelo.
+    // El cliente NUNCA ve este campo — se resuelve server-side.
+    tool: {
+      type: "OBJECT",
+      properties: {
+        name: { type: "STRING" },
+        date_from: { type: "STRING" },
+        date_to: { type: "STRING" },
+        category: { type: "STRING" },
+        is_income: { type: "BOOLEAN" },
+        search: { type: "STRING" },
+        group_by: { type: "STRING" },
+      },
+      // Si el modelo emite tool, el schema lo OBLIGA a incluir las fechas
+      // (sin esto las omitía y la consulta moría por formato).
+      required: ["name", "date_from", "date_to"],
+    },
   },
   required: ["text"],
 };
@@ -111,31 +130,63 @@ serve(async (req) => {
     const accessToken = await getAccessToken();
     const endpoint = `https://${GCP_LOCATION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT}/locations/${GCP_LOCATION}/publishers/google/models/${MODEL}:generateContent`;
 
-    const vertexRes = await fetch(endpoint, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: { role: "system", parts: [{ text: SYSTEM_PROMPT }] },
-        contents,
-        generationConfig: {
-          temperature: 0.7,
-          responseMimeType: "application/json",
-          responseSchema: RESPONSE_SCHEMA,
-          maxOutputTokens: 1024,
-          thinkingConfig: { thinkingBudget: 0 },
-        },
-      }),
-    });
+    const askModel = async (msgs: typeof contents): Promise<any> => {
+      const vertexRes = await fetch(endpoint, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { role: "system", parts: [{ text: SYSTEM_PROMPT }] },
+          contents: msgs,
+          generationConfig: {
+            temperature: 0.7,
+            responseMimeType: "application/json",
+            responseSchema: RESPONSE_SCHEMA,
+            maxOutputTokens: 1024,
+            thinkingConfig: { thinkingBudget: 0 },
+          },
+        }),
+      });
+      if (!vertexRes.ok) {
+        console.error("[vertex]", vertexRes.status, await vertexRes.text());
+        throw new Error(`vertex_${vertexRes.status}`);
+      }
+      const vertexJson = await vertexRes.json();
+      const rawText = vertexJson?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+      try { return JSON.parse(rawText); } catch { return { text: rawText }; }
+    };
 
-    if (!vertexRes.ok) {
-      console.error("[vertex]", vertexRes.status, await vertexRes.text());
-      throw new Error(`vertex_${vertexRes.status}`);
+    let out: any = await askModel(contents);
+
+    // Agente lector: si el modelo pide query_records, ejecutarla (RLS del propio usuario)
+    // y devolverle SOLO agregados como TOOL_RESULT. Máx 2 rondas; luego responde sí o sí.
+    const dbg: any[] = [];
+    let rounds = 0;
+    while (mode === "chat" && out?.tool?.name === "query_records" && rounds < MAX_TOOL_ROUNDS) {
+      rounds++;
+      console.log("[tool]", JSON.stringify(out.tool));
+      let result: Record<string, unknown>;
+      try { result = await runQueryRecords(supa, user.id, out.tool); }
+      catch (e) { result = { error: "tool_failed: " + (e instanceof Error ? e.message : String(e)) }; }
+      if (body.debug === true) dbg.push({ tool: out.tool, result });
+      contents.push({ role: "model", parts: [{ text: JSON.stringify({ tool: out.tool }) }] });
+      contents.push({
+        role: "user",
+        parts: [{
+          text: "TOOL_RESULT=" + JSON.stringify(result) + "\n" + (rounds >= MAX_TOOL_ROUNDS
+            ? "(Answer the user NOW with these numbers; no more tool calls.)"
+            : "(Answer the user now, or request ONE more query only if strictly needed.)"),
+        }],
+      });
+      out = await askModel(contents);
     }
-
-    const vertexJson = await vertexRes.json();
-    const rawText = vertexJson?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-    let out: any = {};
-    try { out = JSON.parse(rawText); } catch { out = { text: rawText }; }
+    // Si tras las rondas el modelo sigue pidiendo tool, su text es el placeholder
+    // ("Déjame revisar…") — no dejarlo llegar al usuario como si fuera la respuesta.
+    if (mode === "chat" && out?.tool?.name && (typeof out.text !== "string" || out.text.trim().length < 60)) {
+      out = { ...out, text: "No pude completar esa consulta ahora mismo. ¿Lo intentamos de nuevo?" };
+    }
+    if (mode === "chat" && (typeof out?.text !== "string" || !out.text.trim())) {
+      out = { ...out, text: "No pude completar esa consulta ahora mismo. ¿Lo intentamos de nuevo?" };
+    }
 
     // Sanitizar contra las listas blancas — el cliente solo recibe destinos/shots válidos
     const actions = (Array.isArray(out.actions) ? out.actions : [])
@@ -148,6 +199,8 @@ serve(async (req) => {
       title: typeof out.title === "string" ? out.title : null,
       actions,
       shot,
+      // Solo con body.debug=true (QA): los args reales de la tool. Data del propio usuario.
+      ...(body.debug === true ? { _dbg: dbg } : {}),
     }), { headers: { ...cors, "Content-Type": "application/json" } });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
