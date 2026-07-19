@@ -90,6 +90,16 @@ def run(url):
         page.wait_for_function("()=>{const c=window.Alpine.$data(document.querySelector('#app'));return !!c.user;}", timeout=20000)
         page.wait_for_timeout(2000)
 
+        # Aislamiento: cada corrida ENSEÑA 'qarace'->food al hacer el clic manual. Desde v188
+        # el login fresco ya carga ese aprendizaje (antes no, y por eso la repro colaba),
+        # asi que el token quedaria categorizado y la premisa "queda en other" seria falsa.
+        page.evaluate("""async () => {
+          const c = window.Alpine.$data(document.querySelector('#app'));
+          try { await sb.from('category_learning').delete().eq('user_id', c.user.id).eq('token', 'qarace'); } catch (e) {}
+          await c.loadCategoryLearning();
+          return Object.keys(c.learnedCats || {}).filter(k => k.includes('qarace')).length;
+        }""")
+
         # ── FASE A: eleccion manual DURANTE la espera de la IA ──
         page.evaluate(START_JS, f"qarace{TS} 7")
         page.wait_for_function(WAIT_PARSED, timeout=8000)
