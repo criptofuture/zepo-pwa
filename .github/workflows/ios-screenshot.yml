@@ -4,11 +4,12 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
+  workflow_dispatch:
 
 jobs:
   ios-qa:
     runs-on: macos-15
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -34,6 +35,8 @@ jobs:
           sys.exit(1)
           ")
           xcrun simctl boot "$DEVICE"
+          # boot returns immediately; block until the sim is FULLY booted or openurl times out (code=60)
+          xcrun simctl bootstatus "$DEVICE" -b
           echo "DEVICE_UDID=$DEVICE" >> "$GITHUB_ENV"
 
       - name: Set status bar
@@ -45,7 +48,15 @@ jobs:
           sleep 2
 
       - name: Open PWA in Safari
-        run: xcrun simctl openurl "$DEVICE_UDID" "http://localhost:8080/index.html"
+        run: |
+          # slower runner images still hit sporadic timeouts right after boot — retry a few times
+          for i in 1 2 3 4 5; do
+            xcrun simctl openurl "$DEVICE_UDID" "http://localhost:8080/index.html" && exit 0
+            echo "openurl attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          echo "openurl failed after 5 attempts"
+          exit 1
 
       - name: Wait for load
         run: sleep 8
