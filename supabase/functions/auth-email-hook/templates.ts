@@ -1,4 +1,4 @@
-// Plantillas de correo de marca — Zepo y Elé (Supabase Send Email Hook → Resend)
+// Plantillas de correo de marca — Zepo, Elé y Catálogo/Lynoia (Send Email Hook → Resend)
 // Diseño aprobado por Alvaro 2026-07-14 (base: recovery Zepo crema/sage).
 
 type Theme = {
@@ -15,6 +15,8 @@ type Theme = {
   display: string; // font stack para wordmark/h1
   body: string;    // font stack para texto
   tagline: string;
+  footerNote: string;
+  signupLine: string;
   appUrl: string;
 };
 
@@ -32,6 +34,8 @@ const ZEPO: Theme = {
   display: "'Bricolage Grotesque',Georgia,'Times New Roman',serif",
   body: "-apple-system,'Segoe UI',Arial,sans-serif",
   tagline: "Tus finanzas, claras.",
+  footerNote: "Un producto de Lynoia",
+  signupLine: "Solo falta un paso: confirma tu correo para activar tu cuenta y empezar a registrar tus gastos en segundos.",
   appUrl: "https://app.zepo.lynoia.com/pwa/",
 };
 
@@ -49,7 +53,30 @@ const ELE: Theme = {
   display: "'Inter',-apple-system,'Segoe UI',Arial,sans-serif",
   body: "'Inter',-apple-system,'Segoe UI',Arial,sans-serif",
   tagline: "Tu contenido, en automático.",
+  footerNote: "Un producto de Lynoia",
+  signupLine: "Solo falta un paso: confirma tu correo para activar tu cuenta y empezar a crear contenido para tu negocio en automático.",
   appUrl: "https://app.ele.lynoia.com/",
+};
+
+// Panel de catálogo (catalogo.lynoia.com) — marca Lynoia, no marca de producto:
+// el destinatario es el CLIENTE de la agencia (Nane, etc.), no un usuario de Zepo.
+const CATALOGO: Theme = {
+  name: "Lynoia",
+  from: "Lynoia <hola@lynoia.com>",
+  bg: "#0b0b10",
+  card: "#13131b",
+  ink: "#FFFFFF",
+  muted: "rgba(255,255,255,0.74)",
+  faint: "rgba(255,255,255,0.46)",
+  border: "rgba(255,255,255,0.12)",
+  accent: "#00F0FF",
+  ctaText: "#0b0b10",
+  display: "'Inter',-apple-system,'Segoe UI',Arial,sans-serif",
+  body: "'Inter',-apple-system,'Segoe UI',Arial,sans-serif",
+  tagline: "Tu catálogo, siempre al día.",
+  footerNote: "Webs y automatización para pymes",
+  signupLine: "Solo falta un paso: confirma tu correo para activar tu cuenta y empezar a publicar tus productos desde el celular.",
+  appUrl: "https://catalogo.lynoia.com/",
 };
 
 type Copy = {
@@ -81,9 +108,7 @@ function copyFor(t: Theme, action: string, token?: string): Copy {
         preheader: `Solo falta un paso: confirma tu correo para activar tu cuenta.`,
         label: "Tu cuenta nueva",
         title: `¡Qué gusto tenerte en ${t.name}!`,
-        bodyHtml: t.name === "Zepo"
-          ? `Solo falta un paso: confirma tu correo para activar tu cuenta y empezar a registrar tus gastos en segundos.`
-          : `Solo falta un paso: confirma tu correo para activar tu cuenta y empezar a crear contenido para tu negocio en automático.`,
+        bodyHtml: t.signupLine,
         cta: "Confirmar mi correo",
         note: "Si no creaste esta cuenta, puedes ignorar este correo.",
       };
@@ -161,7 +186,7 @@ function render(t: Theme, c: Copy, url: string): string {
       </td></tr>
       <tr><td style="padding:24px 6px 4px;text-align:center;">
         <p style="margin:0 0 4px;font-family:${t.display};font-size:14px;font-weight:700;color:${t.ink};">${t.name}</p>
-        <p style="margin:0;font-family:${t.body};font-size:12px;line-height:1.6;color:${t.faint};">${t.tagline} · Un producto de Lynoia<br>Quito, Ecuador</p>
+        <p style="margin:0;font-family:${t.body};font-size:12px;line-height:1.6;color:${t.faint};">${t.tagline} · ${t.footerNote}<br>Quito, Ecuador</p>
       </td></tr>
     </table>
   </td></tr>
@@ -169,8 +194,10 @@ function render(t: Theme, c: Copy, url: string): string {
 </body></html>`;
 }
 
-export function buildEmail(app: "zepo" | "ele", action: string, url: string, token?: string) {
-  const t = app === "ele" ? ELE : ZEPO;
+export type App = "zepo" | "ele" | "catalogo";
+
+export function buildEmail(app: App, action: string, url: string, token?: string) {
+  const t = app === "ele" ? ELE : app === "catalogo" ? CATALOGO : ZEPO;
   const c = copyFor(t, action, token);
   return { from: t.from, subject: c.subject, html: render(t, c, url) };
 }

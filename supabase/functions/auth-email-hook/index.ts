@@ -4,7 +4,7 @@
 // Deploy: --no-verify-jwt (la seguridad es la firma del webhook, no JWT).
 
 import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
-import { buildEmail } from "./templates.ts";
+import { type App, buildEmail } from "./templates.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const HOOK_SECRET = (Deno.env.get("SEND_EMAIL_HOOK_SECRET") ?? "").replace("v1,whsec_", "");
@@ -16,7 +16,9 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-function detectApp(url: string): "zepo" | "ele" {
+// catalogo.lynoia.com y sus previews de CF Pages (catalogo-994.pages.dev, incl. rama.catalogo-994…)
+function detectApp(url: string): App {
+  if (/(^|\/\/|\.)catalogo(-\d+)?\.(lynoia\.com|pages\.dev)/i.test(url)) return "catalogo";
   return /(^|\/\/|\.)((app|guia)\.)?ele\.lynoia\.com/i.test(url) ? "ele" : "zepo";
 }
 
