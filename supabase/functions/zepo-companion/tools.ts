@@ -37,7 +37,7 @@ function daysBetween(a: string, b: string): number {
 
 // El modelo a veces manda "2025-3-5", "2025-03" (mes solo) o un ISO con hora.
 // Normalizamos a YYYY-MM-DD en vez de rebotar el turno entero por formato.
-function normDay(s: unknown, endOfMonth: boolean): string {
+export function normDay(s: unknown, endOfMonth: boolean): string {
   const str = String(s ?? "").trim().replace(/\//g, "-");
   const full = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
   if (full) return `${full[1]}-${full[2].padStart(2, "0")}-${full[3].padStart(2, "0")}`;
@@ -54,7 +54,7 @@ function normDay(s: unknown, endOfMonth: boolean): string {
 
 // Acepta id ("food") o label visible ("Comida"), sin distinguir mayúsculas/acentos exactos.
 // Devuelve TODAS las keys de BD que matchean (ej. "Transporte" → transport + taxi).
-function resolveCategory(input: string, custom: Record<string, string>): string[] {
+export function resolveCategory(input: string, custom: Record<string, string>): string[] {
   const norm = (s: string) => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
   const want = norm(input);
   const keys: string[] = [];
