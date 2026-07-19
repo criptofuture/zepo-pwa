@@ -152,7 +152,7 @@ serve(async (req) => {
     if (authErr || !user) throw new Error("unauthorized");
 
     const body = await req.json().catch(() => ({}));
-    const mode = body.mode === "insight" ? "insight" : body.mode === "tool" ? "tool" : "chat";
+    const mode = body.mode === "insight" ? "insight" : body.mode === "tool" ? "tool" : body.mode === "stt" ? "stt" : "chat";
 
     // Candado de plan REAL (no solo UI): la RLS de users solo deja leer la propia fila.
     // F5 probadita: pro/elite entran al CHAT con cupo mensual; insight y voz siguen Max-only.
@@ -169,6 +169,33 @@ serve(async (req) => {
       try { result = await runQueryRecords(supa, user.id, t); }
       catch (e) { result = { error: "tool_failed: " + (e instanceof Error ? e.message : String(e)) }; }
       return new Response(JSON.stringify({ result }), { headers: { ...cors, "Content-Type": "application/json" } });
+    }
+
+    // Dictado (botón 🎤 del chat): transcribe un audio corto a texto y lo devuelve.
+    // Disponible pro/elite/max — NO descuenta cupo: el mensaje que el usuario mande
+    // con ese texto es el turno que cuenta. El audio nunca se guarda.
+    if (mode === "stt") {
+      const audioB64 = typeof body.audio === "string" ? body.audio : "";
+      const mime = typeof body.mime === "string" && /^audio\/[a-z0-9.+-]{2,30}$/i.test(body.mime) ? body.mime : "audio/wav";
+      if (audioB64.length < 1000) throw new Error("empty_input");
+      if (audioB64.length > 2_800_000) throw new Error("audio_too_long"); // ~2MB ≈ 60s de WAV 16k mono
+      const sttToken = await getAccessToken();
+      const sttEndpoint = `https://${GCP_LOCATION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT}/locations/${GCP_LOCATION}/publishers/google/models/${MODEL}:generateContent`;
+      const sttRes = await fetch(sttEndpoint, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${sttToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [
+            { inlineData: { mimeType: mime, data: audioB64 } },
+            { text: "Transcribe el audio a texto plano en el idioma hablado (español latino por defecto). Devuelve SOLO la transcripción literal, sin comillas ni comentarios. Si no se oye habla, devuelve una cadena vacía." },
+          ] }],
+          generationConfig: { temperature: 0, maxOutputTokens: 512, thinkingConfig: { thinkingBudget: 0 } },
+        }),
+      });
+      if (!sttRes.ok) { console.error("[stt]", sttRes.status, await sttRes.text()); throw new Error(`vertex_${sttRes.status}`); }
+      const sttJson = await sttRes.json();
+      const sttText = String(sttJson?.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
+      return new Response(JSON.stringify({ text: sttText }), { headers: { ...cors, "Content-Type": "application/json" } });
     }
     const snapshotRaw = typeof body.snapshot === "object" && body.snapshot ? JSON.stringify(body.snapshot) : "{}";
     const snapshot = snapshotRaw.slice(0, MAX_SNAPSHOT_CHARS);
@@ -374,7 +401,7 @@ serve(async (req) => {
     const msg = e instanceof Error ? e.message : String(e);
     const status = msg === "unauthorized" || msg === "no_auth" ? 401
       : msg === "plan_required" ? 403
-      : msg === "empty_input" ? 400 : 500;
+      : msg === "empty_input" || msg === "audio_too_long" ? 400 : 500;
     return new Response(JSON.stringify({ error: msg }), { status, headers: { ...cors, "Content-Type": "application/json" } });
   }
 });

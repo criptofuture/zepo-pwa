@@ -2858,6 +2858,13 @@
     /* Modo voz de Zepi (F3, Max): llamada full-duplex con Gemini Live vía relay propio */
     .zepi-mic { width: 44px; height: 44px; border-radius: var(--radius-pill); background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; }
     .zepi-mic svg { width: 20px; height: 20px; stroke: var(--cyan); fill: none; stroke-width: 2; }
+    .zepi-mic.rec { border-color: var(--danger); animation: zepiRecPulse 1.4s ease-in-out infinite; }
+    .zepi-mic.rec svg { stroke: var(--danger); }
+    .zepi-mic.busy svg { animation: zepiSpin 0.9s linear infinite; }
+    @keyframes zepiRecPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(184,72,58,0.28); } 50% { box-shadow: 0 0 0 7px rgba(184,72,58,0); } }
+    @keyframes zepiSpin { to { transform: rotate(360deg); } }
+    .zepi-callbtn { background: var(--cyan); border-color: var(--cyan); }
+    .zepi-callbtn svg { stroke: var(--c-brand-contrast); }
     .zv-scrim { position: fixed; inset: 0; background: rgba(26,36,24,.55); z-index: 96; }
     .zv-panel { position: fixed; left: 0; right: 0; bottom: 0; max-width: 430px; margin: 0 auto; background: var(--bg); border-radius: 24px 24px 0 0; z-index: 97; padding: 30px 24px calc(26px + var(--safe-bottom)); display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
     .zv-ava { width: 84px; height: 84px; border-radius: var(--radius-pill); background: var(--gradient); display: flex; align-items: center; justify-content: center; }
@@ -6623,10 +6630,14 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
 
             <template x-if="hasPlan('pro')">
               <div class="zepi-foot">
-                <button class="zepi-mic" x-show="hasPlan('max')" @click="zepiVoiceStart()" title="Hablar con Zepi">
-                  <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 013 3v8a3 3 0 01-6 0V4a3 3 0 013-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                <button class="zepi-mic" :class="zepiDictState" @click="zepiDictToggle()" :title="zepiDictState === 'rec' ? 'Toca para terminar' : 'Dictar mensaje'">
+                  <svg x-show="zepiDictState !== 'busy'" viewBox="0 0 24 24"><path d="M12 1a3 3 0 013 3v8a3 3 0 01-6 0V4a3 3 0 013-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                  <svg x-show="zepiDictState === 'busy'" viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-6.2-8.56"/></svg>
                 </button>
                 <textarea class="zepi-input" x-model="zepiInput" placeholder="Pregúntame lo que sea…" rows="1" enterkeyhint="send" @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); sendZepi(); }"></textarea>
+                <button class="zepi-mic zepi-callbtn" x-show="hasPlan('max')" @click="zepiVoiceStart()" title="Llamada con Zepi">
+                  <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                </button>
                 <button class="zepi-send" :disabled="zepiTyping" @click="sendZepi()">
                   <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                 </button>
@@ -9363,12 +9374,13 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v186',
+    APP_VERSION: 'v187',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     // ─── ZEPI (companion IA, Max) ───
     zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
     zepiQuota: null, zepiExecBusy: false,
     zepiVoiceOpen: false, zepiVoiceState: 'connecting', zepiVoiceTranscript: '',
+    zepiDictState: 'idle',
     // ─── JOURNEY (tour guiado 30 días + premios) ───
     jrnOpen: false, jrn: null, jrnCelebrate: '', jrnClaiming: '', _jrnSaveT: null, _jrnSrc: 'manual',
     trialPlan: null, trialUntil: null, journeyDiscount: false, referredBy: null, _refActDone: false,
@@ -15699,12 +15711,95 @@ function zepoApp() {
         this.showToast('Memoria de Zepi borrada');
       } catch (e) { this.showToast('Error: ' + e.message); }
     },
+    // ─── Dictado (botón 🎤, pro+): graba con el mismo pipeline PCM16 de la llamada,
+    // arma un WAV 16k y el edge lo transcribe (Vertex). El texto queda EN el input
+    // para que el usuario lo revise y lo mande él — nada se envía solo. ───
+    async zepiDictToggle() {
+      if (this.zepiDictState === 'busy') return;
+      if (this.zepiDictState === 'rec') { await this._zdStop(); return; }
+      const zd = this._zd = { micStream: null, ctx: null, worklet: null, chunks: [], len: 0, inRate: 48000, closed: false };
+      try {
+        zd.micStream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+        zd.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        await zd.ctx.resume();
+        const workletCode = "class ZdCap extends AudioWorkletProcessor { constructor(){ super(); this._b=[]; this._n=0; } process(inputs){ const ch = inputs[0] && inputs[0][0]; if (ch){ this._b.push(new Float32Array(ch)); this._n += ch.length; if (this._n >= 2048){ const all = new Float32Array(this._n); let o=0; for (const b of this._b){ all.set(b,o); o+=b.length; } this.port.postMessage(all, [all.buffer]); this._b=[]; this._n=0; } } return true; } } registerProcessor('zd-cap', ZdCap);";
+        const wurl = URL.createObjectURL(new Blob([workletCode], { type: 'application/javascript' }));
+        await zd.ctx.audioWorklet.addModule(wurl);
+        URL.revokeObjectURL(wurl);
+        zd.inRate = zd.ctx.sampleRate;
+        const src = zd.ctx.createMediaStreamSource(zd.micStream);
+        zd.worklet = new AudioWorkletNode(zd.ctx, 'zd-cap');
+        src.connect(zd.worklet);
+        zd.worklet.port.onmessage = (ev) => {
+          if (zd.closed) return;
+          if (!this.zepiOpen) { this._zdCleanup(); this.zepiDictState = 'idle'; return; }
+          zd.chunks.push(ev.data);
+          zd.len += ev.data.length;
+          if (zd.len / zd.inRate >= 60) this._zdStop(); // tope 60s por dictado
+        };
+        this.zepiDictState = 'rec';
+      } catch (e) {
+        this._zdCleanup();
+        this.zepiDictState = 'idle';
+        this.showToast(e && e.name === 'NotAllowedError' ? 'Necesito permiso del micrófono para dictar' : 'No pude iniciar el micrófono');
+      }
+    },
+    async _zdStop() {
+      const zd = this._zd || {};
+      if (zd.closed) return;
+      const secs = (zd.len || 0) / (zd.inRate || 48000);
+      this._zdCleanup();
+      if (secs < 0.5) { this.zepiDictState = 'idle'; this.showToast('Muy corto — habla un momento después de tocar el micrófono'); return; }
+      this.zepiDictState = 'busy';
+      try {
+        const token = (await sb.auth.getSession())?.data?.session?.access_token;
+        const resp = await fetch(SUPABASE_URL + '/functions/v1/zepo-companion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ mode: 'stt', audio: this._zdWav(zd.chunks, zd.len, zd.inRate), mime: 'audio/wav' }),
+          signal: AbortSignal.timeout(30000),
+        });
+        const j = await resp.json();
+        if (!resp.ok) throw new Error(j.error || ('http_' + resp.status));
+        const text = String(j.text || '').trim();
+        if (text) this.zepiInput = (this.zepiInput ? this.zepiInput.trimEnd() + ' ' : '') + text;
+        else this.showToast('No entendí nada — ¿lo intentas de nuevo?');
+      } catch (e) { this.showToast('No pude transcribir: ' + (e.message || e)); }
+      this.zepiDictState = 'idle';
+    },
+    _zdCleanup() {
+      const zd = this._zd || {};
+      zd.closed = true;
+      try { zd.worklet && zd.worklet.disconnect(); } catch (e) {}
+      try { (zd.micStream ? zd.micStream.getTracks() : []).forEach(t => t.stop()); } catch (e) {}
+      try { zd.ctx && zd.ctx.close(); } catch (e) {}
+    },
+    _zdWav(chunks, len, inRate) {
+      const ratio = inRate / 16000;
+      const n = Math.floor(len / ratio);
+      const all = new Float32Array(len);
+      let o = 0;
+      for (const c of chunks) { all.set(c, o); o += c.length; }
+      const buf = new ArrayBuffer(44 + n * 2);
+      const dv = new DataView(buf);
+      const tag = (off, s) => { for (let i = 0; i < s.length; i++) dv.setUint8(off + i, s.charCodeAt(i)); };
+      tag(0, 'RIFF'); dv.setUint32(4, 36 + n * 2, true); tag(8, 'WAVE'); tag(12, 'fmt ');
+      dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+      dv.setUint32(24, 16000, true); dv.setUint32(28, 32000, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true);
+      tag(36, 'data'); dv.setUint32(40, n * 2, true);
+      for (let i = 0; i < n; i++) { const v = all[Math.floor(i * ratio)] || 0; dv.setInt16(44 + i * 2, Math.max(-32768, Math.min(32767, Math.round(v * 32767))), true); }
+      const u8 = new Uint8Array(buf);
+      let bin = '';
+      for (let i = 0; i < u8.length; i += 8192) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 8192));
+      return btoa(bin);
+    },
     // ─── Voz de Zepi (F3, Max): llamada full-duplex vía relay propio (live.zepo.lynoia.com)
     // contra Gemini Live en Vertex. El SA de Google vive SOLO en el relay; aquí viaja el JWT
     // del usuario. Las escrituras de la voz TAMBIÉN pasan por la tarjeta de confirmación. ───
     async zepiVoiceStart() {
       if (!this.hasPlan('max')) { this.showToast('La voz de Zepi es de Max'); return; }
       if (this.zepiVoiceOpen) return;
+      if (this.zepiDictState !== 'idle') { this._zdCleanup(); this.zepiDictState = 'idle'; } // un solo mic a la vez
       this.zepiVoiceOpen = true;
       this.zepiVoiceState = 'connecting';
       this.zepiVoiceTranscript = '';
@@ -17058,7 +17153,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v162.js';
+  const CURRENT_SW = 'sw-v163.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {

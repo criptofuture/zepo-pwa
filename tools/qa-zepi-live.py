@@ -6,15 +6,20 @@ QA E2E REAL: relay de voz de Zepi (F3) — live.zepo.lynoia.com -> Vertex Live A
  2. WS sin token -> rechazado (el relay no deja pasar anonimos).
  3. WS con token de usuario FREE -> rechazado (voz es Max-only).
  4. WS con token MAX + setup -> Vertex contesta setupComplete (sesion Live real abierta).
- 5. Turno de texto "responde solo: hola" -> llega serverContent con audio o texto + turnComplete.
+ 5. VOZ REAL (TTS 16k PCM16, mismo formato del cliente) por realtimeInput -> Zepi
+    responde con AUDIO + turnComplete. (native-audio IGNORA turnos de texto — la
+    prueba tiene que ser audio->audio como en la app.)
 
 No prueba microfono/altavoz (eso es certificacion en iPhone); prueba TODO el camino
 de red y auth que la voz usa. USO: python tools/qa-zepi-live.py
 """
+import base64
 import json
 import os
 import re
+import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -61,21 +66,44 @@ def login(email):
     raise RuntimeError(f"login imposible: {last}")
 
 
-def try_ws(token, do_session=False):
-    """Devuelve (conectado, setup_ok, got_content, got_turn_complete)."""
+def make_tts_pcm():
+    """Voz real con Windows TTS: PCM16 crudo 16k mono (formato exacto del cliente) + 1.5s
+    de silencio al final para que el VAD del modelo cierre el turno."""
+    path = os.path.join(tempfile.gettempdir(), "zepi-qa-live.wav")
+    ps = f"""
+Add-Type -AssemblyName System.Speech
+$s = New-Object System.Speech.Synthesis.SpeechSynthesizer
+$es = $s.GetInstalledVoices() | Where-Object {{ $_.VoiceInfo.Culture.Name -like 'es-*' -and $_.Enabled }} | Select-Object -First 1
+if ($es) {{ $s.SelectVoice($es.VoiceInfo.Name); $phrase = 'hola zepi, saludame en una frase corta' }}
+else {{ $phrase = 'hello zepi, say hi back in one short sentence' }}
+$fmt = New-Object System.Speech.AudioFormat.SpeechAudioFormatInfo(16000, [System.Speech.AudioFormat.AudioBitsPerSample]::Sixteen, [System.Speech.AudioFormat.AudioChannel]::Mono)
+$s.SetOutputToWaveFile('{path}', $fmt)
+$s.Speak($phrase)
+$s.Dispose()
+"""
+    out = subprocess.run(["powershell.exe", "-NoProfile", "-Command", ps],
+                         capture_output=True, text=True, timeout=60)
+    if not os.path.exists(path):
+        raise RuntimeError(f"TTS local fallo: rc={out.returncode} err={(out.stderr or '')[-200:]}")
+    return open(path, "rb").read()[44:] + b"\x00" * 48000
+
+
+def try_ws(token, do_session=False, pcm=None):
+    """Devuelve (conectado, setup_ok, got_audio, got_turn_complete)."""
     url = f"wss://{RELAY}/ws" + (f"?token={token}" if token else "")
     try:
         ws = ws_connect(url, open_timeout=20, close_timeout=5, max_size=10 * 1024 * 1024)
     except Exception:
         return False, False, False, False
-    setup_ok = got_content = got_turn = False
+    setup_ok = got_audio = got_turn = False
     try:
         if do_session:
             ws.send(json.dumps({"setup": {
                 "model": "ignored-el-relay-lo-pinea",
                 "generationConfig": {"responseModalities": ["AUDIO"]},
+                "inputAudioTranscription": {}, "outputAudioTranscription": {},
             }}))
-            deadline = time.time() + 30
+            deadline = time.time() + 45
             while time.time() < deadline:
                 try:
                     raw = ws.recv(timeout=max(1, deadline - time.time()))
@@ -84,24 +112,28 @@ def try_ws(token, do_session=False):
                 msg = json.loads(raw if isinstance(raw, str) else raw.decode("utf-8", "ignore"))
                 if "setupComplete" in msg:
                     setup_ok = True
-                    ws.send(json.dumps({"clientContent": {
-                        "turns": [{"role": "user", "parts": [{"text": "responde solo: hola"}]}],
-                        "turnComplete": True,
-                    }}))
-                    deadline = time.time() + 40
+                    # voz como la manda la app: chunks de 100ms por realtimeInput
+                    for i in range(0, len(pcm or b""), 3200):
+                        ws.send(json.dumps({"realtimeInput": {"audio": {
+                            "data": base64.b64encode(pcm[i:i + 3200]).decode(),
+                            "mimeType": "audio/pcm;rate=16000",
+                        }}}))
+                    deadline = time.time() + 45
                 if "serverContent" in msg:
                     sc = msg["serverContent"]
-                    if sc.get("modelTurn") or sc.get("outputTranscription"):
-                        got_content = True
+                    for p in ((sc.get("modelTurn") or {}).get("parts") or []):
+                        if (p.get("inlineData") or {}).get("data"):
+                            got_audio = True
                     if sc.get("turnComplete"):
                         got_turn = True
-                        break
+                        if got_audio:
+                            break
     finally:
         try:
             ws.close()
         except Exception:
             pass
-    return True, setup_ok, got_content, got_turn
+    return True, setup_ok, got_audio, got_turn
 
 
 def main():
@@ -124,10 +156,11 @@ def main():
     check("3. WS con token free -> rechazado (voz Max-only)", not ok_f)
 
     jwt_max = login("max@zepo.test")
-    ok_m, setup_ok, got_content, got_turn = try_ws(jwt_max, do_session=True)
+    pcm = make_tts_pcm()
+    ok_m, setup_ok, got_audio, got_turn = try_ws(jwt_max, do_session=True, pcm=pcm)
     check("4. WS max + setup -> setupComplete de Vertex", ok_m and setup_ok)
-    check("5. turno de texto -> serverContent + turnComplete", got_content and got_turn,
-          f"content={got_content} turn={got_turn}")
+    check("5. voz real (realtimeInput) -> Zepi contesta con AUDIO + turnComplete",
+          got_audio and got_turn, f"audio={got_audio} turn={got_turn}")
 
     passed = sum(1 for _, ok2 in results if ok2)
     print(f"\n{passed}/{len(results)} PASS")
