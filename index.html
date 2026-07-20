@@ -9555,7 +9555,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v189',
+    APP_VERSION: 'v190',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     // ─── ZEPI (companion IA, Max) ───
     zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
@@ -15671,11 +15671,12 @@ function zepoApp() {
     openZepi() {
       this.zepiOpen = true;
       this.zepiBadge = 0;
-      if (!this.hasPlan('max')) return;
+      if (!this.hasPlan('pro')) return;                 // free: sin Zepi (el composer ya lo bloquea)
+      // Pro/Elite pagan el chat: cargan su historial y hacen scroll aunque no sean Max.
       if (!this._zepiLoaded) { this.zepiLoadChat(); this._zepiLoaded = true; }
-      this.zepiScan();
-      this.zepiDailyInsight();
       this.$nextTick(() => this._zepiScroll());
+      // Scan proactivo + insight IA del día siguen Max-only (Fase 3 abrirá el insight a Elite).
+      if (this.hasPlan('max')) { this.zepiScan(); this.zepiDailyInsight(); }
     },
     zepiLoadChat() {
       try {
@@ -15773,7 +15774,15 @@ function zepoApp() {
           };
         }
       } catch (e) {}
-      try { snap.splits = { meDeben: r2(this.teDebenConfirmado), adelantadoEsteMes: r2(this.unsettledAdvances) }; } catch (e) {}
+      try {
+        // Contrato del prompt: splits {meDeben, debo, pendientes, oldestDays}. Cobros = Max-only,
+        // para Pro/Elite estos getters dan 0 (inofensivo). oldestDays alimenta el insight "cobros viejos".
+        const pend = (this.pendingSplits || []).filter(e => !e.is_income);
+        const nowMs = Date.now();
+        let oldestDays = 0;
+        pend.forEach(e => { const d = e.date || e.created_at; if (d) { const days = Math.floor((nowMs - new Date(d).getTime()) / 86400000); if (days > oldestDays) oldestDays = days; } });
+        snap.splits = { meDeben: r2(this.teDebenConfirmado), debo: r2(this.totalDeboAmount), pendientes: pend.length, oldestDays };
+      } catch (e) {}
       try { if (this.hasPlan('max') && this.lifetimeSavingsLoaded) snap.patrimonio = { neto: r2(this.patNetWorth), ahorro: r2(this.lifetimeSavings) }; } catch (e) {}
       try { snap.recurring = (this.recurringTemplates || []).length; } catch (e) {}
       return snap;
@@ -17698,7 +17707,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v165.js';
+  const CURRENT_SW = 'sw-v166.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
