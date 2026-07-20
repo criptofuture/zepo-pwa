@@ -15,6 +15,10 @@ const GCP_SA_JSON = Deno.env.get("GCP_SA_JSON")!;
 const GCP_PROJECT = Deno.env.get("GCP_PROJECT") || "gen-lang-client-0934320964";
 const GCP_LOCATION = Deno.env.get("GCP_LOCATION") || "us-central1";
 const MODEL = Deno.env.get("ZEPI_MODEL") || "gemini-2.5-flash";
+// Razonamiento del modelo (thinking). 0 = apagado (más rápido). Un presupuesto modesto
+// mejora la elección de tool/intent y el coaching, a costa de latencia por llamada
+// (ojo: un turno puede hacer varias llamadas por las rondas de tool). Tunable sin redeploy.
+const THINKING = Number(Deno.env.get("ZEPI_THINKING") ?? "512");
 
 const MAX_MESSAGES = 12;        // historial que aceptamos del cliente
 const MAX_MSG_CHARS = 1000;     // por mensaje
@@ -266,7 +270,8 @@ serve(async (req) => {
             responseMimeType: "application/json",
             responseSchema: RESPONSE_SCHEMA,
             maxOutputTokens: 1024,
-            thinkingConfig: { thinkingBudget: 0 },
+            // Chat + insight razonan (mejor tool/intent y coaching); el dictado (stt) sigue en 0.
+            thinkingConfig: { thinkingBudget: THINKING },
           },
         }),
       });
