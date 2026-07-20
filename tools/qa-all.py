@@ -74,6 +74,7 @@ CHECKS = [
     ("E2E invariantes presupuestos/espacios/patrimonio", ["python", os.path.join(TOOLS, "qa-e2e-invariantes-presup.py")]),
     ("E2E limites (tope 1000 filas paginado + recurrente dividido)", ["python", os.path.join(TOOLS, "qa-e2e-invariantes-limites.py")]),
     ("E2E invariantes extra (mes/año/historial/adelanto/PDF/borrar espacio)", ["python", os.path.join(TOOLS, "qa-e2e-invariantes-extra.py")]),
+    ("E2E Wrapped 'Mi mes en Zepo' (PNG normal + privacidad + boton)", ["python", os.path.join(TOOLS, "qa-e2e-wrapped.py")]),
 ]
 
 def main():

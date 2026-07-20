@@ -2482,6 +2482,13 @@
     /* ═══ JOURNEY — tour guiado 30 días + premios ═══ */
     .jrn-home-card { margin: 0 20px 16px; padding: 13px 15px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; align-items: center; gap: 12px; cursor: pointer; }
     .jrn-home-card.claimable { border-color: var(--cyan); box-shadow: 0 4px 16px rgba(var(--c-brand-rgb), 0.14); }
+    /* Compartir mi mes (wrapped) — loop de crecimiento, disponible a todos los planes */
+    .share-month-btn { margin: 0 20px 16px; padding: 12px 15px; background: rgba(var(--c-brand-rgb), 0.07); border: 1px solid rgba(var(--c-brand-rgb), 0.22); border-radius: var(--radius); display: flex; align-items: center; gap: 11px; cursor: pointer; font-family: inherit; text-align: left; width: auto; }
+    .share-month-btn:active { transform: scale(0.99); }
+    .share-month-ico { width: 34px; height: 34px; border-radius: 10px; background: var(--gradient); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .share-month-txt { flex: 1; min-width: 0; }
+    .share-month-title { font-size: 13px; font-weight: 700; letter-spacing: -0.2px; color: var(--text); }
+    .share-month-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
     .jrn-ring { position: relative; width: 44px; height: 44px; flex-shrink: 0; }
     .jrn-ring svg { display: block; }
     .jrn-ring-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; }
@@ -4007,6 +4014,18 @@ setTimeout(function() {
             <div class="stat-card-sub">este mes</div>
           </div>
         </div>
+
+        <!-- Comparte tu mes (wrapped) — imagen linda para historias; motor de crecimiento -->
+        <button class="share-month-btn" x-show="monthExpenses.length + monthIncomeRows.length >= 3" x-cloak @click="shareMonthWrapped()">
+          <span class="share-month-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" width="17" height="17"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          </span>
+          <span class="share-month-txt">
+            <span class="share-month-title">Comparte tu mes</span>
+            <span class="share-month-sub">Una imagen linda de tu resumen para tus historias</span>
+          </span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4" width="16" height="16"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
 
         <!-- Journey 30 días — checklist guiado con premios -->
         <div class="jrn-home-card" :class="{ claimable: !!jrnClaimableChapter }" x-show="jrnCardVisible" x-cloak @click="jrnOpen = true">
@@ -9536,7 +9555,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v188',
+    APP_VERSION: 'v189',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     // ─── ZEPI (companion IA, Max) ───
     zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
@@ -14904,6 +14923,158 @@ function zepoApp() {
       setTimeout(() => URL.revokeObjectURL(url), 4000);
     },
 
+    // ── "Mi mes en Zepo" (wrapped compartible) ──────────────────────────
+    // Genera una imagen 1080x1920 (historia IG) del resumen del mes y la
+    // comparte por Web Share (móvil) / descarga (desktop). Respeta hideAmounts:
+    // en modo privacidad enmascara los $ pero conserva conteos, categorías y %.
+    async shareMonthWrapped() {
+      try {
+        this.showToast('Creando tu resumen…');
+        const canvas = document.createElement('canvas');
+        canvas.width = 1080; canvas.height = 1920;
+        await this._drawWrapped(canvas);
+        const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+        if (!blob) { this.showToast('No se pudo crear la imagen'); return; }
+        await this._saveFile(blob, 'mi-mes-en-zepo.png');
+      } catch (e) {
+        console.warn('[wrapped]', e && e.message);
+        this.showToast('No se pudo crear el resumen');
+      }
+    },
+
+    async _drawWrapped(canvas) {
+      const ctx = canvas.getContext('2d');
+      const W = 1080, H = 1920;
+      const hide = this.hideAmounts;
+      const money = (v) => hide ? '••••' : ('$' + this.fmtMoney(Math.abs(v)));
+      const signed = (v) => hide ? '••••' : ((v < 0 ? '−$' : '+$') + this.fmtMoney(Math.abs(v)));
+
+      // Cargar la display de marca antes de pintar (si falla, cae a la del sistema).
+      try { await document.fonts.load('800 120px "Bricolage Grotesque"'); await document.fonts.load('600 40px "Bricolage Grotesque"'); await document.fonts.ready; } catch (e) {}
+      const DISP = '"Bricolage Grotesque", "Geist", system-ui, sans-serif';
+      const BODY = '"Geist", system-ui, sans-serif';
+
+      // Paleta editorial (misma que la app; canvas no lee var(--*), van literales).
+      const CREMA = '#EFEADB', CREMA2 = '#F4EFE2', SAGE = '#507D5A', SAGE2 = '#84AF72',
+            INK = '#1A2418', INKSOFT = 'rgba(26,36,24,0.60)', WHITE = '#FFFFFF',
+            LIMA = '#D6D864', EXP = '#B8483A', BORDER = 'rgba(26,36,24,0.12)';
+
+      const rr = (x, y, w, h, r) => {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      };
+
+      // Datos del mes (siempre "este mes", independiente del estado del dashboard).
+      const mExp = this.monthExpenses;
+      const nMoves = mExp.length + this.monthIncomeRows.length;
+      const income = this.monthIncome, spent = this.monthTotal, balance = this.monthBalance;
+      const totals = {};
+      mExp.forEach(e => { totals[e.category] = (totals[e.category] || 0) + e.amount; });
+      const top = Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => ({
+        label: (CAT_MAP[k] && CAT_MAP[k].label) || 'Otros',
+        emoji: (CAT_MAP[k] && CAT_MAP[k].emoji) || '✨',
+        total: v, pct: Math.round(v / (spent || 1) * 100),
+      }));
+      const streak = this.jrn ? (this.jrn.streak_days || 0) : 0;
+      const monthLabel = (this.currentMonthName || '').toString().toUpperCase() + ' ' + new Date().getFullYear();
+
+      // Fondo crema + blob sage suave arriba-derecha (calidez, sin ruido).
+      ctx.fillStyle = CREMA; ctx.fillRect(0, 0, W, H);
+      const g = ctx.createRadialGradient(W - 120, 120, 40, W - 120, 120, 520);
+      g.addColorStop(0, 'rgba(80,125,90,0.12)'); g.addColorStop(1, 'rgba(80,125,90,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+      // Wordmark: tile Z + ZEPO
+      const M = 90;
+      ctx.fillStyle = SAGE; rr(M, 96, 66, 66, 18); ctx.fill();
+      ctx.fillStyle = WHITE; ctx.font = '800 40px ' + DISP; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('Z', M + 33, 131);
+      ctx.fillStyle = INK; ctx.font = '800 34px ' + DISP; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText('ZEPO', M + 84, 131);
+
+      // Título
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = INK; ctx.font = '800 82px ' + DISP;
+      ctx.fillText('Mi mes', M, 300);
+      ctx.fillText('en Zepo', M, 392);
+      ctx.fillStyle = SAGE; ctx.font = '700 40px ' + DISP;
+      ctx.save(); ctx.letterSpacing = '4px';
+      ctx.fillText(monthLabel, M, 452);
+      ctx.restore();
+
+      // Tarjeta resumen (blanca)
+      let y = 520;
+      ctx.fillStyle = WHITE; ctx.strokeStyle = BORDER; ctx.lineWidth = 2;
+      rr(M, y, W - 2 * M, 470, 40); ctx.fill(); ctx.stroke();
+      // Movimientos
+      ctx.textAlign = 'center';
+      ctx.fillStyle = INKSOFT; ctx.font = '700 28px ' + BODY;
+      ctx.save(); ctx.letterSpacing = '3px'; ctx.fillText('MOVIMIENTOS ESTE MES', W / 2, y + 70); ctx.restore();
+      ctx.fillStyle = INK; ctx.font = '800 130px ' + DISP;
+      ctx.fillText(String(nMoves), W / 2, y + 210);
+      // Divisoria
+      ctx.strokeStyle = BORDER; ctx.beginPath(); ctx.moveTo(M + 50, y + 268); ctx.lineTo(W - M - 50, y + 268); ctx.stroke();
+      // Ingresos / Gastos
+      const colL = M + (W - 2 * M) / 4, colR = W - M - (W - 2 * M) / 4;
+      ctx.fillStyle = INKSOFT; ctx.font = '700 26px ' + BODY;
+      ctx.save(); ctx.letterSpacing = '2px';
+      ctx.fillText('INGRESOS', colL, y + 330); ctx.fillText('GASTOS', colR, y + 330); ctx.restore();
+      ctx.font = '800 52px ' + DISP;
+      ctx.fillStyle = SAGE; ctx.fillText(hide ? '••••' : ('+$' + this.fmtMoney(income)), colL, y + 400);
+      ctx.fillStyle = EXP; ctx.fillText(hide ? '••••' : ('−$' + this.fmtMoney(spent)), colR, y + 400);
+
+      // Tarjeta categorías
+      y = 1050;
+      const chH = top.length ? (150 + top.length * 96) : 220;
+      ctx.fillStyle = WHITE; ctx.strokeStyle = BORDER; ctx.lineWidth = 2;
+      rr(M, y, W - 2 * M, chH, 40); ctx.fill(); ctx.stroke();
+      ctx.textAlign = 'left'; ctx.fillStyle = INKSOFT; ctx.font = '700 28px ' + BODY;
+      ctx.save(); ctx.letterSpacing = '3px'; ctx.fillText('EN QUÉ SE FUE', M + 50, y + 72); ctx.restore();
+      if (!top.length) {
+        ctx.fillStyle = INKSOFT; ctx.font = '500 32px ' + BODY;
+        ctx.fillText('Aún sin gastos este mes', M + 50, y + 150);
+      } else {
+        let ry = y + 130;
+        top.forEach((c) => {
+          ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.font = '400 44px ' + BODY; ctx.fillText(c.emoji, M + 50, ry + 28);
+          ctx.fillStyle = INK; ctx.font = '700 34px ' + DISP; ctx.fillText(c.label, M + 120, ry + 20);
+          ctx.textAlign = 'right'; ctx.fillStyle = SAGE; ctx.font = '800 34px ' + DISP;
+          ctx.fillText(c.pct + '%', W - M - 50, ry + 20);
+          // barra
+          const bx = M + 120, bw = W - M - 50 - bx, by = ry + 48, bh = 16;
+          ctx.fillStyle = CREMA2; rr(bx, by, bw, bh, 8); ctx.fill();
+          const grad = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+          grad.addColorStop(0, SAGE); grad.addColorStop(1, SAGE2);
+          ctx.fillStyle = grad; rr(bx, by, Math.max(bh, bw * Math.min(1, c.pct / 100)), bh, 8); ctx.fill();
+          ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+          ry += 96;
+        });
+      }
+
+      // Racha (si hay)
+      if (streak >= 2) {
+        const py = y + chH + 44, pw = 420, px = (W - pw) / 2;
+        ctx.fillStyle = 'rgba(80,125,90,0.12)'; rr(px, py, pw, 88, 44); ctx.fill();
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = INK; ctx.font = '700 38px ' + DISP;
+        ctx.fillText('🔥 ' + streak + (streak === 1 ? ' día' : ' días') + ' de racha', W / 2, py + 46);
+        ctx.textBaseline = 'alphabetic';
+      }
+
+      // Footer
+      ctx.textAlign = 'center';
+      ctx.fillStyle = INK; ctx.font = '700 40px ' + DISP;
+      ctx.fillText('Llevo mis gastos con Zepo', W / 2, H - 150);
+      ctx.fillStyle = SAGE; ctx.font = '600 34px ' + BODY;
+      ctx.fillText('zepo.lynoia.com', W / 2, H - 96);
+    },
+
     async exportCSV() {
       // Paginado: sin esto PostgREST devolvía solo los 1000 más recientes y el CSV omitía
       // el resto SIN avisar. Ver _fetchAllRows (.limit NO sube el tope del servidor).
@@ -17527,7 +17698,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v164.js';
+  const CURRENT_SW = 'sw-v165.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
