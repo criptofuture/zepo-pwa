@@ -13,8 +13,16 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const GCP_SA_JSON = Deno.env.get("GCP_SA_JSON")!;
 const GCP_PROJECT = Deno.env.get("GCP_PROJECT") || "gen-lang-client-0934320964";
-const GCP_LOCATION = Deno.env.get("GCP_LOCATION") || "us-central1";
 const MODEL = Deno.env.get("ZEPI_MODEL") || "gemini-2.5-flash";
+// generateContent (chat / dictado / insight) corre en `global`: su pool de cupo compartido
+// es mucho mayor que el de una región fija → esquiva los 429 RESOURCE_EXHAUSTED que satura
+// us-central1. La voz nativa de la llamada es OTRO servicio (relay del VPS) y no se toca aquí.
+const GEN_LOCATION = Deno.env.get("ZEPI_GEN_LOCATION") || "global";
+// Si flash se satura pese a los reintentos, caemos a un modelo con pool aparte (flash-lite).
+const FALLBACK_MODEL = Deno.env.get("ZEPI_FALLBACK_MODEL") || "gemini-2.5-flash-lite";
+const vertexHost = (loc: string) => loc === "global" ? "aiplatform.googleapis.com" : `${loc}-aiplatform.googleapis.com`;
+const vertexUrl = (loc: string, model: string) =>
+  `https://${vertexHost(loc)}/v1/projects/${GCP_PROJECT}/locations/${loc}/publishers/google/models/${model}:generateContent`;
 // Razonamiento del modelo (thinking). 0 = apagado (más rápido). Un presupuesto modesto
 // mejora la elección de tool/intent y el coaching, a costa de latencia por llamada
 // (ojo: un turno puede hacer varias llamadas por las rondas de tool). Tunable sin redeploy.
@@ -55,6 +63,32 @@ async function getAccessToken(): Promise<string> {
   const json = await res.json();
   _tokenCache = { token: json.access_token, exp: now + (json.expires_in || 3600) };
   return _tokenCache.token;
+}
+
+// Reintento con espera ante 429/503 (RESOURCE_EXHAUSTED / capacidad): el pool compartido
+// de Vertex rebota intermitente. Sin esto un rebote = 500 al usuario (y gate QA rojo).
+async function vertexFetch(token: string, url: string, payload: unknown): Promise<Response> {
+  const backoff = [0, 800, 2500];
+  for (let i = 0; i < backoff.length; i++) {
+    if (backoff[i]) await new Promise((r) => setTimeout(r, backoff[i]));
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok || (res.status !== 429 && res.status !== 503) || i === backoff.length - 1) return res;
+    await res.body?.cancel();  // descartar el cuerpo del 429 antes del reintento
+  }
+  throw new Error("vertex_unreachable");
+}
+
+// generateContent en región `global` + fallback a flash-lite si flash sigue saturado.
+async function vertexGenerate(token: string, payload: unknown): Promise<Response> {
+  const res = await vertexFetch(token, vertexUrl(GEN_LOCATION, MODEL), payload);
+  if (res.ok || (res.status !== 429 && res.status !== 503)) return res;
+  await res.body?.cancel();
+  console.error("[vertex] flash 429/503 tras reintentos → fallback", FALLBACK_MODEL);
+  return await vertexFetch(token, vertexUrl(GEN_LOCATION, FALLBACK_MODEL), payload);
 }
 
 // Destinos navegables válidos (lista blanca compartida con el cliente — zepiGo)
@@ -184,17 +218,12 @@ serve(async (req) => {
       if (audioB64.length < 1000) throw new Error("empty_input");
       if (audioB64.length > 2_800_000) throw new Error("audio_too_long"); // ~2MB ≈ 60s de WAV 16k mono
       const sttToken = await getAccessToken();
-      const sttEndpoint = `https://${GCP_LOCATION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT}/locations/${GCP_LOCATION}/publishers/google/models/${MODEL}:generateContent`;
-      const sttRes = await fetch(sttEndpoint, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${sttToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [
-            { inlineData: { mimeType: mime, data: audioB64 } },
-            { text: "Transcribe el audio a texto plano en el idioma hablado (español latino por defecto). Devuelve SOLO la transcripción literal, sin comillas ni comentarios. Si no se oye habla, devuelve una cadena vacía." },
-          ] }],
-          generationConfig: { temperature: 0, maxOutputTokens: 512, thinkingConfig: { thinkingBudget: 0 } },
-        }),
+      const sttRes = await vertexGenerate(sttToken, {
+        contents: [{ role: "user", parts: [
+          { inlineData: { mimeType: mime, data: audioB64 } },
+          { text: "Transcribe el audio a texto plano en el idioma hablado (español latino por defecto). Devuelve SOLO la transcripción literal, sin comillas ni comentarios. Si no se oye habla, devuelve una cadena vacía." },
+        ] }],
+        generationConfig: { temperature: 0, maxOutputTokens: 512, thinkingConfig: { thinkingBudget: 0 } },
       });
       if (!sttRes.ok) { console.error("[stt]", sttRes.status, await sttRes.text()); throw new Error(`vertex_${sttRes.status}`); }
       const sttJson = await sttRes.json();
@@ -256,24 +285,19 @@ serve(async (req) => {
     }
 
     const accessToken = await getAccessToken();
-    const endpoint = `https://${GCP_LOCATION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT}/locations/${GCP_LOCATION}/publishers/google/models/${MODEL}:generateContent`;
 
     const askModel = async (msgs: typeof contents): Promise<any> => {
-      const vertexRes = await fetch(endpoint, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: { role: "system", parts: [{ text: SYSTEM_PROMPT }] },
-          contents: msgs,
-          generationConfig: {
-            temperature: 0.7,
-            responseMimeType: "application/json",
-            responseSchema: RESPONSE_SCHEMA,
-            maxOutputTokens: 1024,
-            // Chat + insight razonan (mejor tool/intent y coaching); el dictado (stt) sigue en 0.
-            thinkingConfig: { thinkingBudget: THINKING },
-          },
-        }),
+      const vertexRes = await vertexGenerate(accessToken, {
+        systemInstruction: { role: "system", parts: [{ text: SYSTEM_PROMPT }] },
+        contents: msgs,
+        generationConfig: {
+          temperature: 0.7,
+          responseMimeType: "application/json",
+          responseSchema: RESPONSE_SCHEMA,
+          maxOutputTokens: 1024,
+          // Chat + insight razonan (mejor tool/intent y coaching); el dictado (stt) sigue en 0.
+          thinkingConfig: { thinkingBudget: THINKING },
+        },
       });
       if (!vertexRes.ok) {
         console.error("[vertex]", vertexRes.status, await vertexRes.text());
