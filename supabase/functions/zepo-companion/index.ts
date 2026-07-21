@@ -154,6 +154,22 @@ const RESPONSE_SCHEMA = {
         total: { type: "NUMBER" },
         description: { type: "STRING" },
         person: { type: "STRING" },
+        id: { type: "STRING" },
+        patch: {
+          type: "OBJECT",
+          properties: {
+            amount: { type: "NUMBER" },
+            description: { type: "STRING" },
+            category: { type: "STRING" },
+            date: { type: "STRING" },
+          },
+        },
+        // set_goal (Fase 6) — propiedades OPCIONALES; kind sigue siendo el unico required
+        goal_kind: { type: "STRING" },
+        title: { type: "STRING" },
+        target_amount: { type: "NUMBER" },
+        deadline: { type: "STRING" },
+        current_amount: { type: "NUMBER" },
       },
       required: ["kind"],
     },
@@ -193,11 +209,13 @@ serve(async (req) => {
     const mode = body.mode === "insight" ? "insight" : body.mode === "tool" ? "tool" : body.mode === "stt" ? "stt" : "chat";
 
     // Candado de plan REAL (no solo UI): la RLS de users solo deja leer la propia fila.
-    // F5 probadita: pro/elite entran al CHAT con cupo mensual; insight y voz siguen Max-only.
+    // F5: pro/elite entran al CHAT con cupo mensual. Fase 3: el insight diario se abre a
+    // Elite+ (anzuelo); el reader (tool) y la voz siguen Max-only.
     const { data: planRow, error: planErr } = await supa.from("users").select("plan").eq("id", user.id).single();
     const plan = String(planRow?.plan || "");
     if (planErr || !["pro", "elite", "max"].includes(plan)) throw new Error("plan_required");
-    if ((mode === "insight" || mode === "tool") && plan !== "max") throw new Error("plan_required");
+    if (mode === "insight" && !["elite", "max"].includes(plan)) throw new Error("plan_required");
+    if (mode === "tool" && plan !== "max") throw new Error("plan_required");
 
     // F3 voz: ejecución directa de query_records para los tool-calls de Gemini Live
     // (mismo RLS del usuario, mismos agregados; el cliente reenvía el resultado al modelo).
@@ -242,7 +260,9 @@ serve(async (req) => {
     let quota: { used: number; limit: number } | null = null;
     let svc: any = null;
     const quotaMonth = todayISO.slice(0, 7);
-    if (plan !== "max") {
+    // El insight diario (anzuelo Elite) es un regalo proactivo: NO consume ni valida el cupo
+    // de chat. Solo chat/tool descuentan. (Para Max el bloque ya se saltaba.)
+    if (plan !== "max" && mode !== "insight") {
       svc = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
       const { data: uRow } = await svc.from("zepi_usage").select("msgs").eq("user_id", user.id).eq("month", quotaMonth).maybeSingle();
       const used = Number(uRow?.msgs) || 0;

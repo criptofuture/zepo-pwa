@@ -126,12 +126,24 @@ async function buildSnapshot(sb: any, userId: string): Promise<Record<string, un
   const { data: buds } = await sb.from("budgets").select("category,amount")
     .eq("user_id", userId).eq("month", now.getUTCMonth() + 1).eq("year", now.getUTCFullYear()).limit(30);
   if (buds && buds.length) snap.budgets = buds.map((b: any) => ({ cat: b.category || "total", amount: Number(b.amount) }));
+  // Metas activas (Fase 6) — v1: nudge por deadline/existencia (sin recomputar ritmo server-side)
+  const { data: goals } = await sb.from("zepi_goals").select("kind,title,target_amount,current_amount,deadline")
+    .eq("user_id", userId).eq("status", "active").limit(10);
+  if (goals && goals.length) {
+    const todayISO = now.toISOString().slice(0, 10);
+    snap.goals = goals.map((g: any) => {
+      const o: Record<string, unknown> = { kind: g.kind, title: g.title, target: Number(g.target_amount) };
+      if (g.deadline) { o.deadline = g.deadline; o.daysLeft = Math.round((new Date(g.deadline + "T00:00:00Z").getTime() - new Date(todayISO + "T00:00:00Z").getTime()) / 86400000); }
+      if (g.kind === "debt" && g.current_amount != null) o.remaining = Number(g.current_amount);
+      return o;
+    });
+  }
   return snap;
 }
 
 const PUSH_PROMPT = `You are Zepi, the financial companion inside Zepo (LatAm expense tracker). You get a SNAPSHOT of one user's aggregated numbers (current month, previous month, budgets, pending split collections). Decide if there is ONE push-notification-worthy insight TODAY.
 Return ONLY JSON: { "send": boolean, "title": string, "body": string }.
-- send=true ONLY for something genuinely useful: budget nearly blown, a category clearly spiking vs prev month, old pending collections, or a real win (spending way down). Otherwise send=false.
+- send=true ONLY for something genuinely useful: budget nearly blown, a category clearly spiking vs prev month, old pending collections, a goal with a close deadline (SNAPSHOT.goals[].daysLeft small) or clear progress on one, or a real win (spending way down). Otherwise send=false.
 - Spanish (LatAm, "tú"). title <= 40 chars, punchy, no emoji spam (max 1). body <= 110 chars, concrete numbers from SNAPSHOT only.
 - Never invent numbers. Never mention "snapshot".`;
 

@@ -41,7 +41,7 @@ export async function sanitizeIntent(
   plan: string,
 ): Promise<{ ok?: Record<string, unknown>; err?: string }> {
   const kind = String(raw?.kind || "");
-  if (!["add_records", "set_budget", "split_handoff"].includes(kind)) {
+  if (!["add_records", "set_budget", "split_handoff", "edit_record", "mark_paid", "accept_cobro", "remind_whatsapp", "delete_record", "set_goal"].includes(kind)) {
     return { err: `unknown intent kind "${kind.slice(0, 24)}"` };
   }
 
@@ -96,6 +96,83 @@ export async function sanitizeIntent(
       if (!category) return { err: `unknown category "${catRaw}" — use the exact labels the user sees in the app` };
     }
     return { ok: { kind, amount, category } };
+  }
+
+  // Acciones sobre un registro EXISTENTE (#3): el edge NO tiene el mapa de tokens.
+  // Solo valida la FORMA del id ordinal (r#/c#); el cliente lo resuelve a la fila real.
+  const REF_R = /^r\d{1,3}$/;
+  const REF_C = /^c\d{1,3}$/;
+
+  if (kind === "edit_record") {
+    const id = String(raw?.id || "");
+    if (!REF_R.test(id)) {
+      return { err: `invalid record id "${id.slice(0, 12)}" — reference a record from SNAPSHOT.recentRecords by its "r#" token (never a uuid)` };
+    }
+    const p = (raw?.patch && typeof raw.patch === "object") ? raw.patch : {};
+    const patch: Record<string, unknown> = {};
+    if (p.amount !== undefined) {
+      const amount = r2(Number(p.amount));
+      if (!Number.isFinite(amount) || amount <= 0 || amount > MAX_AMOUNT) {
+        return { err: `invalid amount "${String(p.amount).slice(0, 20)}" (must be > 0 and <= ${MAX_AMOUNT})` };
+      }
+      patch.amount = amount;
+    }
+    if (p.description !== undefined) patch.description = cleanText(p.description, 80);
+    if (p.category !== undefined) {
+      const category = pickCategory(p.category, custom, false);
+      if (!category) return { err: `unknown category "${cleanText(p.category, 40)}" — use the exact labels the user sees` };
+      patch.category = category;
+    }
+    if (p.date !== undefined) patch.date = cleanDay(p.date, today);
+    if (Object.keys(patch).length === 0) {
+      return { err: "edit_record needs patch{} with at least one field to change (amount, description, category or date)" };
+    }
+    return { ok: { kind, id, patch } };
+  }
+
+  if (kind === "mark_paid" || kind === "accept_cobro" || kind === "remind_whatsapp") {
+    const id = String(raw?.id || "");
+    if (!REF_C.test(id)) {
+      return { err: `invalid cobro id "${id.slice(0, 12)}" — reference a pending cobro from SNAPSHOT.cobros by its "c#" token (never a uuid)` };
+    }
+    return { ok: { kind, id } };
+  }
+
+  if (kind === "delete_record") {
+    // Solo valida la FORMA del ref-token (r#). El edge NO tiene el mapa: el CLIENTE resuelve
+    // el uuid real (RLS), muestra la fila completa y pide 2a confirmación (askConfirm) antes de
+    // borrar. SIEMPRE 1 registro — jamás borrado masivo. Un id alucinado no resuelve → no borra.
+    // Solo r# (registros); c# son cobros y se cancelan por otra vía, no por delete_record.
+    const id = String(raw?.id || "").trim();
+    if (!/^r\d{1,3}$/.test(id)) {
+      return { err: `delete_record needs a valid record ref id like "r3" from SNAPSHOT.recentRecords (got "${id.slice(0, 24)}")` };
+    }
+    return { ok: { kind, id } };
+  }
+
+  if (kind === "set_goal") {
+    const gk = String(raw?.goal_kind || "");
+    if (!["save", "limit", "debt"].includes(gk)) {
+      return { err: `set_goal needs goal_kind = "save" | "limit" | "debt"` };
+    }
+    const target = r2(Number(raw?.target_amount));
+    if (!Number.isFinite(target) || target <= 0 || target > 9999999) {
+      return { err: `invalid target_amount (must be > 0 and <= 9999999)` };
+    }
+    const title = cleanText(raw?.title, 80);
+    let category: string | null = null;
+    if (gk === "limit") {
+      const catRaw = cleanText(raw?.category, 40);
+      if (catRaw) {
+        category = pickCategory(catRaw, custom, false);
+        if (!category) return { err: `unknown category "${catRaw}" — use the exact labels the user sees` };
+      }
+    }
+    // deadline SI puede ser futura (a diferencia de la fecha de un registro): no se clampa.
+    let deadline: string | null = null;
+    const dl = normDay(raw?.deadline, false);
+    if (ISO_DAY.test(dl) && dl >= "2000-01-01") deadline = dl;
+    return { ok: { kind, goal_kind: gk, title, target_amount: target, category, deadline } };
   }
 
   // split_handoff — solo pre-llena la hoja "+"; el usuario elige personas y guarda allá.
