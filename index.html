@@ -10524,6 +10524,8 @@ function zepoApp() {
           else if (this.sendPrOpen) { this.sendPrOpen = false; }
           else if (this.catDrillOpen) { this.catDrillOpen = false; }
           else if (this.cobroDetailOpen) { this.cobroDetailOpen = false; }
+          else if (this.wkSheetOpen) { this.wkSheetOpen = false; }
+          else if (this.wkDetalle) { this.wkDetalle = null; }
           else if (this.bugReportOpen) { this.bugReportOpen = false; }
           else if (this.batchEditPromptExp) { this.batchEditPromptExp = null; this.batchEditPromptItems = []; }
           else if (this.jrnOpen) { this.jrnOpen = false; }
@@ -10552,7 +10554,7 @@ function zepoApp() {
         if (val !== old && !this._navPopping) pushBack();
       });
 
-      ['sheetOpen','patSheetOpen','zepiOpen','zepiVoiceOpen','jrnOpen','catManagerOpen','pmManagerOpen','recurringManagerOpen','spaceSwitcherOpen','spaceManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen','acceptPrModal','acceptAllModal','aliasModalOpen','showDeleteModal','importOpen','batchEditPromptExp'].forEach(k => {
+      ['sheetOpen','patSheetOpen','zepiOpen','zepiVoiceOpen','jrnOpen','catManagerOpen','pmManagerOpen','recurringManagerOpen','spaceSwitcherOpen','spaceManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen','acceptPrModal','acceptAllModal','aliasModalOpen','showDeleteModal','importOpen','batchEditPromptExp','wkSheetOpen','wkDetalle'].forEach(k => {
         this.$watch(k, v => { if (v) pushBack(); });
       });
       // zvDraft va aparte: el watcher es PROFUNDO y con él en la lista de arriba cada tecleo
