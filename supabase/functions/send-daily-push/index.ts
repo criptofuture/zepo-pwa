@@ -175,21 +175,63 @@ serve(async (req) => {
     return new Response(JSON.stringify({ sent: 0 }), { headers: { ...cors, "Content-Type": "application/json" } });
   }
 
-  // Payload de notificación
-  const pushPayload = JSON.stringify({
-    title: "Zepo 💸",
-    body: "¿Registraste todos tus gastos de hoy?",
-    icon: "https://app.zepo.lynoia.com/icons/icon-192.png",
-    badge: "https://app.zepo.lynoia.com/icons/favicon-32.png",
-    url: "https://app.zepo.lynoia.com/",
-  });
+  // Zepo Trabajo (F5): si a alguien le deben algo VENCIDO, ese aviso pesa mas que el generico.
+  // Anti-ruido: un recordatorio por cobro cada 7 dias (last_nudge_at). Perseguir un cobro da
+  // incomodidad y por eso se posterga: el aviso concreto es lo que hace que se cobre.
+  const hoyISO = new Date().toISOString().slice(0, 10);
+  const hace7 = new Date(Date.now() - 7 * 86400000).toISOString();
+  const vencidosPorUsuario = new Map<string, { who: string; amt: number; late: number; n: number }>();
+  try {
+    const { data: venc } = await sb
+      .from("work_invoices")
+      .select("user_id, client_name, amount, tax_pct, due_date, last_nudge_at")
+      .in("user_id", targetUsers)
+      .eq("status", "sent")
+      .lt("due_date", hoyISO);
+    for (const v of venc ?? []) {
+      const nudged = v.last_nudge_at as string | null;
+      if (nudged && nudged > hace7) continue;
+      const uid = v.user_id as string;
+      const total = Number(v.amount) * (1 + Number(v.tax_pct ?? 0) / 100);
+      const late = Math.floor((Date.parse(hoyISO) - Date.parse(v.due_date as string)) / 86400000);
+      const prev = vencidosPorUsuario.get(uid);
+      // Se muestra el MAS atrasado; el resto solo cuenta para el "y N mas".
+      if (!prev) vencidosPorUsuario.set(uid, { who: String(v.client_name), amt: total, late, n: 1 });
+      else {
+        prev.n++;
+        if (late > prev.late) { prev.who = String(v.client_name); prev.amt = total; prev.late = late; }
+      }
+    }
+  } catch (_e) { /* si falla, se manda el push generico */ }
+
+  const payloadFor = (uid: string) => {
+    const v = vencidosPorUsuario.get(uid);
+    if (!v) {
+      return JSON.stringify({
+        title: "Zepo 💸",
+        body: "¿Registraste todos tus gastos de hoy?",
+        icon: "https://app.zepo.lynoia.com/icons/icon-192.png",
+        badge: "https://app.zepo.lynoia.com/icons/favicon-32.png",
+        url: "https://app.zepo.lynoia.com/",
+      });
+    }
+    const dias = v.late === 1 ? "1 día" : `${v.late} días`;
+    const mas = v.n > 1 ? ` · y ${v.n - 1} más` : "";
+    return JSON.stringify({
+      title: "Te deben dinero 💰",
+      body: `${v.who} lleva ${dias} de atraso · $${v.amt.toFixed(2)}${mas}`,
+      icon: "https://app.zepo.lynoia.com/icons/icon-192.png",
+      badge: "https://app.zepo.lynoia.com/icons/favicon-32.png",
+      url: "https://app.zepo.lynoia.com/",
+    });
+  };
 
   let sent = 0;
   const failed: string[] = [];
 
   for (const sub of subs) {
     try {
-      const ok = await sendPush(sub as { endpoint: string; p256dh: string; auth_key: string }, pushPayload);
+      const ok = await sendPush(sub as { endpoint: string; p256dh: string; auth_key: string }, payloadFor(sub.user_id as string));
       if (ok) sent++;
       else failed.push(sub.user_id as string);
     } catch (e) {

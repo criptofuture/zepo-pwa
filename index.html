@@ -4611,7 +4611,7 @@ setTimeout(function() {
           <div class="ph-left">
             <div class="ph-title">Cuentas</div>
             <div class="ph-subtitle"
-              x-text="cuentasTab==='me-deben' ? 'Te deben dinero' : cuentasTab==='debo' ? 'Lo que debes' : 'Tus contactos'">
+              x-text="cuentasTab==='me-deben' ? 'Te deben dinero' : cuentasTab==='debo' ? 'Lo que debes' : cuentasTab==='trabajo' ? 'Lo que te deben tus clientes' : 'Tus contactos'">
             </div>
           </div>
           <div class="ph-actions">
@@ -4632,6 +4632,8 @@ setTimeout(function() {
             @click="cuentasTab='me-deben'; loadPaymentRequests()">Me deben</button>
           <button class="subtab-btn" :class="{active: cuentasTab==='debo'}"
             @click="cuentasTab='debo'; loadPaymentRequests()">Debo</button>
+          <button class="subtab-btn" :class="{active: cuentasTab==='trabajo'}"
+            @click="hasPlan('max') ? (cuentasTab='trabajo', loadWork()) : (tab='plans', showToast('Los cobros a clientes están en Max'))">Clientes</button>
           <button class="subtab-btn" :class="{active: cuentasTab==='amigos'}" style="position:relative;"
             @click="cuentasTab='amigos'; loadFriends()">
             Gente que...
@@ -5268,6 +5270,78 @@ setTimeout(function() {
               </button>
             </div>
           </div>
+        </div>
+        <!-- ── Clientes · lo que te deben (Zepo Trabajo) ── -->
+        <div x-show="cuentasTab === 'trabajo'">
+
+          <!-- Resumen: los dos numeros que importan -->
+          <div style="padding:0 20px 16px;">
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;">
+              <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;">Por cobrar</div>
+              <div class="mono" style="font-size:34px;font-weight:800;letter-spacing:-1px;margin-top:4px;color:var(--text);"
+                x-text="fmtMoney(wkTotalPorCobrar)"></div>
+              <div style="display:flex;gap:14px;margin-top:10px;flex-wrap:wrap;">
+                <div x-show="wkTotalVencido > 0" style="font-size:12px;font-weight:700;color:var(--danger);">
+                  <span x-text="fmtMoney(wkTotalVencido)"></span> vencido
+                </div>
+                <div x-show="wkCobradoMes > 0" style="font-size:12px;color:var(--muted);">
+                  Cobrado este mes <span style="font-weight:700;color:var(--success);" x-text="fmtMoney(wkCobradoMes)"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="padding:0 20px 18px;">
+            <button class="btn-primary" style="width:100%;justify-content:center;" @click="wkNueva()">Nuevo cobro</button>
+          </div>
+
+          <!-- Vacio -->
+          <div x-show="wkLoaded && wkInvoices.length === 0" style="padding:10px 32px 40px;text-align:center;">
+            <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">Nadie te debe nada</div>
+            <div style="font-size:13px;color:var(--muted);line-height:1.5;">
+              Cuando le cobres a un cliente, créalo aquí. Al marcarlo cobrado entra solo como ingreso del mes.
+            </div>
+          </div>
+
+          <!-- Abiertas -->
+          <div x-show="wkAbiertas.length > 0" style="padding:0 20px 8px;">
+            <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;padding-left:4px;">
+              Pendientes · <span x-text="wkAbiertas.length"></span>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+              <template x-for="inv in wkAbiertas" :key="inv.id">
+                <div @click="wkDetalle = inv" style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;">
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="inv.client_name"></div>
+                    <div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;" x-text="inv.concept"></div>
+                    <div :style="'font-size:11px;font-weight:700;margin-top:4px;color:' + (wkDiasTarde(inv) > 0 ? 'var(--danger)' : 'var(--muted)')"
+                      x-text="wkEstadoTexto(inv)"></div>
+                  </div>
+                  <div class="mono" style="font-size:16px;font-weight:800;color:var(--text);white-space:nowrap;" x-text="fmtMoney(wkTotal(inv))"></div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Cobradas -->
+          <div x-show="wkCobradas.length > 0" style="padding:14px 20px 8px;">
+            <button @click="wkVerCobradas = !wkVerCobradas"
+              style="width:100%;text-align:left;font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;background:none;border:0;padding:0 0 8px 4px;">
+              <span x-text="wkVerCobradas ? '− ' : '+ '"></span>Cobradas · <span x-text="wkCobradas.length"></span>
+            </button>
+            <div x-show="wkVerCobradas" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+              <template x-for="inv in wkCobradas" :key="inv.id">
+                <div @click="wkDetalle = inv" style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;">
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="inv.client_name"></div>
+                    <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="inv.concept"></div>
+                  </div>
+                  <div class="mono" style="font-size:14px;font-weight:700;color:var(--success);white-space:nowrap;" x-text="fmtMoney(wkTotal(inv))"></div>
+                </div>
+              </template>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -6535,6 +6609,125 @@ setTimeout(function() {
       <button class="fab" @click="openNew" x-show="!sheetOpen">
         <svg viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
+
+      <!-- ══ ZEPO TRABAJO · nuevo/editar cobro ══ -->
+      <template x-if="wkSheetOpen">
+        <div>
+          <div class="jrn-scrim" @click="wkSheetOpen = false"></div>
+          <div class="jrn-sheet">
+            <div class="jrn-head">
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:800;font-size:16px;font-family:var(--font-display);" x-text="wkForm.id ? 'Editar cobro' : 'Nuevo cobro'"></div>
+                <div style="font-size:11px;color:var(--muted);">Lo que le vas a cobrar a un cliente</div>
+              </div>
+              <button class="zepi-hbtn" @click="wkSheetOpen = false" title="Cerrar">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div class="jrn-body">
+              <div class="field-box" style="margin-bottom:12px;">
+                <div class="field-box-label">CLIENTE</div>
+                <div class="field-box-inner">
+                  <input type="text" x-model="wkForm.client_name" list="wkClientList" placeholder="Nombre del cliente" maxlength="120"
+                    style="flex:1;font-family:var(--font-display);font-size:15px;font-weight:600;background:none;border:0;color:var(--text);outline:none;">
+                </div>
+                <datalist id="wkClientList">
+                  <template x-for="c in wkClients" :key="c.id"><option :value="c.name"></option></template>
+                </datalist>
+              </div>
+              <div class="field-box" style="margin-bottom:12px;">
+                <div class="field-box-label">CONCEPTO</div>
+                <div class="field-box-inner">
+                  <input type="text" x-model="wkForm.concept" placeholder="Paquete de agosto" maxlength="240"
+                    style="flex:1;font-family:var(--font-display);font-size:15px;font-weight:600;background:none;border:0;color:var(--text);outline:none;">
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;margin-bottom:12px;">
+                <div class="field-box" style="flex:1;">
+                  <div class="field-box-label">MONTO</div>
+                  <div class="field-box-inner">
+                    <input type="number" inputmode="decimal" step="0.01" min="0" x-model="wkForm.amount" placeholder="0.00"
+                      style="flex:1;font-family:var(--font-display);font-size:15px;font-weight:700;background:none;border:0;color:var(--text);outline:none;">
+                  </div>
+                </div>
+                <div class="field-box" style="width:104px;">
+                  <div class="field-box-label">IMPUESTO %</div>
+                  <div class="field-box-inner">
+                    <input type="number" inputmode="decimal" step="1" min="0" max="100" x-model="wkForm.tax_pct" placeholder="0"
+                      style="flex:1;font-family:var(--font-display);font-size:15px;font-weight:600;background:none;border:0;color:var(--text);outline:none;">
+                  </div>
+                </div>
+              </div>
+              <div class="field-box" style="margin-bottom:14px;">
+                <div class="field-box-label">VENCE (OPCIONAL)</div>
+                <div class="field-box-inner">
+                  <input type="date" x-model="wkForm.due_date"
+                    style="flex:1;font-family:var(--font-display);font-size:15px;font-weight:600;background:none;border:0;color:var(--text);outline:none;">
+                </div>
+              </div>
+              <div x-show="Number(wkForm.tax_pct) > 0 && Number(wkForm.amount) > 0"
+                style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px;">
+                Total con impuesto:
+                <span class="mono" style="font-weight:800;color:var(--text);"
+                  x-text="fmtMoney(Number(wkForm.amount || 0) * (1 + Number(wkForm.tax_pct || 0)/100))"></span>
+              </div>
+              <button class="save-btn" :disabled="wkSaving" @click="wkGuardar()"
+                x-text="wkSaving ? 'Guardando…' : (wkForm.id ? 'Guardar cambios' : 'Crear cobro')"></button>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ══ ZEPO TRABAJO · detalle y acciones ══ -->
+      <template x-if="wkDetalle">
+        <div>
+          <div class="jrn-scrim" @click="wkDetalle = null"></div>
+          <div class="jrn-sheet">
+            <div class="jrn-head">
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:800;font-size:16px;font-family:var(--font-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="wkDetalle.client_name"></div>
+                <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                  <span x-text="wkDetalle.number || 'Sin número'"></span> · <span x-text="wkEstadoTexto(wkDetalle)"></span>
+                </div>
+              </div>
+              <button class="zepi-hbtn" @click="wkDetalle = null" title="Cerrar">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div class="jrn-body">
+              <div style="text-align:center;padding:6px 0 18px;">
+                <div class="mono" style="font-size:32px;font-weight:800;letter-spacing:-1px;color:var(--text);" x-text="fmtMoney(wkTotal(wkDetalle))"></div>
+                <div style="font-size:13px;color:var(--muted);margin-top:2px;" x-text="wkDetalle.concept"></div>
+              </div>
+
+              <div x-show="wkDetalle.status !== 'paid' && wkDetalle.status !== 'void'" style="display:flex;flex-direction:column;gap:10px;">
+                <button class="save-btn" @click="wkCobrada(wkDetalle)">Ya me pagó</button>
+                <div style="display:flex;gap:10px;">
+                  <button class="btn-primary" style="flex:1;justify-content:center;" x-show="wkDetalle.status === 'draft'" @click="wkEstado(wkDetalle, 'sent')">Marcar enviada</button>
+                  <button class="btn-primary" style="flex:1;justify-content:center;" x-show="wkDetalle.status === 'sent'" @click="wkRecordar(wkDetalle)">Recordar por WhatsApp</button>
+                </div>
+              </div>
+
+              <div x-show="wkDetalle.status === 'paid'" style="display:flex;flex-direction:column;gap:10px;">
+                <div style="background:rgba(var(--c-income-rgb),0.12);border:1px solid rgba(var(--c-income-rgb),0.30);border-radius:var(--radius-sm);padding:12px 14px;font-size:12.5px;color:var(--text);line-height:1.45;">
+                  Cobrada<span x-show="wkDetalle.income_expense_id"> · entró como ingreso del mes</span>.
+                </div>
+                <label class="btn-primary" style="justify-content:center;cursor:pointer;">
+                  <span x-text="wkProofBusy ? 'Subiendo…' : (wkDetalle.proof_path ? 'Cambiar comprobante' : 'Subir comprobante')"></span>
+                  <input type="file" accept="image/*,application/pdf" style="display:none;" @change="wkSubirComprobante(wkDetalle, $event)">
+                </label>
+                <button class="btn-primary" style="justify-content:center;" x-show="wkDetalle.proof_path" @click="wkVerComprobante(wkDetalle)">Ver comprobante</button>
+              </div>
+
+              <div style="display:flex;gap:10px;margin-top:16px;">
+                <button class="btn-decline" style="flex:1;justify-content:center;" x-show="wkDetalle.status === 'paid'" @click="wkDeshacerCobro(wkDetalle)">Deshacer cobro</button>
+                <button class="btn-primary" style="flex:1;justify-content:center;" x-show="wkDetalle.status !== 'paid'" @click="wkEditar(wkDetalle)">Editar</button>
+                <button class="btn-decline" style="flex:1;justify-content:center;" x-show="wkDetalle.status !== 'paid' && wkDetalle.status !== 'void'" @click="wkEstado(wkDetalle, 'void')">Anular</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
 
       <!-- ══ METAS — gestor (Fase 6). Las metas se crean/ajustan hablando con Zepi ══ -->
       <template x-if="goalsOpen">
@@ -9789,7 +9982,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v191',
+    APP_VERSION: 'v192',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     // ─── ZEPI (companion IA, Max) ───
     zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
@@ -10002,6 +10195,16 @@ function zepoApp() {
     pendingReceived: [],
     pendingSent: [],
     cuentasTab: 'me-deben',
+    // ── Zepo Trabajo: cobros a clientes externos (F1-F5) ──
+    wkInvoices: [],
+    wkClients: [],
+    wkLoaded: false,
+    wkSheetOpen: false,
+    wkSaving: false,
+    wkProofBusy: false,
+    wkDetalle: null,
+    wkVerCobradas: false,
+    wkForm: { id: null, client_name: '', concept: '', amount: '', tax_pct: 0, due_date: '', notaCliente: '' },
     friendsSubTab: 'contactos',
     expandedContact: null,
     addFriendEmail: '',
@@ -16203,6 +16406,23 @@ function zepoApp() {
           return { id, person: String(e.split_persona || '').slice(0, 24), amt: r2(Number(e.split_pending) || 0), days };
         });
       } catch (e) {}
+      // receivables SIEMPRE presente (aunque sea []) = señal de que este cliente soporta
+      // create_invoice / mark_invoice_paid. Tokens f# con el MISMO contrato que r#/c#:
+      // el modelo solo ve el token, el uuid nunca sale de aquí.
+      try {
+        if (this.hasPlan('max')) {
+          snap.receivables = this.wkAbiertas.slice(0, 6).map((inv, i) => {
+            const id = 'f' + (i + 1);
+            refMap[id] = inv.id;
+            const o = { id, who: String(inv.client_name).slice(0, 24), amt: r2(this.wkTotal(inv)),
+                        what: String(inv.concept).slice(0, 40), st: inv.status };
+            const late = this.wkDiasTarde(inv);
+            if (late > 0) o.late = late;
+            return o;
+          });
+          snap.receivablesTotal = r2(this.wkTotalPorCobrar);
+        }
+      } catch (e) {}
       // goals SIEMPRE presente (aunque sea []) = señal de que este cliente soporta set_goal.
       try {
         snap.goals = this.goalsActive.slice(0, 3).map(g => {
@@ -16637,6 +16857,22 @@ function zepoApp() {
         } else if (it.kind === 'set_goal' && Number(it.target_amount) > 0) {
           const ok = await this.zepiSaveGoal(it);
           m.intentState = ok ? 'done' : 'error';
+        } else if (it.kind === 'create_invoice' && Number(it.amount) > 0) {
+          // El modelo interpreta; la matemática y el guardado siguen siendo del cliente:
+          // reusa wkGuardar() tal cual, con el gate de plan puesto aquí (fail-closed).
+          if (!this.hasPlan('max')) { m.intentState = 'error'; }
+          else {
+            this.wkForm = { id: null, client_name: it.client_name, concept: it.concept,
+                            amount: String(it.amount), tax_pct: Number(it.tax_pct || 0),
+                            due_date: it.due_date || '', notaCliente: '' };
+            await this.wkGuardar();
+            m.intentState = this.wkSheetOpen ? 'error' : 'done';
+          }
+        } else if (it.kind === 'mark_invoice_paid') {
+          // Sin fila resuelta (token alucinado) → no marca nada.
+          const inv = it._row;
+          if (!inv || !inv.id || !this.hasPlan('max')) { m.intentState = 'error'; }
+          else { await this.wkCobrada(inv); m.intentState = 'done'; }
         } else {
           m.intentState = 'error';
         }
@@ -16656,6 +16892,10 @@ function zepoApp() {
       const map = (m && m.refMap) || {};
       const uuid = map[refId];
       if (!uuid) return null;
+      if (/^f/.test(String(refId))) {
+        const inv = (this.wkInvoices || []).find(i => i.id === uuid);
+        return inv ? { row: inv, type: 'invoice' } : null;
+      }
       if (/^c/.test(String(refId))) {
         const s = (this.pendingSplits || []).find(e => e.id === uuid);
         if (s) return { row: s, type: 'cobro' };
@@ -16669,17 +16909,19 @@ function zepoApp() {
     _zepiResolveIntent(m) {
       const it = m && m.intent;
       if (!it) return;
-      const want = { edit_record: 'r', mark_paid: 'c', accept_cobro: 'c', remind_whatsapp: 'c', delete_record: 'r' }[it.kind];
+      const want = { edit_record: 'r', mark_paid: 'c', accept_cobro: 'c', remind_whatsapp: 'c', delete_record: 'r', mark_invoice_paid: 'f' }[it.kind];
       if (!want) return;
       const res = this._zepiResolveRecord(it.id, m);
-      const okType = res && (want === 'r' ? res.type === 'record' : res.type !== 'record');
+      const okType = res && (want === 'f' ? res.type === 'invoice'
+                           : want === 'r' ? res.type === 'record'
+                           : (res.type !== 'record' && res.type !== 'invoice'));
       if (!okType) { m.intentState = 'unresolved'; return; }
       it._row = res.row; it._type = res.type;
       it._before = { id: res.row.id, amount: res.row.amount, description: res.row.description, category: res.row.category, date: res.row.date, is_income: res.row.is_income, is_split: res.row.is_split };
     },
     zepiConfirmLabel(it) {
       if (!it) return 'Registrar';
-      return { split_handoff: 'Abrir y dividir', edit_record: 'Guardar cambio', mark_paid: 'Marcar pagado', accept_cobro: 'Aceptar', remind_whatsapp: 'Enviar recordatorio', delete_record: 'Eliminar', set_goal: 'Crear meta' }[it.kind] || 'Registrar';
+      return { split_handoff: 'Abrir y dividir', edit_record: 'Guardar cambio', mark_paid: 'Marcar pagado', accept_cobro: 'Aceptar', remind_whatsapp: 'Enviar recordatorio', delete_record: 'Eliminar', set_goal: 'Crear meta', create_invoice: 'Crear cobro', mark_invoice_paid: 'Marcar cobrada' }[it.kind] || 'Registrar';
     },
     zepiEditDiff(it) {
       const b = (it && it._before) || {}, p = (it && it.patch) || {};
@@ -18177,6 +18419,221 @@ function zepoApp() {
       this.friendBadge = this.pendingReceived.length;
     },
 
+    // ═══════════ ZEPO TRABAJO — lo que te deben (F1-F5) ═══════════
+    // Cobros a clientes EXTERNOS (sin cuenta en Zepo), a diferencia de payment_requests.
+    // Al marcar cobrada se crea el ingreso ligado en expenses (income_expense_id):
+    // sin eso el dashboard diria $0 en un mes en que si entro plata.
+    async loadWork() {
+      if (!this.user) return;
+      const uid = this.user.id;
+      const [inv, cli] = await Promise.all([
+        sb.from('work_invoices').select('*').eq('user_id', uid).order('issue_date', { ascending: false }),
+        sb.from('work_clients').select('*').eq('user_id', uid).eq('archived', false).order('name')
+      ]);
+      this.wkInvoices = inv.data || [];
+      this.wkClients  = cli.data || [];
+      this.wkLoaded   = true;
+      this.dataVer++;
+    },
+    get wkAbiertas() {
+      return this.wkInvoices.filter(i => i.status === 'draft' || i.status === 'sent');
+    },
+    get wkCobradas() {
+      return this.wkInvoices.filter(i => i.status === 'paid').slice(0, 40);
+    },
+    get wkTotalPorCobrar() {
+      return this.wkAbiertas.reduce((s, i) => s + this.wkTotal(i), 0);
+    },
+    get wkTotalVencido() {
+      return this.wkAbiertas.filter(i => this.wkDiasTarde(i) > 0).reduce((s, i) => s + this.wkTotal(i), 0);
+    },
+    get wkCobradoMes() {
+      const hoy = new Date(), m = hoy.getMonth(), y = hoy.getFullYear();
+      return this.wkInvoices.filter(i => {
+        if (i.status !== 'paid' || !i.paid_at) return false;
+        const d = new Date(i.paid_at);
+        return d.getMonth() === m && d.getFullYear() === y;
+      }).reduce((s, i) => s + this.wkTotal(i), 0);
+    },
+    // Total con impuesto. Una sola formula para pantalla, PDF, ingreso y recordatorio.
+    wkTotal(inv) {
+      const base = Number(inv.amount || 0);
+      return Math.round(base * (1 + Number(inv.tax_pct || 0) / 100) * 100) / 100;
+    },
+    // Un borrador NO puede estar vencido: todavia no se lo mandaste al cliente.
+    wkDiasTarde(inv) {
+      if (!inv.due_date || inv.status !== 'sent') return 0;
+      const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+      const vence = new Date(inv.due_date + 'T00:00:00');
+      return Math.max(0, Math.round((hoy - vence) / 86400000));
+    },
+    wkEstadoTexto(inv) {
+      const tarde = this.wkDiasTarde(inv);
+      if (inv.status === 'paid')  return 'Cobrada';
+      if (inv.status === 'void')  return 'Anulada';
+      if (inv.status === 'draft') return 'Borrador';
+      if (tarde > 0) return tarde === 1 ? '1 día de atraso' : tarde + ' días de atraso';
+      if (!inv.due_date) return 'Enviada';
+      const faltan = Math.round((new Date(inv.due_date + 'T00:00:00') - new Date().setHours(0, 0, 0, 0)) / 86400000);
+      return faltan === 0 ? 'Vence hoy' : 'Vence en ' + faltan + 'd';
+    },
+    // Correlativo visible P-2026-007. Se calcula sobre lo que ya existe del año.
+    _wkSiguienteNumero() {
+      const y = new Date().getFullYear();
+      const n = this.wkInvoices.filter(i => (i.number || '').startsWith('P-' + y + '-')).length + 1;
+      return 'P-' + y + '-' + String(n).padStart(3, '0');
+    },
+
+    wkNueva() {
+      this.wkForm = { id: null, client_name: '', concept: '', amount: '', tax_pct: 0, due_date: '', notaCliente: '' };
+      this.wkSheetOpen = true;
+    },
+    wkEditar(inv) {
+      this.wkForm = {
+        id: inv.id, client_name: inv.client_name, concept: inv.concept,
+        amount: String(inv.amount), tax_pct: Number(inv.tax_pct || 0),
+        due_date: inv.due_date || '', notaCliente: ''
+      };
+      this.wkSheetOpen = true;
+      this.wkDetalle = null;
+    },
+    async wkGuardar() {
+      const f = this.wkForm;
+      const monto = parseFloat(String(f.amount).replace(',', '.'));
+      if (!f.client_name.trim())  return this.showToast('¿A quién le cobras?');
+      if (!f.concept.trim())      return this.showToast('¿Por qué concepto?');
+      if (!(monto > 0))           return this.showToast('El monto debe ser mayor a 0');
+      this.wkSaving = true;
+      try {
+        const fila = {
+          user_id: this.user.id,
+          client_name: f.client_name.trim(),
+          concept: f.concept.trim(),
+          amount: monto,
+          tax_pct: Number(f.tax_pct || 0),
+          due_date: f.due_date || null,
+          space_id: this._currentSpaceId(),
+          updated_at: new Date().toISOString()
+        };
+        if (f.id) {
+          await sb.from('work_invoices').update(fila).eq('id', f.id);
+        } else {
+          // El cliente se crea solo la primera vez que se le cobra: sin pantalla de alta.
+          let cli = this.wkClients.find(c => c.name.toLowerCase() === fila.client_name.toLowerCase());
+          if (!cli) {
+            const { data } = await sb.from('work_clients')
+              .insert({ user_id: this.user.id, name: fila.client_name }).select().single();
+            if (data) { cli = data; this.wkClients.push(data); }
+          }
+          fila.client_id = cli ? cli.id : null;
+          fila.number = this._wkSiguienteNumero();
+          fila.status = 'draft';
+          await sb.from('work_invoices').insert(fila);
+        }
+        this.wkSheetOpen = false;
+        await this.loadWork();
+        this.showToast(f.id ? 'Cobro actualizado' : 'Cobro creado');
+      } catch (e) {
+        this.showToast('No se pudo guardar');
+      } finally {
+        this.wkSaving = false;
+      }
+    },
+    async wkEstado(inv, status) {
+      await sb.from('work_invoices').update({ status, updated_at: new Date().toISOString() }).eq('id', inv.id);
+      await this.loadWork();
+      this.wkDetalle = this.wkInvoices.find(i => i.id === inv.id) || null;
+      this.showToast(status === 'sent' ? 'Marcada como enviada' : status === 'void' ? 'Anulada' : 'Actualizada');
+    },
+    // F2 · cobrada -> ingreso. Idempotente: si ya tiene ingreso ligado, no crea otro.
+    async wkCobrada(inv) {
+      if (inv.status === 'paid') return;
+      try {
+        let incomeId = inv.income_expense_id;
+        if (!incomeId) {
+          const { data } = await sb.from('expenses').insert({
+            user_id: this.user.id,
+            amount: this.wkTotal(inv),
+            category: 'freelance',
+            description: inv.client_name + ' · ' + inv.concept,
+            date: new Date().toISOString().slice(0, 10),
+            is_income: true,
+            space_id: inv.space_id || this._currentSpaceId()
+          }).select('id').single();
+          incomeId = data ? data.id : null;
+        }
+        await sb.from('work_invoices').update({
+          status: 'paid', paid_at: new Date().toISOString(),
+          income_expense_id: incomeId, updated_at: new Date().toISOString()
+        }).eq('id', inv.id);
+        await this.loadWork();
+        if (typeof this.loadExpenses === 'function') await this.loadExpenses();
+        this.wkDetalle = this.wkInvoices.find(i => i.id === inv.id) || null;
+        this.showToast('Cobrada · entró como ingreso');
+      } catch (e) {
+        this.showToast('No se pudo marcar como cobrada');
+      }
+    },
+    // Deshacer: borra el ingreso ligado para que el mes no quede inflado.
+    async wkDeshacerCobro(inv) {
+      try {
+        if (inv.income_expense_id) {
+          await sb.from('expenses').delete().eq('id', inv.income_expense_id).eq('user_id', this.user.id);
+        }
+        await sb.from('work_invoices').update({
+          status: 'sent', paid_at: null, income_expense_id: null, updated_at: new Date().toISOString()
+        }).eq('id', inv.id);
+        await this.loadWork();
+        if (typeof this.loadExpenses === 'function') await this.loadExpenses();
+        this.wkDetalle = this.wkInvoices.find(i => i.id === inv.id) || null;
+        this.showToast('Cobro deshecho');
+      } catch (e) {
+        this.showToast('No se pudo deshacer');
+      }
+    },
+    // F3 · comprobante. Bucket privado, carpeta por usuario (la policy exige uid como 1er tramo).
+    async wkSubirComprobante(inv, ev) {
+      const file = ev.target.files && ev.target.files[0];
+      ev.target.value = '';
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) return this.showToast('La imagen pesa más de 5 MB');
+      this.wkProofBusy = true;
+      try {
+        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().slice(0, 4);
+        const path = this.user.id + '/' + inv.id + '.' + ext;
+        const up = await sb.storage.from('comprobantes').upload(path, file, { upsert: true, contentType: file.type });
+        if (up.error) throw up.error;
+        await sb.from('work_invoices').update({ proof_path: path, updated_at: new Date().toISOString() }).eq('id', inv.id);
+        await this.loadWork();
+        this.wkDetalle = this.wkInvoices.find(i => i.id === inv.id) || null;
+        this.showToast('Comprobante guardado');
+      } catch (e) {
+        this.showToast('No se pudo subir el comprobante');
+      } finally {
+        this.wkProofBusy = false;
+      }
+    },
+    async wkVerComprobante(inv) {
+      if (!inv.proof_path) return;
+      const { data } = await sb.storage.from('comprobantes').createSignedUrl(inv.proof_path, 300);
+      if (data && data.signedUrl) window.open(data.signedUrl, '_blank');
+      else this.showToast('No se pudo abrir el comprobante');
+    },
+    // F5 · cobrar sin perseguir: el mensaje ya escrito. Registra last_nudge_at (1 por semana).
+    async wkRecordar(inv) {
+      const tarde = this.wkDiasTarde(inv);
+      const monto = this.fmtMoney(this.wkTotal(inv));
+      const txt = 'Hola ' + inv.client_name + ', te escribo por ' + inv.concept +
+        ' (' + monto + ')' + (tarde > 0 ? ', que venció hace ' + tarde + (tarde === 1 ? ' día' : ' días') : '') +
+        '. ¿Me confirmas cuándo lo puedes pagar? ¡Gracias!';
+      const cli = this.wkClients.find(c => c.id === inv.client_id);
+      const tel = (cli && cli.whatsapp || '').replace(/[^0-9]/g, '');
+      window.open('https://wa.me/' + tel + '?text=' + encodeURIComponent(txt), '_blank');
+      await sb.from('work_invoices').update({ last_nudge_at: new Date().toISOString() }).eq('id', inv.id);
+      const local = this.wkInvoices.find(i => i.id === inv.id);
+      if (local) local.last_nudge_at = new Date().toISOString();
+    },
+
     async loadPaymentRequests() {
       if (!this.user) return;
       const uid = this.user.id;
@@ -18450,7 +18907,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v167.js';
+  const CURRENT_SW = 'sw-v168.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {

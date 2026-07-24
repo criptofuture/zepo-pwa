@@ -41,7 +41,7 @@ export async function sanitizeIntent(
   plan: string,
 ): Promise<{ ok?: Record<string, unknown>; err?: string }> {
   const kind = String(raw?.kind || "");
-  if (!["add_records", "set_budget", "split_handoff", "edit_record", "mark_paid", "accept_cobro", "remind_whatsapp", "delete_record", "set_goal"].includes(kind)) {
+  if (!["add_records", "set_budget", "split_handoff", "edit_record", "mark_paid", "accept_cobro", "remind_whatsapp", "delete_record", "set_goal", "create_invoice", "mark_invoice_paid"].includes(kind)) {
     return { err: `unknown intent kind "${kind.slice(0, 24)}"` };
   }
 
@@ -146,6 +146,35 @@ export async function sanitizeIntent(
     const id = String(raw?.id || "").trim();
     if (!/^r\d{1,3}$/.test(id)) {
       return { err: `delete_record needs a valid record ref id like "r3" from SNAPSHOT.recentRecords (got "${id.slice(0, 24)}")` };
+    }
+    return { ok: { kind, id } };
+  }
+
+  // ── Zepo Trabajo: cobros a clientes externos (solo Max; el gate real vive en el cliente) ──
+  if (kind === "create_invoice") {
+    const who = cleanText(raw?.client_name, 120);
+    const what = cleanText(raw?.concept, 240);
+    if (!who) return { err: `create_invoice needs client_name (who owes you)` };
+    if (!what) return { err: `create_invoice needs concept (what you are charging for)` };
+    const amount = r2(Number(raw?.amount));
+    if (!Number.isFinite(amount) || amount <= 0 || amount > 9999999) {
+      return { err: `invalid amount (must be > 0 and <= 9999999)` };
+    }
+    const tax = r2(Number(raw?.tax_pct ?? 0));
+    const taxOk = Number.isFinite(tax) && tax >= 0 && tax <= 100 ? tax : 0;
+    // due_date SI puede ser futura (es un vencimiento): no se clampa al pasado.
+    let due: string | null = null;
+    const dd = normDay(raw?.due_date, false);
+    if (ISO_DAY.test(dd) && dd >= "2000-01-01") due = dd;
+    return { ok: { kind, client_name: who, concept: what, amount, tax_pct: taxOk, due_date: due } };
+  }
+
+  if (kind === "mark_invoice_paid") {
+    // Solo valida la FORMA del token f#. El edge no tiene el mapa: el cliente resuelve
+    // token -> uuid (RLS) y muestra la tarjeta. Un f9 alucinado no resuelve -> no marca nada.
+    const id = String(raw?.id || "").trim();
+    if (!/^f\d{1,3}$/.test(id)) {
+      return { err: `mark_invoice_paid needs a valid ref id like "f2" from SNAPSHOT.receivables (got "${id.slice(0, 24)}")` };
     }
     return { ok: { kind, id } };
   }
