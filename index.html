@@ -7305,13 +7305,46 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
               <!-- ═════════ CREATE MODE: nuevo orden ═════════ -->
               <!-- TIPO segmented pill (estilo Mensual/Anual) -->
               <div x-show="!editingBatch" class="flex-show" style="background:var(--surface);padding:4px;border-radius:12px;margin-bottom:10px;border:1px solid var(--border);">
-                <div @click="if (form.is_income) { form.is_income = false; form.category = ''; parsedItems = []; analyzed = false; }" style="flex:1;height:36px;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.18s;letter-spacing:-0.2px;" :style="{ background: !form.is_income ? 'var(--bg)' : 'transparent', color: !form.is_income ? 'var(--text)' : 'var(--muted)', boxShadow: !form.is_income ? '0 1px 3px rgba(0,0,0,0.18)' : 'none' }">
+                <div @click="if (form.is_income || form.porCobrar) { form.is_income = false; form.porCobrar = false; form.category = ''; parsedItems = []; analyzed = false; }" style="flex:1;height:36px;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.18s;letter-spacing:-0.2px;" :style="{ background: (!form.is_income && !form.porCobrar) ? 'var(--bg)' : 'transparent', color: (!form.is_income && !form.porCobrar) ? 'var(--text)' : 'var(--muted)', boxShadow: (!form.is_income && !form.porCobrar) ? '0 1px 3px rgba(0,0,0,0.18)' : 'none' }">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><polyline points="17 18 23 18 23 12"/><path d="M23 18l-9.5-9.5-5 5L1 6"/></svg>
                   Gasto
                 </div>
-                <div @click="if (!form.is_income) { form.is_income = true; form.category = ''; parsedItems = []; analyzed = false; }" style="flex:1;height:36px;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.18s;letter-spacing:-0.2px;" :style="{ background: form.is_income ? 'var(--bg)' : 'transparent', color: form.is_income ? 'var(--success)' : 'var(--muted)', boxShadow: form.is_income ? '0 1px 3px rgba(0,0,0,0.18)' : 'none' }">
+                <div @click="if (!form.is_income || form.porCobrar) { form.is_income = true; form.porCobrar = false; form.category = ''; parsedItems = []; analyzed = false; }" style="flex:1;height:36px;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.18s;letter-spacing:-0.2px;" :style="{ background: (form.is_income && !form.porCobrar) ? 'var(--bg)' : 'transparent', color: (form.is_income && !form.porCobrar) ? 'var(--success)' : 'var(--muted)', boxShadow: (form.is_income && !form.porCobrar) ? '0 1px 3px rgba(0,0,0,0.18)' : 'none' }">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><polyline points="17 6 23 6 23 12"/><path d="M23 6l-9.5 9.5-5-5L1 18"/></svg>
                   Ingreso
+                </div>
+                <div x-show="!editingExpense && hasPlan('max')" @click="form.porCobrar = true; form.is_income = true; form.category = ''; if (!wkLoaded) loadWork()" style="flex:1;height:36px;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.18s;letter-spacing:-0.2px;" :style="{ background: form.porCobrar ? 'var(--bg)' : 'transparent', color: form.porCobrar ? 'var(--cyan)' : 'var(--muted)', boxShadow: form.porCobrar ? '0 1px 3px rgba(0,0,0,0.18)' : 'none' }">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+                  Por cobrar
+                </div>
+              </div>
+
+              <!-- ═════════ POR COBRAR: datos del cobro (cliente / vence / impuesto) ═════════ -->
+              <!-- El monto y el concepto salen del flujo normal (voz/foto/archivo/texto). Aquí solo
+                   los tres datos que un cobro tiene de más. Al guardar va a work_invoices. -->
+              <div x-show="form.porCobrar" style="margin-bottom:12px;">
+                <div class="field-box" style="margin-bottom:10px;">
+                  <div class="field-box-label">CLIENTE</div>
+                  <div class="field-box-inner">
+                    <input type="text" x-model="form.wkClient" list="wkClientListComposer" maxlength="120" placeholder="¿Quién te debe?" style="flex:1;background:none;border:0;color:var(--text);font-family:inherit;font-size:15px;outline:none;">
+                  </div>
+                  <datalist id="wkClientListComposer">
+                    <template x-for="c in wkClients" :key="'wcc'+c.id"><option :value="c.name"></option></template>
+                  </datalist>
+                </div>
+                <div style="display:flex;gap:10px;">
+                  <div class="field-box" style="flex:1;">
+                    <div class="field-box-label">VENCE (OPCIONAL)</div>
+                    <div class="field-box-inner">
+                      <input type="date" x-model="form.wkDue" style="flex:1;background:none;border:0;color:var(--text);font-family:inherit;font-size:14px;outline:none;">
+                    </div>
+                  </div>
+                  <div class="field-box" style="width:96px;">
+                    <div class="field-box-label">IMPUESTO %</div>
+                    <div class="field-box-inner">
+                      <input type="number" inputmode="decimal" step="1" min="0" max="100" x-model="form.wkTax" placeholder="0" style="flex:1;background:none;border:0;color:var(--text);font-family:inherit;font-size:15px;outline:none;">
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -7329,7 +7362,7 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
               <div id="a7-detected" x-show="!editingExpense && parsedItems.length >= 1 && !importedFile && !receiptPreview" style="margin-bottom:14px;">
                 <div class="cd-section-label" style="display:flex;align-items:center;justify-content:space-between;">
                   <span><span x-text="parsedItems.length"></span> <span x-text="parsedItems.length === 1 ? 'ELEMENTO DETECTADO' : 'ELEMENTOS DETECTADOS'"></span></span>
-                  <span x-show="parsedItems.length >= 2" style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:0.4px;">SE GUARDARÁN POR SEPARADO</span>
+                  <span x-show="parsedItems.length >= 2 && !form.porCobrar" style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:0.4px;">SE GUARDARÁN POR SEPARADO</span>
                 </div>
 
                 <!-- Hidden bank fees toggle -->
@@ -7421,15 +7454,19 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
                 </div>
                 <!-- Summary footer: total + category breakdown -->
                 <div style="margin-top:10px;padding:10px 14px;border-radius:var(--radius-sm);background:linear-gradient(135deg, rgba(var(--c-brand-rgb),0.06), rgba(var(--c-accent-rgb),0.06));border:1px solid rgba(var(--c-brand-rgb),0.2);">
-                  <div x-show="parsedHasExpense" style="display:flex;align-items:center;justify-content:space-between;">
+                  <div x-show="form.porCobrar" style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--muted);">TE DEBEN</span>
+                    <span style="font-size:17px;font-weight:800;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;color:var(--cyan);" x-text="'$' + (_wkComposerTotal() * (1 + (Number(form.wkTax)||0)/100)).toFixed(2)"></span>
+                  </div>
+                  <div x-show="!form.porCobrar && parsedHasExpense" style="display:flex;align-items:center;justify-content:space-between;">
                     <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--muted);" x-text="parsedIsMixed ? 'GASTOS' : 'TOTAL'"></span>
                     <span style="font-size:17px;font-weight:800;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;color:var(--text);" x-text="'−$' + parsedExpenseTotal.toFixed(2)"></span>
                   </div>
-                  <div x-show="parsedHasIncome" style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
+                  <div x-show="!form.porCobrar && parsedHasIncome" style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
                     <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--muted);" x-text="parsedIsMixed ? 'INGRESOS' : 'TOTAL'"></span>
                     <span style="font-size:17px;font-weight:800;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;color:var(--success);" x-text="'+$' + parsedIncomeTotal.toFixed(2)"></span>
                   </div>
-                  <div x-show="parsedIsMixed" style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid rgba(var(--c-brand-rgb),0.15);">
+                  <div x-show="!form.porCobrar && parsedIsMixed" style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid rgba(var(--c-brand-rgb),0.15);">
                     <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:var(--muted);">NETO</span>
                     <span style="font-size:18px;font-weight:800;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;" :style="{ color: parsedNetTotal < 0 ? 'var(--danger)' : 'var(--success)' }" x-text="(parsedNetTotal < 0 ? '−$' : '+$') + Math.abs(parsedNetTotal).toFixed(2)"></span>
                   </div>
@@ -7861,7 +7898,7 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
               </template>
 
               <!-- ═════════ CATEGORY GRID (solo cuando no hay items en lista; los items tienen su propio selector) ═════════ -->
-              <div id="a7-cat" x-show="parsedItems.length === 0 && (editingExpense || analyzed || form.amount)" style="margin-bottom:12px;">
+              <div id="a7-cat" x-show="!form.porCobrar && parsedItems.length === 0 && (editingExpense || analyzed || form.amount)" style="margin-bottom:12px;">
                 <div class="cd-section-label"><span>CATEGORÍA</span></div>
                 <div class="cd-cat-grid">
                   <template x-for="c in (form.is_income ? incomeCategories : categories)" :key="c.key">
@@ -7897,7 +7934,7 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
               </div>
 
               <!-- ═════════ ESPACIO (centro de gasto) ═════════ -->
-              <div x-show="spaces.length > 1 && (editingExpense || analyzed || form.amount || parsedItems.length)" style="margin-bottom:12px;">
+              <div x-show="!form.porCobrar && spaces.length > 1 && (editingExpense || analyzed || form.amount || parsedItems.length)" style="margin-bottom:12px;">
                 <div class="cd-section-label" style="display:flex;align-items:center;justify-content:space-between;">
                   <span>ESPACIO</span>
                   <button type="button" @click="openSpaceManager()" style="background:transparent;border:none;color:var(--cyan);font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:4px;padding:0;">
@@ -7918,7 +7955,7 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
               </div>
 
               <!-- ═════════ MÉTODO DE PAGO (gasto) / CUENTA DESTINO (ingreso) ═════════ -->
-              <div x-show="editingExpense || analyzed || form.amount || parsedItems.length" style="margin-bottom:12px;">
+              <div x-show="!form.porCobrar && (editingExpense || analyzed || form.amount || parsedItems.length)" style="margin-bottom:12px;">
                 <div class="cd-section-label" style="display:flex;align-items:center;justify-content:space-between;">
                   <span x-text="form.is_income ? '¿A QUÉ CUENTA ENTRA?' : 'MÉTODO DE PAGO'"></span>
                   <button type="button" @click="openPmManager()" style="background:transparent;border:none;color:var(--cyan);font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:4px;padding:0;">
@@ -7939,7 +7976,7 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
               </div>
 
               <!-- ═════════ RECURRENTE (crear, item único; coexiste con dividir) ═════════ -->
-              <div x-show="!editingExpense && !editingBatch && (analyzed || form.amount || parsedItems.length)" style="border-radius:14px;margin-bottom:12px;" :style="recurringOn ? { background: 'var(--surface)', border: '1px solid var(--cyan)', overflow: 'hidden' } : { background: 'var(--surface)', border: '1px solid var(--border)', overflow: 'hidden' }">
+              <div x-show="!form.porCobrar && !editingExpense && !editingBatch && (analyzed || form.amount || parsedItems.length)" style="border-radius:14px;margin-bottom:12px;" :style="recurringOn ? { background: 'var(--surface)', border: '1px solid var(--cyan)', overflow: 'hidden' } : { background: 'var(--surface)', border: '1px solid var(--border)', overflow: 'hidden' }">
                 <div @click="recurringOn = !recurringOn; if (recurringOn && !recurringDay) recurringDay = new Date().getDate()" style="padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;">
                   <div style="width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;" :style="{ background: recurringOn ? 'rgba(var(--c-brand-rgb),0.12)' : 'var(--bg)' }">
                     <svg viewBox="0 0 24 24" fill="none" :stroke="recurringOn ? 'var(--cyan)' : 'var(--muted)'" stroke-width="2" width="15" height="15"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
@@ -7960,7 +7997,7 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
               </div>
 
               <!-- SPLIT SECTION — CD: multi-person with proportion bar -->
-              <div style="border-radius:14px;margin-bottom:12px;" :style="form.is_split ? { background: 'var(--surface)', border: '1px solid var(--cyan)', overflow: splitPickerIdx >= 0 ? 'visible' : 'hidden' } : { background: 'var(--surface)', border: '1px solid var(--border)', overflow: 'hidden' }">
+              <div x-show="!form.porCobrar" style="border-radius:14px;margin-bottom:12px;" :style="form.is_split ? { background: 'var(--surface)', border: '1px solid var(--cyan)', overflow: splitPickerIdx >= 0 ? 'visible' : 'hidden' } : { background: 'var(--surface)', border: '1px solid var(--border)', overflow: 'hidden' }">
                 <div @click="toggleSplit()" style="padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;">
                   <div style="width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;" :style="{ background: form.is_split ? 'rgba(var(--c-brand-rgb),0.12)' : 'var(--bg)' }">
                     <svg viewBox="0 0 24 24" fill="none" :stroke="form.is_split ? 'var(--cyan)' : 'var(--muted)'" stroke-width="2" width="15" height="15"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -8108,11 +8145,11 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
               <!-- APPROVE BUTTON (green) — solo en modos SIN composer (edición / recibo / importado).
                    En el flujo normal el guardar vive ANCLADO en el header del composer (.cd-save-inline). -->
               <div style="margin-top:20px;" x-show="editingExpense || editingBatch || receiptPreview || importedFile">
-                <button class="approve-btn" @click="saveExpense" :disabled="saving || (parsedItems.length >= 1 && !form.is_split ? parsedItems.filter(i => i.amount > 0 && i.category).length < 1 : (!form.amount || !form.category))">
+                <button class="approve-btn" @click="saveExpense" :disabled="saving || (form.porCobrar ? !(_wkComposerTotal() > 0) : (parsedItems.length >= 1 && !form.is_split ? parsedItems.filter(i => i.amount > 0 && i.category).length < 1 : (!form.amount || !form.category)))">
                   <template x-if="!saving">
                     <span style="display:flex;align-items:center;gap:8px;">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><polyline points="20 6 9 17 4 12"/></svg>
-                      <span x-text="editingBatch ? ('Guardar ' + parsedItems.length + ' registros') : (editingExpense ? 'Guardar cambios' : (parsedItems.length >= 2 ? 'Guardar ' + parsedItems.length + ' registros' : (parsedItems.length === 1 && !form.is_split ? 'Guardar registro' : 'Aprobar')))"></span>
+                      <span x-text="form.porCobrar ? 'Crear cuenta por cobrar' : (editingBatch ? ('Guardar ' + parsedItems.length + ' registros') : (editingExpense ? 'Guardar cambios' : (parsedItems.length >= 2 ? 'Guardar ' + parsedItems.length + ' registros' : (parsedItems.length === 1 && !form.is_split ? 'Guardar registro' : 'Aprobar'))))"></span>
                     </span>
                   </template>
                   <span x-show="saving">Guardando...</span>
@@ -8133,9 +8170,9 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
                   <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   <div style="font-size:14px;font-weight:700;letter-spacing:-0.2px;">Describe el registro</div>
                 </div>
-                <button id="a7-save" class="cd-save-inline" :class="{ 'a7-glow': a7Active && a7Step === 4 }" x-show="analyzed" x-cloak @click="saveExpense" :disabled="saving || (parsedItems.length >= 1 && !form.is_split ? parsedItems.filter(i => i.amount > 0 && i.category).length < 1 : (!form.amount || !form.category))">
+                <button id="a7-save" class="cd-save-inline" :class="{ 'a7-glow': a7Active && a7Step === 4 }" x-show="analyzed || (form.porCobrar && _wkComposerTotal() > 0)" x-cloak @click="saveExpense" :disabled="saving || (form.porCobrar ? !(_wkComposerTotal() > 0) : (parsedItems.length >= 1 && !form.is_split ? parsedItems.filter(i => i.amount > 0 && i.category).length < 1 : (!form.amount || !form.category)))">
                   <svg x-show="!saving" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
-                  <span x-show="!saving" x-text="parsedItems.length >= 2 ? ('Guardar ' + parsedItems.length) : 'Guardar'"></span>
+                  <span x-show="!saving" x-text="form.porCobrar ? 'Crear cobro' : (parsedItems.length >= 2 ? ('Guardar ' + parsedItems.length) : 'Guardar')"></span>
                   <span x-show="saving">...</span>
                 </button>
               </div>
@@ -8150,7 +8187,7 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
               </div>
 
               <div class="cd-describe-card" :class="{ 'a7-glow': a7Active && a7Step === 2 }">
-                <textarea id="a7-desc" x-model="form.description" maxlength="500" rows="3" enterkeyhint="enter" :placeholder="form.is_income ? 'sueldo octubre 1200 · freelance diseño 350' : 'almuerzo 15 · taxi 8.50 · café 3.20'"></textarea>
+                <textarea id="a7-desc" x-model="form.description" maxlength="500" rows="3" enterkeyhint="enter" :placeholder="form.porCobrar ? 'diseño de logo 450 · di el monto por voz o foto' : (form.is_income ? 'sueldo octubre 1200 · freelance diseño 350' : 'almuerzo 15 · taxi 8.50 · café 3.20')"></textarea>
                 <div class="cd-describe-footer">
                   <div style="display:flex;gap:6px;align-items:center;">
                     <!-- Foto (camara) -->
@@ -9982,7 +10019,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v192',
+    APP_VERSION: 'v193',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     // ─── ZEPI (companion IA, Max) ───
     zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
@@ -14079,6 +14116,12 @@ function zepoApp() {
         split_people: [],
         payment_method: this._defaultPaymentMethod(),
         space_id: this._currentSpaceId(),
+        // Por cobrar: una cuenta por cobrar es "un ingreso pero pendiente". Se llena por los
+        // mismos caminos (voz/foto/archivo/texto) y al guardar va a work_invoices, no a expenses.
+        porCobrar: false,
+        wkClient: '',
+        wkDue: '',
+        wkTax: 0,
       };
       this.recurringOn = false;
       this.recurringDay = new Date().getDate();
@@ -14240,7 +14283,49 @@ function zepoApp() {
       try { await withTimeout(sb.auth.getSession(), 5000, 'ensureFreshSession'); } catch (e) {}
     },
 
+    // Total del composer cuando se está creando una cuenta por cobrar: suma de lo detectado
+    // (voz/foto/archivo) o el monto del form. Una sola fuente para el botón y el guardado.
+    _wkComposerTotal() {
+      if (this.parsedItems && this.parsedItems.length)
+        return this.parsedItems.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+      return parseFloat(String(this.form.amount || '').replace(',', '.')) || 0;
+    },
+    // Crea una cuenta por cobrar desde el composer (modo "Por cobrar"). Reúsa wkGuardar para
+    // el alta del cliente + correlativo; nace 'sent' (alguien ya te lo debe → puede vencer).
+    async wkGuardarDesdeComposer() {
+      const total = this._wkComposerTotal();
+      if (!(total > 0)) { this.showToast('¿Cuánto te deben?'); return; }
+      let concept = (this.form.description || '').trim();
+      if (!concept && this.parsedItems && this.parsedItems.length)
+        concept = this.parsedItems.map(p => p.description).filter(Boolean).join(', ').slice(0, 240);
+      if (!concept) concept = 'Cobro';
+      this.saving = true;
+      try {
+        this.wkForm = {
+          id: null,
+          client_name: (this.form.wkClient || '').trim() || 'Cliente',
+          concept: concept,
+          amount: String(total),
+          tax_pct: Number(this.form.wkTax || 0),
+          due_date: this.form.wkDue || '',
+          notaCliente: ''
+        };
+        await this.wkGuardar('sent');
+        this.sheetOpen = false;
+        if (!this.wkLoaded || true) await this.loadWork();
+      } catch (e) {
+        this.showToast('No se pudo crear el cobro');
+      } finally {
+        this.saving = false;
+      }
+    },
+
     async saveExpense() {
+      // Modo "Por cobrar": no es un gasto ni un ingreso todavía — es una cuenta por cobrar.
+      // Se desvía ANTES de toda la lógica de split/recurrente/multi-item.
+      if (this.form.porCobrar && !this.editingExpense && !this.editingBatch) {
+        return this.wkGuardarDesdeComposer();
+      }
       // Flush split picker if still open (race condition: user taps Save while input focused)
       if (this.splitPickerIdx >= 0) this.closeSplitPicker();
       // Las partes DEBEN sumar 100%: antes un 40/40 se guardaba igual y el 20% restante
@@ -18499,7 +18584,10 @@ function zepoApp() {
       this.wkSheetOpen = true;
       this.wkDetalle = null;
     },
-    async wkGuardar() {
+    async wkGuardar(status) {
+      // status opcional: 'draft' por defecto (botón del sheet pasa el evento → no es string).
+      // Desde el composer se pasa 'sent' (alguien ya te lo debe, no es un borrador).
+      const nuevoStatus = (typeof status === 'string') ? status : 'draft';
       const f = this.wkForm;
       const monto = parseFloat(String(f.amount).replace(',', '.'));
       if (!f.client_name.trim())  return this.showToast('¿A quién le cobras?');
@@ -18529,7 +18617,7 @@ function zepoApp() {
           }
           fila.client_id = cli ? cli.id : null;
           fila.number = this._wkSiguienteNumero();
-          fila.status = 'draft';
+          fila.status = nuevoStatus;
           await sb.from('work_invoices').insert(fila);
         }
         this.wkSheetOpen = false;
@@ -18909,7 +18997,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v168.js';
+  const CURRENT_SW = 'sw-v169.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
