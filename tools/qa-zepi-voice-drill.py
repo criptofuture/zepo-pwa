@@ -46,6 +46,7 @@ ZEPO_CFG = "C:/Users/alvar/lynoia/clients/zepo/config.json"
 MAX_EMAIL, PASS = "max@zepo.test", "ZepoQA2026!"
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) lynoia-cli/1.0"
 TAG = "ZVQA"
+BUD_M, BUD_Y = time.localtime().tm_mon, time.localtime().tm_year
 
 _z = json.load(open(ZEPO_CFG, encoding="utf-8"))
 _sb = _z.get("supabase", _z)
@@ -137,6 +138,35 @@ async ([desc, pm]) => {
 }
 """
 
+# set_budget por voz (F10). Devuelve tambien el espacio destino que resolvio la app.
+BUDGET_TOOLCALL_JS = """
+async ([amount, cat]) => {
+  const c = window.Alpine.$data(document.querySelector('#app'));
+  c.toast = '';
+  await c._zvToolCall([{ id: 'fcb', name: 'set_budget', args: { amount, category: cat } }]);
+  return JSON.stringify({ act: c.zvAct, space: c._zepiBudgetSpace() });
+}
+"""
+
+# Reproduce la causa real del fallo de Alvaro (24-jul): sin espacio resoluble, confirmar
+# moria en un `false` mudo dentro de saveBudgets y el usuario solo veia "no pude".
+NOSPACE_JS = """
+() => {
+  const c = window.Alpine.$data(document.querySelector('#app'));
+  c.__bakSpaces = c.spaces; c.__bakActive = c.activeSpaceId; c.__bakAll = c.spaceViewAll;
+  c.spaces = []; c.activeSpaceId = null; c.spaceViewAll = true; c.toast = '';
+  return true;
+}
+"""
+
+RESTORE_JS = """
+() => {
+  const c = window.Alpine.$data(document.querySelector('#app'));
+  c.spaces = c.__bakSpaces; c.activeSpaceId = c.__bakActive; c.spaceViewAll = c.__bakAll;
+  return (c.spaces || []).length;
+}
+"""
+
 
 def main():
     print("=== QA drill de voz (clics reales + BD real) ===")
@@ -150,6 +180,7 @@ def main():
     jwt, uid = login_api()
     port = free_port(); srv = serve(port)
     created = []
+    bud_before, bud_touched = None, False
     try:
         with sync_playwright() as p:
             br = p.chromium.launch()
@@ -323,11 +354,62 @@ def main():
             check("9a. cancelar NO escribe en la BD", isinstance(gone, list) and len(gone) == 0, f"filas={gone}")
             check("9b. cancelar cierra el drill y restaura la llamada", not state["draft"] and not state["mini"], f"{state}")
 
+            # 10) presupuesto por voz (F10): tool call -> tarjeta -> clic REAL -> fila en budgets.
+            #     Se respalda el mes entero porque saveBudgets borra y reinserta.
+            bud_before = rest(jwt, f"budgets?user_id=eq.{uid}&month=eq.{BUD_M}&year=eq.{BUD_Y}&select=*")
+            bud_touched = isinstance(bud_before, list)
+            info = json.loads(pg.evaluate(BUDGET_TOOLCALL_JS, [317, "Ahorro"]))
+            pg.wait_for_selector(".zv-sheet", timeout=5000)
+            pg.wait_for_timeout(400)
+            space = info.get("space")
+            check("10a. la tarjeta abre con la categoria mapeada ('Ahorro' -> savings)",
+                  (info.get("act") or {}).get("category") == "savings" and (info.get("act") or {}).get("amount") == 317,
+                  f"act={info.get('act')}")
+            check("10b. resolvio un espacio destino", bool(space), f"space={space}")
+            pg.screenshot(path=os.path.join(SHOTS, "zv-5-presupuesto.png"))
+            pg.click(".zv-sheet-btns .zepi-card-go")
+            pg.wait_for_timeout(3500)
+            bud_after = rest(jwt, f"budgets?user_id=eq.{uid}&month=eq.{BUD_M}&year=eq.{BUD_Y}&select=*")
+            saved = [b for b in bud_after if isinstance(b, dict) and b.get("category") == "savings"
+                     and abs(float(b.get("amount") or 0) - 317.0) < 0.01] if isinstance(bud_after, list) else []
+            check("10c. quedo el presupuesto de ahorro en la BD", len(saved) == 1, f"filas savings=317: {len(saved)} / total={len(bud_after) if isinstance(bud_after, list) else bud_after}")
+            prev_cats = {b.get("category") for b in bud_before if isinstance(b, dict) and b.get("category") and b.get("space_id") == space} if isinstance(bud_before, list) else set()
+            now_cats = {b.get("category") for b in bud_after if isinstance(b, dict) and b.get("category") and b.get("space_id") == space} if isinstance(bud_after, list) else set()
+            check("10d. NO borro las otras categorias del mes", prev_cats.issubset(now_cats), f"antes={sorted(prev_cats)} ahora={sorted(now_cats)}")
+            ui2 = pg.evaluate("""() => { const c = window.Alpine.$data(document.querySelector('#app'));
+                return { act: !!c.zvAct, mini: c.zepiVoiceMini, toast: c.toast,
+                         lastMsg: (c.zepiMsgs[c.zepiMsgs.length - 1] || {}).text || '' }; }""")
+            check("10e. la tarjeta se cierra y avisa en el chat", not ui2["act"] and not ui2["mini"] and "Presupuesto" in ui2["lastMsg"],
+                  f"act={ui2['act']} mini={ui2['mini']} msg={ui2['lastMsg'][:70]!r} toast={ui2['toast']!r}")
+
+            # 11) control negativo (la causa real del bug): sin espacio resoluble NO escribe
+            #     y el mensaje DICE por que, en vez del "no pude" mudo de antes.
+            pg.evaluate(NOSPACE_JS)
+            pg.evaluate(BUDGET_TOOLCALL_JS, [999, "Comida"])
+            pg.wait_for_selector(".zv-sheet", timeout=5000)
+            pg.wait_for_timeout(300)
+            pg.click(".zv-sheet-btns .zepi-card-go")
+            pg.wait_for_timeout(2000)
+            bud_neg = rest(jwt, f"budgets?user_id=eq.{uid}&month=eq.{BUD_M}&year=eq.{BUD_Y}&select=category,amount")
+            bad = [b for b in bud_neg if isinstance(b, dict) and abs(float(b.get("amount") or 0) - 999.0) < 0.01] if isinstance(bud_neg, list) else []
+            neg = pg.evaluate("""() => { const c = window.Alpine.$data(document.querySelector('#app')); return c.toast || ''; }""")
+            check("11a. sin espacio NO escribe en la BD", len(bad) == 0, f"filas 999: {len(bad)}")
+            check("11b. el aviso dice el motivo (no el 'no pude' mudo)", "espacio" in neg.lower(), f"toast={neg!r}")
+            pg.evaluate(RESTORE_JS)
+
             ctx.close(); br.close()
     finally:
         for eid in created:
             rest(jwt, f"payment_requests?expense_id=eq.{eid}", method="DELETE")
             rest(jwt, f"expenses?id=eq.{eid}", method="DELETE")
+        # Los presupuestos del mes se borran y reinsertan al guardar: se deja el mes como estaba.
+        if bud_touched:
+            rest(jwt, f"budgets?user_id=eq.{uid}&month=eq.{BUD_M}&year=eq.{BUD_Y}", method="DELETE")
+            back = [{k: v for k, v in b.items() if k not in ("id", "created_at")}
+                    for b in (bud_before or []) if isinstance(b, dict)]
+            if back:
+                rest(jwt, "budgets", method="POST", payload=back)
+            print(f"  presupuestos del mes restaurados: {len(back)} filas")
         srv.shutdown()
 
     left = rest(jwt, f"expenses?user_id=eq.{uid}&description=like.*{TAG}*&select=id")

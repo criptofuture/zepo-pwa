@@ -2846,8 +2846,12 @@
     .zepi-typing span:nth-child(3) { animation-delay: .4s; }
     @keyframes zepiBlink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
     .zepi-find { background: rgba(var(--c-accent-rgb),0.10); border: 1px solid rgba(var(--c-accent-rgb),0.4); border-radius: var(--radius); padding: 10px 12px; font-size: 13px; }
-    .zepi-foot { display: flex; gap: 8px; align-items: flex-end; padding: 10px 12px calc(10px + var(--safe-bottom)); border-top: 1px solid var(--border); background: var(--bg); flex-shrink: 0; }
-    .zepi-input { flex: 1; min-height: 44px; max-height: 110px; resize: none; border-radius: 22px; border: 1px solid var(--border); background: var(--surface); padding: 11px 14px; font-size: 16px; font-family: inherit; color: var(--text); outline: none; }
+    /* Composer de 2 filas: el texto ocupa el ancho completo (con 4 botones en la misma fila
+       el placeholder se partía y quedaba cortado contra el alto fijo de 44px). */
+    .zepi-foot { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px calc(10px + var(--safe-bottom)); border-top: 1px solid var(--border); background: var(--bg); flex-shrink: 0; }
+    .zepi-foot-row { display: flex; gap: 8px; align-items: center; }
+    .zepi-foot-sp { flex: 1; }
+    .zepi-input { width: 100%; min-height: 44px; max-height: 120px; resize: none; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); padding: 11px 14px; font-size: 16px; line-height: 1.35; font-family: inherit; color: var(--text); outline: none; }
     .zepi-input:focus { border-color: var(--cyan); }
     .zepi-send { width: 44px; height: 44px; border-radius: var(--radius-pill); background: var(--gradient); border: none; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; }
     .zepi-send:disabled { opacity: .5; }
@@ -2885,7 +2889,7 @@
     .zv-b-me { align-self: flex-end; background: var(--cyan); color: var(--c-brand-contrast); border-bottom-right-radius: 6px; }
     .zv-b-z { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 6px; }
     .zv-empty { margin: auto; text-align: center; font-size: 13px; color: var(--dim); line-height: 1.5; }
-    .zv-ctrls { display: flex; justify-content: center; gap: 16px; flex-shrink: 0; }
+    .zv-ctrls { display: flex; justify-content: center; gap: 12px; flex-shrink: 0; }
     .zv-cbtn { width: 62px; height: 62px; border-radius: var(--radius-pill); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; }
     .zv-cbtn svg { width: 25px; height: 25px; stroke: var(--c-brand-contrast); fill: none; stroke-width: 2.2; }
     .zv-mute { background: var(--surface); border: 1px solid var(--border2); }
@@ -6890,21 +6894,31 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
 
             <template x-if="hasPlan('pro')">
               <div class="zepi-foot">
-                <button class="zepi-mic" :class="zepiDictState" @click="zepiDictToggle()" :title="zepiDictState === 'rec' ? 'Toca para terminar' : 'Dictar mensaje'">
-                  <svg x-show="zepiDictState !== 'busy'" viewBox="0 0 24 24"><path d="M12 1a3 3 0 013 3v8a3 3 0 01-6 0V4a3 3 0 013-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-                  <svg x-show="zepiDictState === 'busy'" viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-6.2-8.56"/></svg>
-                </button>
-                <label class="zepi-mic" x-show="hasPlan('elite')" title="Foto de recibo" style="cursor:pointer;">
-                  <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                  <input type="file" accept="image/*" capture="environment" @change="zepiReceiptPhoto($event)" style="display:none">
-                </label>
-                <textarea class="zepi-input" x-model="zepiInput" placeholder="Pregúntame lo que sea…" rows="1" enterkeyhint="send" @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); sendZepi(); }"></textarea>
-                <button class="zepi-mic zepi-callbtn" x-show="hasPlan('max')" @click="zepiVoiceStart()" title="Llamada con Zepi">
-                  <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
-                </button>
-                <button class="zepi-send" :disabled="zepiTyping" @click="sendZepi()">
-                  <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                </button>
+                <textarea class="zepi-input" x-model="zepiInput" placeholder="Pregúntame lo que sea…" rows="1" enterkeyhint="send"
+                  @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); sendZepi(); }"
+                  @input="$el.style.height = 'auto'; $el.style.height = Math.min($el.scrollHeight, 120) + 'px'"
+                  x-effect="if (!zepiInput) $el.style.height = ''"></textarea>
+                <div class="zepi-foot-row">
+                  <button class="zepi-mic" :class="zepiDictState" @click="zepiDictToggle()" :title="zepiDictState === 'rec' ? 'Toca para terminar' : 'Dictar mensaje'">
+                    <svg x-show="zepiDictState !== 'busy'" viewBox="0 0 24 24"><path d="M12 1a3 3 0 013 3v8a3 3 0 01-6 0V4a3 3 0 013-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                    <svg x-show="zepiDictState === 'busy'" viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-6.2-8.56"/></svg>
+                  </button>
+                  <label class="zepi-mic" x-show="hasPlan('elite')" title="Foto de recibo" style="cursor:pointer;">
+                    <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    <input type="file" accept="image/*" capture="environment" @change="zepiReceiptPhoto($event)" style="display:none">
+                  </label>
+                  <label class="zepi-mic" x-show="hasPlan('max')" title="Importar archivo (estado de cuenta)" style="cursor:pointer;">
+                    <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+                    <input type="file" accept=".pdf,.xlsx,.xls,.csv,.xml,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,application/xml" @change="zepiAttachFile($event)" style="display:none">
+                  </label>
+                  <div class="zepi-foot-sp"></div>
+                  <button class="zepi-mic zepi-callbtn" x-show="hasPlan('max')" @click="zepiVoiceStart()" title="Llamada con Zepi">
+                    <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                  </button>
+                  <button class="zepi-send" :disabled="zepiTyping" @click="sendZepi()">
+                    <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  </button>
+                </div>
               </div>
             </template>
 
@@ -6947,6 +6961,14 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
                 <svg x-show="!zepiVoiceMuted" viewBox="0 0 24 24"><path d="M12 1a3 3 0 013 3v8a3 3 0 01-6 0V4a3 3 0 013-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
                 <svg x-show="zepiVoiceMuted" viewBox="0 0 24 24"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 005.12 2.12M15 9.34V4a3 3 0 00-5.94-.6"/><path d="M17 16.95A7 7 0 015 12v-2m14 0v2a7 7 0 01-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
               </button>
+              <label class="zv-cbtn zv-mute" title="Foto de recibo" aria-label="Foto de recibo" style="cursor:pointer;">
+                <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <input type="file" accept="image/*" capture="environment" @change="zvAttachPhoto($event)" style="display:none">
+              </label>
+              <label class="zv-cbtn zv-mute" title="Importar archivo" aria-label="Importar archivo" style="cursor:pointer;">
+                <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+                <input type="file" accept=".pdf,.xlsx,.xls,.csv,.xml,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,application/xml" @change="zvAttachFile($event)" style="display:none">
+              </label>
               <button class="zv-cbtn" style="background:var(--danger);" @click="zepiVoiceStop()" aria-label="Colgar">
                 <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
@@ -9705,6 +9727,8 @@ function zepoApp() {
     receiptPreview: null,
     budgets: [],
     budgetForm: {},
+    _budgetFormFailed: false,   // la lectura del form falló → guardar borraría el mes
+    _budgetFail: '',            // motivo del último guardado fallido (para decírselo al usuario)
     budgetSheetOpen: false,
     savingBudget: false,
     _rawUserPlan: 'free',
@@ -9789,7 +9813,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v191',
+    APP_VERSION: 'v192',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     // ─── ZEPI (companion IA, Max) ───
     zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
@@ -12585,6 +12609,7 @@ function zepoApp() {
     // Carga el form con los presupuestos de UN espacio (para el selector del sheet,
     // sin cambiar el espacio activo global).
     async loadBudgetFormForSpace(spaceId) {
+      this._budgetFormFailed = false;
       if (!spaceId) { this.budgetForm = { _targetSpace: null }; this.dataVer++; return; }
       const now = new Date();
       const m = now.getMonth() + 1, y = now.getFullYear();
@@ -12597,8 +12622,17 @@ function zepoApp() {
         try {
           const url = SUPABASE_URL + '/rest/v1/budgets?user_id=eq.' + encodeURIComponent(this.user.id) + '&space_id=eq.' + spaceId;
           const res = await fetch(url, { headers: sbAuthHeaders() });
-          data = res.ok ? await res.json() : [];
-        } catch (e2) { data = []; }
+          if (!res.ok) throw new Error('http_' + res.status);
+          const j = await res.json();
+          if (!Array.isArray(j)) throw new Error('bad_body');
+          data = j;
+        } catch (e2) {
+          // Leer 0 por error y luego guardar BORRARÍA el resto de presupuestos del mes
+          // (saveBudgets borra y reinserta). Se marca el form como no confiable.
+          console.warn('[budgetForm-space] lectura fallida:', e2.message);
+          this._budgetFormFailed = true;
+          data = [];
+        }
       }
       const form = { _targetSpace: spaceId };
       this._resolveBudgetRows(data, m, y).forEach(b => { form[b.category || '_total'] = b.amount; });
@@ -12623,9 +12657,15 @@ function zepoApp() {
       return sum;
     },
 
-    async saveBudgets() {
-      const sf = this.budgetForm._targetSpace || (this.spaceViewAll ? null : this.activeSpaceId);
-      if (!sf) { this.showToast('Elige un espacio para fijar presupuesto'); return false; }
+    // spaceIdOverride: los caminos de Zepi pasan el espacio EXPLÍCITO en vez de confiar en el
+    // estado del sheet (`budgetForm._targetSpace`). Ojo: el botón del sheet usa
+    // @click="saveBudgets", que lo llama con el evento → solo se acepta si es string.
+    async saveBudgets(spaceIdOverride) {
+      const sf = (typeof spaceIdOverride === 'string' && spaceIdOverride)
+        || this.budgetForm._targetSpace || (this.spaceViewAll ? null : this.activeSpaceId);
+      this._budgetFail = '';
+      if (!sf) { this._budgetFail = 'no encontré en qué espacio fijarlo'; this.showToast('Elige un espacio para fijar presupuesto'); return false; }
+      if (this._budgetFormFailed) { this._budgetFail = 'no pude leer tus presupuestos actuales'; this.showToast('No pude leer tus presupuestos — revisa tu conexión'); return false; }
       this.savingBudget = true;
       const now = new Date();
       const month = now.getMonth() + 1;
@@ -12675,6 +12715,7 @@ function zepoApp() {
           if (rows.some(r => r.category)) this.jrnMark('budget_cat');
         }
       } catch (e) {
+        this._budgetFail = (e && e.message) || String(e);
         this.showToast('Error: ' + e.message);
         this.savingBudget = false;
         return false;
@@ -12942,6 +12983,9 @@ function zepoApp() {
           sb.from('spaces').select('*').eq('user_id', this.user.id).order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
           2500, 'loadSpaces'
         );
+        // Sin este throw un error de la query (RLS, 4xx) dejaba `spaces` VACÍO sin pasar por
+        // el fallback REST — y con spaces vacío no hay espacio destino para un presupuesto.
+        if (r.error) throw r.error;
         data = r.data;
       } catch (e) {
         try {
@@ -16113,6 +16157,31 @@ function zepoApp() {
         this.$nextTick(() => this._zepiScroll());
       }
     },
+    // Clip del composer: un estado de cuenta (PDF/Excel/CSV) NO se lee por chat — se entrega
+    // al importador del «+», que ya tiene su revisión fila por fila. Handoff, como split.
+    zepiAttachFile(ev) {
+      if (!ev.target?.files?.length) return;
+      if (!this.hasPlan('max')) { ev.target.value = ''; this.zepiOpen = false; this.tab = 'plans'; return; }
+      this.zepiOpen = false;
+      this.openNew();
+      this.handleFileImport(ev);
+      ev.target.value = '';
+      this.showToast('Archivo listo — dale a analizar');
+    },
+    // Adjuntar SIN colgar: la llamada se minimiza, el recibo se lee en el chat de atrás y
+    // Zepi se entera por texto para poder comentarlo de viva voz.
+    async zvAttachPhoto(ev) {
+      if (!ev.target?.files?.length) return;
+      this.zepiVoiceMini = true;
+      this._zvNotify('[SISTEMA] El usuario acaba de mandar una FOTO de un recibo; la app la está leyendo y le mostrará una tarjeta para confirmar. Dile en una frase corta que la estás mirando.');
+      await this.zepiReceiptPhoto(ev);
+    },
+    zvAttachFile(ev) {
+      if (!ev.target?.files?.length) return;
+      // El importador ocupa la pantalla completa y tarda: cuelga la llamada antes de entregarlo.
+      this.zepiVoiceStop();
+      this.zepiAttachFile(ev);
+    },
     _zepiSnapshot() {
       // Resumen COMPACTO de los datos del usuario para el companion. Solo agregados,
       // nunca el detalle completo (costo acotado). Todo con try/catch: si una fuente
@@ -16575,11 +16644,17 @@ function zepoApp() {
           m.intentState = ok ? 'done' : 'error';
         } else if (it.kind === 'set_budget' && Number(it.amount) > 0) {
           // Mismo espacio destino que usa el sheet real de presupuestos
-          const target = (!this.spaceViewAll && this.activeSpaceId) ? this.activeSpaceId : ((this.spaces.find(s => s.is_default) || this.spaces[0] || {}).id || null);
-          await this.loadBudgetFormForSpace(target);
-          if (it.category) this.budgetForm[it.category] = it.amount; else this.budgetForm._total = it.amount;
-          const ok = await this.saveBudgets();
-          m.intentState = ok ? 'done' : 'error';
+          const target = this._zepiBudgetSpace();
+          if (!target) {
+            m.intentState = 'error';
+            this.showToast('No tengo un espacio donde fijarlo — abre Presupuestos');
+          } else {
+            await this.loadBudgetFormForSpace(target);
+            if (it.category) this.budgetForm[it.category] = it.amount; else this.budgetForm._total = it.amount;
+            const ok = await this.saveBudgets(target);
+            m.intentState = ok ? 'done' : 'error';
+            if (!ok && this._budgetFail) this.showToast('No pude fijar el presupuesto — ' + this._budgetFail);
+          }
         } else if (it.kind === 'split_handoff' && Number(it.total) > 0) {
           // Handoff: se abre la hoja "+" pre-llenada; el usuario elige personas y guarda ALLÁ
           m.intentState = 'done';
@@ -17230,10 +17305,11 @@ function zepoApp() {
       this.zvActBusy = true;
       try {
         const amount = Number(a.amount) || 0, category = a.category || '';
-        const target = (!this.spaceViewAll && this.activeSpaceId) ? this.activeSpaceId : ((this.spaces.find(s => s.is_default) || this.spaces[0] || {}).id || null);
+        const target = this._zepiBudgetSpace();
+        if (!target) { this.showToast('No tengo un espacio donde fijarlo — abre Presupuestos'); this.zvActBusy = false; return; }
         await this.loadBudgetFormForSpace(target);
         if (category) this.budgetForm[category] = amount; else this.budgetForm._total = amount;
-        const ok = await this.saveBudgets();
+        const ok = await this.saveBudgets(target);
         if (ok) {
           const label = category ? this.getCatLabel(category) : 'total';
           this.zvAct = null;
@@ -17242,12 +17318,20 @@ function zepoApp() {
           this._zepiSaveChat();
           this._zvNotify('[SISTEMA] El usuario confirmó; presupuesto ' + label + ' de $' + this.fmtMoney(amount) + ' guardado. Confírmaselo en una frase corta.');
         } else {
-          this.showToast('No pude fijar el presupuesto — inténtalo desde Presupuestos');
+          this.showToast('No pude fijar el presupuesto — ' + (this._budgetFail || 'inténtalo desde Presupuestos'));
         }
       } catch (e) {
-        this.showToast('No pude fijar el presupuesto — inténtalo desde Presupuestos');
+        console.error('[zvActConfirm set_budget]', e);
+        this.showToast('No pude fijar el presupuesto — ' + ((e && e.message) || 'error inesperado'));
       }
       this.zvActBusy = false;
+    },
+    // Espacio destino de un presupuesto pedido a Zepi (voz o chat). Explícito: si devuelve
+    // null el llamador lo DICE, en vez de morir en un `false` mudo dentro de saveBudgets.
+    _zepiBudgetSpace() {
+      if (!this.spaceViewAll && this.activeSpaceId) return this.activeSpaceId;
+      const sp = this.spaces || [];
+      return ((sp.find(s => s.is_default) || sp[0] || {}).id) || this.activeSpaceId || null;
     },
     zvActCancel() {
       if (this.zvActBusy) return;
@@ -18450,7 +18534,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v167.js';
+  const CURRENT_SW = 'sw-v168.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
