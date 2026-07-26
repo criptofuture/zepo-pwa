@@ -20,7 +20,9 @@ from datetime import date
 from playwright.sync_api import sync_playwright
 
 PWA_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CFG = json.load(open(os.path.join(PWA_DIR, "..", "..", "config.json")))["supabase"]
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import qa_cfg
+CFG = qa_cfg.load(PWA_DIR)
 URL, SK = CFG["url"], CFG["secret_key"]
 EMAIL, PASS = "max@zepo.test", "ZepoQA2026!"
 TAG = "PEX_" + str(int(time.time()))

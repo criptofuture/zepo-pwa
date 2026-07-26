@@ -19,7 +19,9 @@ import sys, os, json, socket, threading, http.server, functools, urllib.request,
 from playwright.sync_api import sync_playwright
 
 PWA_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CFG = json.load(open(os.path.join(PWA_DIR, "..", "..", "config.json")))["supabase"]
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import qa_cfg
+CFG = qa_cfg.load(PWA_DIR)
 URL, SK = CFG["url"], CFG["secret_key"]
 EMAIL = "free@zepo.test"; PASS = "ZepoQA2026!"
 H = {"apikey": SK, "Authorization": "Bearer " + SK, "Content-Type": "application/json",
