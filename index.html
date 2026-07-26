@@ -909,9 +909,54 @@
     .batch-meta {
       font-size: 11px; color: var(--muted); margin-top: 2px;
       display: flex; align-items: center; gap: 5px;
+      flex-wrap: wrap; row-gap: 3px;
     }
+    .batch-meta > span:first-child { white-space: nowrap; }
     .batch-right {
       display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    }
+    /* Chip "parte de un grupo mayor": la lista agrupa por fecha antes que por lote, asi que
+       un lote con fechas repartidas se ve troceado. El chip avisa y manda a Importaciones. */
+    .batch-part-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.2px;
+      padding: 2px 7px; border-radius: var(--radius-pill);
+      background: rgba(var(--c-accent-rgb),0.22);
+      color: var(--c-accent-soft);
+      white-space: nowrap;
+    }
+    /* Resumen del grupo en el editor */
+    .batch-summary {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; margin-bottom: 12px;
+    }
+    .batch-summary-head {
+      display: flex; align-items: center; gap: 12px; padding: 13px 14px;
+    }
+    .batch-summary-icon {
+      width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 17px;
+      background: linear-gradient(135deg, rgba(var(--c-brand-rgb),0.12), rgba(var(--c-accent-rgb),0.12));
+      border: 1px solid rgba(var(--c-brand-rgb),0.2);
+    }
+    .batch-summary-label {
+      font-size: 15px; font-weight: 700; letter-spacing: -0.3px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .batch-summary-meta {
+      font-size: 11.5px; color: var(--muted); margin-top: 2px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .batch-summary-total {
+      font-size: 17px; font-weight: 800; letter-spacing: -0.5px;
+      font-variant-numeric: tabular-nums; flex-shrink: 0; color: var(--text);
+    }
+    .batch-summary-warn {
+      display: flex; gap: 8px; padding: 10px 14px;
+      background: rgba(var(--c-warning-rgb),0.10);
+      border-top: 1px solid rgba(var(--c-warning-rgb),0.22);
+      color: var(--c-warning);
+      font-size: 11.5px; line-height: 1.45; font-weight: 600;
     }
     .batch-amount {
       font-size: 15px; font-weight: 700; letter-spacing: -0.3px;
@@ -4117,7 +4162,12 @@ setTimeout(function() {
                     <div class="batch-icon">📦</div>
                     <div class="batch-info">
                       <div class="batch-label" x-text="entry.batch_label"></div>
-                      <div class="batch-meta" x-text="formatDate(entry.date) + ' · ' + entry.items.length + ' items'"></div>
+                      <div class="batch-meta">
+                        <span x-text="formatDate(entry.date) + ' · ' + entry.items.length + ' items'"></span>
+                        <template x-if="batchExtra(entry) > 0">
+                          <span class="batch-part-chip" @click.stop="openImportsManager()" style="cursor:pointer;" x-text="'+' + batchExtra(entry) + ' en otras fechas'"></span>
+                        </template>
+                      </div>
                     </div>
                     <div class="batch-right">
                       <div class="batch-amount" :class="{ income: entry.net >= 0 }" x-text="(entry.net >= 0 ? '+$' : '-$') + fmtMoney(Math.abs(entry.net))"></div>
@@ -4537,7 +4587,12 @@ setTimeout(function() {
                         <div class="batch-icon">📦</div>
                         <div class="batch-info">
                           <div class="batch-label" x-text="entry.batch_label"></div>
-                          <div class="batch-meta" x-text="formatTime(entry.created_at) + ' · ' + entry.items.length + ' items'"></div>
+                          <div class="batch-meta">
+                            <span x-text="formatTime(entry.created_at) + ' · ' + entry.items.length + ' items'"></span>
+                            <template x-if="batchExtra(entry) > 0">
+                              <span class="batch-part-chip" @click.stop="openImportsManager()" style="cursor:pointer;" x-text="'+' + batchExtra(entry) + ' en otras fechas'"></span>
+                            </template>
+                          </div>
                         </div>
                         <div class="batch-right">
                           <div class="batch-amount" :class="{ income: entry.net >= 0 }" x-text="(entry.net >= 0 ? '+$' : '-$') + fmtMoney(Math.abs(entry.net))"></div>
@@ -4757,13 +4812,13 @@ setTimeout(function() {
                           <div style="position:absolute;right:0;top:0;bottom:0;width:6px;background:linear-gradient(90deg, transparent, rgba(var(--c-income-rgb),0.2));"></div>
                           <div style="width:38px;height:38px;border-radius:19px;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--c-brand-contrast);flex-shrink:0;" x-text="(entry._person || '?').charAt(0).toUpperCase()"></div>
                           <div style="flex:1;min-width:0;">
-                            <div style="font-size:14px;font-weight:600;color:var(--text);">
-                              <span x-text="entry._person"></span>
+                            <div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                              <span x-text="entry.description || getCatLabel(entry.category)"></span>
                               <template x-if="isAutoCobro(entry)">
                                 <span style="margin-left:6px;font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(var(--c-accent-rgb),0.18);color:var(--c-accent-soft);font-weight:700;letter-spacing:0.4px;vertical-align:1px;">AUTO</span>
                               </template>
                             </div>
-                            <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="(entry.description || getCatLabel(entry.category)) + ' · ' + relativeTime(entry.date)"></div>
+                            <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="entry._person + ' · ' + relativeTime(entry.date)"></div>
                           </div>
                           <div style="text-align:right;flex-shrink:0;">
                             <div style="font-size:16px;font-weight:700;letter-spacing:-0.3px;color:var(--text);font-variant-numeric:tabular-nums;" x-text="'$' + entry._amount.toFixed(2)"></div>
@@ -4783,8 +4838,8 @@ setTimeout(function() {
                     <div @click="openCobroDetail(c)" :style="'padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;' + (ci < filteredPaidCobros.length - 1 ? 'border-bottom:1px solid var(--border)' : '')">
                       <div style="width:38px;height:38px;border-radius:19px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--muted);flex-shrink:0;text-decoration:line-through;" x-text="(c._person || '?').charAt(0).toUpperCase()"></div>
                       <div style="flex:1;min-width:0;">
-                        <div style="font-size:14px;font-weight:600;color:var(--muted);" x-text="c._person"></div>
-                        <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="(c.description || getCatLabel(c.category)) + ' · ' + relativeTime(c.date)"></div>
+                        <div style="font-size:14px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="c.description || getCatLabel(c.category)"></div>
+                        <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="c._person + ' · ' + relativeTime(c.date)"></div>
                       </div>
                       <div style="text-align:right;flex-shrink:0;">
                         <div style="font-size:16px;font-weight:700;letter-spacing:-0.3px;color:var(--muted);font-variant-numeric:tabular-nums;text-decoration:line-through;" x-text="'$' + c._amount.toFixed(2)"></div>
@@ -4837,8 +4892,8 @@ setTimeout(function() {
                           <div style="display:flex;align-items:center;gap:12px;">
                             <div style="width:38px;height:38px;border-radius:19px;background:linear-gradient(135deg,rgba(var(--c-brand-rgb),0.15),rgba(var(--c-accent-rgb),0.1));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--cyan);flex-shrink:0;" x-text="(g.from_name || '?').charAt(0).toUpperCase()"></div>
                             <div style="flex:1;min-width:0;">
-                              <div style="font-size:14px;font-weight:600;color:var(--text);" x-text="g.from_name"></div>
-                              <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="(g.items[0].description || 'Gasto compartido') + ' · ' + (g.items[0].expense_date || '')"></div>
+                              <div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="g.items[0].description || 'Gasto compartido'"></div>
+                              <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="g.from_name + (g.items[0].expense_date ? ' · ' + g.items[0].expense_date : '')"></div>
                             </div>
                             <div style="display:flex;align-items:center;gap:8px;">
                               <div class="mono" style="font-size:16px;font-weight:700;color:var(--text);" x-text="'$' + fmtMoney(g.total)"></div>
@@ -4904,7 +4959,8 @@ setTimeout(function() {
                                 <div style="display:flex;align-items:center;gap:12px;">
                                   <div style="width:32px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;" :style="sub._type === 'income-split' ? 'background:linear-gradient(135deg,rgba(var(--c-income-rgb),0.15),rgba(var(--c-brand-rgb),0.08));color:var(--success)' : 'background:linear-gradient(135deg,rgba(var(--c-warning-rgb),0.15),rgba(var(--c-expense-rgb),0.1));color:var(--warning)'" x-text="(sub.from_name || sub._person || '?').charAt(0).toUpperCase()"></div>
                                   <div style="flex:1;min-width:0;">
-                                    <div style="font-size:13px;font-weight:600;color:var(--text);" x-text="sub.from_name || sub._person || 'Contacto'"></div>
+                                    <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="sub.description || 'Gasto compartido'"></div>
+                                    <div style="font-size:10px;color:var(--muted);margin-top:1px;" x-text="sub.from_name || sub._person || 'Contacto'"></div>
                                   </div>
                                   <div class="mono" style="font-size:14px;font-weight:700;color:var(--warning);" x-text="'$' + Number(sub.amount || sub._amount || 0).toFixed(2)"></div>
                                 </div>
@@ -4918,8 +4974,8 @@ setTimeout(function() {
                           <div style="display:flex;align-items:center;gap:12px;">
                             <div style="width:38px;height:38px;border-radius:19px;background:linear-gradient(135deg,rgba(var(--c-warning-rgb),0.15),rgba(var(--c-expense-rgb),0.1));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--warning);flex-shrink:0;" x-text="(entry.from_name || '?').charAt(0).toUpperCase()"></div>
                             <div style="flex:1;min-width:0;">
-                              <div style="font-size:14px;font-weight:600;color:var(--text);" x-text="entry.from_name || 'Contacto'"></div>
-                              <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="(entry.description || 'Gasto compartido') + ' · ' + (entry.expense_date || '')"></div>
+                              <div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="entry.description || 'Gasto compartido'"></div>
+                              <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="(entry.from_name || 'Contacto') + (entry.expense_date ? ' · ' + entry.expense_date : '')"></div>
                             </div>
                             <div style="display:flex;align-items:center;gap:8px;">
                               <div class="mono" style="font-size:16px;font-weight:700;color:var(--warning);" x-text="'$' + Number(entry.amount).toFixed(2)"></div>
@@ -4935,8 +4991,8 @@ setTimeout(function() {
                               <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="1.8" width="18" height="18"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
                             </div>
                             <div style="flex:1;min-width:0;">
-                              <div style="font-size:14px;font-weight:600;color:var(--text);" x-text="entry._person"></div>
-                              <div style="font-size:11px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="(entry.description || 'Ingreso compartido') + ' · ' + relativeTime(entry.date)"></div>
+                              <div style="font-size:14px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="entry.description || 'Ingreso compartido'"></div>
+                              <div style="font-size:11px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="entry._person + ' · ' + relativeTime(entry.date)"></div>
                             </div>
                             <div style="display:flex;align-items:center;gap:8px;">
                               <div style="text-align:right;flex-shrink:0;">
@@ -4979,7 +5035,8 @@ setTimeout(function() {
                               <div @click="activeDebo = pr; activeDeboType = 'paid'; deboDetailOpen = true" style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;">
                                 <div style="width:32px;height:32px;border-radius:16px;background:rgba(var(--c-income-rgb),0.1);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--success);flex-shrink:0;" x-text="(pr.from_name || '?').charAt(0).toUpperCase()"></div>
                                 <div style="flex:1;min-width:0;">
-                                  <div style="font-size:13px;font-weight:600;color:var(--muted);" x-text="pr.from_name || 'Contacto'"></div>
+                                  <div style="font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="pr.description || 'Gasto compartido'"></div>
+                                  <div style="font-size:10px;color:var(--dim);margin-top:1px;" x-text="pr.from_name || 'Contacto'"></div>
                                 </div>
                                 <div class="mono" style="font-size:14px;font-weight:700;color:var(--muted);text-decoration:line-through;" x-text="'$' + Number(pr.amount).toFixed(2)"></div>
                               </div>
@@ -4991,8 +5048,8 @@ setTimeout(function() {
                         <div @click="activeDebo = entry; activeDeboType = 'paid'; deboDetailOpen = true" style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;">
                           <div style="width:38px;height:38px;border-radius:19px;background:rgba(var(--c-income-rgb),0.1);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--success);flex-shrink:0;" x-text="(entry.from_name || '?').charAt(0).toUpperCase()"></div>
                           <div style="flex:1;min-width:0;">
-                            <div style="font-size:14px;font-weight:600;color:var(--muted);" x-text="entry.from_name || 'Contacto'"></div>
-                            <div style="font-size:11px;color:var(--dim);margin-top:2px;" x-text="(entry.description || 'Gasto compartido') + ' · ' + (entry.expense_date || '')"></div>
+                            <div style="font-size:14px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="entry.description || 'Gasto compartido'"></div>
+                            <div style="font-size:11px;color:var(--dim);margin-top:2px;" x-text="(entry.from_name || 'Contacto') + (entry.expense_date ? ' · ' + entry.expense_date : '')"></div>
                           </div>
                           <div style="display:flex;align-items:center;gap:8px;">
                             <div style="text-align:right;flex-shrink:0;">
@@ -5958,6 +6015,13 @@ setTimeout(function() {
               <svg viewBox="0 0 24 24" fill="none" style="stroke:var(--c-brand)" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             </div>
             <span class="si-label">Importar desde otra app</span>
+            <svg class="si-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+          <button class="settings-item" @click="openImportsManager()">
+            <div class="si-icon" style="background:rgba(var(--c-brand-rgb),0.1);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            </div>
+            <span class="si-label">Importaciones y grupos</span>
             <svg class="si-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 18l6-6-6-6"/></svg>
           </button>
         </div>
@@ -7131,6 +7195,36 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
             <!-- Main content area -->
             <div class="approve-body">
 
+              <!-- ═════════ RESUMEN DEL GRUPO (solo al editar un lote) ═════════ -->
+              <template x-if="editingBatch && batchEditInfo">
+                <div class="batch-summary">
+                  <div class="batch-summary-head">
+                    <div class="batch-summary-icon">📦</div>
+                    <div style="flex:1;min-width:0;">
+                      <div class="batch-summary-label" x-text="batchEditInfo.label"></div>
+                      <div class="batch-summary-meta">
+                        <span x-text="batchEditInfo.count + (batchEditInfo.count === 1 ? ' registro' : ' registros')"></span>
+                        <span x-show="batchEditInfo.minDate" x-text="' · ' + batchRange(batchEditInfo)"></span>
+                      </div>
+                    </div>
+                    <div class="batch-summary-total mono" x-text="'$' + fmtMoney(batchEditInfo.total)"></div>
+                  </div>
+
+                  <div x-show="batchEditInfo.splits > 0" x-cloak class="batch-summary-warn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <div>
+                      <span x-text="batchEditInfo.splits === 1 ? 'Un registro de este grupo está compartido.' : batchEditInfo.splits + ' registros de este grupo están compartidos.'"></span>
+                      <template x-if="batchEditInfo.accepted > 0">
+                        <span x-text="' Ya ' + (batchEditInfo.accepted === 1 ? 'hay 1 cobro aceptado' : 'hay ' + batchEditInfo.accepted + ' cobros aceptados') + ': al guardar se reemplazan y la otra persona tendrá que aceptarlos otra vez.'"></span>
+                      </template>
+                      <template x-if="!batchEditInfo.accepted">
+                        <span> Al guardar se vuelven a enviar los cobros.</span>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+              </template>
+
               <!-- ═════════ CREATE MODE: nuevo orden ═════════ -->
               <!-- TIPO segmented pill (estilo Mensual/Anual) -->
               <div x-show="!editingBatch" class="flex-show" style="background:var(--surface);padding:4px;border-radius:12px;margin-bottom:10px;border:1px solid var(--border);">
@@ -7144,8 +7238,8 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
                 </div>
               </div>
 
-              <!-- FECHA full width -->
-              <div x-show="!editingExpense" class="field-box" style="margin-bottom:12px;">
+              <!-- FECHA full width — en un lote cada item lleva la suya, no hay una global -->
+              <div x-show="!editingExpense && !editingBatch" class="field-box" style="margin-bottom:12px;">
                 <div class="field-box-label">FECHA</div>
                 <div class="field-box-inner">
                   <input type="date" x-model="form.date" style="flex:1;">
@@ -8321,6 +8415,74 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
       </template>
 
       <!-- ══ RECURRENTES MANAGER SHEET (Feature 4) ══ -->
+      <!-- ══ IMPORTACIONES Y GRUPOS ══ -->
+      <template x-if="importsManagerOpen">
+        <div style="position:fixed;inset:0;z-index:200;">
+          <div class="sheet-backdrop" style="z-index:200;" @click="importsManagerOpen = false"></div>
+          <div class="sheet" style="max-height:calc(100% - var(--safe-top) - var(--safe-bottom) - 20px);position:fixed;left:0;right:0;bottom:0;max-width:430px;margin:0 auto;background:var(--bg);border-top-left-radius:24px;border-top-right-radius:24px;padding:14px 0 calc(16px + var(--safe-bottom));z-index:201;overflow-y:auto;border-top:1px solid var(--border);">
+            <div class="sheet-grabber"></div>
+            <div style="padding:6px 20px 24px;">
+              <div class="sheet-title">Importaciones y grupos</div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5;">Todo lo que guardaste de una sola vez — un Excel, una foto, varios items juntos. Aquí sí aparecen completos aunque sus fechas estén repartidas.</div>
+
+              <!-- Cargando -->
+              <template x-if="importsLoading">
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <template x-for="i in 3" :key="i">
+                    <div style="height:64px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);opacity:0.55;"></div>
+                  </template>
+                </div>
+              </template>
+
+              <!-- Error -->
+              <template x-if="!importsLoading && importsError">
+                <div style="padding:20px 14px;text-align:center;">
+                  <div style="font-size:13px;color:var(--danger);line-height:1.5;margin-bottom:14px;" x-text="importsError"></div>
+                  <button @click="loadImports()" style="height:40px;padding:0 20px;border-radius:20px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;">Reintentar</button>
+                </div>
+              </template>
+
+              <!-- Vacío -->
+              <template x-if="!importsLoading && !importsError && importsList.length === 0">
+                <div style="padding:26px 14px;text-align:center;color:var(--dim);font-size:13px;line-height:1.5;">Todavía no has guardado ningún grupo.<br>Al importar un archivo o registrar varios items juntos, aparecerán aquí.</div>
+              </template>
+
+              <!-- Lista -->
+              <div x-show="!importsLoading && !importsError && importsList.length > 0" style="display:flex;flex-direction:column;gap:8px;">
+                <template x-for="b in importsList" :key="b.batch_id">
+                  <div style="border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);padding:12px;">
+                    <div style="display:flex;align-items:center;gap:11px;">
+                      <div class="batch-summary-icon">📦</div>
+                      <div style="flex:1;min-width:0;">
+                        <div class="batch-summary-label" x-text="b.batch_label"></div>
+                        <div class="batch-summary-meta">
+                          <span x-text="b.count + (b.count === 1 ? ' registro' : ' registros')"></span>
+                          <span x-text="' · ' + batchRange(b)"></span>
+                        </div>
+                      </div>
+                      <div style="font-size:15px;font-weight:800;letter-spacing:-0.4px;font-variant-numeric:tabular-nums;flex-shrink:0;" x-text="'$' + fmtMoney(b.total)"></div>
+                    </div>
+                    <div x-show="b.splits > 0" x-cloak style="margin-top:8px;font-size:11px;font-weight:600;color:var(--c-warning);" x-text="(b.splits === 1 ? '1 registro compartido' : b.splits + ' registros compartidos') + ' — al eliminar se retiran sus cobros'"></div>
+                    <div style="display:flex;gap:6px;margin-top:10px;">
+                      <button @click="editImport(b)" style="flex:1;height:38px;border-radius:var(--radius-sm);background:var(--surface2);border:1px solid var(--border);color:var(--text);font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        Editar
+                      </button>
+                      <button @click="deleteImport(b)" style="flex:1;height:38px;border-radius:var(--radius-sm);background:rgba(var(--c-expense-rgb),0.10);border:1px solid rgba(var(--c-expense-rgb),0.28);color:var(--danger);font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                </template>
+              </div>
+
+              <button @click="importsManagerOpen = false" style="margin-top:16px;width:100%;height:42px;border-radius:21px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </template>
+
       <template x-if="recurringManagerOpen">
         <div style="position:fixed;inset:0;z-index:200;">
           <div class="sheet-backdrop" style="z-index:200;" @click="recurringManagerOpen = false; cancelEditRt()"></div>
@@ -8627,7 +8789,8 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
               </div>
               <div style="font-size:17px;font-weight:700;margin-bottom:6px;">Este registro es parte de un grupo</div>
               <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:20px;">
-                Tiene <span style="font-weight:700;color:var(--text);" x-text="batchEditPromptItems.length"></span> elementos.
+                Tiene <span style="font-weight:700;color:var(--text);" x-text="batchEditPromptItems.length"></span> elementos
+                <span x-show="batchPromptRange" x-text="'(' + batchPromptRange + ')'"></span>.
                 Puedes editar solo este o todo el grupo.
               </div>
               <button @click="editSingleFromBatch()" style="width:100%;height:50px;border-radius:25px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;">
@@ -9610,6 +9773,11 @@ function zepoApp() {
     _extractFromBatch: false,
     batchEditPromptExp: null,
     batchEditPromptItems: [],
+    batchEditInfo: null,
+    importsManagerOpen: false,
+    importsList: [],
+    importsLoading: false,
+    importsError: '',
     saving: false,
     authMode: 'login',
     authEmail: '',
@@ -9813,7 +9981,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v192',
+    APP_VERSION: 'v194',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     // ─── ZEPI (companion IA, Max) ───
     zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
@@ -10275,7 +10443,9 @@ function zepoApp() {
       this.$watch('form.amount', () => { if (this.form.is_split) this._syncSplitAmts(); });
       this.$watch('recurringOn', v => { if (v) this.coachTip('recur'); });
       this.$watch('budgetSheetOpen', v => { if (v) { this.coachTip('budget'); this._initBudgetForm(); } });
-      this.$watch('parsedItems', items => { if (items && items.length >= 2) this.coachTip('multi'); });
+      // Al EDITAR un grupo, parsedItems se llena con lo que ya existe: el tip explica cómo
+      // crear varios de una y ahí no viene a cuento (tapa el editor sin aportar nada).
+      this.$watch('parsedItems', items => { if (items && items.length >= 2 && !this.editingBatch) this.coachTip('multi'); });
       this.$watch('tab', v => { if (v === 'home' && this.expenses.length >= 1) this.coachTip('home'); });
 
       // A7: tour del primer gasto. Paso 1 = resaltar el + en Inicio (driver.js, quieto).
@@ -10336,6 +10506,7 @@ function zepoApp() {
           else if (this.importOpen) { this.importOpen = false; }
           else if (this.spaceManagerOpen) { this.spaceManagerOpen = false; this.cancelEditSpace(); }
           else if (this.spaceSwitcherOpen) { this.spaceSwitcherOpen = false; }
+          else if (this.importsManagerOpen) { this.importsManagerOpen = false; }
           else if (this.recurringManagerOpen) { this.recurringManagerOpen = false; this.cancelEditRt(); }
           else if (this.pmManagerOpen) { this.pmManagerOpen = false; this.cancelEditPm(); }
           else if (this.catManagerOpen) { this.catManagerOpen = false; this.cancelEditCategory(); }
@@ -10373,7 +10544,7 @@ function zepoApp() {
         if (val !== old && !this._navPopping) pushBack();
       });
 
-      ['sheetOpen','patSheetOpen','zepiOpen','zepiVoiceOpen','jrnOpen','catManagerOpen','pmManagerOpen','recurringManagerOpen','spaceSwitcherOpen','spaceManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen','acceptPrModal','acceptAllModal','aliasModalOpen','showDeleteModal','importOpen','batchEditPromptExp'].forEach(k => {
+      ['sheetOpen','patSheetOpen','zepiOpen','zepiVoiceOpen','jrnOpen','catManagerOpen','pmManagerOpen','recurringManagerOpen','importsManagerOpen','spaceSwitcherOpen','spaceManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen','acceptPrModal','acceptAllModal','aliasModalOpen','showDeleteModal','importOpen','batchEditPromptExp'].forEach(k => {
         this.$watch(k, v => { if (v) pushBack(); });
       });
       // zvDraft va aparte: el watcher es PROFUNDO y con él en la lista de arriba cada tecleo
@@ -10963,6 +11134,7 @@ function zepoApp() {
         e.date >= start && e.date <= end && this._rowInActiveSpace(e));
       this.expenses = pendingLocal.length ? [...pendingLocal, ...data] : data;
       this.dataVer++;
+      this.loadBatchIndex();
       try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
       try { this.zepiScan(); } catch (e) {} // badge proactivo del companion (barato: puro array local)
       // Deep-link del push proactivo (?open=zepi): abre el chat una sola vez y limpia la URL
@@ -11365,6 +11537,56 @@ function zepoApp() {
         }
       });
       return result;
+    },
+    // Cuántos registros tiene cada lote EN TOTAL. Memoria sola no basta: loadExpenses solo
+    // trae ~2 meses, así que un lote importado con fechas viejas se veía completo cuando no
+    // lo estaba. Se cuenta contra la BD (barato: una columna) y se toma el mayor de los dos.
+    _batchCountsDb: {},
+    _batchIdxAt: 0,
+    async loadBatchIndex(force) {
+      if (!this.user) return;
+      if (!force && Date.now() - this._batchIdxAt < 60000) return;
+      this._batchIdxAt = Date.now();
+      try {
+        const counts = {};
+        const PAGE = 1000;
+        for (let from = 0; ; from += PAGE) {
+          const r = await withTimeout(
+            sb.from('expenses').select('batch_id').eq('user_id', this.user.id)
+              .not('batch_id', 'is', null).range(from, from + PAGE - 1),
+            8000, 'batchIndex');
+          if (r.error) throw r.error;
+          const page = r.data || [];
+          page.forEach(e => { counts[e.batch_id] = (counts[e.batch_id] || 0) + 1; });
+          if (page.length < PAGE) break;
+        }
+        this._batchCountsDb = counts;
+        this.dataVer++;
+      } catch (e) {
+        console.warn('[loadBatchIndex]', e.message);
+        this._batchIdxAt = 0;
+      }
+    },
+    get _batchCounts() {
+      return this._memo('batchCounts', null, () => {
+        const seen = {};
+        [...(this.expenses || []), ...(this.historyData || [])].forEach(e => {
+          if (!e.batch_id) return;
+          (seen[e.batch_id] = seen[e.batch_id] || new Set()).add(e.id);
+        });
+        const out = { ...this._batchCountsDb };
+        for (const k in seen) out[k] = Math.max(out[k] || 0, seen[k].size);
+        return out;
+      });
+    },
+    batchExtra(entry) {
+      if (!entry || !entry.batch_id || !entry.items) return 0;
+      return Math.max(0, (this._batchCounts[entry.batch_id] || 0) - entry.items.length);
+    },
+    get batchPromptRange() {
+      const d = (this.batchEditPromptItems || []).map(e => e.date).filter(Boolean).sort();
+      if (!d.length) return '';
+      return this.batchRange({ minDate: d[0], maxDate: d[d.length - 1] });
     },
     get _busyEditing() {
       // El overlay de edición/alta se muestra con sheetOpen, que SÍ se limpia siempre al cerrar.
@@ -13896,6 +14118,7 @@ function zepoApp() {
     openNew() {
       this.editingExpense = null;
       this.editingBatch = null;
+      this.batchEditInfo = null;
       this.inputMode = 'texto';
       this.saving = false;
       this.analyzing = false;
@@ -13926,10 +14149,10 @@ function zepoApp() {
       this.coachTip('text');
     },
 
-    openEdit(exp) {
+    async openEdit(exp) {
       // If this expense belongs to a multi-item batch, ask what to edit
       if (exp.batch_id) {
-        const batchItems = this.expenses.filter(e => e.batch_id === exp.batch_id);
+        const batchItems = await this._batchItems(exp.batch_id);
         if (batchItems.length > 1) {
           this.batchEditPromptExp = exp;
           this.batchEditPromptItems = batchItems;
@@ -13945,6 +14168,7 @@ function zepoApp() {
       // Editar 1 elemento = UI individual: limpia el estado de grupo (si no, queda
       // "Editar grupo" / "Guardar N registros" pegado y se oculta el grid de categoria).
       this.editingBatch = null;
+      this.batchEditInfo = null;
       this.parsedItems = [];
       this.saving = false;
       this.gridAddingCat = false;
@@ -13964,6 +14188,30 @@ function zepoApp() {
         space_id: exp.space_id || this._currentSpaceId(),
       };
       this.sheetOpen = true;
+    },
+
+    // Los items de un lote, COMPLETOS. `this.expenses` solo trae ~2 meses (loadExpenses) y
+    // `historyData` solo el mes abierto, así que un lote importado con fechas repartidas se
+    // veía como registros sueltos: openEdit no ofrecía "todo el grupo", deleteBatch borraba
+    // solo la parte visible y saveBatchEdit borraba lo visible pero re-insertaba TODO →
+    // duplicaba los items viejos. Se consulta la BD y se cae a memoria solo si falla.
+    async _batchItems(batchId) {
+      if (!batchId) return [];
+      const local = [...(this.expenses || []), ...(this.historyData || [])]
+        .filter(e => e.batch_id === batchId);
+      try {
+        let q = sb.from('expenses').select('*').eq('user_id', this.user.id).eq('batch_id', batchId);
+        const r = await withTimeout(q, 6000, 'batchItems');
+        if (r.error) throw r.error;
+        const rows = r.data || [];
+        // Los optimistas (temp_) aún no están en la BD: conservarlos o desaparecen del editor.
+        const temps = local.filter(e => String(e.id).startsWith('temp_'));
+        return rows.length || temps.length ? [...rows, ...temps] : local;
+      } catch (e) {
+        console.warn('[_batchItems] fallback memoria:', e.message);
+        const seen = new Set();
+        return local.filter(e => !seen.has(e.id) && seen.add(e.id));
+      }
     },
 
     openEditBatch(batch) {
@@ -13999,6 +14247,19 @@ function zepoApp() {
         label: this.getCatLabel(exp.category),
         color: this.getCatColor(exp.category),
       }));
+      // Resumen para la cabecera del editor: qué es, cuántos, de cuándo a cuándo y cuánto.
+      const dates = items.map(e => e.date).filter(Boolean).sort();
+      this.batchEditInfo = {
+        label: (batch.batch_label || items.find(e => e.batch_label)?.batch_label || 'Registro múltiple'),
+        count: items.length,
+        minDate: dates[0] || null,
+        maxDate: dates[dates.length - 1] || null,
+        total: items.reduce((s, e) => s + (e.is_income ? 0 : Number(e.is_split ? (e.split_total || e.amount) : e.amount) || 0), 0),
+        splits: items.filter(e => e.is_split).length,
+        accepted: 0,
+      };
+      this._loadBatchAccepted(items);
+
       const first = items[0];
       this.form = {
         amount: this.parsedItems.reduce((s, e) => s + e.amount, 0).toFixed(2),
@@ -14014,6 +14275,22 @@ function zepoApp() {
         space_id: (first && first.space_id) || this._currentSpaceId(),
       };
       this.sheetOpen = true;
+    },
+
+    // ¿Alguien ya aceptó (o pagó) un cobro de este lote? Si sí, guardar lo vuelve a emitir y
+    // la otra persona tiene que aceptarlo de nuevo — hay que avisarlo ANTES, no después.
+    async _loadBatchAccepted(items) {
+      const ids = items.map(e => e.id).filter(id => id && !String(id).startsWith('temp_'));
+      if (!ids.length || !this.batchEditInfo) return;
+      try {
+        const r = await withTimeout(
+          sb.from('payment_requests').select('id').in('origin_expense_id', ids).in('status', ['accepted', 'settled']),
+          6000, 'batchAccepted');
+        if (r.error) throw r.error;
+        if (this.batchEditInfo) this.batchEditInfo.accepted = (r.data || []).length;
+      } catch (e) {
+        console.warn('[batchAccepted]', e.message);
+      }
     },
 
     editSingleFromBatch() {
@@ -14032,43 +14309,155 @@ function zepoApp() {
       this.openEditBatch({ batch_id: exp.batch_id, items, date: exp.date });
     },
 
+    // Borra un lote entero: retira los cobros de los items divididos y luego las filas.
+    // Lo usan el botón del editor (deleteBatch) y la pantalla Importaciones (deleteImport).
+    async _purgeBatch(batchId, batchItems) {
+      const ids = batchItems.map(e => e.id).filter(id => !String(id).startsWith('temp_'));
+      // Retira cobros ligados de los items divididos antes de borrarlos.
+      for (const it of batchItems) {
+        if (it.is_split && !String(it.id).startsWith('temp_')) {
+          try { await sb.rpc('retract_split_expense', { p_expense_id: it.id }); }
+          catch (e) { console.warn('[purgeBatch] retract:', e.message); }
+        }
+      }
+      if (ids.length > 0) {
+        try {
+          await withTimeout(sb.from('expenses').delete().in('id', ids).then(r => { if (r.error) throw r.error; return r; }), 4000, 'purgeBatch');
+        } catch (e) {
+          console.warn('[purgeBatch] fallback REST:', e.message);
+          for (const id of ids) { await sbRestDelete('expenses', { id }); }
+        }
+      }
+      this.expenses = this.expenses.filter(e => e.batch_id !== batchId);
+      this.historyData = (this.historyData || []).filter(e => e.batch_id !== batchId);
+      this.importsList = this.importsList.filter(b => b.batch_id !== batchId);
+      delete this._batchCountsDb[batchId];
+      this._batchIdxAt = 0;
+      this.historyVer++;
+      this.dataVer++;
+      try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
+      Promise.all([this.loadExpenses(), this.loadSplits(), this._maybeReloadHistory()]).catch(e => console.warn('[purgeBatch] bg:', e.message));
+    },
+
     async deleteBatch() {
       if (!this.editingBatch) return;
-      const batchItems = this.expenses.filter(e => e.batch_id === this.editingBatch);
+      const batchItems = await this._batchItems(this.editingBatch);
       if (!batchItems.length) return;
-      if (!await this.askConfirm({ title: '¿Eliminar grupo?', body: 'Se eliminarán los ' + batchItems.length + ' registros. No se puede deshacer.' })) return;
+      const compartidos = batchItems.filter(e => e.is_split).length;
+      let body = 'Se eliminarán los ' + batchItems.length + ' registros. No se puede deshacer.';
+      if (compartidos) body += ' ' + (compartidos === 1 ? 'Uno está compartido y su cobro se retira' : compartidos + ' están compartidos y sus cobros se retiran') + ' automáticamente.';
+      if (!await this.askConfirm({ title: '¿Eliminar grupo?', body })) return;
       try {
-        const ids = batchItems.map(e => e.id).filter(id => !String(id).startsWith('temp_'));
-        // Retira cobros ligados de los items divididos antes de borrarlos.
-        for (const it of batchItems) {
-          if (it.is_split && !String(it.id).startsWith('temp_')) {
-            try { await sb.rpc('retract_split_expense', { p_expense_id: it.id }); }
-            catch (e) { console.warn('[deleteBatch] retract:', e.message); }
-          }
-        }
-        if (ids.length > 0) {
-          try {
-            await withTimeout(sb.from('expenses').delete().in('id', ids).then(r => { if (r.error) throw r.error; return r; }), 4000, 'deleteBatch');
-          } catch (e) {
-            console.warn('[deleteBatch] fallback REST:', e.message);
-            for (const id of ids) { await sbRestDelete('expenses', { id }); }
-          }
-        }
-        const _bid = this.editingBatch;
-        this.expenses = this.expenses.filter(e => e.batch_id !== _bid);
-        this.historyData = (this.historyData || []).filter(e => e.batch_id !== _bid);
-        this.historyVer++;
-        this.dataVer++;
-        try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
+        await this._purgeBatch(this.editingBatch, batchItems);
         this.sheetOpen = false;
         this.editingBatch = null;
+        this.batchEditInfo = null;
         this.parsedItems = [];
         this.showToast(batchItems.length + ' registros eliminados');
-        Promise.all([this.loadExpenses(), this.loadSplits(), this._maybeReloadHistory()]).catch(e => console.warn('[deleteBatch] bg:', e.message));
       } catch (e) {
         console.error('deleteBatch error:', e);
         this.showToast('Error: ' + e.message);
       }
+    },
+
+    // ── Importaciones / grupos ──────────────────────────────────────────────
+    // Consulta TODOS los lotes de la cuenta, no solo los ~2 meses que trae loadExpenses.
+    // Ese era el bug de raíz: un lote con fechas repartidas quedaba fuera de la ventana y
+    // no había ninguna pantalla desde donde verlo entero ni borrarlo.
+    async openImportsManager() {
+      this.importsManagerOpen = true;
+      await this.loadImports();
+    },
+
+    async loadImports() {
+      this.importsLoading = true;
+      this.importsError = '';
+      try {
+        const rows = [];
+        const PAGE = 1000;
+        for (let from = 0; ; from += PAGE) {
+          const r = await withTimeout(
+            sb.from('expenses')
+              .select('id, batch_id, batch_label, amount, date, is_income, is_split, created_at')
+              .eq('user_id', this.user.id)
+              .not('batch_id', 'is', null)
+              .order('created_at', { ascending: false })
+              .range(from, from + PAGE - 1),
+            8000, 'loadImports');
+          if (r.error) throw r.error;
+          const page = r.data || [];
+          rows.push(...page);
+          if (page.length < PAGE) break;
+        }
+        const map = {};
+        rows.forEach(e => {
+          let b = map[e.batch_id];
+          if (!b) {
+            b = map[e.batch_id] = {
+              batch_id: e.batch_id,
+              batch_label: e.batch_label || 'Registro múltiple',
+              count: 0, total: 0, net: 0, splits: 0,
+              minDate: e.date, maxDate: e.date,
+              created_at: e.created_at,
+            };
+          }
+          b.count++;
+          if (!e.is_income) b.total += Number(e.amount) || 0;
+          b.net += (e.is_income ? 1 : -1) * (Number(e.amount) || 0);
+          if (e.is_split) b.splits++;
+          if (e.date < b.minDate) b.minDate = e.date;
+          if (e.date > b.maxDate) b.maxDate = e.date;
+          if (e.created_at < b.created_at) b.created_at = e.created_at;
+        });
+        this.importsList = Object.values(map).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+        // Ya tenemos el conteo exacto: aprovecharlo para el chip en vez de pedirlo otra vez.
+        const counts = {};
+        this.importsList.forEach(b => { counts[b.batch_id] = b.count; });
+        this._batchCountsDb = counts;
+        this._batchIdxAt = Date.now();
+        this.dataVer++;
+      } catch (e) {
+        console.warn('[loadImports]', e.message);
+        this.importsError = 'No pudimos cargar tus grupos. Revisa tu conexión.';
+        this.importsList = [];
+      } finally {
+        this.importsLoading = false;
+      }
+    },
+
+    // Rango de fechas legible: "12 mar" si es un solo día, "12 mar – 4 may" si abarca varios.
+    // Lleva el año cuando no es el actual: un lote viejo con "12 mar" a secas confunde.
+    batchRange(b) {
+      if (!b || !b.minDate) return '';
+      const yr = String(new Date().getFullYear());
+      const f = d => {
+        const opts = { day: 'numeric', month: 'short' };
+        if (d.slice(0, 4) !== yr) opts.year = 'numeric';
+        return new Date(d + 'T12:00:00').toLocaleDateString('es-EC', opts);
+      };
+      return b.minDate === b.maxDate ? f(b.minDate) : f(b.minDate) + ' – ' + f(b.maxDate);
+    },
+
+    async deleteImport(b) {
+      let body = 'Se eliminarán los ' + b.count + ' registros de «' + b.batch_label + '». No se puede deshacer.';
+      if (b.splits) body += ' ' + (b.splits === 1 ? 'Uno está compartido y su cobro se retira' : b.splits + ' están compartidos y sus cobros se retiran') + ' automáticamente.';
+      if (!await this.askConfirm({ title: '¿Eliminar esta importación?', body })) return;
+      try {
+        const items = await this._batchItems(b.batch_id);
+        if (!items.length) { this.showToast('Ya no quedaban registros'); this.importsList = this.importsList.filter(x => x.batch_id !== b.batch_id); return; }
+        await this._purgeBatch(b.batch_id, items);
+        this.showToast(items.length + ' registros eliminados');
+      } catch (e) {
+        console.error('deleteImport error:', e);
+        this.showToast('Error: ' + e.message);
+      }
+    },
+
+    async editImport(b) {
+      const items = await this._batchItems(b.batch_id);
+      if (!items.length) { this.showToast('Ese grupo ya no existe'); this.importsList = this.importsList.filter(x => x.batch_id !== b.batch_id); return; }
+      this.importsManagerOpen = false;
+      this.openEditBatch({ batch_id: b.batch_id, items, date: items[0].date });
     },
 
     async ensureFreshSession() {
@@ -14133,6 +14522,34 @@ function zepoApp() {
         this.tab = 'plans';
         this.sheetOpen = false;
         return;
+      }
+      // Editar un registro compartido REHACE sus cobros. Si la otra persona ya aceptó (o
+      // pagó), no puede pasar en silencio: se avisa y se pide confirmación. A quien YA PAGÓ
+      // no se le vuelve a cobrar (su cobro saldado no se retira y emitir otro lo duplicaría).
+      let settledUsers = [];
+      if (this.editingExpense && !String(this.editingExpense.id).startsWith('temp_')) {
+        try {
+          const { data: vivos } = await sb.from('payment_requests')
+            .select('id, amount, status, to_user_id')
+            .eq('origin_expense_id', this.editingExpense.id)
+            .in('status', ['accepted', 'settled']);
+          if (vivos && vivos.length) {
+            const quien = c => (this.friends.find(f => f.user_id === c.to_user_id) || {}).display_name || 'La otra persona';
+            const pagados = vivos.filter(c => c.status === 'settled');
+            const aceptados = vivos.filter(c => c.status === 'accepted');
+            settledUsers = pagados.map(c => c.to_user_id);
+            let body = '';
+            if (aceptados.length) {
+              body += aceptados.map(c => quien(c) + ' ya aceptó un cobro de $' + Number(c.amount).toFixed(2)).join('. ')
+                + '. Al guardar se reemplaza por el nuevo y tendrá que aceptarlo otra vez.';
+            }
+            if (pagados.length) {
+              body += (body ? ' ' : '') + pagados.map(c => quien(c) + ' ya pagó $' + Number(c.amount).toFixed(2)).join('. ')
+                + '. Ese cobro pagado no se toca ni se vuelve a cobrar.';
+            }
+            if (!await this.askConfirm({ title: '¿Actualizar el cobro?', body })) return;
+          }
+        } catch (e) { console.warn('[saveExpense] guard cobros:', e.message); }
       }
       this.saving = true;
       try {
@@ -14246,12 +14663,13 @@ function zepoApp() {
         // debe refrescarse para que el registro desaparezca de "Me deben"/"Debo". Antes solo
         // se recargaba cuando el nuevo estado ERA split → al quitar la división quedaba viejo.
         const bgTasks = [this.loadExpenses(), this.loadSplits(), this._maybeReloadHistory()];
+        // Un cobro por cada OTRA persona, con SU porcentaje (mismo cálculo que el
+        // cron mensual de recurrentes → mes 1 y mes N idénticos). Solo a amigos.
+        const prRows = [];
         if (isSplit) {
-          // Un cobro por cada OTRA persona, con SU porcentaje (mismo cálculo que el
-          // cron mensual de recurrentes → mes 1 y mes N idénticos). Solo a amigos.
-          const prRows = [];
           for (const p of meta.people) {
             if (!p.user_id) continue;
+            if (settledUsers.includes(p.user_id)) continue;
             const perPersonAmt = Math.round(totalAmount * p.pct / 100 * 100) / 100;
             if (perPersonAmt <= 0) continue;
             prRows.push({
@@ -14265,28 +14683,24 @@ function zepoApp() {
               origin_expense_id: savedExpenseId,
             });
           }
-          if (prRows.length) {
-            bgTasks.push((async () => {
-              // Editar re-emite los cobros: hay que anular el pendiente anterior o la otra
-              // persona ve dos cobros por lo mismo. Se anulan SOLO los de quienes reciben
-              // cobro nuevo ahora (nunca una deuda que no se vaya a reponer: si el contacto
-              // dejó de ser amigo no se le emite cobro, y borrarle el pendiente le haría
-              // desaparecer la deuda). Los 'accepted' no se tocan: lo que el receptor ya
-              // confirmó solo se anula por revisión/cancelación. Va ANTES del insert: en
-              // paralelo, el update podría alcanzar a los cobros recién creados.
-              if (_wasEditing && savedExpenseId) {
-                await sb.from('payment_requests')
-                  .update({ status: 'cancelled' })
-                  .eq('from_user_id', this.user.id)
-                  .eq('origin_expense_id', savedExpenseId)
-                  .eq('status', 'pending')
-                  .in('to_user_id', prRows.map(r => r.to_user_id));
-              }
-              await Promise.all(prRows.map(r => sb.from('payment_requests').insert(r)));
-            })());
-            this.jrnMark('pr_send');
-          }
         }
+        // Editar un gasto compartido REHACE sus cobros: se retiran TODOS los vivos (con su
+        // gasto espejo, vía la misma RPC que usa borrar) y se emiten los nuevos. Antes esto
+        // vivía dentro de `if (isSplit)` y solo anulaba los 'pending' de quien recibía cobro
+        // nuevo, así que: (a) editar un gasto YA ACEPTADO dejaba el viejo vivo y sumaba el
+        // nuevo → la otra persona pagaba dos veces; (b) quitar la división no retiraba nada
+        // → quedaba un cobro sin gasto que lo respaldara. Casos reales: "vape weed" $25
+        // cobrado dos veces, "claude" $20 cobrado tras quitarle el split.
+        if (_wasEditing && savedExpenseId) {
+          bgTasks.push((async () => {
+            try { await sb.rpc('retract_split_expense', { p_expense_id: savedExpenseId }); }
+            catch (e) { console.warn('[saveExpense] retract:', e.message); }
+            if (prRows.length) await Promise.all(prRows.map(r => sb.from('payment_requests').insert(r)));
+          })());
+        } else if (prRows.length) {
+          bgTasks.push(Promise.all(prRows.map(r => sb.from('payment_requests').insert(r))));
+        }
+        if (prRows.length) this.jrnMark('pr_send');
         Promise.all(bgTasks).catch(e => console.warn('[saveExpense] bg reload:', e.message));
         // Dividir es decisión POR registro: no debe arrastrarse al siguiente. Los cobros
         // ya se encolaron arriba leyendo el form, así que aquí es seguro limpiarlo.
@@ -14414,6 +14828,7 @@ function zepoApp() {
           this.saving = false;
           return false;
         }
+        this._batchIdxAt = 0;   // el lote nuevo cambia los conteos: que el chip los relea
 
         // Anti-duplicados: no re-insertar transacciones que ya existen (mismo PDF subido 2 veces).
         // Compara contra gastos ya guardados por fecha+monto+descripción (normalizada).
@@ -14512,8 +14927,20 @@ function zepoApp() {
         const pct = isSplit ? meta.pct : 0;
         const persona = isSplit ? meta.persona : '';
 
-        // Delete old batch items from DB
-        const oldIds = this.expenses.filter(e => e.batch_id === batchId).map(e => e.id).filter(id => !String(id).startsWith('temp_'));
+        // Delete old batch items from DB — el lote COMPLETO (ver _batchItems): antes salía de
+        // this.expenses (~2 meses), así que un lote viejo se borraba a medias y se re-insertaba
+        // entero → los items fuera de rango quedaban DUPLICADOS.
+        const oldItems = await this._batchItems(batchId);
+        // Los cobros se retiran ANTES de borrar los gastos: el FK origin_expense_id es
+        // ON DELETE SET NULL, así que borrar primero dejaba cada cobro vivo y sin vínculo
+        // — imposible de retirar después y sumando deuda a la otra persona para siempre.
+        for (const it of oldItems) {
+          if (it.is_split && !String(it.id).startsWith('temp_')) {
+            try { await sb.rpc('retract_split_expense', { p_expense_id: it.id }); }
+            catch (e) { console.warn('[saveBatchEdit] retract:', e.message); }
+          }
+        }
+        const oldIds = oldItems.map(e => e.id).filter(id => !String(id).startsWith('temp_'));
         if (oldIds.length > 0) {
           try {
             await withTimeout(sb.from('expenses').delete().in('id', oldIds).then(r => { if (r.error) throw r.error; return r; }), 4000, 'batchEdit-delete');
@@ -14547,13 +14974,17 @@ function zepoApp() {
             batch_label: validItems.length > 1 ? batchLabel : null,
           };
         });
+        let insertedIds = [];
         try {
-          await withTimeout(sb.from('expenses').insert(rows).then(r => { if (r.error) throw r.error; return r; }), 3000, 'batchEdit-insert');
+          const r = await withTimeout(sb.from('expenses').insert(rows).select('id').then(r => { if (r.error) throw r.error; return r; }), 3000, 'batchEdit-insert');
+          insertedIds = (r.data || []).map(x => x.id);
         } catch (e) {
           console.warn('[saveBatchEdit] insert fallback:', e.message);
-          await sbRestInsert('expenses', rows);
+          const back = await sbRestInsert('expenses', rows);
+          insertedIds = (back || []).map(x => x.id);
         }
         // Optimistic update
+        this._batchIdxAt = 0;   // el lote cambió de tamaño: que el chip relea los conteos
         this.expenses = this.expenses.filter(e => e.batch_id !== batchId);
         this.dataVer++;
         const now = new Date().toISOString();
@@ -14561,6 +14992,7 @@ function zepoApp() {
         try { localStorage.setItem('zepo_cache', JSON.stringify(this.expenses)); } catch {}
         this.parsedItems = [];
         this.editingBatch = null;
+        this.batchEditInfo = null;
         this.sheetOpen = false;
         this.showToast(isSplit ? '💸 Split guardado (' + rows.length + ' items)' : rows.length + ' registros actualizados');
         this.jrnMark('exp_edit');
@@ -14569,24 +15001,50 @@ function zepoApp() {
         // Background reload expenses + splits + create payment_requests
         const bgTasks = [this.loadExpenses(), this.loadSplits(), this._maybeReloadHistory()];
         if (isSplit) {
-          // Un cobro consolidado por persona con SU porcentaje (antes (100-pct)/n igualado).
-          const totalBatchAmt = validItems.reduce((s, it) => s + it.amount, 0);
-          const prInserts = [];
-          for (const p of meta.people) {
-            if (!p.user_id) continue;
-            const perPersonAmt = Math.round(totalBatchAmt * p.pct / 100 * 100) / 100;
-            if (perPersonAmt <= 0) continue;
-            prInserts.push(sb.from('payment_requests').insert({
-              from_user_id: this.user.id,
-              to_user_id: p.user_id,
-              amount: perPersonAmt,
-              description: validItems.map(it => it.description).filter(Boolean).join(', ') || 'Gasto compartido',
-              category: validItems[0].category,
-              expense_date: date,
-              status: 'pending',
-            }));
+          // Un cobro POR ITEM, ligado a su gasto con origin_expense_id. Antes era UN cobro
+          // consolidado por persona y SIN vínculo: nacía huérfano, así que ni borrar ni editar
+          // el lote lo retiraban nunca y la deuda seguía viva en la app de la otra persona.
+          // De ahí salen los cobros "sin origen" que descuadran las dos apps.
+          const prRows = [];
+          rows.forEach((row, i) => {
+            const oid = insertedIds[i];
+            if (!oid) return;
+            for (const p of meta.people) {
+              if (!p.user_id) continue;
+              const perPersonAmt = Math.round((row.split_total || row.amount) * p.pct / 100 * 100) / 100;
+              if (perPersonAmt <= 0) continue;
+              prRows.push({
+                from_user_id: this.user.id,
+                to_user_id: p.user_id,
+                amount: perPersonAmt,
+                description: row.description || 'Gasto compartido',
+                category: row.category,
+                expense_date: row.date || date,
+                status: 'pending',
+                origin_expense_id: oid,
+              });
+            }
+          });
+          // Sin ids devueltos no se puede ligar nada: se emite el consolidado de siempre
+          // antes que perder la deuda (queda sin vínculo, como los legacy).
+          if (!prRows.length && !insertedIds.length) {
+            const totalBatchAmt = validItems.reduce((s, it) => s + it.amount, 0);
+            for (const p of meta.people) {
+              if (!p.user_id) continue;
+              const perPersonAmt = Math.round(totalBatchAmt * p.pct / 100 * 100) / 100;
+              if (perPersonAmt <= 0) continue;
+              prRows.push({
+                from_user_id: this.user.id,
+                to_user_id: p.user_id,
+                amount: perPersonAmt,
+                description: validItems.map(it => it.description).filter(Boolean).join(', ') || 'Gasto compartido',
+                category: validItems[0].category,
+                expense_date: date,
+                status: 'pending',
+              });
+            }
           }
-          if (prInserts.length) bgTasks.push(Promise.all(prInserts));
+          if (prRows.length) bgTasks.push(sb.from('payment_requests').insert(prRows));
           bgTasks.push(this.loadPaymentRequests());
         }
         Promise.all(bgTasks).catch(e => console.warn('[saveBatchEdit] bg:', e.message));
@@ -16637,7 +17095,7 @@ function zepoApp() {
       try {
         if (it.kind === 'add_records' && Array.isArray(it.items) && it.items.length) {
           // Estado limpio: nada residual del form (split viejo, edición, recurrente) puede colarse
-          this.editingExpense = null; this.editingBatch = null; this.recurringOn = false; this._extractFromBatch = false;
+          this.editingExpense = null; this.editingBatch = null; this.batchEditInfo = null; this.recurringOn = false; this._extractFromBatch = false;
           this.form = { amount: '', description: '', category: '', date: localDate(), is_income: false, is_split: false, split_persona: '', split_pct: '', split_people: [], payment_method: this._defaultPaymentMethod(), space_id: this._currentSpaceId() };
           this.parsedItems = it.items.map(x => ({ amount: Number(x.amount) || 0, category: x.category, description: x.description || '', is_income: !!x.is_income, date: x.date }));
           const ok = await this.saveMultiItems();
@@ -16667,7 +17125,7 @@ function zepoApp() {
           if (it.person && this.form.is_split && this.form.split_people[1]) this.form.split_people[1].name = it.person;
         } else if (it.kind === 'edit_record' && it._row) {
           const row = it._row;
-          this.editingExpense = row; this.editingBatch = null; this.parsedItems = []; this.recurringOn = false; this._extractFromBatch = false;
+          this.editingExpense = row; this.editingBatch = null; this.batchEditInfo = null; this.parsedItems = []; this.recurringOn = false; this._extractFromBatch = false;
           this.removeReceipt();
           this.form = {
             amount: row.is_split ? row.split_total : row.amount,
@@ -17212,7 +17670,7 @@ function zepoApp() {
       this.zvDraftBusy = true;
       try {
         // Mismo camino probado que la tarjeta del chat: form limpio + saveMultiItems
-        this.editingExpense = null; this.editingBatch = null; this.recurringOn = false; this._extractFromBatch = false;
+        this.editingExpense = null; this.editingBatch = null; this.batchEditInfo = null; this.recurringOn = false; this._extractFromBatch = false;
         this.form = {
           amount: '', description: '', category: '', date: localDate(), is_income: false,
           is_split: !!d.split, split_persona: '', split_pct: '',
@@ -18534,7 +18992,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v168.js';
+  const CURRENT_SW = 'sw-v170.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
