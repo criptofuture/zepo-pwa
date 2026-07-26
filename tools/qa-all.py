@@ -71,6 +71,7 @@ CHECKS = [
     ("E2E Zepi dictado (mode=stt, WAV real -> transcripcion)", ["python", os.path.join(TOOLS, "qa-zepi-stt.py")]),
     ("E2E Zepi drill de voz (chat, pildora, split editable -> BD)", ["python", os.path.join(TOOLS, "qa-zepi-voice-drill.py")]),
     ("E2E Zepi capas (llamada en el chat, tarjeta revelada, recibo editable)", ["python", os.path.join(TOOLS, "qa-zepi-capas.py")]),
+    ("E2E Zepi verbos de voz (editar/cobrar/meta por voz, borrar fuera)", ["python", os.path.join(TOOLS, "qa-zepi-voz-verbos.py")]),
     ("E2E Journey 30 dias + trials (misiones, reclamo, anti-trampa)", ["python", os.path.join(TOOLS, "qa-e2e-journey.py")]),
     # Invariantes de dinero entre pantallas (campana de calculos, jul-2026). Cada uno deriva
     # la aritmetica por su cuenta desde la BD y lleva controles negativos.
