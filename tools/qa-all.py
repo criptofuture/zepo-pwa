@@ -39,6 +39,7 @@ CHECKS = [
     ("E2E editar 'Debo' quitar division",  ["python", os.path.join(TOOLS, "qa-e2e-remove-split.py")]),
     ("Parpadeo Cuentas (keys duplicadas)", ["python", os.path.join(TOOLS, "qa-cuentas-flicker.py")]),
     ("E2E multi-item / batch",         ["python", os.path.join(TOOLS, "qa-e2e-batch.py")]),
+    ("E2E totales de un grupo (cabecera/pie/Importaciones)", ["python", os.path.join(TOOLS, "qa-e2e-batch-totales.py")]),
     ("E2E importar + quitar + dividir (suma restante)", ["python", os.path.join(TOOLS, "qa-e2e-import-split.py")]),
     ("E2E import tabular determinista (Excel/CSV sin IA)", ["python", os.path.join(TOOLS, "qa-e2e-import-tabular.py")]),
     ("E2E presupuestos",               ["python", os.path.join(TOOLS, "qa-e2e-budgets.py")]),
