@@ -2905,7 +2905,9 @@
     .zepi-card-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid var(--border); font-size: 13px; }
     .zepi-card-row:first-of-type { border-top: none; }
     .zepi-card-btns { display: flex; gap: 8px; margin-top: 10px; }
-    .zepi-card-go { flex: 1; height: 40px; border-radius: var(--radius-pill); background: var(--gradient); border: none; color: var(--c-brand-contrast); font-weight: 700; font-size: 13px; font-family: inherit; cursor: pointer; }
+    /* flex-basis auto (no 0): con una tarjeta angosta, `flex:1` dejaba que el boton encogiera
+       por debajo de su texto y "Registrar" se salia del pill. */
+    .zepi-card-go { flex: 1 0 auto; height: 40px; padding: 0 16px; border-radius: var(--radius-pill); background: var(--gradient); border: none; color: var(--c-brand-contrast); font-weight: 700; font-size: 13px; font-family: inherit; cursor: pointer; }
     .zepi-card-go:disabled, .zepi-card-no:disabled { opacity: .5; }
     .zepi-card-no { height: 40px; padding: 0 16px; border-radius: var(--radius-pill); background: transparent; border: 1px solid var(--border); color: var(--muted); font-weight: 600; font-size: 13px; font-family: inherit; cursor: pointer; }
     .zepi-card-done { margin-top: 8px; font-size: 12px; font-weight: 700; color: var(--success); }
@@ -6806,7 +6808,7 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
                 <template x-for="(m, mi) in zepiMsgs" :key="'zm' + mi">
                   <div class="zepi-row" :class="m.role === 'user' ? 'user' : 'bot'">
                     <!-- OJO: span+img en UNA linea — .zepi-msg es pre-wrap y renderizaria los saltos del markup -->
-                    <div class="zepi-msg" :class="m.role === 'user' ? 'user' : 'bot'"><span x-html="zepiFmt(m.text)"></span><img x-show="m.shot" class="zepi-shot" :src="m.shot ? ('guide/' + m.shot + '.webp?v=1') : ''" loading="lazy" @error="$el.style.display = 'none'" alt=""></div>
+                    <div class="zepi-msg" :class="m.role === 'user' ? 'user' : 'bot'"><span x-show="m.viaVoice" style="opacity:.5;" title="Dicho en una llamada">🎙 </span><span x-html="zepiFmt(m.text)"></span><img x-show="m.shot" class="zepi-shot" :src="m.shot ? ('guide/' + m.shot + '.webp?v=1') : ''" loading="lazy" @error="$el.style.display = 'none'" alt=""></div>
                     <div class="zepi-actions" x-show="m.actions && m.actions.length > 0">
                       <template x-for="(a, ai) in (m.actions || [])" :key="'za' + mi + '-' + ai">
                         <button class="zepi-action" x-text="a.label" @click="zepiGo(a.target)"></button>
@@ -6817,16 +6819,42 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
                       <template x-if="m.intent && m.intent.kind === 'add_records'">
                         <div>
                           <div class="zepi-card-title" x-text="(m.intent.items || []).length > 1 ? ('¿Registro estos ' + m.intent.items.length + ' movimientos?') : '¿Registro esto?'"></div>
-                          <template x-for="(it, ii) in (m.intent.items || [])" :key="'zci' + mi + '-' + ii">
-                            <div class="zepi-card-row">
-                              <span x-text="getCatEmoji(it.category)"></span>
-                              <div style="flex:1;min-width:0;">
-                                <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="it.description || getCatLabel(it.category)"></div>
-                                <div style="font-size:11px;color:var(--muted);" x-text="getCatLabel(it.category) + ' · ' + zepiNiceDate(it.date)"></div>
-                              </div>
-                              <b class="mono" :style="it.is_income ? 'color:var(--success);' : ''" x-text="(it.is_income ? '+' : '') + '$' + fmtMoney(it.amount)"></b>
+                          <!-- Vista compacta -->
+                          <template x-if="!m.editing">
+                            <div>
+                              <template x-for="(it, ii) in (m.intent.items || [])" :key="'zci' + mi + '-' + ii">
+                                <div class="zepi-card-row">
+                                  <span x-text="getCatEmoji(it.category)"></span>
+                                  <div style="flex:1;min-width:0;">
+                                    <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="it.description || getCatLabel(it.category)"></div>
+                                    <div style="font-size:11px;color:var(--muted);" x-text="getCatLabel(it.category) + ' · ' + zepiNiceDate(it.date)"></div>
+                                  </div>
+                                  <b class="mono" :style="it.is_income ? 'color:var(--success);' : ''" x-text="(it.is_income ? '+' : '') + '$' + fmtMoney(it.amount)"></b>
+                                </div>
+                              </template>
                             </div>
                           </template>
+                          <!-- Vista editable: mismos campos que el drill de la llamada. El OCR
+                               manda casi todo como «Otro»; sin esto se registran 10 mal de una. -->
+                          <template x-if="m.editing">
+                            <div>
+                              <template x-for="(it, ii) in (m.intent.items || [])" :key="'zce' + mi + '-' + ii">
+                                <div class="zv-item">
+                                  <div class="zv-row">
+                                    <input class="zv-in zv-in-desc" x-model="it.description" placeholder="Descripción" maxlength="80">
+                                    <div class="zv-amt"><span>$</span><input class="mono" type="number" inputmode="decimal" step="0.01" min="0" x-model="it.amount"></div>
+                                    <button class="zv-x" x-show="m.intent.items.length > 1" @click="m.intent.items.splice(ii, 1)">×</button>
+                                  </div>
+                                  <div class="zv-chips">
+                                    <template x-for="c in (it.is_income ? incomeCategories : categories)" :key="'zcec' + mi + '-' + ii + c.key">
+                                      <button class="zv-chip" :class="it.category === c.key ? 'on' : ''" @click="it.category = c.key" x-text="c.emoji + ' ' + c.label"></button>
+                                    </template>
+                                  </div>
+                                </div>
+                              </template>
+                            </div>
+                          </template>
+                          <button x-show="m.intentState === 'pending'" class="zepi-action" style="margin-top:8px;" @click="m.editing = !m.editing" x-text="m.editing ? '✓ Listo' : '✏️ Corregir'"></button>
                         </div>
                       </template>
                       <template x-if="m.intent && m.intent.kind === 'set_budget'">
@@ -6928,7 +6956,7 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
                         </div>
                       </template>
                       <div class="zepi-card-btns" x-show="m.intentState === 'pending'">
-                        <button class="zepi-card-go" :disabled="zepiExecBusy" :style="m.intent && m.intent.kind === 'delete_record' ? 'background:var(--danger);color:var(--c-brand-contrast);' : ''" @click="zepiConfirmIntent(m)" x-text="zepiConfirmLabel(m.intent)"></button>
+                        <button class="zepi-card-go" :disabled="zepiExecBusy || !zepiIntentReady(m.intent)" :style="m.intent && m.intent.kind === 'delete_record' ? 'background:var(--danger);color:var(--c-brand-contrast);' : ''" @click="zepiConfirmIntent(m)" x-text="zepiConfirmLabel(m.intent)"></button>
                         <button class="zepi-card-no" :disabled="zepiExecBusy" @click="zepiCancelIntent(m)">Cancelar</button>
                       </div>
                       <div class="zepi-card-done" x-show="m.intentState === 'unresolved'" style="color:var(--muted);">No tengo claro cuál de tus registros es 🤔 Ábrelo en la lista y edítalo tú, o dime más detalles.</div>
@@ -9976,7 +10004,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v197',
+    APP_VERSION: 'v198',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     // ─── ZEPI (companion IA, Max) ───
     zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
@@ -16702,6 +16730,11 @@ function zepoApp() {
       this.zepiVoiceMini = true;
       this._zvNotify('[SISTEMA] El usuario acaba de mandar una FOTO de un recibo; la app la está leyendo y le mostrará una tarjeta para confirmar. Dile en una frase corta que la estás mirando.');
       await this.zepiReceiptPhoto(ev);
+      // Si ya tenías una tarjeta tuya abierta, la del recibo queda DEBAJO. Decírselo a Zepi:
+      // si no, jura que está en pantalla y el usuario responde "no la veo" (pasó el 25-jul).
+      if ((this.zvDraft || this.zvAct) && this._zepiHasPendingCard()) {
+        this._zvNotify('[SISTEMA] Ya leí el recibo, pero su tarjeta quedó DETRÁS de la que ya tenías abierta. Dile que resuelva primero la de arriba y ahí aparece la del recibo. NO le digas que ya la ve.');
+      }
     },
     zvAttachFile(ev) {
       if (!ev.target?.files?.length) return;
@@ -17279,6 +17312,14 @@ function zepoApp() {
       it._row = res.row; it._type = res.type;
       it._before = { id: res.row.id, amount: res.row.amount, description: res.row.description, category: res.row.category, date: res.row.date, is_income: res.row.is_income, is_split: res.row.is_split };
     },
+    // Un movimiento sin monto o sin categoría no se guarda a medias: se bloquea el botón y el
+    // usuario lo corrige en la propia tarjeta (✏️ Corregir).
+    zepiIntentReady(it) {
+      if (!it) return false;
+      if (it.kind !== 'add_records') return true;
+      const items = it.items || [];
+      return items.length > 0 && items.every(x => Number(x.amount) > 0 && !!x.category);
+    },
     zepiConfirmLabel(it) {
       if (!it) return 'Registrar';
       return { split_handoff: 'Abrir y dividir', edit_record: 'Guardar cambio', mark_paid: 'Marcar pagado', accept_cobro: 'Aceptar', remind_whatsapp: 'Enviar recordatorio', delete_record: 'Eliminar', set_goal: 'Crear meta' }[it.kind] || 'Registrar';
@@ -17550,16 +17591,26 @@ function zepoApp() {
       }
       if (sc.turnComplete) this._zvCloseTurns();
     },
+    // Cada turno se escribe EN VIVO también en el chat de Zepi (marcado 🎙). Así al colgar
+    // queda TODA la conversación, en su orden real respecto a las tarjetas que salieron
+    // durante la llamada — y sobrevive aunque la app se cierre a mitad.
     _zvPushTurn(side, text) {
       const t = String(text || '');
-      if (!t) return;
+      if (!t || t.startsWith('[SISTEMA]')) return; // los avisos internos no son conversación
       const last = this.zvTurns[this.zvTurns.length - 1];
-      if (last && last.side === side && !last.closed) last.text += t;
-      else this.zvTurns.push({ side, text: t, closed: false });
+      if (last && last.side === side && !last.closed) {
+        last.text += t;
+        if (last.msg) last.msg.text = last.text; // el mensaje del chat crece con el turno
+      } else {
+        const msg = { role: side === 'me' ? 'user' : 'model', text: t, actions: [], shot: null, viaVoice: true };
+        this.zepiMsgs.push(msg);
+        this.zvTurns.push({ side, text: t, closed: false, msg });
+      }
       if (this.zvTurns.length > 40) this.zvTurns.splice(0, this.zvTurns.length - 40);
       this.$nextTick(() => { try { const el = this.$refs.zvChat; if (el) el.scrollTop = el.scrollHeight; } catch (e) {} });
     },
-    _zvCloseTurns() { this.zvTurns.forEach(t => { t.closed = true; }); },
+    // Guardar al CERRAR el turno, no por fragmento: si no, son decenas de escrituras por frase.
+    _zvCloseTurns() { this.zvTurns.forEach(t => { t.closed = true; }); this._zepiSaveChat(); },
     // Avisa al modelo por texto lo que pasó con su propuesta (para que lo diga en voz)
     _zvNotify(text) {
       const zv = this._zv;
@@ -17733,6 +17784,13 @@ function zepoApp() {
       }
       return true;
     },
+    // ¿Queda alguna tarjeta esperando respuesta ABAJO, en el chat? (p.ej. el recibo de una foto
+    // mandada durante la llamada). Si la hay, la llamada NO se re-maximiza al cerrar el drill:
+    // el panel (z 97) vive por encima del chat (z 93) y la enterraría. Cerrar una tarjeta
+    // revela la siguiente, nunca la tapa.
+    _zepiHasPendingCard() {
+      return (this.zepiMsgs || []).some(m => m && m.intent && m.intent.kind && m.intentState === 'pending');
+    },
     async zvDraftSave() {
       const d = this.zvDraft;
       if (!d || this.zvDraftBusy || !this.zvDraftValid) return;
@@ -17757,7 +17815,7 @@ function zepoApp() {
           this.zepiMsgs.push({ role: 'model', text: '🎙 Registrado desde la llamada: ' + resumen + (d.split ? ' (dividido)' : ''), actions: [], shot: null });
           this._zepiSaveChat();
           this.zvDraft = null;
-          this.zepiVoiceMini = false;
+          this.zepiVoiceMini = this._zepiHasPendingCard();
           this.showToast(ok === 'dup' ? 'Ya estaba registrado' : 'Registrado ✓');
           this._zvNotify('[SISTEMA] El usuario confirmó y ya quedó guardado: ' + resumen + '. Confírmaselo en una frase corta.');
         } else {
@@ -17771,7 +17829,7 @@ function zepoApp() {
     zvDraftCancel() {
       if (this.zvDraftBusy) return;
       this.zvDraft = null;
-      this.zepiVoiceMini = false;
+      this.zepiVoiceMini = this._zepiHasPendingCard();
       this._zvNotify('[SISTEMA] El usuario canceló ese registro; NO se guardó nada. Pregúntale qué corregir.');
     },
     // ─── Drill de presupuesto por voz: tarjeta editable, nada se guarda hasta confirmar ───
@@ -17840,7 +17898,7 @@ function zepoApp() {
         if (ok) {
           const label = category ? this.getCatLabel(category) : 'total';
           this.zvAct = null;
-          this.zepiVoiceMini = false;
+          this.zepiVoiceMini = this._zepiHasPendingCard();
           this.zepiMsgs.push({ role: 'model', text: '🎙 Presupuesto ' + label + ' fijado en $' + this.fmtMoney(amount) + ' desde la llamada.', actions: [], shot: null });
           this._zepiSaveChat();
           this._zvNotify('[SISTEMA] El usuario confirmó; presupuesto ' + label + ' de $' + this.fmtMoney(amount) + ' guardado. Confírmaselo en una frase corta.');
@@ -17864,7 +17922,7 @@ function zepoApp() {
       if (this.zvActBusy) return;
       const wasSplit = this.zvAct && this.zvAct.kind === 'split_handoff';
       this.zvAct = null;
-      this.zepiVoiceMini = false;
+      this.zepiVoiceMini = this._zepiHasPendingCard();
       this._zvNotify('[SISTEMA] El usuario canceló ' + (wasSplit ? 'esa división' : 'ese presupuesto') + '; NO se guardó nada. Pregúntale qué corregir.');
     },
     _zvCatKey(input, isIncome) {
@@ -19065,7 +19123,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v173.js';
+  const CURRENT_SW = 'sw-v174.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
