@@ -14362,15 +14362,14 @@ function zepoApp() {
         // cron mensual de recurrentes → mes 1 y mes N idénticos). Solo a amigos.
         const prRows = [];
         if (isSplit) {
-          for (const p of meta.people) {
+          for (const p of this._splitAmounts(totalAmount, pct, meta.people)) {
             if (!p.user_id) continue;
             if (settledUsers.includes(p.user_id)) continue;
-            const perPersonAmt = Math.round(totalAmount * p.pct / 100 * 100) / 100;
-            if (perPersonAmt <= 0) continue;
+            if (p.amount <= 0) continue;
             prRows.push({
               from_user_id: this.user.id,
               to_user_id: p.user_id,
-              amount: perPersonAmt,
+              amount: p.amount,
               description: this.form.description.trim() || 'Gasto compartido',
               category: this.form.category,
               expense_date: this.form.date || localDate(),
@@ -14379,16 +14378,22 @@ function zepoApp() {
             });
           }
         }
-        // Editar un gasto compartido REHACE sus cobros: se retiran TODOS los vivos (con su
-        // gasto espejo, vía la misma RPC que usa borrar) y se emiten los nuevos. Antes esto
-        // vivía dentro de `if (isSplit)` y solo anulaba los 'pending' de quien recibía cobro
+        // Editar un gasto compartido REHACE sus cobros: se retira el vivo (con su gasto
+        // espejo, vía la misma RPC que usa borrar) y se emite el nuevo. Antes esto vivía
+        // dentro de `if (isSplit)` y solo anulaba los 'pending' de quien recibía cobro
         // nuevo, así que: (a) editar un gasto YA ACEPTADO dejaba el viejo vivo y sumaba el
         // nuevo → la otra persona pagaba dos veces; (b) quitar la división no retiraba nada
         // → quedaba un cobro sin gasto que lo respaldara. Casos reales: "vape weed" $25
         // cobrado dos veces, "claude" $20 cobrado tras quitarle el split.
+        //
+        // Se retira SOLO lo que se va a reponer. Si la otra persona no es amigo en Zepo no
+        // tiene user_id, no entra en prRows y su cobro no se puede re-emitir: retirarlo le
+        // borraba la deuda sin dejar rastro. Con la división quitada (isSplit=false) sí se
+        // retira todo, que es justo lo que se pidió.
         if (_wasEditing && savedExpenseId) {
+          const soloEstos = isSplit ? prRows.map(r => r.to_user_id) : null;
           bgTasks.push((async () => {
-            try { await sb.rpc('retract_split_expense', { p_expense_id: savedExpenseId }); }
+            try { await sb.rpc('retract_split_expense', { p_expense_id: savedExpenseId, p_to_users: soloEstos }); }
             catch (e) { console.warn('[saveExpense] retract:', e.message); }
             if (prRows.length) await Promise.all(prRows.map(r => sb.from('payment_requests').insert(r)));
           })());
@@ -14418,6 +14423,28 @@ function zepoApp() {
     // solo los OTROS) → el cron mensual y el cliente comparten formato sin conversión.
     // Antes cada ruta de guardado repetía este bloque y ninguna persistía el % por persona:
     // "Cuentas" lo reconstruía en partes iguales y las proporciones custom se perdían.
+    // Reparte lo que NO es mi parte entre las otras personas de forma que la suma sea
+    // exactamente split_pending (total - mi parte). Cada sitio que emitía cobros hacía
+    // su propio Math.round(total * pct / 100) y eso dejaba 1 centavo suelto entre mi
+    // libreta y lo que la otra app decía deber; con 129 gastos eran $0.20 de descuadre.
+    // El residuo de centavos se le asigna a la última persona.
+    _splitAmounts(total, myPct, people) {
+      const r2 = n => Math.round(n * 100) / 100;
+      const t = Number(total) || 0;
+      const pend = r2(t - r2(t * (Number(myPct) || 0) / 100));
+      const list = Array.isArray(people) ? people.filter(Boolean) : [];
+      if (!list.length) return [];
+      const sumPct = list.reduce((s, p) => s + (parseFloat(p.pct) || 0), 0);
+      let acc = 0;
+      return list.map((p, i) => {
+        const amount = i === list.length - 1
+          ? r2(pend - acc)
+          : r2(sumPct ? pend * (parseFloat(p.pct) || 0) / sumPct : pend / list.length);
+        acc = r2(acc + amount);
+        return { ...p, amount };
+      });
+    },
+
     _splitMeta() {
       const f = this.form;
       if (!(f.is_split && f.split_people && f.split_people.length >= 2)) return null;
@@ -14570,17 +14597,16 @@ function zepoApp() {
           // Se itera sobre `rows` (ya deduplicado) y no sobre validItems: insertedRows
           // corresponde a rows, así que con duplicados omitidos los índices no calzaban.
           const prInserts = [];
-          for (const p of meta.people) {
-            if (!p.user_id) continue;
-            for (let i = 0; i < insertedRows.length; i++) {
-              const r = rows[i];
-              if (!r) continue;
-              const perPersonAmt = Math.round((r.split_total || 0) * p.pct / 100 * 100) / 100;
-              if (perPersonAmt > 0) {
+          for (let i = 0; i < insertedRows.length; i++) {
+            const r = rows[i];
+            if (!r) continue;
+            for (const p of this._splitAmounts(r.split_total || 0, meta.pct, meta.people)) {
+              if (!p.user_id) continue;
+              if (p.amount > 0) {
                 prInserts.push(sb.from('payment_requests').insert({
                   from_user_id: this.user.id,
                   to_user_id: p.user_id,
-                  amount: perPersonAmt,
+                  amount: p.amount,
                   description: r.description || 'Gasto compartido',
                   category: r.category || 'other',
                   expense_date: r.date || date,
@@ -14704,14 +14730,13 @@ function zepoApp() {
           rows.forEach((row, i) => {
             const oid = insertedIds[i];
             if (!oid) return;
-            for (const p of meta.people) {
+            for (const p of this._splitAmounts(row.split_total || row.amount, meta.pct, meta.people)) {
               if (!p.user_id) continue;
-              const perPersonAmt = Math.round((row.split_total || row.amount) * p.pct / 100 * 100) / 100;
-              if (perPersonAmt <= 0) continue;
+              if (p.amount <= 0) continue;
               prRows.push({
                 from_user_id: this.user.id,
                 to_user_id: p.user_id,
-                amount: perPersonAmt,
+                amount: p.amount,
                 description: row.description || 'Gasto compartido',
                 category: row.category,
                 expense_date: row.date || date,
@@ -14724,14 +14749,13 @@ function zepoApp() {
           // antes que perder la deuda (queda sin vínculo, como los legacy).
           if (!prRows.length && !insertedIds.length) {
             const totalBatchAmt = validItems.reduce((s, it) => s + it.amount, 0);
-            for (const p of meta.people) {
+            for (const p of this._splitAmounts(totalBatchAmt, meta.pct, meta.people)) {
               if (!p.user_id) continue;
-              const perPersonAmt = Math.round(totalBatchAmt * p.pct / 100 * 100) / 100;
-              if (perPersonAmt <= 0) continue;
+              if (p.amount <= 0) continue;
               prRows.push({
                 from_user_id: this.user.id,
                 to_user_id: p.user_id,
-                amount: perPersonAmt,
+                amount: p.amount,
                 description: validItems.map(it => it.description).filter(Boolean).join(', ') || 'Gasto compartido',
                 category: validItems[0].category,
                 expense_date: date,
@@ -14843,27 +14867,59 @@ function zepoApp() {
       return !!(exp.split_persona && exp.split_persona.includes(','));
     },
 
+    // Reparto de un gasto dividido que SIEMPRE suma exactamente split_pending.
+    // split_pending es la libreta (total - mi parte, ya redondeado); recalcular cada
+    // parte por separado como total*pct/100 daba 1 centavo de más cuando la mitad caía
+    // en medio (2.35/2 → mi parte 1.18, libreta 1.17, cobro 1.18). Aquí el residuo de
+    // centavos se le asigna a la última persona, así libreta y cobros cuadran al centavo.
+    _sharesFor(exp) {
+      const r2 = n => Math.round(n * 100) / 100;
+      const total = Number(exp.split_total) || (Number(exp.amount) || 0) + (Number(exp.split_pending) || 0);
+      const tuPct = exp.split_pct != null ? (parseFloat(exp.split_pct) || 0) : 50;
+      const sp = Array.isArray(exp.split_people) ? exp.split_people.filter(p => p && p.name) : [];
+      const names = sp.length
+        ? sp.map(p => String(p.name).trim())
+        : (exp.split_persona || '').split(',').map(s => s.trim()).filter(Boolean);
+      if (!names.length) return {};
+      const pend = exp.split_pending != null
+        ? r2(Number(exp.split_pending) || 0)
+        : r2(total - r2(total * tuPct / 100));
+      const pcts = sp.length
+        ? sp.map(p => parseFloat(p.pct) || 0)
+        : names.map(() => (100 - tuPct) / names.length);
+      const sumPct = pcts.reduce((s, p) => s + p, 0);
+      const out = {};
+      let acc = 0;
+      names.forEach((nm, i) => {
+        const val = i === names.length - 1
+          ? r2(pend - acc)
+          : r2(sumPct ? pend * pcts[i] / sumPct : pend / names.length);
+        out[nm] = val;
+        acc = r2(acc + val);
+      });
+      return out;
+    },
+
     // Lo que le toca a UNA persona de un gasto dividido. Con personaName usa el dato REAL
-    // en 2 pasos antes de adivinar: (1) el cobro emitido (payment_requests) — es la misma
-    // fila que ve la otra app, cubre los splits viejos que se guardaron sin desglose;
-    // (2) el % persistido en split_people. Solo si no hay ninguno reparte en partes
-    // iguales (legacy sin cobro por-ítem). Sin personaName conserva el cálculo viejo:
-    // lo llaman sitios que solo necesitan "la parte típica" (matcher de cobros).
+    // antes de repartir: el cobro emitido (payment_requests) es la misma fila que ve la
+    // otra app, así que manda sobre cualquier cálculo. Sin personaName devuelve "la parte
+    // típica" (lo llama el matcher de cobros viejos).
     cobroFor(exp, personaName) {
       const r2 = n => Math.round(n * 100) / 100;
-      const total = exp.split_total || (exp.amount + (exp.split_pending || 0));
       if (personaName) {
         const pr = this._prForPersona(exp, personaName);
         if (pr) return r2(Number(pr.amount) || 0);
-        const sp = Array.isArray(exp.split_people) ? exp.split_people : [];
-        const person = sp.find(p => (p.name || '').toLowerCase() === personaName.toLowerCase());
-        if (person && person.pct != null) return r2(total * (parseFloat(person.pct) || 0) / 100);
+        const shares = this._sharesFor(exp);
+        const key = Object.keys(shares).find(k => k.toLowerCase() === String(personaName).toLowerCase());
+        if (key) return shares[key];
       }
-      const others = (exp.split_persona || '').split(',').map(s => s.trim()).filter(Boolean);
-      const n = others.length || 1;
+      const shares = this._sharesFor(exp);
+      const vals = Object.values(shares);
+      if (vals.length === 1) return vals[0];
+      const total = Number(exp.split_total) || (Number(exp.amount) || 0) + (Number(exp.split_pending) || 0);
+      const n = vals.length || 1;
       const tuPct = exp.split_pct != null ? (parseFloat(exp.split_pct) || 0) : 50;
-      const othersPct = (100 - tuPct) / n;
-      return r2(total * othersPct / 100);
+      return r2(total * ((100 - tuPct) / n) / 100);
     },
 
     // TODOS los cobros activos que YO envié, agrupados por gasto origen. _sentCobroByOrigin
@@ -17923,15 +17979,19 @@ function zepoApp() {
       this.showToast('Pago rechazado — deuda sigue pendiente');
     },
 
+    // Saldar cerraba solo los cobros y dejaba los gastos en 'pendiente': cada lado veía
+    // que el otro le debía y que él no debía nada. La RPC cierra las DOS libretas además
+    // de los cobros en una sola transacción (definer: puede tocar las filas del otro).
     async settleWithFriend(friend_id, friend_name, balance) {
-      const uid = this.user.id;
-      await sb.from('payment_requests')
-        .update({ status: 'settled' })
-        .or(`and(from_user_id.eq.${uid},to_user_id.eq.${friend_id}),and(from_user_id.eq.${friend_id},to_user_id.eq.${uid})`)
-        .in('status', ['pending', 'accepted', 'paid']);
+      if (!friend_id) return;
+      const { error } = await sb.rpc('settle_with_friend', { p_friend: friend_id });
+      if (error) { this.showToast('No se pudo saldar — intenta de nuevo'); return; }
       this.showToast('Cuentas saldadas con ' + friend_name);
-      await this.loadFriends();
-      await this.loadPaymentRequests();
+      await Promise.all([
+        this.loadExpenses(), this.loadSplits(), this.loadPaymentRequests(),
+        this.loadFriends(), this._maybeReloadHistory(),
+      ]);
+      this.dataVer++;
     },
 
     // ── BUG REPORTING ───────────────────────────────────────────────

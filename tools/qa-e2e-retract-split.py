@@ -20,7 +20,9 @@ import sys, time, socket, threading, http.server, functools, os, json, urllib.re
 from playwright.sync_api import sync_playwright
 
 PWA_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CFG = json.load(open(os.path.join(PWA_DIR, "..", "..", "config.json")))["supabase"]
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import qa_cfg
+CFG = qa_cfg.load(PWA_DIR)
 URL, SK = CFG["url"], CFG["secret_key"]
 SENDER_EMAIL = "demo@zepo.test"; SENDER_PASS = "ZepoDemo2026!"
 RECV_EMAIL = "qa-to@zepo.test"; RECV_PASS = "ZepoQAto2026!"
