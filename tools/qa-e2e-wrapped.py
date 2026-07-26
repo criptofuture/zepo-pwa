@@ -100,8 +100,14 @@ def run():
         # 3. el botón existe en Home y su guard aparece con >=3 movimientos
         page.evaluate("()=>{const c=window.Alpine.$data(document.querySelector('#app'));c.tab='home';c.showWelcomeCarousel=false;c.showOnbV2=false;}")
         page.wait_for_timeout(400)
-        has_btn = page.evaluate("()=>!!document.querySelector('.share-month-btn')")
-        check("botón 'Comparte tu mes' presente en Home", has_btn is True)
+        # v197: dejo de ser un boton suelto en mitad de Home; vive DENTRO del box del mes
+        # (.hero-card > .hero-recap). Se comprueba tambien que siga ahi dentro, que es el punto.
+        btn = page.evaluate("""()=>{
+          const el = document.querySelector('.hero-recap');
+          return { existe: !!el, dentroDelBox: !!(el && el.closest('.hero-card')) };
+        }""")
+        check("acceso 'Tu mes en Zepo' presente en Home", btn.get("existe") is True)
+        check("y vive DENTRO del box del mes", btn.get("dentroDelBox") is True)
 
         browser.close()
 
