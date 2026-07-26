@@ -2527,13 +2527,11 @@
     /* ═══ JOURNEY — tour guiado 30 días + premios ═══ */
     .jrn-home-card { margin: 0 20px 16px; padding: 13px 15px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; align-items: center; gap: 12px; cursor: pointer; }
     .jrn-home-card.claimable { border-color: var(--cyan); box-shadow: 0 4px 16px rgba(var(--c-brand-rgb), 0.14); }
-    /* Compartir mi mes (wrapped) — loop de crecimiento, disponible a todos los planes */
-    .share-month-btn { margin: 0 20px 16px; padding: 12px 15px; background: rgba(var(--c-brand-rgb), 0.07); border: 1px solid rgba(var(--c-brand-rgb), 0.22); border-radius: var(--radius); display: flex; align-items: center; gap: 11px; cursor: pointer; font-family: inherit; text-align: left; width: auto; }
-    .share-month-btn:active { transform: scale(0.99); }
-    .share-month-ico { width: 34px; height: 34px; border-radius: 10px; background: var(--gradient); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .share-month-txt { flex: 1; min-width: 0; }
-    .share-month-title { font-size: 13px; font-weight: 700; letter-spacing: -0.2px; color: var(--text); }
-    .share-month-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    /* "Tu mes en Zepo" DENTRO del hero del mes (sobre el degradado: todo en blanco) */
+    .hero-recap { margin-top: 14px; width: 100%; padding: 10px 13px; background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.24); border-radius: 12px; display: flex; align-items: center; gap: 9px; cursor: pointer; font-family: inherit; color: #FFFFFF; -webkit-tap-highlight-color: transparent; }
+    .hero-recap:active { transform: scale(0.99); }
+    .hero-recap-ico { font-size: 14px; flex-shrink: 0; }
+    .hero-recap-txt { flex: 1; min-width: 0; text-align: left; font-size: 13px; font-weight: 700; letter-spacing: -0.2px; }
     .jrn-ring { position: relative; width: 44px; height: 44px; flex-shrink: 0; }
     .jrn-ring svg { display: block; }
     .jrn-ring-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; }
@@ -4028,6 +4026,13 @@ setTimeout(function() {
               <span x-text="'Balance saldado ' + (monthBalance < 0 ? '-$' : '$') + fmtMoney(Math.abs(monthBalance))"></span>
             </div>
           </template>
+          <!-- "Tu mes en Zepo" vive DENTRO del box del mes: es de este mes de lo que habla.
+               Suelto en mitad de Inicio partia la lectura de las tarjetas. -->
+          <button class="hero-recap" x-show="monthExpenses.length + monthIncomeRows.length >= 3" x-cloak @click="openMonthRecap()">
+            <span class="hero-recap-ico">✨</span>
+            <span class="hero-recap-txt">Tu mes en Zepo</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="15" height="15" style="flex-shrink:0;opacity:.8;"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
         </div>
 
         <!-- Safe-to-spend — disponible para gastar (flujo de caja) -->
@@ -4063,18 +4068,6 @@ setTimeout(function() {
             <div class="stat-card-sub">este mes</div>
           </div>
         </div>
-
-        <!-- Comparte tu mes (wrapped) — imagen linda para historias; motor de crecimiento -->
-        <button class="share-month-btn" x-show="monthExpenses.length + monthIncomeRows.length >= 3" x-cloak @click="openMonthRecap()">
-          <span class="share-month-ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" width="17" height="17"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          </span>
-          <span class="share-month-txt">
-            <span class="share-month-title">Tu mes en Zepo</span>
-            <span class="share-month-sub">Míralo, deja que Zepi lo cuente y compártelo</span>
-          </span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.4" width="16" height="16"><path d="M9 18l6-6-6-6"/></svg>
-        </button>
 
         <!-- Journey 30 días — checklist guiado con premios -->
         <div class="jrn-home-card" :class="{ claimable: !!jrnClaimableChapter }" x-show="jrnCardVisible" x-cloak @click="jrnOpen = true">
@@ -6753,11 +6746,13 @@ setTimeout(function() {
                   <div style="flex:1;min-width:0;">
                     <div style="font-weight:700;">Zepi cuenta tu mes</div>
                     <div x-show="recapNarration" style="color:var(--muted);margin-top:2px;white-space:pre-wrap;" x-text="recapNarration"></div>
-                    <div x-show="!recapNarration && !recapNarrating" style="color:var(--muted);margin-top:2px;">Deja que te resuma cómo te fue este mes.</div>
                     <div x-show="recapNarrating" style="color:var(--muted);margin-top:2px;">Pensándolo…</div>
+                    <div x-show="!recapNarration && !recapNarrating && recapNarrError" style="color:var(--muted);margin-top:2px;">No pude armar el resumen ahora.</div>
                   </div>
                 </div>
-                <button x-show="!recapNarration" class="zepi-action" style="margin-top:8px;" :disabled="recapNarrating" @click="zepiNarrateMonth()" x-text="recapNarrating ? 'Un momento…' : 'Que Zepi lo cuente'"></button>
+                <!-- La reflexion sale sola al abrir (openMonthRecap). Este boton SOLO aparece
+                     si fallo: no es "pedirla", es reintentar. -->
+                <button x-show="!recapNarration && !recapNarrating && recapNarrError" class="zepi-action" style="margin-top:8px;" @click="zepiNarrateMonth()">Reintentar</button>
               </div>
             </div>
             <div style="padding:12px 16px calc(16px + var(--safe-bottom));border-top:1px solid var(--border);flex-shrink:0;">
@@ -9981,12 +9976,12 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v195',
+    APP_VERSION: 'v196',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     // ─── ZEPI (companion IA, Max) ───
     zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
     zepiQuota: null, zepiExecBusy: false, _zepiRefMap: {},
-    recapOpen: false, recapImg: '', recapNarration: '', recapNarrating: false, _recapKey: '',
+    recapOpen: false, recapImg: '', recapNarration: '', recapNarrating: false, recapNarrError: false, _recapKey: '',
     zepiVoiceOpen: false, zepiVoiceState: 'connecting', zepiVoiceTranscript: '',
     zepiVoiceMuted: false, zepiVoiceMini: false,
     zvTurns: [], zvDraft: null, zvDraftBusy: false, zvMini: { x: null, y: null },
@@ -10519,6 +10514,8 @@ function zepoApp() {
           else if (this.bugReportOpen) { this.bugReportOpen = false; }
           else if (this.batchEditPromptExp) { this.batchEditPromptExp = null; this.batchEditPromptItems = []; }
           else if (this.jrnOpen) { this.jrnOpen = false; }
+          else if (this.recapOpen) { this.recapOpen = false; }
+          else if (this.goalsOpen) { this.goalsOpen = false; }
           else if (this.zvAct) { this.zvActCancel(); }
           else if (this.zvDraft) { this.zvDraftCancel(); }
           else if (this.zepiVoiceOpen) { this.zepiVoiceStop(); }
@@ -10544,7 +10541,10 @@ function zepoApp() {
         if (val !== old && !this._navPopping) pushBack();
       });
 
-      ['sheetOpen','patSheetOpen','zepiOpen','zepiVoiceOpen','jrnOpen','catManagerOpen','pmManagerOpen','recurringManagerOpen','importsManagerOpen','spaceSwitcherOpen','spaceManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen','acceptPrModal','acceptAllModal','aliasModalOpen','showDeleteModal','importOpen','batchEditPromptExp'].forEach(k => {
+      // ⚠️ Toda pantalla nueva con scrim va AQUI y en la cadena de popstate de arriba, o el
+      // gesto atras sale de la app (paso con 'recapOpen'/'goalsOpen', 26-jul).
+      // Candado: tools/qa-back-gesture.py falla si un flag *Open no esta en ambas listas.
+      ['sheetOpen','patSheetOpen','zepiOpen','zepiVoiceOpen','jrnOpen','recapOpen','goalsOpen','catManagerOpen','pmManagerOpen','recurringManagerOpen','importsManagerOpen','spaceSwitcherOpen','spaceManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen','acceptPrModal','acceptAllModal','aliasModalOpen','showDeleteModal','importOpen','batchEditPromptExp'].forEach(k => {
         this.$watch(k, v => { if (v) pushBack(); });
       });
       // zvDraft va aparte: el watcher es PROFUNDO y con él en la lista de arriba cada tecleo
@@ -10752,7 +10752,12 @@ function zepoApp() {
         accepted_at: new Date().toISOString(),
         created_at: new Date().toISOString()
       };
-      let exists = false;
+      // ⚠️ payload trae plan:'free' — SOLO puede crear filas, NUNCA tocar una existente.
+      // Bug real (26-jul): si el chequeo de abajo fallaba (timeout de 3s), exists quedaba
+      // false y el upsert hacia UPDATE -> degradaba a 'free' a un usuario que pagaba.
+      // Dos candados independientes: null = "no se pudo saber" (no escribe), y el
+      // ignoreDuplicates (ON CONFLICT DO NOTHING) protege aunque el chequeo se equivoque.
+      let exists = null;
       try {
         const r = await withTimeout(sb.from('users').select('id').eq('id', uid).maybeSingle(), 3000, 'ensureUserRow-check');
         exists = !!r?.data;
@@ -10765,16 +10770,18 @@ function zepoApp() {
             3000, 'ensureUserRow-rest-check'
           );
           const arr = await resp.json().catch(() => []);
-          exists = Array.isArray(arr) && arr.length > 0;
+          if (resp.ok && Array.isArray(arr)) exists = arr.length > 0;
         } catch (e2) { console.warn('[ensureUserRow] REST check failed:', e2.message); }
       }
-      if (!exists) {
+      if (exists === false) {
         try {
-          await withTimeout(sb.from('users').upsert(payload, { onConflict: 'id' }), 4000, 'ensureUserRow-upsert');
+          await withTimeout(sb.from('users').upsert(payload, { onConflict: 'id', ignoreDuplicates: true }), 4000, 'ensureUserRow-upsert');
         } catch (e) {
           console.warn('[ensureUserRow] upsert fallback REST:', e.message);
           try { await sbRestInsert('users', payload); } catch (e2) { console.warn('[ensureUserRow] REST insert failed:', e2.message); }
         }
+      } else if (exists === null) {
+        console.warn('[ensureUserRow] no se pudo verificar la fila: no se escribe (proteccion de plan)');
       }
       // Mirror del nombre publico en profiles (legible por amigos; user_settings es privado).
       // Solo display_name -> avatar_color conserva su valor o el default de la tabla.
@@ -15747,6 +15754,7 @@ function zepoApp() {
       this.recapOpen = true;
       this.recapImg = '';
       this.recapNarrating = false;
+      this.recapNarrError = false;
       this._recapKey = 'zepo_recap_narr_' + (this.user && this.user.id || '') + '_' + new Date().toISOString().slice(0, 7);
       try { this.recapNarration = localStorage.getItem(this._recapKey) || ''; } catch (e) { this.recapNarration = ''; }
       this.$nextTick(async () => {
@@ -15757,11 +15765,15 @@ function zepoApp() {
           this.recapImg = canvas.toDataURL('image/png');
         } catch (e) { console.warn('[recap]', e && e.message); }
       });
+      // La reflexion sale sola: pedirla con otro boton sobraba. Si ya esta cacheada del mes,
+      // no se vuelve a gastar cupo.
+      if (!this.recapNarration) this.zepiNarrateMonth();
     },
 
     async zepiNarrateMonth() {
       if (!this.hasPlan('pro') || this.recapNarrating) return;
       this.recapNarrating = true;
+      this.recapNarrError = false;
       try {
         const token = (await sb.auth.getSession())?.data?.session?.access_token;
         if (!token) throw new Error('no_session');
@@ -15784,6 +15796,7 @@ function zepoApp() {
         }
         if (data.quota) this.zepiQuota = data.quota;
       } catch (e) {
+        this.recapNarrError = true;
         this.showToast('No pude armar el resumen ahora');
       } finally {
         this.recapNarrating = false;
@@ -19052,7 +19065,7 @@ document.addEventListener('alpine:initialized', () => {
 });
 
 if ('serviceWorker' in navigator && !location.hostname.includes('localhost') && !location.hostname.includes('127.0.0.1')) {
-  const CURRENT_SW = 'sw-v171.js';
+  const CURRENT_SW = 'sw-v172.js';
   // Auto-desinstala CUALQUIER SW que no sea el actual (limpia sw.js v52 cache-first,
   // sw-v54.js v55, etc. que sirven HTML viejo). Critico para usuarios atascados.
   navigator.serviceWorker.getRegistrations().then(regs => {
