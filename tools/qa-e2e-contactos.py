@@ -63,7 +63,18 @@ async ([fromId]) => {
   const c = window.Alpine.$data(document.querySelector('#app'));
   // Simula al usuario PARADO en la pestana cuentas (asi el getter memoizado recomputa en vivo).
   c.tab = 'cuentas'; c.cuentasTab = 'amigos'; c.friendsSubTab = 'contactos';
-  await Promise.all([c.loadExpenses(), c.loadSplits(), c.loadPaymentRequests(), c.loadFriends()]);
+  await Promise.all([c.loadExpenses(), c.loadSplits(), c.loadPaymentRequests()]);
+  // loadFriends() va aparte y con reintento acotado. Si su lectura falla (un blip bajo la carga
+  // de la bateria completa), el metodo sale por `if (!conns) return` dejando friends=[] SIN
+  // avisar, y los 3 checks de amistad caen sin que exista bug de producto. Reintentar es lo que
+  // haria el usuario al volver a la pestana. Si la amistad de verdad no esta, los 5 intentos
+  // fallan igual y la prueba se pone roja: no tapa nada, solo no confia en un solo tiro.
+  let tries = 0;
+  while (tries++ < 5) {
+    await c.loadFriends();
+    if (c.friendsLoaded && (c.friends || []).some(f => f.user_id === fromId)) break;
+    await new Promise(r => setTimeout(r, 400));
+  }
   const acc = c.accountsByPerson || [];
   const noZepo = c.nonZepoAccounts || [];
   const carlos = acc.find(p => p.name === 'Carlos QA');
@@ -73,6 +84,9 @@ async ([fromId]) => {
   await c.loadFriends();
   const renamed = (c.friends || []).find(f => f.user_id === fromId);
   return {
+    _friendsLoaded: c.friendsLoaded,
+    _friendsTries: tries,
+    _friends: (c.friends || []).map(f => f.user_id + ':' + f.display_name),
     carlosNeto: carlos ? carlos.neto : null,
     carlosDebeGroups: carlos ? carlos.debeGroups.length : 0,
     carlosEnNoZepo: noZepo.some(p => p.name === 'Carlos QA'),
@@ -103,8 +117,32 @@ def run(url, from_id):
 def cleanup(demo, frm):
     admin("DELETE", "/rest/v1/expenses?description=eq.Almuerzo%20QA")
     admin("DELETE", "/rest/v1/payment_requests?description=eq.Cine%20QA")
-    admin("DELETE", f"/rest/v1/user_connections?requester_id=eq.{frm}&addressee_id=eq.{demo}")
+    # Las DOS direcciones: el UNIQUE de la tabla es (requester_id, addressee_id), o sea el par
+    # ORDENADO. Borrar solo qa-from->demo deja viva una fila demo->qa-from de otra suite, que
+    # ni se limpia ni estorba al INSERT, pero si ensucia lo que ve la pantalla.
+    for a, b in ((frm, demo), (demo, frm)):
+        admin("DELETE", f"/rest/v1/user_connections?requester_id=eq.{a}&addressee_id=eq.{b}")
     admin("DELETE", f"/rest/v1/contact_aliases?owner_id=eq.{demo}&contact_id=eq.{frm}")
+
+
+def seed_friendship(demo, frm):
+    """Deja la amistad qa-from->demo en 'accepted' y COMPRUEBA que quedo asi.
+
+    Esta suite comparte la cuenta demo con qa-e2e-friends y qa-e2e-names, que crean y borran
+    conexiones entre las mismas dos cuentas. En vez de dar por hecho que el INSERT entro, se
+    lee de vuelta: si no quedo, la prueba dice ESO en vez de disfrazarse de 3 checks de UI
+    rotos (que fue el rojo dificil de leer que motivo esto).
+    """
+    s, _ = admin("POST", "/rest/v1/user_connections",
+                 {"requester_id": frm, "addressee_id": demo, "status": "accepted"})
+    _, rows = admin("GET", f"/rest/v1/user_connections"
+                           f"?requester_id=eq.{frm}&addressee_id=eq.{demo}&select=status")
+    got = rows[0]["status"] if isinstance(rows, list) and rows else None
+    if got != "accepted":
+        print(f"[FALLA] arnes: no quedo sembrada la amistad demo<->qa-from "
+              f"(INSERT HTTP {s}, estado leido: {got!r}). No es un bug de la pantalla.")
+        return False
+    return True
 
 def main():
     demo = ensure_user(DEMO_EMAIL, DEMO_PASS)
@@ -122,9 +160,9 @@ def main():
     admin("POST", "/rest/v1/payment_requests", {
         "from_user_id": frm, "to_user_id": demo, "amount": 4, "description": "Cine QA",
         "category": "food", "expense_date": TODAY, "status": "accepted"})
-    # amistad aceptada
-    admin("POST", "/rest/v1/user_connections",
-          {"requester_id": frm, "addressee_id": demo, "status": "accepted"})
+    # amistad aceptada (sembrada y verificada; ver seed_friendship)
+    if not seed_friendship(demo, frm):
+        cleanup(demo, frm); return 1
     try:
         port = free_port(); serve(port); time.sleep(0.5)
         res = run(f"http://127.0.0.1:{port}/index.html", frm)

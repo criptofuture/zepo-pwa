@@ -951,6 +951,13 @@
       font-size: 17px; font-weight: 800; letter-spacing: -0.5px;
       font-variant-numeric: tabular-nums; flex-shrink: 0; color: var(--text);
     }
+    /* El monto grande es TU parte. Cuando el grupo tiene compartidos, esta linea da el
+       contexto que faltaba: cuanto costo completo y cuanto te deben. */
+    .batch-summary-sub {
+      font-size: 11.5px; font-weight: 600; color: var(--c-accent-soft); margin-top: 3px;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
     .batch-summary-warn {
       display: flex; gap: 8px; padding: 10px 14px;
       background: rgba(var(--c-warning-rgb),0.10);
@@ -7280,6 +7287,10 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
                       <div class="batch-summary-meta">
                         <span x-text="batchEditInfo.count + (batchEditInfo.count === 1 ? ' registro' : ' registros')"></span>
                         <span x-show="batchEditInfo.minDate" x-text="' · ' + batchRange(batchEditInfo)"></span>
+                      </div>
+                      <div x-show="batchEditInfo.splits > 0" x-cloak class="batch-summary-sub">
+                        <span x-text="'$' + fmtMoney(batchEditInfo.totalFull) + ' en total'"></span>
+                        <span x-show="batchEditInfo.porCobrar > 0" x-text="' · $' + fmtMoney(batchEditInfo.porCobrar) + ' por cobrar'"></span>
                       </div>
                     </div>
                     <div class="batch-summary-total mono" x-text="'$' + fmtMoney(batchEditInfo.total)"></div>
@@ -14335,13 +14346,21 @@ function zepoApp() {
         color: this.getCatColor(exp.category),
       }));
       // Resumen para la cabecera del editor: qué es, cuántos, de cuándo a cuándo y cuánto.
+      // `total` es TU PARTE (amount), igual que el pie de esta misma hoja, Importaciones y el
+      // dashboard: en Zepo un gasto compartido te cuesta solo tu parte y lo adelantado se
+      // cuenta aparte (unsettledAdvances). Antes sumaba split_total y la cabecera decía
+      // $70.20 mientras el TOTAL de abajo, en la misma pantalla, decía $47.03.
+      // `totalFull` y `porCobrar` van en la línea secundaria: es info que no se veía en ningún lado.
       const dates = items.map(e => e.date).filter(Boolean).sort();
+      const gasto = items.filter(e => !e.is_income);
       this.batchEditInfo = {
         label: (batch.batch_label || items.find(e => e.batch_label)?.batch_label || 'Registro múltiple'),
         count: items.length,
         minDate: dates[0] || null,
         maxDate: dates[dates.length - 1] || null,
-        total: items.reduce((s, e) => s + (e.is_income ? 0 : Number(e.is_split ? (e.split_total || e.amount) : e.amount) || 0), 0),
+        total:     gasto.reduce((s, e) => s + (Number(e.amount) || 0), 0),
+        totalFull: gasto.reduce((s, e) => s + (Number(e.is_split ? (e.split_total || e.amount) : e.amount) || 0), 0),
+        porCobrar: gasto.reduce((s, e) => s + (e.is_split && e.split_status === 'pendiente' ? (Number(e.split_pending) || 0) : 0), 0),
         splits: items.filter(e => e.is_split).length,
         accepted: 0,
       };
