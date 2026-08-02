@@ -110,6 +110,50 @@ Alvaro eligió; implementado y probado. Gate: `qa-e2e-invariantes-presup.py` **6
 
 ---
 
+## ✅ D21 — el arreglo de D7 se pasó de rosca: **el balance del mes contaba adelantos de otros meses** (1-ago, v200)
+
+**Reportado por Alvaro:** *"si pongo hoy un gasto con fecha del mes pasado, aparece en el historial en
+el mes pasado pero también lo cuenta en el balance de este mes"*.
+
+**Causa:** `unsettledAdvances` sumaba **todos** los `split_pending` en estado `pendiente`, de cualquier
+fecha. Esa fue la cura de **D7** (17-jul), que arreglaba un síntoma real —un adelanto sin cobrar
+desaparecía del cálculo al cambiar de mes— pero al quitarle el filtro de mes metió plata de meses
+anteriores dentro de **`monthBalanceReal`** (la tarjeta que dice literalmente "BALANCE EN \<mes\>"),
+`safeToSpend`, `monthRealOutflow` y la barra "Adelantado $X" del presupuesto total.
+
+**Medido en producción el 1-ago (v198), con datos reales:**
+
+| Cuenta | Gasto de agosto | Adelantos pendientes | …de ellos, de agosto | "BALANCE EN AGOSTO" mostrado | Correcto |
+|---|---|---|---|---|---|
+| Alvaro · espacio Personal | $87.13 | $144.72 | $13.12 | **−$231.85** | −$100.25 |
+| Beatriz | $9.00 | $267.00 | $0.00 | **−$276.00** | −$9.00 |
+
+El caso de Beatriz es exactamente el reportado: gasto dividido registrado el 1-ago con fecha 31-jul.
+
+**Incoherencia hermana, misma raíz:** en Presupuestos, el "adelantado" **por categoría**
+(`budgetBars[].advance`) salía de `monthExpenses` (solo este mes) mientras el **total**
+(`totalBudgetAdvancePct`, "Adelantado $X") salía del global → las dos cifras de la misma pantalla se
+contradecían. Con D21 ambas quedan acotadas al mes.
+
+**Arreglo:** `unsettledAdvances` se acota al mes en curso (`_inCurrentMonth`) y exige `is_split`
+(antes bastaba `split_status='pendiente'`; hay 103 filas con ese estado y `is_split=false` que hoy
+aportan $0 por tener `split_pending` nulo — trampa latente). Lo que queda fuera **no se pierde**:
+sale en el getter nuevo `unsettledAdvancesOther`, con su línea en el hero
+*"+ $X adelantado en meses anteriores"*, y sigue completo en la pestaña Cuentas.
+
+**Regla que zanja D7 vs D21:** el mes es un **flujo** (lo que entró y salió ESE mes); lo que te deben
+es un **stock** y vive en Cuentas. Nunca sumar un stock dentro de una cifra rotulada con un mes.
+Es el mismo criterio que ya usaba el correo semanal (`send-weekly-email`): `balance` = la semana,
+`pendingCobros` = aparte.
+
+**Prueba:** `qa-e2e-invariantes-extra.py` caso **D21** (6 checks + control negativo) reemplaza al viejo
+caso D7, que certificaba lo contrario. Verifica que el adelanto del mes pasado da delta 0.00 en
+`unsettledAdvances`/`monthBalanceReal`/`safeToSpend` y 40.00 en `unsettledAdvancesOther`, y que el
+adelanto de **este** mes sí sigue contando (−30.00 en `safeToSpend`). Suites: extra **35/35**,
+dash **48/48**, presup **59/59**, safe-to-spend **3/3**.
+
+---
+
 ## ✅ 4ª TANDA — barrido final de lo que quedaba (18-jul, v185)
 
 Alvaro pidió verificar y corregir todo lo que el informe dejó sin arreglar. Resultado del barrido:

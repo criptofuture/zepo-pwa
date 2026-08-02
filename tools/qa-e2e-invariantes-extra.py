@@ -8,8 +8,9 @@ Cuenta: elite@zepo.test / ZepoQA2026! (unica asignada a esta campana).
 D18 -- "este mes" ya no incluye el mes que viene (_inCurrentMonth con tope superior).
 D20 -- la tarjeta "Transacciones" cuenta el periodo activo (periodSrc), no siempre el mes.
 D19 -- el Historial "todo el tiempo" pagina con _fetchAllRows, ya no corta en 1000.
-D7  -- unsettledAdvances lee pendingSplits (global), no monthExpenses -- un adelanto del
-       mes pasado sigue restando en safeToSpend.
+D21 -- unsettledAdvances se acota al mes en curso: un adelanto del mes pasado NO mueve
+       "BALANCE EN <mes>" ni safeToSpend; queda visible en unsettledAdvancesOther.
+       (Reemplaza al viejo caso D7, que certificaba justo lo contrario.)
 D10 -- exportPDF lista TODAS las filas del detalle (data.map), no data.slice(0,500).
 D14 -- removeSpace usa la RPC atomica zepo_delete_space en vez de 4 awaits sueltos.
 
@@ -195,6 +196,8 @@ async () => {
   await c.loadSplits();
   await c.loadExpenses();
   return { unsettledAdvances: Math.round(c.unsettledAdvances*100)/100,
+           unsettledAdvancesOther: Math.round(c.unsettledAdvancesOther*100)/100,
+           monthBalanceReal: Math.round(c.monthBalanceReal*100)/100,
            safeToSpend: Math.round(c.safeToSpend*100)/100 };
 }
 """
@@ -263,37 +266,68 @@ def main():
             page.on("dialog", lambda d: d.accept())
             login(page, base_url)
 
-            # ══════════════════ CASO D7 -- adelanto de split del mes pasado ══════════════════
-            print("\n--- CASO D7: unsettledAdvances/safeToSpend leen pendingSplits (global), no monthExpenses ---")
+            # ═════════ CASO D21 -- el adelanto del mes pasado NO entra en el balance de este mes ═════════
+            # Reemplaza al viejo caso D7, que certificaba lo contrario. D7 arreglo el sintoma real
+            # (un adelanto no cobrado desaparecia al cambiar de mes) sumando TODOS los pendientes sin
+            # importar su fecha -> la tarjeta "BALANCE EN <mes>" y safeToSpend contaban plata que salio
+            # del bolsillo en OTRO mes. Regla nueva: el mes solo cuenta lo del mes; lo de meses
+            # anteriores sigue visible en unsettledAdvancesOther (y en la pestana Cuentas).
+            print("\n--- CASO D21: un adelanto de split del MES PASADO no toca monthBalanceReal/safeToSpend ---")
 
             m0 = page.evaluate(MEASURE_SPLIT_JS)
             print(f"  baseline ANTES: {m0}")
 
-            SEED_D7 = {"user_id": uid, "description": TAG + "_D7split", "amount": 10.00, "category": "other",
-                       "date": prev_month_day15.isoformat(), "is_income": False, "is_split": True,
-                       "split_total": 50, "split_pending": 40, "split_pct": 20,
-                       "split_persona": TAG + "_Ana", "split_status": "pendiente"}
-            st_d7, res_d7 = admin("POST", "/rest/v1/expenses", SEED_D7, {"Prefer": "return=minimal"})
-            chk("Setup D7: POST del gasto dividido del mes pasado devolvio 201", st_d7 == 201,
-                f"status={st_d7}  body={str(res_d7)[:200]}  fecha={prev_month_day15.isoformat()}")
+            # created_at viejo a proposito: loadExpenses conserva 120s las filas locales recien
+            # creadas que la query fresca ya no devuelve (pendingLocal, D15). Sin esto la siembra
+            # de este caso sobrevive al cleanup dentro del navegador y descuadra los casos de abajo.
+            old_ts = "2026-01-01T00:00:00+00:00"
+            SEED_D21 = {"user_id": uid, "description": TAG + "_D21split", "amount": 10.00, "category": "other",
+                        "date": prev_month_day15.isoformat(), "is_income": False, "is_split": True,
+                        "split_total": 50, "split_pending": 40, "split_pct": 20, "created_at": old_ts,
+                        "split_persona": TAG + "_Ana", "split_status": "pendiente"}
+            st_d21, res_d21 = admin("POST", "/rest/v1/expenses", SEED_D21, {"Prefer": "return=minimal"})
+            chk("Setup D21: POST del gasto dividido del mes pasado devolvio 201", st_d21 == 201,
+                f"status={st_d21}  body={str(res_d21)[:200]}  fecha={prev_month_day15.isoformat()}")
 
             m1 = page.evaluate(MEASURE_SPLIT_JS)
             d_adv = d2(m1["unsettledAdvances"], m0["unsettledAdvances"])
+            d_oth = d2(m1["unsettledAdvancesOther"], m0["unsettledAdvancesOther"])
+            d_bal = d2(m1["monthBalanceReal"], m0["monthBalanceReal"])
             d_safe = d2(m1["safeToSpend"], m0["safeToSpend"])
-            print(f"  medicion DESPUES: {m1}  deltas: unsettledAdvances={d_adv} safeToSpend={d_safe}")
+            print(f"  medicion DESPUES: {m1}  deltas: adv={d_adv} advOther={d_oth} balReal={d_bal} safe={d_safe}")
 
-            chk("D7 check1: delta unsettledAdvances == 40.00 (el adelanto del MES PASADO si cuenta)",
-                abs(d_adv - 40.00) <= TOL, f"esperado=40.00  observado={d_adv}")
-            chk("D7 check2: delta safeToSpend == -40.00 (el gasto es de fecha pasada, no toca monthTotal; "
-                "solo unsettledAdvances lo resta)",
-                abs(d_safe - (-40.00)) <= TOL, f"esperado=-40.00  observado={d_safe}")
-            chk("D7 CONTROL NEGATIVO: hipotesis 'delta unsettledAdvances == 0.00 (el del mes pasado no "
-                "cuenta al cambiar de mes)' debe DAR FALSO",
-                abs(d_adv - 0.00) > TOL,
-                f"delta observado={d_adv}  "
-                f"({'el control discrimina correctamente' if abs(d_adv - 0.00) > TOL else 'BUG: el adelanto del mes pasado dejo de contar'})")
+            chk("D21 check1: delta unsettledAdvances == 0.00 (el adelanto del MES PASADO no es de este mes)",
+                abs(d_adv - 0.00) <= TOL, f"esperado=0.00  observado={d_adv}")
+            chk("D21 check2: delta unsettledAdvancesOther == 40.00 (no se pierde: sale aparte)",
+                abs(d_oth - 40.00) <= TOL, f"esperado=40.00  observado={d_oth}")
+            chk("D21 check3: delta monthBalanceReal == 0.00 (la tarjeta del mes no se mueve)",
+                abs(d_bal - 0.00) <= TOL, f"esperado=0.00  observado={d_bal}")
+            chk("D21 check4: delta safeToSpend == 0.00 (el disponible del mes tampoco se mueve)",
+                abs(d_safe - 0.00) <= TOL, f"esperado=0.00  observado={d_safe}")
+            chk("D21 CONTROL NEGATIVO: la sonda SI ve el adelanto (advOther != 0) -> los ceros de arriba "
+                "son la regla nueva, no una siembra que fallo",
+                abs(d_oth - 0.00) > TOL,
+                f"delta advOther={d_oth}  "
+                f"({'el control discrimina correctamente' if abs(d_oth - 0.00) > TOL else 'la siembra no llego: los checks 1/3/4 no prueban nada'})")
 
-            cleanup_expenses(uid)  # limpia D7 antes de seguir para no ensuciar los siguientes casos
+            # Y el adelanto de ESTE mes si tiene que contar (o el arreglo apagaria la funcion entera).
+            SEED_D21B = {"user_id": uid, "description": TAG + "_D21splitHoy", "amount": 5.00, "category": "other",
+                         "date": today_iso, "is_income": False, "is_split": True,
+                         "split_total": 30, "split_pending": 25, "split_pct": 17, "created_at": old_ts,
+                         "split_persona": TAG + "_Ana", "split_status": "pendiente"}
+            st_d21b, res_d21b = admin("POST", "/rest/v1/expenses", SEED_D21B, {"Prefer": "return=minimal"})
+            chk("Setup D21b: POST del gasto dividido de HOY devolvio 201", st_d21b == 201,
+                f"status={st_d21b}  body={str(res_d21b)[:200]}")
+            m2 = page.evaluate(MEASURE_SPLIT_JS)
+            d_adv2 = d2(m2["unsettledAdvances"], m1["unsettledAdvances"])
+            d_safe2 = d2(m2["safeToSpend"], m1["safeToSpend"])
+            print(f"  medicion DESPUES (adelanto de hoy): {m2}  deltas: adv={d_adv2} safe={d_safe2}")
+            chk("D21 check5: delta unsettledAdvances == 25.00 (el adelanto de ESTE mes si cuenta)",
+                abs(d_adv2 - 25.00) <= TOL, f"esperado=25.00  observado={d_adv2}")
+            chk("D21 check6: delta safeToSpend == -30.00 (tu parte 5.00 en monthTotal + 25.00 adelantado)",
+                abs(d_safe2 - (-30.00)) <= TOL, f"esperado=-30.00  observado={d_safe2}")
+
+            cleanup_expenses(uid)  # limpia D21 antes de seguir para no ensuciar los siguientes casos
             page.evaluate(MEASURE_SPLIT_JS)  # refresca estado local (splits/expenses) tras el cleanup
 
             # ══════════════════ CASO D18 -- "este mes" con tope superior ══════════════════
