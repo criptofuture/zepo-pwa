@@ -3334,7 +3334,7 @@ setTimeout(function() {
       <form class="auth-form" @submit.prevent="handleAuth">
         <input x-show="authMode === 'signup'" class="auth-input" type="text" placeholder="Nombre completo" x-model="authName" autocomplete="name">
         <input class="auth-input" type="email" placeholder="Email" x-model="authEmail" required autocomplete="email">
-        <input class="auth-input" type="password" :placeholder="authMode === 'login' ? 'Contraseña' : 'Minimo 8 caracteres'" x-model="authPassword" required minlength="6" :autocomplete="authMode === 'login' ? 'current-password' : 'new-password'">
+        <input class="auth-input" type="password" :placeholder="authMode === 'login' ? 'Contraseña' : 'Minimo 8 caracteres'" x-model="authPassword" required minlength="8" :autocomplete="authMode === 'login' ? 'current-password' : 'new-password'">
         <div x-show="authMode === 'signup' && authPassword.length > 0" class="flex-show" style="align-items:center;gap:8px;margin-top:-4px;">
           <div style="flex:1;height:4px;border-radius:2px;background:var(--border);overflow:hidden;">
             <div :style="'width:' + (authPassword.length >= 12 ? '100' : authPassword.length >= 8 ? '70' : authPassword.length >= 4 ? '40' : '15') + '%;height:100%;background:' + (authPassword.length >= 12 ? 'var(--success)' : authPassword.length >= 8 ? 'var(--success)' : authPassword.length >= 4 ? 'var(--warning)' : 'var(--danger)')"></div>
@@ -3492,7 +3492,7 @@ setTimeout(function() {
               <div class="field-box-label">NUEVA CONTRASEÑA</div>
               <div class="field-box-inner">
                 <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="14" height="14" style="flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                <input :type="showRecoveryPw ? 'text' : 'password'" x-model="recoveryForm.newPw" placeholder="Mínimo 6 caracteres" autocomplete="new-password" style="flex:1;font-family:var(--font-display);font-size:13px;letter-spacing:0.2px;">
+                <input :type="showRecoveryPw ? 'text' : 'password'" x-model="recoveryForm.newPw" placeholder="Mínimo 8 caracteres" autocomplete="new-password" style="flex:1;font-family:var(--font-display);font-size:13px;letter-spacing:0.2px;">
                 <button type="button" @click="showRecoveryPw = !showRecoveryPw" style="background:transparent;border:none;cursor:pointer;padding:2px;flex-shrink:0;color:var(--muted);">
                   <svg x-show="!showRecoveryPw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
                   <svg x-show="showRecoveryPw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-7-11-7a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 7 11 7a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
@@ -3511,12 +3511,12 @@ setTimeout(function() {
 
             <!-- Hint de validación -->
             <div style="min-height:18px;margin:0 4px 12px;font-size:11px;line-height:1.4;">
-              <span x-show="recoveryForm.newPw && recoveryForm.newPw.length < 6" style="color:var(--danger);">La contraseña debe tener al menos 6 caracteres.</span>
-              <span x-show="recoveryForm.newPw.length >= 6 && recoveryForm.confirm && recoveryForm.newPw !== recoveryForm.confirm" style="color:var(--danger);">Las contraseñas no coinciden.</span>
-              <span x-show="recoveryForm.newPw.length >= 6 && recoveryForm.newPw === recoveryForm.confirm" style="color:var(--success);">✓ Las contraseñas coinciden.</span>
+              <span x-show="recoveryForm.newPw && recoveryForm.newPw.length < 8" style="color:var(--danger);">La contraseña debe tener al menos 8 caracteres.</span>
+              <span x-show="recoveryForm.newPw.length >= 8 && recoveryForm.confirm && recoveryForm.newPw !== recoveryForm.confirm" style="color:var(--danger);">Las contraseñas no coinciden.</span>
+              <span x-show="recoveryForm.newPw.length >= 8 && recoveryForm.newPw === recoveryForm.confirm" style="color:var(--success);">✓ Las contraseñas coinciden.</span>
             </div>
 
-            <button @click="submitNewPassword" :disabled="recoverySaving || recoveryForm.newPw.length < 6 || recoveryForm.newPw !== recoveryForm.confirm" style="width:100%;height:50px;border-radius:25px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 20px rgba(var(--c-brand-rgb),0.2);" :style="{ opacity: (recoverySaving || recoveryForm.newPw.length < 6 || recoveryForm.newPw !== recoveryForm.confirm) ? 0.5 : 1, cursor: (recoverySaving || recoveryForm.newPw.length < 6 || recoveryForm.newPw !== recoveryForm.confirm) ? 'not-allowed' : 'pointer' }">
+            <button @click="submitNewPassword" :disabled="recoverySaving || recoveryForm.newPw.length < 8 || recoveryForm.newPw !== recoveryForm.confirm" style="width:100%;height:50px;border-radius:25px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 20px rgba(var(--c-brand-rgb),0.2);" :style="{ opacity: (recoverySaving || recoveryForm.newPw.length < 8 || recoveryForm.newPw !== recoveryForm.confirm) ? 0.5 : 1, cursor: (recoverySaving || recoveryForm.newPw.length < 8 || recoveryForm.newPw !== recoveryForm.confirm) ? 'not-allowed' : 'pointer' }">
               <span x-show="!recoverySaving">Guardar contraseña</span>
               <span x-show="recoverySaving">Guardando...</span>
             </button>
@@ -6153,14 +6153,14 @@ setTimeout(function() {
               <span style="font-size:11px;font-weight:700;letter-spacing:0.4px;" :style="{ color: pwStrength.color }" x-text="pwStrength.label"></span>
             </div>
             <div style="margin-top:8px;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;">
-              <svg x-show="pwForm.newPw.length >= 6" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="3" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
-              <svg x-show="pwForm.newPw.length < 6" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="11" height="11"><circle cx="12" cy="12" r="9"/></svg>
-              Mínimo 6 caracteres
+              <svg x-show="pwForm.newPw.length >= 8" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="3" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
+              <svg x-show="pwForm.newPw.length < 8" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="11" height="11"><circle cx="12" cy="12" r="9"/></svg>
+              Mínimo 8 caracteres
             </div>
           </div>
 
           <div style="margin-top:26px;">
-            <button class="grad-btn" @click="changePassword" :disabled="!pwForm.current || !pwForm.newPw || pwForm.newPw !== pwForm.confirm || pwForm.newPw.length < 6 || changingPw" style="width:100%;height:54px;border-radius:27px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:inherit;letter-spacing:-0.1px;disabled:opacity:0.5;">
+            <button class="grad-btn" @click="changePassword" :disabled="!pwForm.current || !pwForm.newPw || pwForm.newPw !== pwForm.confirm || pwForm.newPw.length < 8 || changingPw" style="width:100%;height:54px;border-radius:27px;background:var(--gradient);color:var(--c-brand-contrast);font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:inherit;letter-spacing:-0.1px;disabled:opacity:0.5;">
               <span x-show="!changingPw">Actualizar contraseña</span>
               <span x-show="changingPw">Actualizando...</span>
             </button>
@@ -9609,6 +9609,39 @@ function withTimeout(promise, ms, label) {
   ]);
 }
 
+// Supabase responde en ingles cuando rechaza una contraseña. La segunda regla NO se puede validar
+// en el navegador — desde el 2026-08-03 el servidor consulta HaveIBeenPwned, asi que "12345678"
+// cumple el largo y aun asi lo rechaza. Sin esta traduccion el usuario veia el ingles crudo.
+function pwErrorEs(msg) {
+  const m = msg || '';
+  if (/at least \d+ characters|password.*too short/i.test(m)) return 'La contraseña debe tener al menos 8 caracteres.';
+  if (/weak|easy to guess|pwned|compromised|data breach/i.test(m)) return 'Esa contraseña aparece en filtraciones conocidas. Elige otra.';
+  return m;
+}
+
+// Rechaza claves que ya aparecieron en filtraciones publicas. Supabase trae esto server-side, pero
+// SOLO en plan Pro, asi que lo hacemos contra la misma fuente (HaveIBeenPwned) desde el navegador.
+// La clave NUNCA sale de aca: por k-anonymity mandamos los 5 PRIMEROS caracteres del hash SHA-1,
+// HIBP devuelve ~800 sufijos que empiezan igual y la comparacion final se hace local.
+// Falla ABIERTO a proposito (sin red / sin https / HIBP caido -> deja pasar): esto es un filtro de
+// calidad, no una barrera de seguridad. Al ser del lado del cliente, alguien decidido lo saltea —
+// pero el caso real que ataja es el usuario que reusa sin saber una clave ya filtrada.
+async function pwFiltrada(pw) {
+  try {
+    if (!window.isSecureContext || !crypto || !crypto.subtle) return false;
+    const bytes = new Uint8Array(await crypto.subtle.digest('SHA-1', new TextEncoder().encode(pw)));
+    const hash = [...bytes].map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 3000);
+    const resp = await fetch('https://api.pwnedpasswords.com/range/' + hash.slice(0, 5), { signal: ctrl.signal });
+    clearTimeout(t);
+    if (!resp.ok) return false;
+    const suf = hash.slice(5);
+    return (await resp.text()).split('\n').some(l => l.split(':')[0].trim() === suf);
+  } catch { return false; }
+}
+const PW_FILTRADA_MSG = 'Esa contraseña aparece en filtraciones conocidas. Elige otra.';
+
 // Devuelve un access_token FRESCO (refrescando via REST si el actual está expirado o cerca).
 // Resuelve el bug "HTTP 401" al llamar edge functions con token caducado del localStorage.
 async function sbFreshToken(force = false) {
@@ -10041,7 +10074,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v201',
+    APP_VERSION: 'v202',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     // ─── ZEPI (companion IA, Max) ───
     zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
@@ -10890,6 +10923,11 @@ function zepoApp() {
             this.authLoading = false;
             return;
           }
+          if (await pwFiltrada(this.authPassword)) {
+            this.authError = PW_FILTRADA_MSG;
+            this.authLoading = false;
+            return;
+          }
           const { data, error } = await withTimeout(
             sb.auth.signUp({
               email: this.authEmail,
@@ -10967,7 +11005,7 @@ function zepoApp() {
         } else if (msg.startsWith('timeout')) {
           this.authError = 'La conexión está lenta. Verifica tu internet e intenta de nuevo.';
         } else {
-          this.authError = msg || 'Error de autenticación';
+          this.authError = pwErrorEs(msg) || 'Error de autenticación';
         }
       } finally {
         this.authLoading = false;
@@ -16470,7 +16508,8 @@ function zepoApp() {
     async changePassword() {
       if (!this.pwForm.current) return this.showToast('Ingresa tu contraseña actual');
       if (this.pwForm.newPw !== this.pwForm.confirm) return this.showToast('Las contraseñas no coinciden');
-      if (this.pwForm.newPw.length < 6) return this.showToast('Mínimo 6 caracteres');
+      if (this.pwForm.newPw.length < 8) return this.showToast('Mínimo 8 caracteres');
+      if (await pwFiltrada(this.pwForm.newPw)) return this.showToast(PW_FILTRADA_MSG);
       this.changingPw = true;
       try {
         // 1) Verificar contraseña actual con fetch directo (evita hang del cliente JS)
@@ -16504,7 +16543,7 @@ function zepoApp() {
         this.tab = 'settings';
       } catch (e) {
         console.warn('[changePassword]', e.message);
-        this.showToast('Error: ' + e.message);
+        this.showToast(pwErrorEs(e.message));
       }
       this.changingPw = false;
     },
@@ -18280,7 +18319,8 @@ function zepoApp() {
 
     // Fija la nueva contraseña usando el token del enlace de recuperación (sin pedir la actual).
     async submitNewPassword() {
-      if (!this.recoveryForm.newPw || this.recoveryForm.newPw.length < 6) return this.showToast('Mínimo 6 caracteres');
+      if (!this.recoveryForm.newPw || this.recoveryForm.newPw.length < 8) return this.showToast('Mínimo 8 caracteres');
+      if (await pwFiltrada(this.recoveryForm.newPw)) return this.showToast(PW_FILTRADA_MSG);
       if (this.recoveryForm.newPw !== this.recoveryForm.confirm) return this.showToast('Las contraseñas no coinciden');
       this.recoverySaving = true;
       try {
@@ -18308,7 +18348,7 @@ function zepoApp() {
         this.recoveryDone = true;
       } catch (e) {
         console.warn('[submitNewPassword]', e.message);
-        this.showToast('Error: ' + e.message);
+        this.showToast(pwErrorEs(e.message));
       }
       this.recoverySaving = false;
     },
