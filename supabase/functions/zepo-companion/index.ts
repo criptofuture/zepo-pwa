@@ -242,7 +242,10 @@ serve(async (req) => {
           { inlineData: { mimeType: mime, data: audioB64 } },
           { text: "Transcribe el audio a texto plano en el idioma hablado (español latino por defecto). Devuelve SOLO la transcripción literal, sin comillas ni comentarios. Si no se oye habla, devuelve una cadena vacía." },
         ] }],
-        generationConfig: { maxOutputTokens: 1024, thinkingConfig: { thinkingLevel: "MINIMAL" } },
+        // Sin thinkingConfig a proposito: con audio (multimodal), thinkingLevel dio 400
+        // "not supported" en gemini-analyze con imagen (mismo modelo, confirmado 17-sep-2026).
+        // Omitirlo usa el nivel por defecto (MINIMAL) sin arriesgar el mismo 400 aqui.
+        generationConfig: { maxOutputTokens: 1024 },
       });
       if (!sttRes.ok) { console.error("[stt]", sttRes.status, await sttRes.text()); throw new Error(`vertex_${sttRes.status}`); }
       const sttJson = await sttRes.json();
