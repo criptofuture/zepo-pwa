@@ -50,6 +50,7 @@ CHECKS = [
     ("E2E retirar gasto dividido (borrar retira cobro+espejo)", ["python", os.path.join(TOOLS, "qa-e2e-retract-split.py")]),
     ("E2E pedir revision + cancelar cobro (vuelve a 100%)", ["python", os.path.join(TOOLS, "qa-e2e-cancel-cobro.py")]),
     ("E2E saldar cuentas + centavos (libreta == cobros)", ["python", os.path.join(TOOLS, "qa-e2e-settle.py")]),
+    ("SEGURIDAD cobros: nadie reescribe un cobro por la API", ["python", os.path.join(TOOLS, "qa-e2e-payreq-guard.py")]),
     ("E2E amigos (aceptar/rechazar conexion)", ["python", os.path.join(TOOLS, "qa-e2e-friends.py")]),
     ("E2E onboarding (primer gasto/presupuesto/finalizar)", ["python", os.path.join(TOOLS, "qa-e2e-onboarding.py")]),
     ("E2E nombres de contacto (anti-UUID)", ["python", os.path.join(TOOLS, "qa-e2e-names.py")]),
