@@ -4717,6 +4717,35 @@ setTimeout(function() {
               no cuadra con sus cobros aceptados. Abre a la persona en “Gente que…” para reconciliar.
             </div>
           </div>
+          <!-- Rechazados: la otra persona rechazó un cobro mío; acepto el rechazo o no -->
+          <div x-show="rejectedSent.length > 0" style="padding:0 20px 14px;">
+            <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--danger);text-transform:uppercase;margin-bottom:8px;padding-left:4px;">
+              RECHAZADOS · <span x-text="rejectedSent.length"></span>
+            </div>
+            <div style="background:var(--surface);border-radius:14px;border:1px solid rgba(var(--c-expense-rgb),0.30);overflow:hidden;">
+              <template x-for="pr in rejectedSent" :key="'rj' + pr.id">
+                <div style="padding:14px 16px;border-bottom:1px solid var(--border);">
+                  <div style="display:flex;align-items:center;gap:12px;">
+                    <div style="width:38px;height:38px;border-radius:19px;background:rgba(var(--c-expense-rgb),0.10);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--danger);flex-shrink:0;" x-text="(pr.to_name || '?').charAt(0).toUpperCase()"></div>
+                    <div style="flex:1;min-width:0;">
+                      <div style="font-size:14px;font-weight:600;color:var(--text);">
+                        <span x-text="pr.to_name || 'Contacto'"></span>
+                        <span style="font-size:11px;color:var(--danger);font-weight:700;margin-left:4px;">rechazó tu cobro</span>
+                      </div>
+                      <div style="font-size:12px;color:var(--muted);margin-top:2px;" x-text="(pr.description || 'Gasto compartido') + ' · $' + Number(pr.amount).toFixed(2)"></div>
+                    </div>
+                  </div>
+                  <div x-show="pr.reject_comment" style="margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--surface2);font-size:13px;line-height:1.45;color:var(--text);overflow-wrap:anywhere;" x-text="'«' + (pr.reject_comment || '') + '»'"></div>
+                  <div x-show="!pr.reject_comment" style="margin-top:8px;font-size:12px;color:var(--muted);">No dejó comentario.</div>
+                  <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;">
+                    <button @click="openRejectSheet('deny', pr)" style="padding:9px 14px;border-radius:10px;background:var(--surface);color:var(--text);font-size:13px;font-weight:600;border:1px solid var(--border2);">No aceptar</button>
+                    <button @click="openRejectSheet('accept', pr)" style="padding:9px 14px;border-radius:10px;background:var(--cyan);color:var(--c-brand-contrast);font-size:13px;font-weight:700;border:none;">Aceptar rechazo</button>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
           <!-- Confirmar pagos (friends claim they paid me) -->
           <div x-show="meDebenPaidClaims.length > 0" style="padding:0 20px 14px;">
             <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--success);text-transform:uppercase;margin-bottom:8px;padding-left:4px;">
@@ -4744,7 +4773,7 @@ setTimeout(function() {
             </div>
           </div>
 
-          <template x-if="pendingSplits.length === 0 && paidSplits.length === 0 && meDebenPaidClaims.length === 0">
+          <template x-if="pendingSplits.length === 0 && paidSplits.length === 0 && meDebenPaidClaims.length === 0 && rejectedSent.length === 0">
             <div class="empty-state">
               <div class="empty-icon" style="background:radial-gradient(circle at 35% 35%, rgba(var(--c-accent-rgb),0.18), rgba(var(--c-brand-rgb),0.10) 60%, transparent 80%);border:1px solid rgba(var(--c-accent-rgb),0.35);box-shadow:0 0 48px rgba(var(--c-accent-rgb),0.15);position:relative;">
                 <svg viewBox="0 0 24 24" fill="none" style="stroke:var(--c-brand)" stroke-width="1.6" width="48" height="48"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
@@ -4830,8 +4859,12 @@ setTimeout(function() {
                           </div>
                           <div style="text-align:right;flex-shrink:0;">
                             <div style="font-size:16px;font-weight:700;letter-spacing:-0.3px;color:var(--text);font-variant-numeric:tabular-nums;" x-text="'$' + entry._amount.toFixed(2)"></div>
-                            <div style="margin-top:4px;display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(var(--c-warning-rgb),0.15);color:var(--warning);letter-spacing:0.4px;" x-text="_isPorAceptar(entry, entry._person) ? 'POR ACEPTAR' : 'PENDIENTE'"></div>
-                            <div x-show="_isReviewRequested(entry)" style="margin-top:4px;font-size:10px;font-weight:800;color:var(--warning);letter-spacing:0.3px;">🔎 REVISION</div>
+                            <template x-if="!_isReviewRequested(entry, entry._person)">
+                              <div style="margin-top:4px;display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(var(--c-warning-rgb),0.15);color:var(--warning);letter-spacing:0.4px;" x-text="_isPorAceptar(entry, entry._person) ? 'POR ACEPTAR' : 'PENDIENTE'"></div>
+                            </template>
+                            <template x-if="_isReviewRequested(entry, entry._person)">
+                              <div style="margin-top:4px;display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(var(--c-expense-rgb),0.12);color:var(--danger);letter-spacing:0.4px;">RECHAZADO</div>
+                            </template>
                           </div>
                         </div>
                       </template>
@@ -4863,7 +4896,32 @@ setTimeout(function() {
 
         <!-- ── Debo ── -->
         <div x-show="cuentasTab === 'debo'">
-          <template x-if="deboSolicitudes.length === 0 && deboDeudas.length === 0 && deboPaidWaiting.length === 0 && incomeSplitDebts.length === 0">
+          <!-- Rechazos que el emisor aceptó: aviso con su comentario hasta que lo veas -->
+          <div x-show="rejectNotices.length > 0" style="padding:0 20px 14px;">
+            <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--cyan);text-transform:uppercase;margin-bottom:8px;padding-left:4px;">
+              RECHAZOS ACEPTADOS · <span x-text="rejectNotices.length"></span>
+            </div>
+            <div style="background:var(--surface);border-radius:14px;border:1px solid rgba(var(--c-brand-rgb),0.30);overflow:hidden;">
+              <template x-for="n in rejectNotices" :key="'rn' + n.id">
+                <div style="padding:14px 16px;border-bottom:1px solid var(--border);">
+                  <div style="display:flex;align-items:center;gap:12px;">
+                    <div style="width:38px;height:38px;border-radius:19px;background:rgba(var(--c-brand-rgb),0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.6" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                      <div style="font-size:14px;font-weight:600;color:var(--text);" x-text="(n.from_name || 'Tu contacto') + ' aceptó tu rechazo'"></div>
+                      <div style="font-size:12px;color:var(--muted);margin-top:2px;" x-text="(n.description || 'Gasto compartido') + ' · ya no le debes $' + Number(n.amount).toFixed(2)"></div>
+                    </div>
+                  </div>
+                  <div x-show="n.reject_reply" style="margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--surface2);font-size:13px;line-height:1.45;color:var(--text);overflow-wrap:anywhere;" x-text="'«' + (n.reject_reply || '') + '»'"></div>
+                  <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+                    <button @click="dismissRejectNotice(n)" style="padding:9px 16px;border-radius:10px;background:var(--surface);color:var(--text);font-size:13px;font-weight:600;border:1px solid var(--border2);">Entendido</button>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+          <template x-if="deboSolicitudes.length === 0 && deboDeudas.length === 0 && deboPaidWaiting.length === 0 && incomeSplitDebts.length === 0 && rejectNotices.length === 0">
             <div class="empty-state">
               <div class="empty-icon" style="background:radial-gradient(circle at 35% 35%, rgba(var(--c-income-rgb),0.15), rgba(var(--c-brand-rgb),0.08) 60%, transparent 80%);border:1px solid rgba(var(--c-income-rgb),0.3);box-shadow:0 0 48px rgba(var(--c-income-rgb),0.10);">
                 <svg viewBox="0 0 24 24" fill="none" style="stroke:var(--c-income)" stroke-width="1.6" width="48" height="48"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -4902,6 +4960,12 @@ setTimeout(function() {
                             <div style="flex:1;min-width:0;">
                               <div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="g.items[0].description || 'Gasto compartido'"></div>
                               <div style="font-size:11px;color:var(--muted);margin-top:2px;" x-text="g.from_name + (g.items[0].expense_date ? ' · ' + g.items[0].expense_date : '')"></div>
+                              <template x-if="_rejState(g.items[0]) === 'open'">
+                                <div style="margin-top:4px;display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(var(--c-expense-rgb),0.12);color:var(--danger);letter-spacing:0.4px;">RECHAZASTE · ESPERANDO</div>
+                              </template>
+                              <template x-if="_rejState(g.items[0]) === 'denied'">
+                                <div style="margin-top:4px;display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(var(--c-warning-rgb),0.15);color:var(--warning);letter-spacing:0.4px;">RESPONDIÓ</div>
+                              </template>
                             </div>
                             <div style="display:flex;align-items:center;gap:8px;">
                               <div class="mono" style="font-size:16px;font-weight:700;color:var(--text);" x-text="'$' + fmtMoney(g.total)"></div>
@@ -4928,9 +4992,11 @@ setTimeout(function() {
                                 <div @click="activeDebo = pr; activeDeboType = 'solicitud'; deboDetailOpen = true" style="flex:1;min-width:0;cursor:pointer;">
                                   <div style="font-size:13px;font-weight:600;color:var(--text);" x-text="pr.description || 'Gasto compartido'"></div>
                                   <div style="font-size:10px;color:var(--muted);margin-top:1px;" x-text="pr.expense_date || ''"></div>
+                                  <div x-show="_rejState(pr) === 'open'" style="margin-top:3px;font-size:10px;font-weight:700;color:var(--danger);letter-spacing:0.4px;">RECHAZASTE · ESPERANDO</div>
+                                  <div x-show="_rejState(pr) === 'denied'" style="margin-top:3px;font-size:10px;font-weight:700;color:var(--warning);letter-spacing:0.4px;">RESPONDIÓ</div>
                                 </div>
                                 <div class="mono" style="font-size:14px;font-weight:700;color:var(--text);flex-shrink:0;" x-text="'$' + fmtMoney(Number(pr.amount))"></div>
-                                <button class="btn-accept" @click.stop="acceptPrModal = pr" style="padding:6px 10px;font-size:11px;flex-shrink:0;">Aceptar</button>
+                                <button x-show="_rejState(pr) !== 'open'" class="btn-accept" @click.stop="acceptPrModal = pr" style="padding:6px 10px;font-size:11px;flex-shrink:0;">Aceptar</button>
                               </div>
                             </template>
                           </div>
@@ -8780,17 +8846,17 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
                 </div>
               </div>
 
-              <!-- El receptor pidio revision de este cobro -> el emisor puede cancelarlo -->
-              <template x-if="_isReviewRequested(activeCobro)">
+              <!-- La otra persona rechazo este cobro -> el emisor acepta el rechazo o no -->
+              <template x-if="_isReviewRequested(activeCobro, activeCobro._person)">
                 <div style="margin-bottom:12px;">
-                  <div style="padding:12px 14px;border-radius:12px;background:rgba(var(--c-warning-rgb),0.12);border:1px solid rgba(var(--c-warning-rgb),0.35);margin-bottom:8px;">
-                    <div style="font-size:13px;font-weight:700;color:var(--warning);">🔎 Revision pedida</div>
-                    <div style="font-size:12px;color:var(--muted);margin-top:3px;line-height:1.4;">La otra persona pidio revisar este cobro. Si lo cancelas, el gasto vuelve a ser 100% tuyo y desaparece de la deuda de ambos.</div>
+                  <div style="padding:12px 14px;border-radius:12px;background:rgba(var(--c-expense-rgb),0.08);border:1px solid rgba(var(--c-expense-rgb),0.30);margin-bottom:8px;">
+                    <div style="font-size:13px;font-weight:700;color:var(--danger);" x-text="activeCobro._person + ' rechazó este cobro'"></div>
+                    <div style="font-size:13px;color:var(--text);margin-top:4px;line-height:1.45;overflow-wrap:anywhere;" x-text="(_prForPersona(activeCobro, activeCobro._person) || {}).reject_comment ? '«' + _prForPersona(activeCobro, activeCobro._person).reject_comment + '»' : 'No dejó comentario.'"></div>
                   </div>
-                  <button @click="cancelCobro((_cobroForSplit(activeCobro)||{}).id)" style="width:100%;height:50px;border-radius:25px;background:rgba(var(--c-expense-rgb),0.12);border:1px solid rgba(var(--c-expense-rgb),0.35);color:var(--danger);font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2.4" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                    Cancelar cobro
-                  </button>
+                  <div style="display:flex;gap:8px;">
+                    <button @click="openRejectSheet('deny', _prForPersona(activeCobro, activeCobro._person))" style="flex:1;height:48px;border-radius:24px;background:var(--surface);border:1px solid var(--border2);color:var(--text);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">No aceptar</button>
+                    <button @click="openRejectSheet('accept', _prForPersona(activeCobro, activeCobro._person))" style="flex:1;height:48px;border-radius:24px;background:var(--cyan);border:none;color:var(--c-brand-contrast);font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Aceptar rechazo</button>
+                  </div>
                 </div>
               </template>
 
@@ -8866,6 +8932,58 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
         </div>
       </template>
 
+      <!-- ══ RECHAZAR COBRO / RESPONDER AL RECHAZO ══ -->
+      <template x-if="rejectSheet">
+        <div>
+          <div class="sheet-backdrop" @click="rejectSheet = null"></div>
+          <div class="sheet" style="max-height:86%;">
+            <div class="sheet-grabber"></div>
+            <div style="padding:12px 22px 24px;">
+              <div style="font-family:var(--font-display);font-size:22px;font-weight:800;letter-spacing:-0.4px;color:var(--text);"
+                   x-text="rejectSheet.mode === 'reject' ? 'Rechazar cobro' : rejectSheet.mode === 'deny' ? 'No aceptar el rechazo' : 'Aceptar el rechazo'"></div>
+              <div style="font-size:13px;color:var(--muted);margin-top:4px;margin-bottom:16px;"
+                   x-text="(rejectSheet.pr.from_name || rejectSheet.pr.to_name || 'Contacto') + ' · ' + (rejectSheet.pr.description || 'Gasto compartido') + ' · $' + Number(rejectSheet.pr.amount).toFixed(2)"></div>
+
+              <template x-if="rejectSheet.mode !== 'reject' && rejectSheet.pr.reject_comment">
+                <div style="padding:10px 12px;border-radius:10px;background:var(--surface2);font-size:13px;line-height:1.45;color:var(--text);margin-bottom:16px;overflow-wrap:anywhere;">
+                  <span style="font-weight:700;" x-text="(rejectSheet.pr.to_name || 'Contacto') + ':'"></span>
+                  <span x-text="'«' + rejectSheet.pr.reject_comment + '»'"></span>
+                </div>
+              </template>
+
+              <template x-if="rejectSheet.mode === 'accept'">
+                <div style="padding:12px 14px;border-radius:12px;background:rgba(var(--c-brand-rgb),0.08);border:1px solid rgba(var(--c-brand-rgb),0.25);margin-bottom:16px;">
+                  <div style="font-size:13px;font-weight:700;color:var(--cyan);">Qué pasa si lo aceptas</div>
+                  <div style="font-size:13px;color:var(--text);margin-top:4px;line-height:1.45;"
+                       x-text="_rejectAcceptInfo(rejectSheet.pr)
+                         ? 'El cobro se anula para los dos. Esos $' + Number(rejectSheet.pr.amount).toFixed(2) + ' vuelven a tu gasto: tu parte de «' + _rejectAcceptInfo(rejectSheet.pr).desc + '» pasa de $' + _rejectAcceptInfo(rejectSheet.pr).mine.toFixed(2) + ' a $' + _rejectAcceptInfo(rejectSheet.pr).after.toFixed(2) + '.'
+                         : 'El cobro se anula para los dos y ' + (rejectSheet.pr.to_name || 'esa persona') + ' ya no te debe esos $' + Number(rejectSheet.pr.amount).toFixed(2) + '.'"></div>
+                  <div x-show="(_rejectAcceptInfo(rejectSheet.pr) || {}).others" style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45;">Las demás personas con las que dividiste el gasto siguen igual.</div>
+                  <div x-show="rejectSheet.pr.receiver_expense_id" style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45;" x-text="'También se borra el gasto que ' + (rejectSheet.pr.to_name || 'esa persona') + ' había registrado por este cobro.'"></div>
+                </div>
+              </template>
+
+              <label for="rej-text" class="field-box-label" style="display:block;"
+                     x-text="rejectSheet.mode === 'reject' ? '¿POR QUÉ? (OPCIONAL)' : rejectSheet.mode === 'deny' ? 'TU RESPUESTA (OPCIONAL)' : 'COMENTARIO PARA ' + (rejectSheet.pr.to_name || 'TU CONTACTO').toUpperCase() + ' (OPCIONAL)'"></label>
+              <div class="field-box-inner">
+                <textarea id="rej-text" x-model="rejectSheet.text" maxlength="280" rows="3"
+                          :placeholder="rejectSheet.mode === 'reject' ? 'Ej.: Yo no estuve en esa cena.' : rejectSheet.mode === 'deny' ? 'Ej.: Sí fuiste, tengo el recibo.' : 'Ej.: Tienes razón, fue un error.'"></textarea>
+              </div>
+              <div style="display:flex;justify-content:space-between;gap:12px;margin-top:6px;margin-bottom:20px;">
+                <div style="font-size:12px;color:var(--muted);line-height:1.45;"
+                     x-text="rejectSheet.mode === 'reject' ? (rejectSheet.pr.from_name || 'Tu contacto') + ' verá tu comentario y decidirá si acepta el rechazo.' : rejectSheet.mode === 'deny' ? 'El cobro le vuelve a ' + (rejectSheet.pr.to_name || 'tu contacto') + ' con tu respuesta, para que lo acepte o lo rechace otra vez.' : (rejectSheet.pr.to_name || 'Tu contacto') + ' verá un aviso con tu comentario.'"></div>
+                <div style="font-size:11px;color:var(--dim);flex-shrink:0;" x-text="(rejectSheet.text || '').length + '/280'"></div>
+              </div>
+
+              <button @click="submitRejectSheet()" :disabled="rejectSheet.busy"
+                      :style="'width:100%;height:50px;border-radius:25px;border:none;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--c-brand-contrast);opacity:' + (rejectSheet.busy ? '0.5' : '1') + ';background:' + (rejectSheet.mode === 'reject' ? 'var(--danger)' : 'var(--cyan)') + ';'"
+                      x-text="rejectSheet.busy ? 'Enviando…' : rejectSheet.mode === 'reject' ? 'Enviar rechazo' : rejectSheet.mode === 'deny' ? 'Enviar respuesta' : 'Aceptar rechazo'"></button>
+              <button @click="rejectSheet = null" style="margin-top:10px;width:100%;height:44px;border-radius:22px;background:transparent;border:none;color:var(--muted);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">Volver</button>
+            </div>
+          </div>
+        </div>
+      </template>
+
       <!-- ══ DEBO DETAIL SHEET ══ -->
       <template x-if="deboDetailOpen && activeDebo">
         <div>
@@ -8889,7 +9007,7 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
                   <div style="font-size:10px;color:var(--muted);letter-spacing:1.2px;font-weight:700;margin-bottom:4px;">MONTO</div>
                   <div :style="'font-size:28px;font-weight:800;letter-spacing:-0.8px;font-variant-numeric:tabular-nums;' + (activeDeboType === 'paid' ? 'color:var(--muted);text-decoration:line-through;' : 'color:var(--text);')" x-text="'$' + Number(activeDeboType === 'income-split' ? activeDebo._amount : activeDebo.amount).toFixed(2)"></div>
                 </div>
-                <div :style="'font-size:11px;font-weight:700;padding:6px 10px;border-radius:6px;letter-spacing:0.6px;' + (activeDeboType === 'paid' ? 'background:rgba(var(--c-income-rgb),0.15);color:var(--success);' : activeDeboType === 'solicitud' ? 'background:rgba(var(--c-brand-rgb),0.15);color:var(--cyan);' : 'background:rgba(var(--c-warning-rgb),0.15);color:var(--warning);')" x-text="activeDeboType === 'paid' ? 'PAGADO' : activeDeboType === 'solicitud' ? 'SOLICITUD' : 'PENDIENTE'"></div>
+                <div :style="'font-size:11px;font-weight:700;padding:6px 10px;border-radius:6px;letter-spacing:0.6px;' + (activeDeboType === 'paid' ? 'background:rgba(var(--c-income-rgb),0.15);color:var(--success);' : _rejState(activeDebo) === 'open' ? 'background:rgba(var(--c-expense-rgb),0.12);color:var(--danger);' : _rejState(activeDebo) === 'denied' ? 'background:rgba(var(--c-warning-rgb),0.15);color:var(--warning);' : activeDeboType === 'solicitud' ? 'background:rgba(var(--c-brand-rgb),0.15);color:var(--cyan);' : 'background:rgba(var(--c-warning-rgb),0.15);color:var(--warning);')" x-text="activeDeboType === 'paid' ? 'PAGADO' : _rejState(activeDebo) === 'open' ? 'RECHAZASTE' : _rejState(activeDebo) === 'denied' ? 'RESPONDIÓ' : activeDeboType === 'solicitud' ? 'SOLICITUD' : 'PENDIENTE'"></div>
               </div>
 
               <!-- Detalle -->
@@ -8914,6 +9032,22 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
                 </template>
               </div>
 
+              <!-- Rechazo en curso: lo que escribiste y, si hubo, la respuesta del emisor -->
+              <template x-if="(activeDeboType === 'solicitud' || activeDeboType === 'deuda') && _rejState(activeDebo) === 'open'">
+                <div style="padding:12px 14px;border-radius:12px;background:rgba(var(--c-expense-rgb),0.08);border:1px solid rgba(var(--c-expense-rgb),0.30);margin-bottom:14px;">
+                  <div style="font-size:13px;font-weight:700;color:var(--danger);">Rechazaste este cobro</div>
+                  <div x-show="activeDebo.reject_comment" style="font-size:13px;color:var(--text);margin-top:4px;line-height:1.45;overflow-wrap:anywhere;" x-text="'«' + (activeDebo.reject_comment || '') + '»'"></div>
+                  <div style="font-size:12px;color:var(--muted);margin-top:4px;" x-text="'Esperando la respuesta de ' + (activeDebo.from_name || 'tu contacto') + '.'"></div>
+                </div>
+              </template>
+              <template x-if="(activeDeboType === 'solicitud' || activeDeboType === 'deuda') && _rejState(activeDebo) === 'denied'">
+                <div style="padding:12px 14px;border-radius:12px;background:rgba(var(--c-warning-rgb),0.10);border:1px solid rgba(var(--c-warning-rgb),0.35);margin-bottom:14px;">
+                  <div style="font-size:13px;font-weight:700;color:var(--text);" x-text="(activeDebo.from_name || 'Tu contacto') + ' no aceptó tu rechazo'"></div>
+                  <div style="font-size:13px;color:var(--text);margin-top:4px;line-height:1.45;overflow-wrap:anywhere;" x-text="activeDebo.reject_reply ? '«' + activeDebo.reject_reply + '»' : 'No dejó comentario.'"></div>
+                  <div x-show="activeDebo.reject_comment" style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.45;overflow-wrap:anywhere;" x-text="'Tú habías escrito: «' + (activeDebo.reject_comment || '') + '»'"></div>
+                </div>
+              </template>
+
               <!-- Acciones segun tipo -->
               <template x-if="activeDeboType === 'solicitud'">
                 <div style="display:flex;flex-direction:column;gap:8px;">
@@ -8921,20 +9055,23 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
                     <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
                     Aceptar cobro
                   </button>
-                  <button @click="declinePaymentRequest(activeDebo.id); deboDetailOpen = false" style="width:100%;height:46px;border-radius:23px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">Ignorar</button>
-                  <button x-show="!activeDebo.review_requested" @click="requestReview(activeDebo.id); deboDetailOpen = false" style="width:100%;height:46px;border-radius:23px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    Pedir revision al emisor
-                  </button>
-                  <div x-show="activeDebo.review_requested" style="width:100%;padding:12px;border-radius:12px;background:rgba(var(--c-brand-rgb),0.08);border:1px solid rgba(var(--c-brand-rgb),0.25);text-align:center;font-size:13px;color:var(--cyan);font-weight:600;">🔎 Revision solicitada — esperando al emisor</div>
+                  <template x-if="_rejState(activeDebo) !== 'open'">
+                    <button @click="openRejectSheet('reject', activeDebo)" style="width:100%;height:48px;border-radius:24px;background:transparent;border:1px solid rgba(var(--c-expense-rgb),0.35);color:var(--danger);font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2.4" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      <span x-text="_rejState(activeDebo) === 'denied' ? 'Rechazar otra vez' : 'Rechazar'"></span>
+                    </button>
+                  </template>
                 </div>
               </template>
               <template x-if="activeDeboType === 'deuda'">
                 <div style="display:flex;flex-direction:column;gap:8px;">
-                  <button @click="claimPayment(activeDebo.id); deboDetailOpen = false" style="width:100%;height:50px;border-radius:25px;background:rgba(var(--c-income-rgb),0.12);border:1px solid rgba(var(--c-income-rgb),0.3);color:var(--success);font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.4" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
-                    Ya pague
-                  </button>
+                  <!-- Con un rechazo abierto no se paga: primero se resuelve (si no, el rechazo queda colgado en 'paid') -->
+                  <template x-if="_rejState(activeDebo) !== 'open'">
+                    <button @click="claimPayment(activeDebo.id); deboDetailOpen = false" style="width:100%;height:50px;border-radius:25px;background:rgba(var(--c-income-rgb),0.12);border:1px solid rgba(var(--c-income-rgb),0.3);color:var(--success);font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.4" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+                      Ya pague
+                    </button>
+                  </template>
                   <!-- Aceptaste sin registrar: puedes registrarlo como gasto ahora (pedido Alvaro) -->
                   <button x-show="!activeDebo.receiver_expense_id" @click="registerAcceptedDebt(activeDebo)" style="width:100%;height:46px;border-radius:23px;background:rgba(var(--c-brand-rgb),0.08);border:1px solid rgba(var(--c-brand-rgb),0.25);color:var(--cyan);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -8945,12 +9082,12 @@ Pídeme que te anote algo («anota 5 de almuerzo»), pregúntame por tus gastos 
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     Editar registro
                   </button>
-                  <!-- Pedir revision al emisor (si crees que el cobro esta mal, el emisor puede cancelarlo) -->
-                  <button x-show="!activeDebo.review_requested" @click="requestReview(activeDebo.id); deboDetailOpen = false" style="width:100%;height:46px;border-radius:23px;background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    Pedir revision al emisor
-                  </button>
-                  <div x-show="activeDebo.review_requested" style="width:100%;padding:12px;border-radius:12px;background:rgba(var(--c-brand-rgb),0.08);border:1px solid rgba(var(--c-brand-rgb),0.25);text-align:center;font-size:13px;color:var(--cyan);font-weight:600;">🔎 Revision solicitada — esperando al emisor</div>
+                  <template x-if="_rejState(activeDebo) !== 'open'">
+                    <button @click="openRejectSheet('reject', activeDebo)" style="width:100%;height:48px;border-radius:24px;background:transparent;border:1px solid rgba(var(--c-expense-rgb),0.35);color:var(--danger);font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2.4" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      <span x-text="_rejState(activeDebo) === 'denied' ? 'Rechazar otra vez' : 'Rechazar'"></span>
+                    </button>
+                  </template>
                 </div>
               </template>
               <template x-if="activeDeboType === 'paid'">
@@ -10074,7 +10211,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v202',
+    APP_VERSION: 'v203',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     // ─── ZEPI (companion IA, Max) ───
     zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
@@ -10296,10 +10433,12 @@ function zepoApp() {
     friendBadge: 0,
     payReqs: [],
     payReqsSent: [],
+    rejectNotices: [],
     sendPrOpen: false,
     sendPrTo: null,
     prForm: { amount: '', description: '', category: 'food', date: '' },
     acceptPrModal: null,
+    rejectSheet: null,
     acceptAllModal: null,
     acceptPrAddExpense: true,
 
@@ -10594,6 +10733,7 @@ function zepoApp() {
           else if (this.photoPickOpen) { this.photoPickOpen = false; }
           else if (this.catDropdownOpen) { this.catDropdownOpen = false; }
           else if (this.showDeleteModal) { this.showDeleteModal = false; this.deleteConfirmText = ''; }
+          else if (this.rejectSheet) { this.rejectSheet = null; }
           else if (this.acceptPrModal) { this.acceptPrModal = null; }
           else if (this.acceptAllModal) { this.acceptAllModal = null; }
           else if (this.aliasModalOpen) { this.aliasModalOpen = false; }
@@ -10643,7 +10783,7 @@ function zepoApp() {
       // ⚠️ Toda pantalla nueva con scrim va AQUI y en la cadena de popstate de arriba, o el
       // gesto atras sale de la app (paso con 'recapOpen'/'goalsOpen', 26-jul).
       // Candado: tools/qa-back-gesture.py falla si un flag *Open no esta en ambas listas.
-      ['sheetOpen','patSheetOpen','photoPickOpen','zepiOpen','zepiVoiceOpen','jrnOpen','recapOpen','goalsOpen','catManagerOpen','pmManagerOpen','recurringManagerOpen','importsManagerOpen','spaceSwitcherOpen','spaceManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen','acceptPrModal','acceptAllModal','aliasModalOpen','showDeleteModal','importOpen','batchEditPromptExp'].forEach(k => {
+      ['sheetOpen','patSheetOpen','photoPickOpen','zepiOpen','zepiVoiceOpen','jrnOpen','recapOpen','goalsOpen','catManagerOpen','pmManagerOpen','recurringManagerOpen','importsManagerOpen','spaceSwitcherOpen','spaceManagerOpen','budgetSheetOpen','exportSheetOpen','deboDetailOpen','sendPrOpen','catDrillOpen','cobroDetailOpen','bugReportOpen','rejectSheet','acceptPrModal','acceptAllModal','aliasModalOpen','showDeleteModal','importOpen','batchEditPromptExp'].forEach(k => {
         this.$watch(k, v => { if (v) pushBack(); });
       });
       // zvDraft va aparte: el watcher es PROFUNDO y con él en la lista de arriba cada tecleo
@@ -15456,9 +15596,10 @@ function zepoApp() {
       const c = this._sentCobroByOrigin[exp && exp.id];
       return !!c && c.status === 'pending';
     },
-    // El receptor pidio revision de este cobro (el emisor puede cancelarlo).
-    _isReviewRequested(exp) {
-      const c = this._sentCobroByOrigin[exp && exp.id];
+    // El cobro de esta persona para este gasto tiene un rechazo abierto. Con varias personas
+    // en el split mira el cobro de ESA persona (el "mejor por gasto" podía ser de otra).
+    _isReviewRequested(exp, personaName) {
+      const c = personaName ? this._prForPersona(exp, personaName) : this._sentCobroByOrigin[exp && exp.id];
       return !!c && c.review_requested === true;
     },
 
@@ -15575,6 +15716,10 @@ function zepoApp() {
     },
     get meDebenPaidClaims() {
       return this.payReqsSent.filter(p => p.status === 'paid');
+    },
+    // Cobros que envié y la otra persona rechazó: me toca aceptar o no el rechazo.
+    get rejectedSent() {
+      return this.payReqsSent.filter(p => p.review_requested === true && (p.status === 'pending' || p.status === 'accepted'));
     },
 
     get knownPersonas() {
@@ -18949,14 +19094,20 @@ function zepoApp() {
     async loadPaymentRequests() {
       if (!this.user) return;
       const uid = this.user.id;
+      const REJ = ',review_requested,reject_comment,reject_reply,rejection_denied_at';
       const { data: received } = await sb.from('payment_requests')
-        .select('id,from_user_id,amount,description,category,expense_date,status,created_at,receiver_expense_id,review_requested')
+        .select('id,from_user_id,amount,description,category,expense_date,status,created_at,receiver_expense_id' + REJ)
         .eq('to_user_id', uid).in('status', ['pending','accepted','paid']).order('created_at', { ascending: false });
       const { data: sent } = await sb.from('payment_requests')
-        .select('id,to_user_id,amount,description,category,expense_date,status,created_at,origin_expense_id,receiver_expense_id,review_requested')
+        .select('id,to_user_id,amount,description,category,expense_date,status,created_at,origin_expense_id,receiver_expense_id' + REJ)
         .eq('from_user_id', uid).in('status', ['pending','accepted','paid']).order('created_at', { ascending: false });
+      // Rechazos que el emisor aceptó y el receptor todavía no vio.
+      const { data: notices } = await sb.from('payment_requests')
+        .select('id,from_user_id,amount,description,reject_reply,rejection_accepted_at')
+        .eq('to_user_id', uid).eq('status', 'cancelled').eq('rejection_notice_seen', false)
+        .not('rejection_accepted_at', 'is', null).order('rejection_accepted_at', { ascending: false });
 
-      const fromIds = [...new Set((received || []).map(p => p.from_user_id))];
+      const fromIds = [...new Set([...(received || []), ...(notices || [])].map(p => p.from_user_id))];
       const toIds   = [...new Set((sent     || []).map(p => p.to_user_id))];
       const allIds  = [...new Set([...fromIds, ...toIds])];
       let namesMap = {};
@@ -18968,6 +19119,7 @@ function zepoApp() {
       }
       this.payReqs     = (received || []).map(p => ({ ...p, from_name: namesMap[p.from_user_id] || '?' }));
       this.payReqsSent = (sent     || []).map(p => ({ ...p, to_name:   namesMap[p.to_user_id]   || '?' }));
+      this.rejectNotices = (notices || []).map(p => ({ ...p, from_name: namesMap[p.from_user_id] || '?' }));
       // dataVer: payReqs alimenta 4 memos de Cuentas (solicitudes/deudas/pagados)
       this.dataVer++;
     },
@@ -19022,6 +19174,12 @@ function zepoApp() {
     async _doAcceptPr(pr, addExpense, opts) {
       opts = opts || {};
       if (!pr) return false;
+      // Aceptar retira el rechazo que hubiera (el receptor cambió de opinión). Va por RPC:
+      // la app solo puede escribir status y receiver_expense_id en esta tabla.
+      if (pr.review_requested || pr.rejection_denied_at) {
+        const { error: we } = await sb.rpc('withdraw_cobro_rejection', { p_cobro_id: pr.id });
+        if (we) { if (!opts.silent) this.showToast('Error al aceptar'); return false; }
+      }
       const { error } = await sb.from('payment_requests').update({ status: 'accepted' }).eq('id', pr.id);
       if (error) { if (!opts.silent) this.showToast('Error al aceptar'); return false; }
       if (addExpense) {
@@ -19033,7 +19191,7 @@ function zepoApp() {
         if (!opts.deferReload) await this.loadExpenses();
       }
       const found = this.payReqs.find(p => p.id === pr.id);
-      if (found) found.status = 'accepted';
+      if (found) Object.assign(found, { status: 'accepted', review_requested: false, rejection_denied_at: null });
       this.jrnMark('pr_accept');
       return true;
     },
@@ -19063,8 +19221,12 @@ function zepoApp() {
     },
 
     // Aceptar TODAS las solicitudes de una persona → abre modal de confirmación.
+    // No incluye las que rechazaste y siguen esperando respuesta: esas se aceptan una por una.
     acceptAllFromPerson(group) {
-      this.acceptAllModal = { from_name: group.from_name, items: group.items.slice(), total: group.total };
+      const items = group.items.filter(p => p.review_requested !== true);
+      if (!items.length) { this.showToast('Rechazaste todas: espera la respuesta de ' + group.from_name); return; }
+      const total = items.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+      this.acceptAllModal = { from_name: group.from_name, items, total };
     },
 
     async confirmAcceptAll(addExpense) {
@@ -19081,34 +19243,60 @@ function zepoApp() {
       this.loadFriends();
     },
 
-    async declinePaymentRequest(pr_id) {
-      await sb.from('payment_requests').update({ status: 'declined' }).eq('id', pr_id);
-      this.payReqs = this.payReqs.filter(p => p.id !== pr_id);
-      this.dataVer++;
-      this.showToast('Solicitud ignorada');
-    },
-
-    // El RECEPTOR pide revision de un cobro (pendiente o aceptado) que le hicieron.
-    async requestReview(pr_id) {
-      const { data, error } = await sb.rpc('request_cobro_review', { p_cobro_id: pr_id });
-      if (error || data === false) { this.showToast('No se pudo pedir revision'); return; }
-      const found = this.payReqs.find(p => p.id === pr_id);
-      if (found) found.review_requested = true;
-      this.dataVer++;
-      this.showToast('🔎 Revision solicitada al emisor');
-    },
-
-    // El EMISOR cancela un cobro tras la revision: se anula, se borra el gasto espejo del receptor
-    // y el gasto origen vuelve a ser 100% tuyo (deja de estar dividido).
-    async cancelCobro(pr_id) {
-      if (!pr_id) return;
-      if (!confirm('Cancelar este cobro? El gasto vuelve a ser 100% tuyo y desaparece de la deuda de ambos.')) return;
-      const { data, error } = await sb.rpc('cancel_split_cobro', { p_cobro_id: pr_id });
-      if (error || data === false) { this.showToast('No se pudo cancelar el cobro'); return; }
+    // Rechazar un cobro (receptor) y responder al rechazo (emisor). Los tres pasan por la
+    // misma hoja: mode = 'reject' | 'deny' | 'accept'. Cada RPC autoriza por usuario y estado.
+    openRejectSheet(mode, pr) {
+      if (!pr || !pr.id) return;
+      this.deboDetailOpen = false;
       this.cobroDetailOpen = false;
-      await Promise.all([this.loadExpenses(), this.loadSplits(), this.loadPaymentRequests(), this._maybeReloadHistory()]);
+      this.rejectSheet = { mode, pr, text: '', busy: false };
+    },
+
+    // Lo que le pasa al gasto del emisor si acepta el rechazo (se muestra antes de confirmar).
+    _rejectAcceptInfo(pr) {
+      const exp = pr && pr.origin_expense_id && (this.pendingSplits || []).find(e => e.id === pr.origin_expense_id);
+      if (!exp) return null;
+      const r2 = n => Math.round(n * 100) / 100;
+      const mine = r2(Number(exp.amount) || 0);
+      const names = (exp.split_persona || '').split(',').map(s => s.trim()).filter(Boolean);
+      return { desc: exp.description || 'Gasto compartido', mine, after: r2(mine + (Number(pr.amount) || 0)), others: names.length > 1 };
+    },
+
+    async submitRejectSheet() {
+      const s = this.rejectSheet;
+      if (!s || s.busy) return;
+      s.busy = true;
+      const rpc = { reject: 'reject_cobro', deny: 'deny_cobro_rejection', accept: 'accept_cobro_rejection' }[s.mode];
+      const { data, error } = await sb.rpc(rpc, { p_cobro_id: s.pr.id, p_comment: (s.text || '').trim() || null });
+      if (error || data !== true) {
+        s.busy = false;
+        this.showToast('No se pudo enviar. Revisa tu conexión e intenta de nuevo.');
+        return;
+      }
+      this.rejectSheet = null;
+      const reloads = [this.loadPaymentRequests()];
+      if (s.mode === 'accept') reloads.push(this.loadExpenses(), this.loadSplits(), this._maybeReloadHistory());
+      await Promise.all(reloads);
       this.dataVer++;
-      this.showToast('✅ Cobro cancelado — el gasto vuelve a ser 100% tuyo');
+      const who = s.pr.from_name || s.pr.to_name || 'la otra persona';
+      this.showToast(s.mode === 'reject' ? 'Rechazo enviado a ' + who
+        : s.mode === 'deny' ? 'Respuesta enviada a ' + who
+        : 'Rechazo aceptado: el cobro se anuló');
+    },
+
+    async dismissRejectNotice(n) {
+      this.rejectNotices = this.rejectNotices.filter(x => x.id !== n.id);
+      this.dataVer++;
+      const { error } = await sb.rpc('dismiss_rejection_notice', { p_cobro_id: n.id });
+      if (error) console.warn('[rechazo] aviso:', error.message);
+    },
+
+    // Estado del rechazo de un cobro, visto desde cualquiera de los dos lados.
+    _rejState(pr) {
+      if (!pr) return null;
+      if (pr.review_requested === true) return 'open';
+      if (pr.rejection_denied_at) return 'denied';
+      return null;
     },
 
     async claimPayment(pr_id) {

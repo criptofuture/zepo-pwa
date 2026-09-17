@@ -2,7 +2,7 @@ name: Deploy — PWA + Supabase Functions
 
 on:
   push:
-    branches: [master, main, dev, patrimonio]
+    branches: [master, main, dev, patrimonio, rechazar-cobro]
     paths:
       - 'index.html'
       - 'manifest.json'
