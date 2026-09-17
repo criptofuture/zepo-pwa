@@ -1,0 +1,53 @@
+# Elementos con x-show + display en su style estatico que YA existian el 16-sep-2026
+# (index.html de zepo-pwa f042a5a). lint-design.py solo avisa por estos; uno nuevo bloquea.
+# Al arreglar uno, borra su linea: la lista solo se achica. Nunca se regenera: eso dejaria pasar los nuevos.
+# Columnas (TAB): linea de referencia · etiqueta · display · expresion de x-show.
+# La linea es solo para ubicarlo ese dia; se compara por las otras tres columnas.
+3566	div	flex	tab === 'onb-welcome'
+3597	div	flex	tab === 'onb-currency'
+3636	div	flex	tab === 'onb-plan'
+3725	div	flex	tab === 'onb-first'
+3781	div	flex	tab === 'onb-budget'
+3842	div	flex	tab === 'onb-method'
+4312	div	flex	patHasCrypto
+4685	button	flex	cuentasTab === 'amigos'
+4705	span	inline-flex	friendBadge > 0
+4713	div	flex	_reconcileWarnings.length > 0
+5152	span	inline-flex	friendBadge > 0
+5820	div	flex	trialActive
+6045	div	flex	notifBudget
+6061	div	flex	notifWeekly
+6504	div	flex	tab === 'pay-success'
+6529	div	flex	tab === 'pay-failed'
+6822	img	block	recapImg
+7344	div	flex	showHiddenFees
+7400	div	flex	gridAddingCat
+7425	div	flex	parsedHasExpense
+7429	div	flex	parsedHasIncome
+7433	div	flex	parsedIsMixed
+7437	div	flex	parsedItems.length > 5
+7480	div	flex	c.key === form.category
+7494	div	flex	form.amount && parseFloat(form.amount) > 0
+7499	div	flex	!form.amount || parseFloat(form.amount) <= 0
+7558	div	flex	c.key === form.category
+7737	div	flex	tabShowDiscards
+7756	div	flex	importWarn && !editingExpense
+7771	div	flex	showHiddenFees
+7814	div	flex	parsedHasExpense
+7818	div	flex	parsedHasIncome
+7822	div	flex	parsedIsMixed
+7885	div	flex	gridAddingCat
+7956	div	flex	recurringOn
+8191	div	flex	voiceRecording
+8430	button	flex	_hiddenBuiltins.size > 0
+8575	div	flex	!importsLoading && !importsError && importsList.length > 0
+8752	button	flex	!s.is_default
+9076	button	flex	!activeDebo.receiver_expense_id
+9081	button	flex	activeDebo.receiver_expense_id && expenses.some(e => e.id === activeDebo.receiver_expense_id)
+9106	button	flex	expenses.some(e => e.id === activeDebo.id)
+9175	div	flex	hasPlan('pro') && !hasPlan('elite')
+9205	div	flex	catPickerItem
+9229	button	flex	!catPickerAdding
+9232	div	flex	catPickerAdding
+9250	div	flex	aliasModalOpen
+9572	button	flex	importStep > 1
