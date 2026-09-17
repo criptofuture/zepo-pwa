@@ -33,6 +33,7 @@ CHECKS = [
     ("Keys x-for por-persona (lint)",  ["python", os.path.join(TOOLS, "qa-keys-lint.py")]),
     ("Claves sin rutas fijas (lint)",  ["python", os.path.join(TOOLS, "qa-rutas-lint.py")]),
     ("Candado x-show + display (lint-design)", ["python", os.path.join(TOOLS, "qa-lint-xshow.py")]),
+    ("Botones de pago no quedan bajo la barra", ["python", os.path.join(TOOLS, "qa-botones-sobre-barra.py")]),
     ("Layout teclado/split (5 perfiles)", ["python", os.path.join(TOOLS, "qa-keyboard.py")]),
     ("E2E CRUD gasto (alta/editar/borrar)", ["python", os.path.join(TOOLS, "qa-e2e-crud.py")]),
     ("E2E editar cobro + agregar persona", ["python", os.path.join(TOOLS, "qa-e2e-edit-split.py")]),

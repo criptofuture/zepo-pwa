@@ -6502,7 +6502,7 @@ setTimeout(function() {
       </div>
 
       <!-- ══ PAYMENT SUCCESS ══ -->
-      <div x-show="tab === 'pay-success'" x-cloak class="flex-show" style="flex:1;flex-direction:column;align-items:center;padding:60px 28px 32px;text-align:center;background:radial-gradient(circle at 50% 25%, rgba(var(--c-income-rgb),0.18) 0%, transparent 55%);">
+      <div x-show="tab === 'pay-success'" x-cloak class="flex-show" style="flex:1;flex-direction:column;align-items:center;padding:60px 28px 32px;text-align:center;padding-bottom:var(--content-pad-bottom);background:radial-gradient(circle at 50% 25%, rgba(var(--c-income-rgb),0.18) 0%, transparent 55%);">
         <div style="width:108px;height:108px;border-radius:28px;background:linear-gradient(135deg, rgba(var(--c-income-rgb),0.22), rgba(var(--c-brand-rgb),0.12));border:1px solid var(--success);display:flex;align-items:center;justify-content:center;margin-bottom:28px;box-shadow:0 0 64px rgba(var(--c-income-rgb),0.35);position:relative;">
           <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.6" width="52" height="52"><polyline points="20 6 9 17 4 12"/></svg>
           <div style="position:absolute;inset:-10px;border-radius:38px;border:1px solid rgba(var(--c-income-rgb),0.3);"></div>
@@ -6527,7 +6527,7 @@ setTimeout(function() {
       </div>
 
       <!-- ══ PAYMENT FAILED ══ -->
-      <div x-show="tab === 'pay-failed'" x-cloak class="flex-show" style="flex:1;flex-direction:column;align-items:center;padding:60px 28px 32px;text-align:center;background:radial-gradient(circle at 50% 25%, rgba(var(--c-expense-rgb),0.18) 0%, transparent 55%);">
+      <div x-show="tab === 'pay-failed'" x-cloak class="flex-show" style="flex:1;flex-direction:column;align-items:center;padding:60px 28px 32px;text-align:center;padding-bottom:var(--content-pad-bottom);background:radial-gradient(circle at 50% 25%, rgba(var(--c-expense-rgb),0.18) 0%, transparent 55%);">
         <div style="width:108px;height:108px;border-radius:28px;background:linear-gradient(135deg, rgba(var(--c-expense-rgb),0.22), rgba(var(--c-warning-rgb),0.10));border:1px solid var(--danger);display:flex;align-items:center;justify-content:center;margin-bottom:28px;box-shadow:0 0 64px rgba(var(--c-expense-rgb),0.3);">
           <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="1.9" width="48" height="48"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         </div>
