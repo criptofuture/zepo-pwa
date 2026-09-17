@@ -13,20 +13,21 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const GCP_SA_JSON = Deno.env.get("GCP_SA_JSON")!;
 const GCP_PROJECT = Deno.env.get("GCP_PROJECT") || "gen-lang-client-0934320964";
-const MODEL = Deno.env.get("ZEPI_MODEL") || "gemini-2.5-flash";
+const MODEL = Deno.env.get("ZEPI_MODEL") || "gemini-3.5-flash-lite";
 // generateContent (chat / dictado / insight) corre en `global`: su pool de cupo compartido
 // es mucho mayor que el de una región fija → esquiva los 429 RESOURCE_EXHAUSTED que satura
 // us-central1. La voz nativa de la llamada es OTRO servicio (relay del VPS) y no se toca aquí.
 const GEN_LOCATION = Deno.env.get("ZEPI_GEN_LOCATION") || "global";
 // Si flash se satura pese a los reintentos, caemos a un modelo con pool aparte (flash-lite).
-const FALLBACK_MODEL = Deno.env.get("ZEPI_FALLBACK_MODEL") || "gemini-2.5-flash-lite";
+const FALLBACK_MODEL = Deno.env.get("ZEPI_FALLBACK_MODEL") || "gemini-3.1-flash-lite";
 const vertexHost = (loc: string) => loc === "global" ? "aiplatform.googleapis.com" : `${loc}-aiplatform.googleapis.com`;
 const vertexUrl = (loc: string, model: string) =>
   `https://${vertexHost(loc)}/v1/projects/${GCP_PROJECT}/locations/${loc}/publishers/google/models/${model}:generateContent`;
-// Razonamiento del modelo (thinking). 0 = apagado (más rápido). Un presupuesto modesto
-// mejora la elección de tool/intent y el coaching, a costa de latencia por llamada
-// (ojo: un turno puede hacer varias llamadas por las rondas de tool). Tunable sin redeploy.
-const THINKING = Number(Deno.env.get("ZEPI_THINKING") ?? "512");
+// Razonamiento del modelo (thinking). La familia 3.x reemplaza el presupuesto numerico
+// (thinkingBudget) por niveles discretos (thinkingLevel): MINIMAL/LOW/MEDIUM/HIGH. LOW da
+// algo de razonamiento para elegir tool/intent sin la latencia de MEDIUM/HIGH (ojo: un turno
+// puede hacer varias llamadas por las rondas de tool). Tunable sin redeploy.
+const THINKING_LEVEL = Deno.env.get("ZEPI_THINKING_LEVEL") || "LOW";
 
 const MAX_MESSAGES = 12;        // historial que aceptamos del cliente
 const MAX_MSG_CHARS = 1000;     // por mensaje
@@ -241,7 +242,7 @@ serve(async (req) => {
           { inlineData: { mimeType: mime, data: audioB64 } },
           { text: "Transcribe el audio a texto plano en el idioma hablado (español latino por defecto). Devuelve SOLO la transcripción literal, sin comillas ni comentarios. Si no se oye habla, devuelve una cadena vacía." },
         ] }],
-        generationConfig: { temperature: 0, maxOutputTokens: 512, thinkingConfig: { thinkingBudget: 0 } },
+        generationConfig: { maxOutputTokens: 1024, thinkingConfig: { thinkingLevel: "MINIMAL" } },
       });
       if (!sttRes.ok) { console.error("[stt]", sttRes.status, await sttRes.text()); throw new Error(`vertex_${sttRes.status}`); }
       const sttJson = await sttRes.json();
@@ -311,12 +312,12 @@ serve(async (req) => {
         systemInstruction: { role: "system", parts: [{ text: SYSTEM_PROMPT }] },
         contents: msgs,
         generationConfig: {
-          temperature: 0.7,
+          // temperature: Google pide quitarlo en la familia 3.x.
           responseMimeType: "application/json",
           responseSchema: RESPONSE_SCHEMA,
-          maxOutputTokens: 1024,
-          // Chat + insight razonan (mejor tool/intent y coaching); el dictado (stt) sigue en 0.
-          thinkingConfig: { thinkingBudget: THINKING },
+          maxOutputTokens: 4096, // 1024/2048 se quedaban cortos: thinkingLevel gasta del mismo tope
+          // Chat + insight razonan (mejor tool/intent y coaching); el dictado (stt) sigue en MINIMAL.
+          thinkingConfig: { thinkingLevel: THINKING_LEVEL },
         },
       });
       if (!vertexRes.ok) {
@@ -325,7 +326,13 @@ serve(async (req) => {
       }
       const vertexJson = await vertexRes.json();
       const rawText = vertexJson?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-      try { return JSON.parse(rawText); } catch { return { text: rawText }; }
+      // Si el JSON viene cortado (tope alcanzado a media respuesta), NUNCA mostrarlo crudo:
+      // el usuario veria "{"text": "algo\"actio" como si fuera la respuesta del asistente.
+      try { return JSON.parse(rawText); }
+      catch {
+        console.warn("[parse_fail]", rawText.slice(0, 200));
+        return { text: "No pude completar esa respuesta ahora mismo. ¿Lo intentamos de nuevo?" };
+      }
     };
 
     let out: any = await askModel(contents);

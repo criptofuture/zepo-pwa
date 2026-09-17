@@ -13,8 +13,10 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const CRON_SECRET = Deno.env.get("ZEPI_CRON_SECRET") || "";
 const GCP_SA_JSON = Deno.env.get("GCP_SA_JSON")!;
 const GCP_PROJECT = Deno.env.get("GCP_PROJECT") || "gen-lang-client-0934320964";
-const GCP_LOCATION = Deno.env.get("GCP_LOCATION") || "us-central1";
-const MODEL = Deno.env.get("ZEPI_MODEL") || "gemini-2.5-flash";
+const GCP_LOCATION = Deno.env.get("GCP_LOCATION") || "global";
+const MODEL = Deno.env.get("ZEPI_MODEL") || "gemini-3.5-flash-lite";
+// "global" no lleva prefijo de region en el host (mismo patron que zepo-companion).
+const vertexHost = (loc: string) => loc === "global" ? "aiplatform.googleapis.com" : `${loc}-aiplatform.googleapis.com`;
 const VAPID_PUBLIC = Deno.env.get("VAPID_PUBLIC_KEY")!;
 const VAPID_PRIVATE = Deno.env.get("VAPID_PRIVATE_KEY")!;
 const VAPID_EMAIL = Deno.env.get("VAPID_EMAIL") ?? "hola@zepo.app";
@@ -149,16 +151,18 @@ Return ONLY JSON: { "send": boolean, "title": string, "body": string }.
 
 async function insightFor(snap: Record<string, unknown>): Promise<{ send: boolean; title: string; body: string } | null> {
   const token = await gcpToken();
-  const endpoint = `https://${GCP_LOCATION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT}/locations/${GCP_LOCATION}/publishers/google/models/${MODEL}:generateContent`;
+  const endpoint = `https://${vertexHost(GCP_LOCATION)}/v1/projects/${GCP_PROJECT}/locations/${GCP_LOCATION}/publishers/google/models/${MODEL}:generateContent`;
   const res = await fetch(endpoint, {
     method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       systemInstruction: { role: "system", parts: [{ text: PUSH_PROMPT }] },
+      // temperature: Google pide quitarlo en la familia 3.x. maxOutputTokens 256->1024:
+      // thinkingLevel gasta del mismo tope y 256 dejaba el JSON cortado.
       contents: [{ role: "user", parts: [{ text: "SNAPSHOT=" + JSON.stringify(snap) }] }],
       generationConfig: {
-        temperature: 0.5, responseMimeType: "application/json", maxOutputTokens: 256,
+        responseMimeType: "application/json", maxOutputTokens: 1024,
         responseSchema: { type: "OBJECT", properties: { send: { type: "BOOLEAN" }, title: { type: "STRING" }, body: { type: "STRING" } }, required: ["send", "title", "body"] },
-        thinkingConfig: { thinkingBudget: 0 },
+        thinkingConfig: { thinkingLevel: "MINIMAL" },
       },
     }),
   });

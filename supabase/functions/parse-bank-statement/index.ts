@@ -1,4 +1,4 @@
-// parse-bank-statement · Extracts transactions from bank statement text via Gemini 2.5 Flash
+// parse-bank-statement · Extracts transactions from bank statement text via Gemini 3.5 Flash-Lite
 // Receives raw text (extracted client-side from PDF), returns structured transactions.
 // Reuses GCP_SA_JSON + Vertex AI auth from categorize-ai.
 
@@ -10,8 +10,10 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const GCP_SA_JSON = Deno.env.get("GCP_SA_JSON")!;
 const GCP_PROJECT = Deno.env.get("GCP_PROJECT") || "gen-lang-client-0934320964";
-const GCP_LOCATION = Deno.env.get("GCP_LOCATION") || "us-central1";
-const MODEL = "gemini-2.5-flash";
+const GCP_LOCATION = Deno.env.get("GCP_LOCATION") || "global";
+const MODEL = "gemini-3.5-flash-lite";
+// "global" no lleva prefijo de region en el host (mismo patron que zepo-companion).
+const vertexHost = (loc: string) => loc === "global" ? "aiplatform.googleapis.com" : `${loc}-aiplatform.googleapis.com`;
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -106,7 +108,7 @@ serve(async (req) => {
     const truncated = text.slice(0, 30000);
 
     const accessToken = await getAccessToken();
-    const endpoint = `https://${GCP_LOCATION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT}/locations/${GCP_LOCATION}/publishers/google/models/${MODEL}:generateContent`;
+    const endpoint = `https://${vertexHost(GCP_LOCATION)}/v1/projects/${GCP_PROJECT}/locations/${GCP_LOCATION}/publishers/google/models/${MODEL}:generateContent`;
 
     const vertexRes = await fetch(endpoint, {
       method: "POST",
@@ -115,11 +117,11 @@ serve(async (req) => {
         systemInstruction: { role: "system", parts: [{ text: PROMPT }] },
         contents: [{ role: "user", parts: [{ text: truncated }] }],
         generationConfig: {
-          temperature: 0,
+          // temperature: Google pide quitarlo en la familia 3.x.
           responseMimeType: "application/json",
           responseSchema: SCHEMA,
           maxOutputTokens: 65536,
-          thinkingConfig: { thinkingBudget: 0 },
+          thinkingConfig: { thinkingLevel: "MINIMAL" },
         },
       }),
     });
