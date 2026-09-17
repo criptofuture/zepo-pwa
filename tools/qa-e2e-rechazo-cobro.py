@@ -116,6 +116,16 @@ def wait_db(fn, secs=10):
     return fn()
 
 
+# La app cierra la hoja ANTES de terminar de recargar los cobros (submitRejectSheet), asi que
+# leer la pantalla tras una espera fija falla a ratos: se espera la condicion.
+wait_ui = wait_db
+
+
+def sheet_text(page):
+    s = page.locator(".sheet:visible")
+    return s.last.inner_text() if s.count() else ""
+
+
 def serve():
     s = socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
     h = functools.partial(http.server.SimpleHTTPRequestHandler, directory=PWA_DIR)
@@ -226,15 +236,14 @@ def fase1(page, ids):
     send_sheet(page, "Ya te pagué en efectivo", "Enviar rechazo")
     check("rechazar B (deuda YA aceptada) -> rechazo abierto", wait_db(lambda: one("payment_requests", ids["b"], "status,review_requested")
           == {"status": "accepted", "review_requested": True}))
-    page.wait_for_timeout(500)
-    check("receptor: la fila de A dice RECHAZASTE · ESPERANDO", row_has(page, TAG + " pizza", "RECHAZASTE · ESPERANDO"))
+    check("receptor: la fila de A dice RECHAZASTE · ESPERANDO", wait_ui(lambda: row_has(page, TAG + " pizza", "RECHAZASTE · ESPERANDO")))
 
 
 def fase2(page, ids):
     goto(page, "me-deben")
     a = card(page, TAG + " pizza", "No aceptar")
-    check("emisor: A aparece en RECHAZADOS con su comentario", a.is_visible() and "No comí pizza ese día" in a.inner_text())
-    check("emisor: la fila de A en PENDIENTES dice RECHAZADO", row_has(page, TAG + " pizza", "RECHAZADO", "QA To"))
+    check("emisor: A aparece en RECHAZADOS con su comentario", wait_ui(lambda: a.is_visible() and "No comí pizza ese día" in a.inner_text()))
+    check("emisor: la fila de A en PENDIENTES dice RECHAZADO", wait_ui(lambda: row_has(page, TAG + " pizza", "RECHAZADO", "QA To")))
     chips = page.get_by_text("RECHAZADO", exact=True)
     widths = [chips.nth(i).bounding_box()["width"] for i in range(chips.count()) if chips.nth(i).is_visible()]
     check("emisor: la etiqueta RECHAZADO no se estira (x-show le quitaba el inline-block)", widths and max(widths) < 120)
@@ -246,8 +255,7 @@ def fase2(page, ids):
         return (r.get("review_requested") is False and r.get("reject_reply") == "Sí fuiste, tengo el recibo"
                 and bool(r.get("rejection_denied_at")) and r.get("status") == "pending")
     check("no aceptar A -> vuelve al receptor con la respuesta", wait_db(denied))
-    page.wait_for_timeout(600)
-    check("emisor: la fila de A vuelve a POR ACEPTAR", row_has(page, TAG + " pizza", "POR ACEPTAR", "QA To"))
+    check("emisor: la fila de A vuelve a POR ACEPTAR", wait_ui(lambda: row_has(page, TAG + " pizza", "POR ACEPTAR", "QA To")))
 
     card(page, TAG + " directo", "Aceptar rechazo").get_by_role("button", name="Aceptar rechazo").click()
     txt = sheet(page).inner_text()
@@ -269,20 +277,19 @@ def fase2(page, ids):
 def fase3(page, ids):
     goto(page, "debo")
     nb = card(page, TAG + " directo", "Entendido")
-    check("receptor: aviso de B con el comentario del emisor", nb.is_visible() and "Tienes razón, fue un error" in nb.inner_text())
-    check("receptor: aviso de C (sin comentario)", card(page, TAG + " solo", "Entendido").is_visible())
+    check("receptor: aviso de B con el comentario del emisor", wait_ui(lambda: nb.is_visible() and "Tienes razón, fue un error" in nb.inner_text()))
+    check("receptor: aviso de C (sin comentario)", wait_ui(lambda: card(page, TAG + " solo", "Entendido").is_visible()))
     open_solicitud(page, TAG + " pizza")
-    body = page.locator(".sheet").last.inner_text()
-    check("receptor: A muestra 'no aceptó tu rechazo' con la respuesta", "no aceptó tu rechazo" in body and "Sí fuiste, tengo el recibo" in body)
+    check("receptor: A muestra 'no aceptó tu rechazo' con la respuesta", wait_ui(lambda: "no aceptó tu rechazo" in sheet_text(page)
+          and "Sí fuiste, tengo el recibo" in sheet_text(page)))
     page.get_by_role("button", name="Rechazar otra vez").click()
     send_sheet(page, "Revisa bien, fue Pedro", "Enviar rechazo")
     check("rechazar otra vez A -> rechazo abierto, respuesta vieja limpia", wait_db(lambda: one("payment_requests", ids["a"],
           "review_requested,reject_comment,reject_reply,rejection_denied_at") == {"review_requested": True,
           "reject_comment": "Revisa bien, fue Pedro", "reject_reply": None, "rejection_denied_at": None}))
     open_solicitud(page, TAG + " cambio")
-    body = page.locator(".sheet").last.inner_text()
-    check("receptor: E rechazado muestra 'Rechazaste' y deja aceptar igual",
-          "Rechazaste este cobro" in body and page.get_by_role("button", name="Rechazar", exact=True).count() == 0)
+    check("receptor: E rechazado muestra 'Rechazaste' y deja aceptar igual", wait_ui(lambda: "Rechazaste este cobro" in sheet_text(page)
+          and page.get_by_role("button", name="Rechazar", exact=True).count() == 0))
     page.get_by_role("button", name="Aceptar cobro").click()
     page.get_by_role("button", name="Solo aceptar (sin registrar)").click()
     check("aceptar E rechazado -> aceptado y el rechazo se retira", wait_db(lambda: one("payment_requests", ids["e"],
