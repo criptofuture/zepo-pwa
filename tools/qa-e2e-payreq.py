@@ -6,7 +6,7 @@ Siembra 3 payment_requests reales hacia la cuenta demo (remitente = usuario qa-f
 creado via admin), inicia sesion demo, y prueba las 3 transiciones verificando el
 estado REAL en Supabase tras recargar:
   A) acceptPaymentRequest -> pasa a "deudas" (accepted)
-  B) declinePaymentRequest -> sale de la lista (declined)
+  B) rechazar -> sigue en solicitudes, marcado como rechazado (espera al emisor)
   C) claimPayment -> pasa a "esperando confirmacion" (paid)
 Limpia los 3 registros sembrados. Sale 1 si alguna transicion no persiste.
 """
@@ -80,15 +80,15 @@ async (tag) => {
   const A=find('A'), B=find('B'), Cc=find('C');
   // A) aceptar
   if (A) { c.acceptPrModal = A; await c.acceptPaymentRequest(A.id, false); }
-  // B) rechazar
-  if (B) { await c.declinePaymentRequest(B.id); }
+  // B) rechazar (v203: ya no se esconde; queda esperando la respuesta del emisor)
+  if (B) { c.openRejectSheet('reject', B); c.rejectSheet.text = 'QA'; await c.submitRejectSheet(); }
   // C) flujo real: aceptar y LUEGO marcar pagado (la base bloquea pendiente->pagado directo)
   if (Cc) { c.acceptPrModal = Cc; await c.acceptPaymentRequest(Cc.id, false); await c.claimPayment(Cc.id); }
   // recargar desde Supabase para verificar persistencia real
   await c.loadPaymentRequests();
   const acc = (c.deboDeudas||[]).some(p=>(p.description||'')===(tag+' A'));
-  const declGone = !(c.deboSolicitudes||[]).some(p=>(p.description||'')===(tag+' B'))
-                 && !(c.deboDeudas||[]).some(p=>(p.description||'')===(tag+' B'));
+  const declGone = (c.deboSolicitudes||[]).some(p=>(p.description||'')===(tag+' B')
+                   && p.review_requested === true && p.reject_comment === 'QA');
   const paid = (c.deboPaidWaiting||[]).some(p=>(p.description||'')===(tag+' C'));
   return { seededCount, accepted: acc, declinedGone: declGone, paid };
 }
@@ -109,7 +109,7 @@ def run(url, expect_seed):
     checks = [
         ("3 solicitudes sembradas visibles", res.get("seededCount")==expect_seed),
         ("ACEPTAR -> pasa a deudas (accepted)", res.get("accepted") is True),
-        ("RECHAZAR -> sale de la lista",        res.get("declinedGone") is True),
+        ("RECHAZAR -> queda rechazado con su comentario", res.get("declinedGone") is True),
         ("MARCAR PAGADO -> esperando confirmacion (paid)", res.get("paid") is True),
     ]
     ok = all(v for _,v in checks)

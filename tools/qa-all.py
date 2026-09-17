@@ -48,7 +48,7 @@ CHECKS = [
     ("E2E solicitudes cobro (aceptar/rechazar/pagar)", ["python", os.path.join(TOOLS, "qa-e2e-payreq.py")]),
     ("E2E registrar cobro aceptado sin registrar", ["python", os.path.join(TOOLS, "qa-e2e-register-accepted.py")]),
     ("E2E retirar gasto dividido (borrar retira cobro+espejo)", ["python", os.path.join(TOOLS, "qa-e2e-retract-split.py")]),
-    ("E2E pedir revision + cancelar cobro (vuelve a 100%)", ["python", os.path.join(TOOLS, "qa-e2e-cancel-cobro.py")]),
+    ("E2E rechazar cobro + aceptar/no aceptar el rechazo", ["python", os.path.join(TOOLS, "qa-e2e-rechazo-cobro.py")]),
     ("E2E saldar cuentas + centavos (libreta == cobros)", ["python", os.path.join(TOOLS, "qa-e2e-settle.py")]),
     ("SEGURIDAD cobros: nadie reescribe un cobro por la API", ["python", os.path.join(TOOLS, "qa-e2e-payreq-guard.py")]),
     ("E2E amigos (aceptar/rechazar conexion)", ["python", os.path.join(TOOLS, "qa-e2e-friends.py")]),
