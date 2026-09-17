@@ -21,11 +21,12 @@ try:
 except Exception:
     pass
 
-SB_CFG = "C:/Users/alvar/.claude/skills/supabase/config.json"
+TOOLS = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, TOOLS)
+import qa_cfg
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) lynoia-cli/1.0"
 
-s = json.load(open(SB_CFG, encoding="utf-8"))
-REF, MGMT = s["project_ref"], s["management_token"]
+MGMT, REF = qa_cfg.mgmt(os.path.dirname(TOOLS))
 MGMT_URL = f"https://api.supabase.com/v1/projects/{REF}/database/query"
 FN_URL = f"https://{REF}.supabase.co/functions/v1/zepi-push-insight"
 

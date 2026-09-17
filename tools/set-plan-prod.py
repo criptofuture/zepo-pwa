@@ -7,20 +7,14 @@ USO:
     python tools/set-plan-prod.py --show <email>              # inspecciona
     python tools/set-plan-prod.py --set  <email> <plan>       # setea plan + 365d
 """
-import sys, json, urllib.request, urllib.error
+import sys, os, json, urllib.request, urllib.error
 
-ZEPO_CFG = "C:/Users/alvar/lynoia/clients/zepo/config.json"
-SB_CFG   = "C:/Users/alvar/.claude/skills/supabase/config.json"
+TOOLS = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, TOOLS)
+import qa_cfg
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) lynoia-cli/1.0"
 
-def _load():
-    z = json.load(open(ZEPO_CFG, encoding="utf-8"))
-    s = json.load(open(SB_CFG, encoding="utf-8"))
-    sb = z.get("supabase", z)
-    ref = s["project_ref"]
-    return s["management_token"], ref
-
-MGMT, REF = _load()
+MGMT, REF = qa_cfg.mgmt(os.path.dirname(TOOLS))
 MGMT_URL = f"https://api.supabase.com/v1/projects/{REF}/database/query"
 
 def sql(query):

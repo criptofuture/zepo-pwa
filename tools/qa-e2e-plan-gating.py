@@ -13,6 +13,8 @@ import sys, time, socket, threading, http.server, functools, os, json, urllib.re
 from playwright.sync_api import sync_playwright
 
 PWA_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import qa_cfg
 PASSWORD = "ZepoQA2026!"
 ACCOUNTS = [("free@zepo.test", "free"), ("pro@zepo.test", "pro"),
             ("elite@zepo.test", "elite"), ("max@zepo.test", "max")]
@@ -29,11 +31,11 @@ def serve(port):
     threading.Thread(target=srv.serve_forever, daemon=True).start(); return srv
 
 def cleanup_spaces():
-    cfg = json.load(open("C:/Users/alvar/.claude/skills/supabase/config.json", encoding="utf-8"))
-    url = f"https://api.supabase.com/v1/projects/{cfg['project_ref']}/database/query"
+    token, ref = qa_cfg.mgmt(PWA_DIR)
+    url = f"https://api.supabase.com/v1/projects/{ref}/database/query"
     body = json.dumps({"query": f"delete from public.spaces where name like '{RUNTAG}%';"}).encode()
     r = urllib.request.Request(url, data=body, method="POST", headers={
-        "Authorization": f"Bearer {cfg['management_token']}", "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}", "Content-Type": "application/json",
         "User-Agent": "Mozilla/5.0 lynoia-cli/1.0"})
     try: urllib.request.urlopen(r, timeout=20)
     except Exception as e: print("  (cleanup spaces warn:", repr(e)[:80], ")")

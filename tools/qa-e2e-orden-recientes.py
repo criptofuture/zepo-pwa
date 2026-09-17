@@ -9,12 +9,14 @@ arriba de todo en Inicio. Ahora _sortExpenses() reordena tras cada mutacion loca
 Guarda de verdad (saveExpense real, no simulado) sobre elite@zepo.test y limpia al final.
 Siembra 3 gastos de HOY primero: sin ellos la cuenta queda vacia y el gasto viejo seria
 legitimamente el primero -> la prueba no probaria nada. Sale 1 si algun check falla."""
-import os, socket, threading, http.server, functools, json, time, urllib.request, urllib.error
+import os, sys, socket, threading, http.server, functools, json, time, urllib.request, urllib.error
 from datetime import date
 from playwright.sync_api import sync_playwright
 
 PWA_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CFG = json.load(open(os.path.join(PWA_DIR, "..", "..", "config.json"), encoding="utf-8"))["supabase"]
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import qa_cfg
+CFG = qa_cfg.load(PWA_DIR)
 URL, SK = CFG["url"], CFG["secret_key"]
 EMAIL, PASSWORD = "elite@zepo.test", "ZepoQA2026!"
 TAG = "ORD_" + str(int(time.time()))

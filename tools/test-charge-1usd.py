@@ -16,7 +16,9 @@ if not SECRET:
     print("FALTA el secreto. Define ZEPO_INTERNAL_SECRET y vuelve a correr.")
     sys.exit(1)
 
-CFG = json.load(open(os.path.join(os.path.dirname(__file__), "..", "..", "..", "config.json")))["supabase"]
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import qa_cfg
+CFG = qa_cfg.load(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 URL, SK = CFG["url"], CFG["secret_key"]
 H = {"apikey": SK, "Authorization": "Bearer " + SK}
 

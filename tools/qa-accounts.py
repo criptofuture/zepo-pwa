@@ -9,24 +9,20 @@ USO:
     python tools/qa-accounts.py --set pro@zepo.test elite   # cambia el plan de una
     python tools/qa-accounts.py --list     # lista estado actual
 """
-import sys, json, urllib.request, urllib.error
+import sys, os, json, urllib.request, urllib.error
 
-ZEPO_CFG = "C:/Users/alvar/lynoia/clients/zepo/config.json"
-SB_CFG   = "C:/Users/alvar/.claude/skills/supabase/config.json"
+TOOLS = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, TOOLS)
+import qa_cfg
 PASSWORD = "ZepoQA2026!"
 ACCOUNTS = [("free@zepo.test", "free"), ("pro@zepo.test", "pro"),
             ("elite@zepo.test", "elite"), ("max@zepo.test", "max")]
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) lynoia-cli/1.0"
 
 def _load():
-    z = json.load(open(ZEPO_CFG, encoding="utf-8"))
-    s = json.load(open(SB_CFG, encoding="utf-8"))
-    sb = z.get("supabase", z)
-    secret = sb.get("secret_key")
-    ref = s["project_ref"]
-    base = sb.get("url") or f"https://{ref}.supabase.co"
-    base = base.rstrip("/")
-    return secret, s["management_token"], ref, base
+    sb = qa_cfg.load(os.path.dirname(TOOLS))
+    mgmt, ref = qa_cfg.mgmt(os.path.dirname(TOOLS))
+    return sb.get("secret_key"), mgmt, ref, sb["url"].rstrip("/")
 
 SECRET, MGMT, REF, BASE = _load()
 MGMT_URL = f"https://api.supabase.com/v1/projects/{REF}/database/query"

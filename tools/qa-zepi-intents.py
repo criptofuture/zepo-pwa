@@ -28,24 +28,21 @@ except Exception:
 import os
 TOOLS = os.path.dirname(os.path.abspath(__file__))
 PWA = os.path.dirname(TOOLS)
-ZEPO_CFG = "C:/Users/alvar/lynoia/clients/zepo/config.json"
-SB_CFG = "C:/Users/alvar/.claude/skills/supabase/config.json"
+sys.path.insert(0, TOOLS)
+import qa_cfg
 PASSWORD = "ZepoQA2026!"
 MAX_EMAIL, FREE_EMAIL = "max@zepo.test", "free@zepo.test"
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) lynoia-cli/1.0"
 
 
 def _load():
-    z = json.load(open(ZEPO_CFG, encoding="utf-8"))
-    s = json.load(open(SB_CFG, encoding="utf-8"))
-    sb = z.get("supabase", z)
-    ref = s["project_ref"]
-    base = (sb.get("url") or f"https://{ref}.supabase.co").rstrip("/")
+    mgmt, ref = qa_cfg.mgmt(PWA)
+    base = qa_cfg.load(PWA)["url"].rstrip("/")
     html = open(os.path.join(PWA, "index.html"), encoding="utf-8").read()
     m = re.search(r"sb_publishable_[A-Za-z0-9_-]+", html)
     if not m:
         print("FATAL: no encontre la publishable key en index.html"); sys.exit(1)
-    return base, m.group(0), s["management_token"], ref
+    return base, m.group(0), mgmt, ref
 
 
 BASE, PUB_KEY, MGMT, REF = _load()

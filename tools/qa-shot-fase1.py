@@ -5,7 +5,9 @@ from playwright.sync_api import sync_playwright
 
 PWA_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SHOT = os.path.join(PWA_DIR, "tools", "_shots"); os.makedirs(SHOT, exist_ok=True)
-CFG = json.load(open(os.path.join(PWA_DIR, "..", "..", "config.json")))["supabase"]
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import qa_cfg
+CFG = qa_cfg.load(PWA_DIR)
 URL, SK = CFG["url"], CFG["secret_key"]
 DEMO_EMAIL = "demo@zepo.test"; DEMO_PASS = "ZepoDemo2026!"
 
