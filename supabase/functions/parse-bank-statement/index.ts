@@ -10,7 +10,11 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const GCP_SA_JSON = Deno.env.get("GCP_SA_JSON")!;
 const GCP_PROJECT = Deno.env.get("GCP_PROJECT") || "gen-lang-client-0934320964";
-const GCP_LOCATION = Deno.env.get("GCP_LOCATION") || "global";
+// Hardcodeado, NO por env var: un secret viejo de Supabase tiene GCP_LOCATION=us-central1
+// (dashboard, fuera de git) y gana sobre cualquier default de codigo. Confirmado en produccion
+// el 17-sep-2026: con el default por env, esta funcion devolvia vertex_404 en us-central1.
+// "global" es el unico lugar donde la familia 3.x funciona completa.
+const GCP_LOCATION = "global";
 const MODEL = "gemini-3.5-flash-lite";
 // "global" no lleva prefijo de region en el host (mismo patron que zepo-companion).
 const vertexHost = (loc: string) => loc === "global" ? "aiplatform.googleapis.com" : `${loc}-aiplatform.googleapis.com`;

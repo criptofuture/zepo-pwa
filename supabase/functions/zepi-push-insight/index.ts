@@ -13,7 +13,11 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const CRON_SECRET = Deno.env.get("ZEPI_CRON_SECRET") || "";
 const GCP_SA_JSON = Deno.env.get("GCP_SA_JSON")!;
 const GCP_PROJECT = Deno.env.get("GCP_PROJECT") || "gen-lang-client-0934320964";
-const GCP_LOCATION = Deno.env.get("GCP_LOCATION") || "global";
+// Hardcodeado, NO por env var: un secret viejo de Supabase tiene GCP_LOCATION=us-central1
+// (dashboard, fuera de git) y gana sobre cualquier default de codigo (ver el mismo arreglo
+// en gemini-analyze/categorize-ai/parse-bank-statement, 17-sep-2026). "global" es el unico
+// lugar donde la familia 3.x funciona completa.
+const GCP_LOCATION = "global";
 const MODEL = Deno.env.get("ZEPI_MODEL") || "gemini-3.5-flash-lite";
 // "global" no lleva prefijo de region en el host (mismo patron que zepo-companion).
 const vertexHost = (loc: string) => loc === "global" ? "aiplatform.googleapis.com" : `${loc}-aiplatform.googleapis.com`;
