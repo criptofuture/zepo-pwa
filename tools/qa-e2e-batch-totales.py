@@ -16,9 +16,15 @@ Se prueban los DOS casos, porque el pie de la hoja cambia de base entre ellos:
   UNIFORME (todos 50/50 con la misma persona) -> las filas se editan con el TOTAL
 
 Sale 1 si algun numero se contradice.
+
+Fechas (16-sep-2026): los grupos se siembran en el MES PASADO, no en fechas fijas. La app
+solo tiene en memoria el mes pasado y el actual (loadExpenses), y MEDIR busca el grupo ahi.
+Con fechas fijas de julio la prueba se rompio sola el 1-sep: la app no veia el grupo y
+salia "el grupo se abrio" en FALLA, aunque desde Importaciones el grupo abre bien.
 """
 import sys, os, time, json, socket, threading, http.server, functools
 import urllib.request, urllib.error, urllib.parse
+from datetime import date, timedelta
 from playwright.sync_api import sync_playwright
 
 PWA_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -29,6 +35,9 @@ URL, SK = CFG["url"], CFG["secret_key"]
 EMAIL, PASS = "demo@zepo.test", "ZepoDemo2026!"
 TAG = "BT_" + str(int(time.time()))
 H = {"apikey": SK, "Authorization": "Bearer " + SK, "Content-Type": "application/json"}
+# Mes pasado: siempre dentro de la ventana de loadExpenses y siempre en el pasado.
+MES_PASADO = (date.today().replace(day=1) - timedelta(days=1)).replace(day=1)
+def dia(n): return MES_PASADO.replace(day=n).isoformat()
 
 
 def admin(method, path, body=None, extra=None):
@@ -104,7 +113,10 @@ async (batchId) => {
   c.showOnbV2 = false; c.jrnOpen = false;
   await c.loadExpenses();
   const items = (c.expenses||[]).filter(e => e.batch_id === batchId);
-  if (!items.length) return { ok:false };
+  if (!items.length) {
+    const ds = (c.expenses||[]).map(e => e.date).sort();
+    return { ok:false, enMemoria: ds.length, desde: ds[0], hasta: ds[ds.length-1] };
+  }
   c.openEditBatch({ batch_id: batchId, items, date: items[0].date });
   const r2 = n => Math.round(n*100)/100;
   const info = c.batchEditInfo;
@@ -135,6 +147,8 @@ async (batchId) => {
 def run(page, batch_id, ids, caso, esperado_parte, esperado_full, esperado_cobrar):
     m = page.evaluate(MEDIR, batch_id)
     if not m.get("ok"):
+        print(f"   {caso}: el grupo no esta en la memoria de la app ({m.get('enMemoria')} gastos,"
+              f" de {m.get('desde')} a {m.get('hasta')}); se sembro en {MES_PASADO:%Y-%m}")
         return [(f"{caso}: el grupo se abrio", False)]
     imp = page.evaluate(IMPORTS, batch_id)
     checks = [
@@ -162,13 +176,13 @@ def main():
         # MIXTO: 2 compartidos (20 y 10) + 2 propios (7 y 3)
         #   tu parte = 10 + 5 + 7 + 3 = 25 | completo = 40 | por cobrar = 15
         b1, i1 = seed(user, "Grupo mixto " + TAG, [
-            ("a", 20.00, "2026-07-05", True), ("b", 10.00, "2026-07-11", True),
-            ("c",  7.00, "2026-07-14", False), ("d", 3.00, "2026-07-19", False)])
+            ("a", 20.00, dia(5), True), ("b", 10.00, dia(11), True),
+            ("c",  7.00, dia(14), False), ("d", 3.00, dia(19), False)])
         # UNIFORME: los 3 compartidos 50/50 -> la hoja edita montos completos
         #   tu parte = 4 + 6 + 2.5 = 12.50 | completo = 25 | por cobrar = 12.50
         b2, i2 = seed(user, "Grupo uniforme " + TAG, [
-            ("e", 8.00, "2026-07-06", True), ("f", 12.00, "2026-07-12", True),
-            ("g", 5.00, "2026-07-18", True)])
+            ("e", 8.00, dia(6), True), ("f", 12.00, dia(12), True),
+            ("g", 5.00, dia(18), True)])
 
         port = free_port(); serve(port); time.sleep(0.5)
         with sync_playwright() as p:
