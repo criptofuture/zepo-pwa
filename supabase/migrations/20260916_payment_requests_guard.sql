@@ -94,14 +94,16 @@ BEGIN
 
   -- Cada lado solo hace sus propios cambios de estado.
   IF NEW.status IS DISTINCT FROM OLD.status THEN
-    v_paso := OLD.status || '>' || NEW.status;
-    IF NOT (
+    v_paso := COALESCE(OLD.status, '') || '>' || COALESCE(NEW.status, '');
+    IF NOT COALESCE(
          (v_uid = OLD.to_user_id   AND v_paso IN ('pending>accepted',   -- aceptar
-                                                  'pending>declined',   -- ignorar
+                                                  'pending>declined',   -- «Ignorar» de v202; v203 lo
+                                                                        -- quita: sacarlo cuando v203
+                                                                        -- este en produccion
                                                   'accepted>paid'))     -- «ya pague»
       OR (v_uid = OLD.from_user_id AND v_paso IN ('paid>settled',       -- confirmar el pago
-                                                  'paid>accepted'))     -- «no recibido»
-    ) THEN
+                                                  'paid>accepted')),    -- «no recibido»
+       false) THEN
       RAISE EXCEPTION 'payment_requests: el cambio % no esta permitido para este usuario', v_paso
         USING ERRCODE = '42501';
     END IF;
