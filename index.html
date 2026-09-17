@@ -10212,7 +10212,7 @@ function zepoApp() {
     aliasModalOpen: false,
     aliasModalContact: null,
     aliasModalValue: '',
-    APP_VERSION: 'v205',
+    APP_VERSION: 'v206',
     hideAmounts: (() => { try { return localStorage.getItem('zepo_hide_amounts') === '1'; } catch (e) { return false; } })(), // modo privacidad: enmascara montos (estilo banca)
     // ─── ZEPI (companion IA, Max) ───
     zepiOpen: false, zepiMsgs: [], zepiInput: '', zepiTyping: false, zepiBadge: 0, zepiFindings: [], _zepiLoaded: false,
@@ -14084,22 +14084,26 @@ function zepoApp() {
     },
     async loadPaymentMethods() {
       if (!this.user) return;
+      // data = null significa «no se pudo leer»: NO es lo mismo que «no hay ninguno».
+      // Sembrar tras una lectura fallida duplicó Efectivo/Tarjeta/Transferencia (16-sep).
       let data = null;
       try {
         const r = await withTimeout(
           sb.from('payment_methods').select('*').eq('user_id', this.user.id).order('sort', { ascending: true }),
           2500, 'loadPaymentMethods'
         );
-        data = r.data;
+        if (!r.error && Array.isArray(r.data)) data = r.data;
+        else throw new Error((r.error && r.error.message) || 'sin datos');
       } catch (e) {
         console.warn('[loadPaymentMethods] fallback REST:', e.message);
         try {
           const url = SUPABASE_URL + '/rest/v1/payment_methods?user_id=eq.' + encodeURIComponent(this.user.id) + '&order=sort.asc';
           const res = await fetch(url, { headers: sbAuthHeaders() });
-          data = res.ok ? await res.json() : [];
-        } catch (e2) { data = []; }
+          if (res.ok) data = await res.json();
+        } catch (e2) { /* sigue null */ }
       }
-      this.paymentMethods = data || [];
+      if (!Array.isArray(data)) return; // lectura fallida: se deja la lista como estaba y no se siembra
+      this.paymentMethods = data;
       if (this.paymentMethods.length === 0 && !this._pmSeeding) await this.seedPaymentMethods();
       if (!this.form.payment_method) this.form.payment_method = this._defaultPaymentMethod();
     },

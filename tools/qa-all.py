@@ -36,6 +36,7 @@ CHECKS = [
     ("Botones de pago no quedan bajo la barra", ["python", os.path.join(TOOLS, "qa-botones-sobre-barra.py")]),
     ("Layout teclado/split (5 perfiles)", ["python", os.path.join(TOOLS, "qa-keyboard.py")]),
     ("E2E CRUD gasto (alta/editar/borrar)", ["python", os.path.join(TOOLS, "qa-e2e-crud.py")]),
+    ("E2E lectura fallida de métodos de pago no siembra duplicados", ["python", os.path.join(TOOLS, "qa-e2e-pm-no-duplica.py")]),
     ("E2E editar cobro + agregar persona", ["python", os.path.join(TOOLS, "qa-e2e-edit-split.py")]),
     ("E2E proporciones desiguales (guardar/cuentas/editar/historico)", ["python", os.path.join(TOOLS, "qa-e2e-split-proportions.py")]),
     ("E2E restante del split (asignar/dividir/fijado a mano)", ["python", os.path.join(TOOLS, "qa-e2e-split-restante.py")]),
