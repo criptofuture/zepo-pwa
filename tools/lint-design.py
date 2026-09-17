@@ -63,11 +63,9 @@ BLOCK_SIN_CSS = {"div", "section", "article", "aside", "header", "footer", "nav"
                  "blockquote", "pre", "details"}
 
 
-def xshow_con_display(texto):
-    """[(linea, clave, fragmento)] de cada elemento con x-show y display en su style estatico.
-    clave = etiqueta<TAB>display<TAB>expresion de x-show (lo que se compara con XSHOW_VIEJOS)."""
+def elementos(texto):
+    """(linea, match, attrs) de cada etiqueta de apertura, sin comentarios, <script> ni <style>."""
     texto = NO_ES_HTML.sub(lambda m: re.sub(r'[^\n]', ' ', m.group(0)), texto)
-    hallados = []
     for m in TAG.finditer(texto):
         attrs = {}
         for a in ATTR.finditer(m.group(2) or ""):
@@ -75,6 +73,14 @@ def xshow_con_display(texto):
             if valor[:1] in ('"', "'"):
                 valor = valor[1:-1]
             attrs.setdefault(a.group(1).lower(), valor)
+        yield texto.count("\n", 0, m.start()) + 1, m, attrs
+
+
+def xshow_con_display(texto):
+    """[(linea, clave, fragmento)] de cada elemento con x-show y display en su style estatico.
+    clave = etiqueta<TAB>display<TAB>expresion de x-show (lo que se compara con XSHOW_VIEJOS)."""
+    hallados = []
+    for linea, m, attrs in elementos(texto):
         xshow = next((v for k, v in attrs.items() if k == "x-show" or k.startswith("x-show.")), None)
         if xshow is None or "style" not in attrs:
             continue
@@ -90,17 +96,40 @@ def xshow_con_display(texto):
         if base == "none" or (base == "block" and tag in BLOCK_SIN_CSS):
             continue
         clave = "\t".join((tag, display, " ".join(xshow.split())))
-        linea = texto.count("\n", 0, m.start()) + 1
         hallados.append((linea, clave, " ".join(m.group(0).split())[:90]))
     return hallados
 
 
-def xshow_viejos():
-    if not os.path.exists(XSHOW_VIEJOS):
+def xshow_viejos(ruta=None, campos=3):
+    ruta = ruta or XSHOW_VIEJOS
+    if not os.path.exists(ruta):
         return Counter()
-    with open(XSHOW_VIEJOS, encoding="utf-8") as f:
+    with open(ruta, encoding="utf-8") as f:
         filas = [l.rstrip("\n").split("\t") for l in f if l.strip() and not l.startswith("#")]
-    return Counter("\t".join(p[1:4]) for p in filas if len(p) >= 4)
+    return Counter("\t".join(p[1:1 + campos]) for p in filas if len(p) >= 1 + campos)
+
+
+# --- style="..." fijo + :style con un STRING ---
+# Alpine v3 (packages/alpinejs/src/utils/styles.js, setStylesFromString) hace
+# el.setAttribute('style', valor) cuando :style es un string: el style estatico se pierde
+# entero. Con un objeto ({...}) solo toca esas propiedades. Estaba en
+# memory/feedback/alpine-frontend-gotchas.md §1 y volvio igual el 17-sep-2026 (v205, ventana
+# «Elegir categoria»: casillas sin fondo ni borde). Mismo trato que x-show: viejos avisan,
+# uno nuevo bloquea, y la lista solo se achica.
+STYLE_VIEJOS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lint-design-style-string-viejos.tsv")
+
+
+def style_con_string(texto):
+    """[(linea, clave, fragmento)] de cada elemento con style="..." y :style cuyo valor no es objeto.
+    clave = etiqueta<TAB>valor de :style (lo que se compara con STYLE_VIEJOS)."""
+    hallados = []
+    for linea, m, attrs in elementos(texto):
+        din = attrs.get(":style", attrs.get("x-bind:style"))
+        if din is None or not attrs.get("style", "").strip() or din.strip().startswith("{"):
+            continue
+        clave = "\t".join((m.group(1).lower(), " ".join(din.split())))
+        hallados.append((linea, clave, " ".join(m.group(0).split())[:90]))
+    return hallados
 
 # --- Patrones que AVISAN (residuo de paleta vieja, no bloquea) ---
 WARN_PATTERNS = [
@@ -140,6 +169,20 @@ def main():
     xs_viejos = [h for h in xs_todos if vistos[h[1]] <= viejos[h[1]]]
     ya_no_estan = sum((viejos - vistos).values())
 
+    st_viejos_lista = xshow_viejos(STYLE_VIEJOS, 2)
+    st_todos = style_con_string("".join(lines[:dev_start]))
+    st_vistos = Counter(clave for _, clave, _ in st_todos)
+    st_nuevos = [h for h in st_todos if st_vistos[h[1]] > st_viejos_lista[h[1]]]
+    st_viejos = [h for h in st_todos if st_vistos[h[1]] <= st_viejos_lista[h[1]]]
+    st_ya_no_estan = sum((st_viejos_lista - st_vistos).values())
+    if "--generar-style-viejos" in sys.argv:  # solo para crear la lista la primera vez
+        with open(STYLE_VIEJOS, "w", encoding="utf-8", newline="\n") as f:
+            f.write("# Elementos con style=\"...\" fijo + :style con un STRING que YA existian el 17-sep-2026.\n"
+                    "# lint-design.py solo avisa por estos; uno nuevo bloquea. Al arreglar uno, borra su linea.\n")
+            f.writelines(f"{ln}\t{clave}\n" for ln, clave, _ in st_todos)
+        print(f"lista escrita: {len(st_todos)} elementos")
+        return 0
+
     fails = []
     warns = []
     for idx, line in enumerate(lines):
@@ -162,6 +205,9 @@ def main():
         fails.append((ln, f"x-show + style con display:{display} — Alpine borra ese display al mostrarlo "
                           "y queda block. Pasalo a una clase (flex: class=\"flex-show\") o envuelve "
                           f"el elemento con <template x-if>{copias}", frag))
+    for ln, clave, frag in st_nuevos:
+        fails.append((ln, "style=\"...\" fijo + :style con un string — Alpine reemplaza el style estatico "
+                          "COMPLETO. Usa :style con un objeto ({ color: ... }) o junta todo en :style", frag))
     fails.sort(key=lambda f: f[0])
 
     if xs_viejos:
@@ -173,6 +219,15 @@ def main():
     if ya_no_estan:
         print(f"ℹ️  {ya_no_estan} de {os.path.basename(XSHOW_VIEJOS)} ya no existen: borra sus lineas "
               "para que la lista solo se achique")
+
+    if st_viejos:
+        print(f"⚠️  {len(st_viejos)} elemento(s) viejos con style fijo + :style string (no bloquea; "
+              f"--viejos los lista, {os.path.basename(STYLE_VIEJOS)} los guarda)")
+        if "--viejos" in sys.argv:
+            for ln, clave, frag in st_viejos:
+                print(f"    L{ln}: {frag}")
+    if st_ya_no_estan:
+        print(f"ℹ️  {st_ya_no_estan} de {os.path.basename(STYLE_VIEJOS)} ya no existen: borra sus lineas")
 
     if warns:
         print(f"⚠️  {len(warns)} residuo(s) de paleta vieja (no bloquea):")

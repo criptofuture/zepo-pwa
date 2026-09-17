@@ -1,0 +1,36 @@
+# Elementos con style="..." fijo + :style con un STRING que YA existian el 17-sep-2026.
+# lint-design.py solo avisa por estos; uno nuevo bloquea. Al arreglar uno, borra su linea.
+4287	div	lifetimeSavingsByMonth.length ? 'cursor:pointer' : ''
+4290	div	lifetimeSavings < 0 ? 'color:var(--danger)' : 'color:var(--text)'
+4300	span	mo.saldo < 0 ? 'color:var(--danger)' : 'color:var(--success)'
+4307	div	patTotalWithSavings < 0 ? 'color:var(--danger)' : 'color:var(--c-brand)'
+4588	span	histType === 'all' ? (group.total >= 0 ? 'color:var(--success)' : 'color:var(--muted)') : (histType === 'income' ? 'color:var(--success)' : 'color:var(--muted)')
+4662	span	histType === 'income' ? 'color:var(--success)' : histType === 'all' ? (historyTotal >= 0 ? 'color:var(--success)' : 'color:var(--danger)') : ''
+5035	div	sub._type === 'income-split' ? 'background:linear-gradient(135deg,rgba(var(--c-income-rgb),0.15),rgba(var(--c-brand-rgb),0.08));color:var(--success)' : 'background:linear-gradient(135deg,rgba(var(--c-warning-rgb),0.15),rgba(var(--c-expense-rgb),0.1));color:var(--warning)'
+5576	div	dashViewMode === 'balance' ? (dashPeriodData >= 0 ? 'color:var(--success)' : 'color:var(--danger)') : dashViewMode === 'income' ? 'color:var(--success)' : ''
+5669	span	dashViewMode === 'balance' ? (cat.total < 0 ? 'color:var(--danger)' : 'color:var(--success)') : ''
+5960	div	'background:' + b.color + '18;border:1px solid ' + b.color + '30'
+5973	div	b.pct >= a ? { background: 'rgba(var(--c-warning-rgb),0.15)', color: 'var(--warning)', border: '1px solid rgba(var(--c-warning-rgb),0.3)' } : { background: 'var(--bg)', color: 'var(--dim)', border: '1px solid var(--border)' }
+6288	div	p.gradient ? { padding: '1.8px', background: 'var(--gradient)', boxShadow: '0 0 40px rgba(var(--c-accent-rgb),0.28)' } : {}
+6304	span	p.gradient ? { background: 'var(--gradient)', color: 'var(--c-brand-contrast)' } : { background: 'rgba(var(--c-brand-rgb),0.10)', color: 'var(--cyan)' }
+6566	button	deleteConfirmText !== 'ELIMINAR' ? 'opacity:0.55' : ''
+7176	span	zvSplitOk ? 'color:var(--success);' : 'color:var(--danger);'
+7343	svg	showHiddenFees && 'transform:rotate(180deg)'
+7492	input	(!form.amount || parseFloat(form.amount) <= 0) ? '-webkit-text-fill-color:var(--c-accent-soft);color:var(--c-accent-soft);' : ''
+7594	button	importProcessing && 'opacity:0.6;cursor:wait'
+7736	svg	tabShowDiscards && 'transform:rotate(180deg)'
+7770	svg	showHiddenFees && 'transform:rotate(180deg)'
+7944	div	recurringOn ? { background: 'var(--surface)', border: '1px solid var(--cyan)', overflow: 'hidden' } : { background: 'var(--surface)', border: '1px solid var(--border)', overflow: 'hidden' }
+7965	div	form.is_split ? { background: 'var(--surface)', border: '1px solid var(--cyan)', overflow: splitPickerIdx >= 0 ? 'visible' : 'hidden' } : { background: 'var(--surface)', border: '1px solid var(--border)', overflow: 'hidden' }
+8003	div	'background:' + p.color
+8010	span	!p.name ? 'color:var(--dim)' : ''
+8221	button	exportScope === 'active' ? { background: 'rgba(var(--c-brand-rgb),0.10)', color: 'var(--cyan)', border: '1px solid var(--cyan)' } : { background: 'var(--surface)', color: 'var(--muted)', border: '1px solid var(--border)' }
+8222	button	exportScope === 'all' ? { background: 'rgba(var(--c-brand-rgb),0.10)', color: 'var(--cyan)', border: '1px solid var(--cyan)' } : { background: 'var(--surface)', color: 'var(--muted)', border: '1px solid var(--border)' }
+8291	div	dashViewMode === 'balance' ? (catDrillTotal < 0 ? 'color:var(--danger)' : 'color:var(--success)') : ''
+8296	span	'color:' + budgetColor(budgetLevel(catDrillTotal / budgetForm[catDrillKey] * 100))
+8394	div	'background:' + c.color + '18;border:1px solid ' + c.color + '35'
+8483	button	m.is_default ? 'color:var(--warning)' : 'color:var(--dim)'
+8643	button	t.active ? 'color:var(--success)' : 'color:var(--dim)'
+9024	div	(activeDeboType === 'deuda' && activeDebo.accepted_at) ? 'border-bottom:1px solid var(--border)' : ''
+9151	button	budgetForm._targetSpace === s.id ? { background:'var(--gradient)', color:'var(--c-brand-contrast)', border:'1px solid transparent' } : { background:'var(--surface2)', color:'var(--muted)', border:'1px solid var(--border)' }
+9618	svg	importShowInstructions ? 'transform:rotate(180deg)' : ''
